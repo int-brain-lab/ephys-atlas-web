@@ -255,6 +255,7 @@ svg {
 #svg1 path:hover {
     stroke-width: 1px;
     stroke: #000000ff;
+    cursor: pointer;
 }
 
 

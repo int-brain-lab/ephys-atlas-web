@@ -6,12 +6,15 @@
 # -------------------------------------------------------------------------------------------------
 
 from datetime import datetime, timezone
-import os
-from xml.dom import minidom
+import json
 import lxml.etree as le
+import os
 import re
 from pathlib import Path
+from xml.dom import minidom
+
 from joblib import Parallel, delayed
+from tqdm import tqdm
 
 
 # -------------------------------------------------------------------------------------------------
@@ -36,8 +39,9 @@ Steps to cleanup the SVGs:
 # Constants
 # -------------------------------------------------------------------------------------------------
 
-ROOT_DIR = Path(__file__).parent
+ROOT_DIR = Path(__file__).parent.parent
 DATA_DIR = ROOT_DIR / "data"
+AXES = ('coronal', 'horizontal', 'sagittal')
 NS = "http://www.w3.org/2000/svg"
 SIMPLIFY_CMD = "inkscape --batch-process --actions='EditSelectAll;SelectionSimplify;FileSave;FileClose'"
 RE_PATH = re.compile(r'<path id="path[0-9]+"')
@@ -90,12 +94,21 @@ def replace_text(node, new_text):
     node.firstChild.replaceWholeText(new_text)
 
 
-def save_xml(root, filename):
+def get_xml(root):
     xml = root.toxml()
     xml = RE_WHITESPACE.sub('', xml)
+    return xml
 
+
+def save_xml(root, filename):
+    xml = get_xml(root)
     with open(filename, 'w') as f:
         f.write(xml)
+
+
+def save_json(d, filename):
+    with open(filename, "w") as f:
+        json.dump(d, f)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -145,6 +158,23 @@ def clean_svg(file):
     save_xml(root, file)
 
 
+def get_figure_string(file):
+    with open(file, 'r') as f:
+        root = minidom.parse(f)
+        figure = get_element(root, "g", "figure_1")
+        return get_xml(figure)
+
+
+def get_svg_strings(dir):
+    svg_files = sorted(dir.iterdir())
+    out = {axis: {} for axis in AXES}
+    for file in tqdm(svg_files):
+        ax, idx = file.stem.split('_')
+        assert ax in AXES
+        out[ax][int(idx)] = get_figure_string(file)
+    return out
+
+
 def run_parallel(dir, func):
     svg_files = sorted(dir.iterdir())
     Parallel(n_jobs=-2)(delayed(func)(file) for file in svg_files)
@@ -160,7 +190,10 @@ if __name__ == '__main__':
     path = DATA_DIR / "svg"
 
     # Test on 1 file.
-    # clean_svg(Path("rdp/coronal_286.svg"))
+    # print(get_figure_string(path / "coronal_286.svg"))
+
+    d = get_svg_strings(path)
+    save_json(d, DATA_DIR / "slices.json")
 
     # Process all files.
     # run_parallel(path, process)
