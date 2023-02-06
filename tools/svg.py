@@ -26,12 +26,14 @@ Steps to cleanup the SVGs:
 
 1. Start from the original mesh files
 2. Run a MATLAB script written by Nick Steinmetz to get slice SVGs.
-3. Apply Ramer-Douglas-Peucker Algorithm algorithm https://rdp.readthedocs.io/en/latest/ on all SVGs
-4. Apply inkscape simplification with parallel processing below (slow)
+3. Apply Ramer-Douglas-Peucker Algorithm algorithm https://rdp.readthedocs.io/en/latest/ on all
+   SVGs.
+4. Apply inkscape simplification with parallel processing below (slow), with simplification
+   parameter .0007 (in inkscape settings)
 5. Apply svgo independently on each file (and not in batch as svgo silently deletes all files!)
 6. Apply a simple regex in Python to remove all useless path ID (but keep the <g> region IDs)
 7. Some SVG Python processing to cleanup the SVGs further.
-
+8. Create the slices.json file that will be used to fill the IndexedDB database on the client.
 """
 
 
@@ -162,17 +164,28 @@ def get_figure_string(file):
     with open(file, 'r') as f:
         root = minidom.parse(f)
         figure = get_element(root, "g", "figure_1")
-        return get_xml(figure)
+        out = get_xml(figure)
+        out = out.replace('<g id="figure_1">', '')
+        out = out.replace('<g id="figure_1"/>', '')
+        out = out.replace('</g>', '')
+        return out
 
 
-def get_svg_strings(dir):
+def make_slices_json(dir):
+    # step 8
     svg_files = sorted(dir.iterdir())
-    out = {axis: {} for axis in AXES}
+    out = {axis: [] for axis in AXES}
     for file in tqdm(svg_files):
         ax, idx = file.stem.split('_')
+        idx = int(idx)
+        # NOTE: only keep even indexes as we don't need full resolution on the client
+        if idx % 2 == 1:
+            continue
         assert ax in AXES
-        out[ax][int(idx)] = get_figure_string(file)
-    return out
+        svg = get_figure_string(file)
+        if svg:
+            out[ax].append({"idx": int(idx), "svg": svg})
+    save_json(out, DATA_DIR / "slices.json")
 
 
 def run_parallel(dir, func):
@@ -189,11 +202,21 @@ def run_serial(dir, func):
 if __name__ == '__main__':
     path = DATA_DIR / "svg"
 
+    # # Step 4.
+    # run_parallel(path, simplify)
+
+    # # Step 5.
+    # run_parallel(path, svgo)
+
+    # # Step 6.
+    # run_parallel(path, remove_path_id)
+
+    # # Step 7.
+    # run_parallel(path, clean_svg)
+
+    # Step 8.
+    make_slices_json(path)
+
+    #
     # Test on 1 file.
     # print(get_figure_string(path / "coronal_286.svg"))
-
-    d = get_svg_strings(path)
-    save_json(d, DATA_DIR / "slices.json")
-
-    # Process all files.
-    # run_parallel(path, process)

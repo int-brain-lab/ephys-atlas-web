@@ -22,6 +22,7 @@ async function downloadSlices() {
 
 
 function deleteDatabase() {
+    console.log("deleting the database");
     Dexie.delete(DB_NAME);
 }
 
@@ -37,12 +38,12 @@ async function createDatabase() {
     // Now add some values.
     slices = await downloadSlices();
 
-    let items = [];
-    for (const [key, value] of Object.entries(slices["coronal"])) {
-        items.push({ idx: parseInt(key, 10), svg: value });
-    }
-    console.log(items);
-    db.coronal.bulkPut(items).then(ev => {
+    // let items = [];
+    // for (const [key, value] of Object.entries(slices["coronal"])) {
+    //     items.push({ idx: parseInt(key, 10), svg: value });
+    // }
+    // console.log(items);
+    db.coronal.bulkPut(slices["coronal"]).then(ev => {
         console.log("successfully filled the database with the SVG slices");
     }).catch(err => {
         console.error("error:", err);
@@ -73,6 +74,7 @@ function openDatabase(idx) {
 
 window.onload = async (ev) => {
     console.log("page loaded");
+    // deleteDatabase();
     // createDatabase();
     // openDatabase(idx);
 
