@@ -44,9 +44,13 @@
 /*  Global                                                                                       */
 /*************************************************************************************************/
 
+:root {
+    --main-accent-color: #0898d4;
+}
+
 * {
     box-sizing: border-box;
-    accent-color: #0898d4;
+    accent-color: var(--main-accent-color);
 }
 
 
@@ -215,6 +219,7 @@ h2 {
     border-style: solid;
     height: 100%;
     padding: 12px;
+    margin: 0 12px;
 }
 
 #col-left {
@@ -241,6 +246,19 @@ svg {
     display: block;
     border: 5px solid black;
 }
+
+#svg1 path {
+    stroke: #00000077;
+    stroke-width: 0.5px;
+}
+
+#svg1 path:hover {
+    stroke-width: 1px;
+    stroke: #000000ff;
+}
+
+
+
 
 #slice-range {
     width: 100%;
