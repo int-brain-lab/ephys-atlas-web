@@ -6,6 +6,45 @@
 const DB_NAME = "IBLEphysAtlasDatabase";
 
 
+
+/*************************************************************************************************/
+/* Utils                                                                                         */
+/*************************************************************************************************/
+
+function throttle(func, wait, options) {
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+    if (!options) options = {};
+    var later = function () {
+        previous = options.leading === false ? 0 : Date.now();
+        timeout = null;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+    };
+    return function () {
+        var now = Date.now();
+        if (!previous && options.leading === false) previous = now;
+        var remaining = wait - (now - previous);
+        context = this;
+        args = arguments;
+        if (remaining <= 0 || remaining > wait) {
+            if (timeout) {
+                clearTimeout(timeout);
+                timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if (!timeout) context = args = null;
+        } else if (!timeout && options.trailing !== false) {
+            timeout = setTimeout(later, remaining);
+        }
+        return result;
+    };
+};
+
+
+
 /*************************************************************************************************/
 /* SVG slices                                                                                    */
 /*************************************************************************************************/
@@ -16,10 +55,16 @@ async function downloadSlices() {
     var url = `/data/slices.json`;
     var r = await fetch(url);
     var slices = await r.json();
+
+    console.log("download finished");
     return slices;
 }
 
 
+
+/*************************************************************************************************/
+/* SVG local database                                                                            */
+/*************************************************************************************************/
 
 function deleteDatabase() {
     console.log("deleting the database");
@@ -28,42 +73,74 @@ function deleteDatabase() {
 
 
 
-async function createDatabase() {
-    var db = new Dexie(DB_NAME);
-
-    db.version(1).stores({
-        coronal: "idx,svg",
-    });
-
-    // Now add some values.
-    slices = await downloadSlices();
-
-    // let items = [];
-    // for (const [key, value] of Object.entries(slices["coronal"])) {
-    //     items.push({ idx: parseInt(key, 10), svg: value });
-    // }
-    // console.log(items);
-    db.coronal.bulkPut(slices["coronal"]).then(ev => {
-        console.log("successfully filled the database with the SVG slices");
+function insertSlices(store, slices, axis) {
+    // Put the SVG data in the database.
+    store.bulkPut(slices[axis]).then(ev => {
+        console.log(`successfully filled the '${axis}' store with the SVG slices`);
     }).catch(err => {
         console.error("error:", err);
     });
-
 }
 
 
 
-function openDatabase(idx) {
-    var db = new Dexie(DB_NAME);
-    db.open().then((ev) => {
-        let table = db.table("coronal");
-        table.get(idx).then((item) => {
-            let svg = item["svg"];
-            document.getElementById("figure_1").innerHTML = svg;
-        });
-    }).catch((err) => {
-        console.error('failed to open db:', (err.stack || err));
+function getSlice(table, idx) {
+    table.get(idx).then((item) => {
+        let svg = item["svg"];
+        document.getElementById("figure_1").innerHTML = svg;
     });
+}
+
+getSlice = throttle(getSlice, 10); // wait at least 10 ms between two successive calls
+
+
+
+/*************************************************************************************************/
+/* SVG class                                                                                     */
+/*************************************************************************************************/
+
+class SVGDB {
+    constructor() {
+        this.db = new Dexie(DB_NAME);
+
+        this.db.version(1).stores({
+            coronal: "idx,svg",
+            horizontal: "idx,svg",
+            sagittal: "idx,svg",
+        });
+
+        let that = this;
+        this.db.open().then((ev) => {
+            console.log("opening the database");
+
+            that.coronal = this.db.table("coronal");
+            that.horizontal = this.db.table("horizontal");
+            that.sagittal = this.db.table("sagittal");
+
+            that.coronal.count().then((res) => {
+                if (res == 0) {
+                    console.log("database seems to be empty, downloading the SVG slices...");
+
+                    // Download the SVG slices.
+                    downloadSlices().then((slices) => {
+
+                        // Put the SVG data in the database.
+                        insertSlices(that.coronal, slices, "coronal");
+                        insertSlices(that.horizontal, slices, "horizontal");
+                        insertSlices(that.sagittal, slices, "sagittal");
+
+                        console.log("successfully loaded stores");
+                    });
+                }
+            });
+        }).catch((err) => {
+            console.error('failed to open db:', (err.stack || err));
+        });
+    }
+
+    getSlice(axis, idx) {
+        return getSlice(this[axis], idx);
+    }
 }
 
 
@@ -75,12 +152,11 @@ function openDatabase(idx) {
 window.onload = async (ev) => {
     console.log("page loaded");
     // deleteDatabase();
-    // createDatabase();
-    // openDatabase(idx);
+
+    let svgdb = new SVGDB();
 
     document.getElementById("slice-range").oninput = (ev) => {
         let idx = Math.floor(ev.target.value);
-        console.log(idx);
-        openDatabase(idx);
+        svgdb.getSlice("coronal", idx);
     };
 };

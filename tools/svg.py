@@ -168,6 +168,7 @@ def get_figure_string(file):
         out = out.replace('<g id="figure_1">', '')
         out = out.replace('<g id="figure_1"/>', '')
         out = out.replace('</g>', '')
+        out = out.replace('id="region_', 'class="region_')
         return out
 
 
@@ -214,8 +215,8 @@ if __name__ == '__main__':
     # # Step 7.
     # run_parallel(path, clean_svg)
 
-    # Step 8.
-    make_slices_json(path)
+    # # Step 8.
+    # make_slices_json(path)
 
     #
     # Test on 1 file.
