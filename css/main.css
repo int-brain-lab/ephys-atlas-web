@@ -44,6 +44,12 @@
 /*  Global                                                                                       */
 /*************************************************************************************************/
 
+* {
+    box-sizing: border-box;
+}
+
+
+
 html.wait,
 html.wait * {
     cursor: wait !important;
@@ -53,6 +59,21 @@ html.wait * {
 
 body {
     font-family: proxima-nova;
+}
+
+
+
+html,
+body {
+    height: calc(100vh - 150px);
+    margin: 0;
+    padding: 0;
+}
+
+
+
+body>.container {
+    height: 100%;
 }
 
 
@@ -76,16 +97,22 @@ body {
     text-transform: uppercase;
 }
 
+
+
 #header a,
 #footer a {
     text-decoration: none;
     color: #333;
 }
 
+
+
 #header a:hover,
 #footer a:hover {
     color: #999;
 }
+
+
 
 #header img {
     max-height: 80px;
@@ -94,15 +121,21 @@ body {
     vertical-align: middle;
 }
 
+
+
 #header ul {
     display: inline-block;
     margin: 0 40px;
 }
 
+
+
 #header ul li {
     display: inline-block;
     margin: 0 20px;
 }
+
+
 
 #header .menu-explore {
     font-weight: 500;
@@ -114,47 +147,6 @@ body {
 /*************************************************************************************************/
 /*  Body                                                                                         */
 /*************************************************************************************************/
-
-figure {
-    margin-left: 0;
-    margin-right: 0;
-}
-
-
-caption {
-    text-align: center;
-}
-
-
-select.multiple {
-    height: 100px !important;
-}
-
-
-
-form img {
-    /* changed this from 100% but now scaling with page doesn't work */
-    width: 100%;
-    min-height: 100px;
-    border: 0;
-}
-
-
-
-body img.loading {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-
-    width: 30px;
-    min-width: 30px;
-    min-height: 30px;
-    visibility: hidden;
-    border: 0;
-    z-index: 100;
-}
-
-
 
 h1,
 h2,
@@ -183,7 +175,6 @@ h2 {
 
 
 
-
 /*************************************************************************************************/
 /*  Footer                                                                                       */
 /*************************************************************************************************/
@@ -205,4 +196,47 @@ h2 {
     background-size: contain;
     background-repeat: no-repeat;
     aspect-ratio: 1;
+}
+
+
+
+/*************************************************************************************************/
+/*  Columns                                                                                      */
+/*************************************************************************************************/
+
+#main-container {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.main-col {
+    border-width: 5px;
+    border-style: solid;
+    height: 100%;
+    padding: 12px;
+}
+
+#col-left {
+    border-color: red;
+    overflow-y: scroll;
+}
+
+#col-center {
+    border-color: green;
+}
+
+#col-right {
+    border-color: blue;
+}
+
+
+
+/*************************************************************************************************/
+/*  SVG                                                                                          */
+/*************************************************************************************************/
+
+svg {
+    width: 100%;
+    display: block;
+    border: 5px solid black;
 }
