@@ -49,6 +49,8 @@ Steps to cleanup the SVGs:
 # -------------------------------------------------------------------------------------------------
 
 ROOT_DIR = Path(__file__).parent.parent
+COLORMAP = 'viridis'
+COLORMAP_VALUE_COUNT = 128  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
 NS = "http://www.w3.org/2000/svg"
@@ -259,7 +261,7 @@ def process_features(dir):
     save_json(features_dict, DATA_DIR / 'features.json')
 
     # Generate CSS stylesheets for each feature.
-    viridis = cm.get_cmap('viridis', 48)
+    cmap = cm.get_cmap(COLORMAP, COLORMAP_VALUE_COUNT)
 
     for fet in features:
         # Get feature values across all brain regions.
@@ -270,7 +272,7 @@ def process_features(dir):
         values_n = norm(values)
 
         # Compute the color of each brain region, using a colormap.
-        colors = viridis(values_n)
+        colors = cmap(values_n)
 
         # Generate the CSS class rules.
         region_colors = [
@@ -314,7 +316,7 @@ def make_regions(dir):
     acronym = br['acronym'][keep]
     hex = br['hex'][keep]
 
-    # Generate regions.html, to copy into index.html.
+    # Generate regions.html, to copy manually into index.html.
     print("Generating regions.html...")
     html = ''.join(
         f'''
@@ -367,5 +369,5 @@ if __name__ == '__main__':
     # print(get_figure_string(path / "coronal_286.svg"))
 
     # Make the JSON feature file and the CSS files.
-    # process_features(DATA_DIR / 'pqt')
-    make_regions(DATA_DIR / 'pqt')
+    process_features(DATA_DIR / 'pqt')
+    # make_regions(DATA_DIR / 'pqt')

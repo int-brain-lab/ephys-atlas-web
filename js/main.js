@@ -234,26 +234,56 @@ function setupHighlightBars(svg, barPlot) {
 
 
 /*************************************************************************************************/
+/* Slider                                                                                        */
+/*************************************************************************************************/
+
+function getSlider() {
+    return document.getElementById("slice-range");
+}
+
+function setSlice(svgdb, slider) {
+    let idx = Math.floor(slider.value);
+    svgdb.getSlice("coronal", idx);
+}
+
+function setupSlider(svgdb, svg) {
+    let slider = getSlider();
+
+    slider.oninput = (ev) => {
+        setSlice(svgdb, ev.target);
+    };
+
+    svg.addEventListener('wheel', function (ev) {
+        let x = ev.deltaY;
+        if (x == 0) return;
+        else if (x < 0)
+            slider.valueAsNumber += 10;
+        else if (x > 0)
+            slider.valueAsNumber -= 10;
+
+        setSlice(svgdb, slider);
+    });
+}
+
+
+
+/*************************************************************************************************/
 /* Entry-point                                                                                   */
 /*************************************************************************************************/
 
-window.onload = async (ev) => {
+window.onload = async (evl) => {
     console.log("page loaded");
     // deleteDatabase();
 
     let svgdb = new SVGDB();
 
-    // Slicing.
-    document.getElementById("slice-range").oninput = (ev) => {
-        let idx = Math.floor(ev.target.value);
-        svgdb.getSlice("coronal", idx);
-    };
-
-    // Setup highlighting.
     let svg = getSVG();
     let barPlot = getBarPlot();
 
+    // Setup slicing.
+    setupSlider(svgdb, svg)
+
+    // Setup highlighting.
     setupHighlightRegions(svg, barPlot);
     setupHighlightBars(svg, barPlot);
-
 };
