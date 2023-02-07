@@ -280,7 +280,7 @@ def process_features(dir):
 
         region_bars = [
             (br_mapping[atlas_id],
-             f"#bar-plot .bar.region_{br_mapping[atlas_id]} {{ width: {value * 100:.2f}%; }} /* {acronym}: {values.loc[atlas_id]} */")
+             f"#bar-plot li.region_{br_mapping[atlas_id]} .bar {{ width: {value * 100:.2f}%; }} /* {acronym}: {values.loc[atlas_id]} */")
             for (atlas_id, value, acronym) in zip(regions, values_n, acronyms)]
 
         css = '''/* Region colors */\n\n'''
@@ -296,31 +296,32 @@ def process_features(dir):
 
 def make_regions(dir):
 
-    from ibllib.atlas.regions import BrainRegions
-    br = BrainRegions()
-    order = br.order
+    # from ibllib.atlas.regions import BrainRegions
+    # br = BrainRegions()
+    # order = br.order
+    # print(order)
 
     # Load the brain regions dataframe.
     br = pd.read_parquet(dir / 'brain_regions_for_viz.pqt')
 
     # Only keep the brain regions appear in the features file.
     df = pd.read_parquet(dir / 'features_for_viz.pqt')
-    keep = np.in1d(br['atlas_id'][order], df['atlas_id'].unique())
+    keep = np.in1d(br['atlas_id'], df['atlas_id'].unique())
     print(f"Keep {keep.sum()}/{len(keep)} brain regions.")
-    order = order[keep]
+    # order = order[keep]
 
-    idx = br['idx'][order]
-    acronym = br['acronym'][order]
-    hex = br['hex'][order]
+    idx = br['idx'][keep]
+    acronym = br['acronym'][keep]
+    hex = br['hex'][keep]
 
     # Generate regions.html, to copy into index.html.
     print("Generating regions.html...")
     html = ''.join(
         f'''
-    <li>
-        <div class="acronym region_{idx_}">{acronym_}</div>
+    <li class="region_{idx_}">
+        <div class="acronym">{acronym_}</div>
         <div class="bar_wrapper">
-            <div class="bar region_{idx_}"></div>
+            <div class="bar"></div>
         </div>
     </li>''' for (idx_, acronym_) in zip(idx, acronym))
     write_text(html, DATA_DIR / 'regions.html')
@@ -334,8 +335,8 @@ def make_regions(dir):
     css += ''.join(
         dedent(f'''
         /* {acronym_} */
-        #bar-plot .bar.region_{idx_} {{ background-color: var(--region-{idx_}); }}
-        #bar-plot .acronym.region_{idx_} {{ color: var(--region-{idx_}); }}
+        #bar-plot li.region_{idx_} .bar {{ background-color: var(--region-{idx_}); }}
+        #bar-plot li.region_{idx_} .acronym {{ color: var(--region-{idx_}); }}
         ''') for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
     write_text(css, DATA_DIR / 'region_colors.css')
 

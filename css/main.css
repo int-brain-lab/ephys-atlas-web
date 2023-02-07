@@ -46,6 +46,7 @@
 
 :root {
     --main-accent-color: #0898d4;
+    --bar-highlight-color: #f2f6f7;
 }
 
 * {
@@ -261,31 +262,27 @@ h2 {
 }
 
 #bar-plot li {
-    margin: 0 0 8px 0;
-    padding: 2px 4px;
+    margin: 0 0 4px 0;
+    padding: 2px 4px 6px 4px;
     cursor: pointer;
 }
 
-#bar-plot li:hover {
-    background-color: #f2f6f7;
+#bar-plot li * {
+    pointer-events: none;
 }
 
-#bar-plot .acronym {
-    /* display: inline; */
+#bar-plot li.hover {
+    background-color: var(--bar-highlight-color);
 }
 
-#bar-plot .bar_wrapper {
-    /* display: inline; */
-}
+#bar-plot .acronym {}
+
+#bar-plot .bar_wrapper {}
 
 #bar-plot .bar {
     height: 10px;
     background-color: red;
 }
-
-/* .acronym
-.bar_wrapper
-.bar */
 
 
 
@@ -305,10 +302,13 @@ svg {
 }
 
 #svg1 path:hover {
+    cursor: pointer;
+}
+
+#svg1 path.hover {
     /* stroke-width: 1px; */
     stroke: #000000ff;
     filter: brightness(125%);
-    cursor: pointer;
 }
 
 

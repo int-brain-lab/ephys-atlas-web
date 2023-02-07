@@ -146,6 +146,94 @@ class SVGDB {
 
 
 /*************************************************************************************************/
+/* Highlighting                                                                                  */
+/*************************************************************************************************/
+
+function getSVG() {
+    return document.getElementById("figure_1");
+}
+
+function getPaths(svg) {
+    return svg.getElementsByTagName('path');
+}
+
+function getPath(svg, region) {
+    return svg.getElementsByClassName(region)[0];
+}
+
+function highlight(obj, highlighted) {
+    if (obj) {
+        if (highlighted)
+            obj.classList.add("hover");
+        else
+            obj.classList.remove("hover");
+    }
+}
+
+
+
+function getBarPlot() {
+    return document.getElementById("bar-plot");
+}
+
+function getBars(barPlot) {
+    return barPlot.getElementsByTagName('li');
+}
+
+function getBar(barplot, region) {
+    return barplot.getElementsByClassName(region)[0];
+}
+
+
+
+function setupHighlightRegions(svg, barPlot) {
+    // SVG ==> bars
+    svg.addEventListener('mouseover', (e) => {
+        if (e.target.tagName == 'path') {
+            highlight(e.target, true);
+
+            let bar = getBar(barPlot, e.target.classList[0]);
+            highlight(bar, true);
+        }
+    });
+    svg.addEventListener('mouseout', (e) => {
+        if (e.target.tagName == 'path') {
+            highlight(e.target, false);
+
+            let bar = getBar(barPlot, e.target.classList[0]);
+            highlight(bar, false);
+        }
+    });
+
+}
+
+function setupHighlightBars(svg, barPlot) {
+    // Bars ==> SVG
+    let bars = getBars(barPlot);
+    for (let bar of bars) {
+        bar.addEventListener('mouseover', (e) => {
+            if (e.target.tagName == 'LI') {
+                highlight(bar, true);
+
+                let path = getPath(svg, e.target.classList[0]);
+                highlight(path, true);
+            }
+        });
+
+        bar.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'LI') {
+                highlight(bar, false);
+
+                let path = getPath(svg, e.target.classList[0]);
+                highlight(path, false);
+            }
+        });
+    }
+}
+
+
+
+/*************************************************************************************************/
 /* Entry-point                                                                                   */
 /*************************************************************************************************/
 
@@ -155,8 +243,17 @@ window.onload = async (ev) => {
 
     let svgdb = new SVGDB();
 
+    // Slicing.
     document.getElementById("slice-range").oninput = (ev) => {
         let idx = Math.floor(ev.target.value);
         svgdb.getSlice("coronal", idx);
     };
+
+    // Setup highlighting.
+    let svg = getSVG();
+    let barPlot = getBarPlot();
+
+    setupHighlightRegions(svg, barPlot);
+    setupHighlightBars(svg, barPlot);
+
 };
