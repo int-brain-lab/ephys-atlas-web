@@ -10,11 +10,17 @@ import json
 import lxml.etree as le
 import os
 import re
+from operator import itemgetter
 from pathlib import Path
 from xml.dom import minidom
 
 from joblib import Parallel, delayed
 from tqdm import tqdm
+import numpy as np
+import pandas as pd
+from matplotlib import cm
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap, to_hex
 
 
 # -------------------------------------------------------------------------------------------------
@@ -59,6 +65,20 @@ def get_day(file):
     stat = os.stat(file)
     date = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
     return date.day
+
+
+def float_json(x):
+    return float(f'{x:.6g}')
+
+
+def save_json(d, filename):
+    with open(filename, "w") as f:
+        json.dump(d, f)
+
+
+def write_text(s, filename):
+    with open(filename, "w") as f:
+        f.write(s)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -108,13 +128,8 @@ def save_xml(root, filename):
         f.write(xml)
 
 
-def save_json(d, filename):
-    with open(filename, "w") as f:
-        json.dump(d, f)
-
-
 # -------------------------------------------------------------------------------------------------
-# Processing functions
+# SVG processing functions
 # -------------------------------------------------------------------------------------------------
 
 def simplify(file):
@@ -200,6 +215,78 @@ def run_serial(dir, func):
         func(file)
 
 
+def process_features(dir):
+    # Take as input features_for_viz.pqt and brain_regions_for_viz.pqt, and generates files for the website.
+
+    df = pd.read_parquet(dir / 'features_for_viz.pqt')
+    br = pd.read_parquet(dir / 'brain_regions_for_viz.pqt')
+
+    # Mapping atlas_id => idx
+    br_mapping = {int(atlas_id): int(idx)
+                  for atlas_id, idx in zip(br['atlas_id'], br['idx'])}
+
+    # Compute feature statistics per brain region.
+    fet_m = df.groupby('atlas_id').mean(numeric_only=True)  # index is atlas_id
+    features = fet_m.columns  # index is atlas_id
+    regions = fet_m.index  # atlas_id
+    acronyms = df.groupby('atlas_id').acronym.first()  # index is atlas_id
+
+    # All dataframe atlas_ids must be in the brain region atlas.
+    assert(np.all(np.in1d(regions, br['atlas_id'])))
+
+    fet_s = df.groupby('atlas_id').std(numeric_only=True)
+    fet_min = df.groupby('atlas_id').min()
+    fet_max = df.groupby('atlas_id').max()
+
+    # Generate the Python dictionary with all feature/region values.
+    features_dict = {
+        fet: {br_mapping[atlas_id]: {  # the key is the brain region idx
+            'mean': float_json(fet_m.loc[atlas_id][fet]),
+            'std': float_json(fet_s.loc[atlas_id][fet]),
+            'min': float_json(fet_min.loc[atlas_id][fet]),
+            'max': float_json(fet_max.loc[atlas_id][fet]),
+        } for atlas_id in regions} for fet in features}
+
+    # Collect statistics across regions, for each feature. Used for client bar plot.
+    for fet in features:
+        features_dict[fet]['mean'] = float_json(fet_m[fet].mean())
+        features_dict[fet]['std'] = float_json(fet_m[fet].std())
+        features_dict[fet]['min'] = float_json(fet_m[fet].min())
+        features_dict[fet]['max'] = float_json(fet_m[fet].max())
+
+    # Save the features.json file.
+    save_json(features_dict, DATA_DIR / 'features.json')
+
+    # Generate CSS stylesheets for each feature.
+    viridis = cm.get_cmap('viridis', 48)
+
+    for fet in features:
+        # Get feature values across all brain regions.
+        values = fet_m[fet]
+
+        # Normalization.
+        norm = plt.Normalize(vmin=values.min(), vmax=values.max())
+        values_n = norm(values)
+
+        # Compute the color of each brain region, using a colormap.
+        colors = viridis(values_n)
+
+        # Generate the CSS class rule.
+        css = [
+            (br_mapping[atlas_id],
+             f".region_{br_mapping[atlas_id]} {{ fill: {to_hex(color)}; }} /* {acronym}: {values.loc[atlas_id]} */")
+            for (atlas_id, color, acronym) in zip(regions, colors, acronyms)]
+        css = '\n'.join(s for _, s in sorted(css, key=itemgetter(0)))
+
+        # Save the CSS file.
+        write_text(css, DATA_DIR / f'colors_{fet}.css')
+
+
+# -------------------------------------------------------------------------------------------------
+# Features
+# -------------------------------------------------------------------------------------------------
+
+
 if __name__ == '__main__':
     path = DATA_DIR / "svg"
 
@@ -221,3 +308,5 @@ if __name__ == '__main__':
     #
     # Test on 1 file.
     # print(get_figure_string(path / "coronal_286.svg"))
+
+    process_features(DATA_DIR / 'pqt')
