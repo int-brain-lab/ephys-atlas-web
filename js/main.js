@@ -86,8 +86,10 @@ function insertSlices(store, slices, axis) {
 
 function getSlice(table, idx) {
     table.get(idx).then((item) => {
-        let svg = item["svg"];
-        document.getElementById("figure_1").innerHTML = svg;
+        if (item) {
+            let svg = item["svg"];
+            document.getElementById("figure_1").innerHTML = svg;
+        }
     });
 }
 
@@ -180,8 +182,14 @@ function getBars(barPlot) {
     return barPlot.getElementsByTagName('li');
 }
 
-function getBar(barplot, region) {
-    return barplot.getElementsByClassName(region)[0];
+function getBar(barPlot, region) {
+    return barPlot.getElementsByClassName(region)[0];
+}
+
+function clearBars(bars) {
+    for (let bar of bars) {
+        bar.classList.remove("hover");
+    }
 }
 
 
@@ -211,7 +219,7 @@ function setupHighlightBars(svg, barPlot) {
     // Bars ==> SVG
     let bars = getBars(barPlot);
     for (let bar of bars) {
-        bar.addEventListener('mouseover', (e) => {
+        bar.addEventListener('mouseenter', (e) => {
             if (e.target.tagName == 'LI') {
                 highlight(bar, true);
 
@@ -220,7 +228,7 @@ function setupHighlightBars(svg, barPlot) {
             }
         });
 
-        bar.addEventListener('mouseout', (e) => {
+        bar.addEventListener('mouseleave', (e) => {
             if (e.target.tagName == 'LI') {
                 highlight(bar, false);
 
@@ -253,16 +261,28 @@ function setupSlider(svgdb, svg) {
         setSlice(svgdb, ev.target);
     };
 
+    let bars = getBars(getBarPlot());
+
     svg.addEventListener('wheel', function (ev) {
+        ev.preventDefault();
         let x = ev.deltaY;
+
+        // HACK: handle scrolling with touchpad on mac
+        let k = navigator.userAgentData.platform == "macOS" ? 4 : 10;
+
         if (x == 0) return;
         else if (x < 0)
-            slider.valueAsNumber += 10;
+            slider.valueAsNumber += k;
         else if (x > 0)
-            slider.valueAsNumber -= 10;
+            slider.valueAsNumber -= k;
+
+        clearBars(bars);
+
+        // Clipping.
+        slider.valueAsNumber = Math.min(1319, Math.max(0, slider.valueAsNumber));
 
         setSlice(svgdb, slider);
-    });
+    }, { passive: false });
 }
 
 
@@ -281,7 +301,8 @@ window.onload = async (evl) => {
     let barPlot = getBarPlot();
 
     // Setup slicing.
-    setupSlider(svgdb, svg)
+    // NOTE: parent's parent is SVG's container div.
+    setupSlider(svgdb, svg.parentNode.parentNode);
 
     // Setup highlighting.
     setupHighlightRegions(svg, barPlot);
