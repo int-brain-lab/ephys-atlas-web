@@ -11,6 +11,7 @@ import lxml.etree as le
 import os
 import re
 from operator import itemgetter
+from textwrap import dedent
 from pathlib import Path
 from xml.dom import minidom
 
@@ -271,22 +272,77 @@ def process_features(dir):
         # Compute the color of each brain region, using a colormap.
         colors = viridis(values_n)
 
-        # Generate the CSS class rule.
-        css = [
+        # Generate the CSS class rules.
+        region_colors = [
             (br_mapping[atlas_id],
-             f".region_{br_mapping[atlas_id]} {{ fill: {to_hex(color)}; }} /* {acronym}: {values.loc[atlas_id]} */")
+             f"svg path.region_{br_mapping[atlas_id]} {{ fill: {to_hex(color)}; }} /* {acronym}: {values.loc[atlas_id]} */")
             for (atlas_id, color, acronym) in zip(regions, colors, acronyms)]
-        css = '\n'.join(s for _, s in sorted(css, key=itemgetter(0)))
+
+        region_bars = [
+            (br_mapping[atlas_id],
+             f"#bar-plot .bar.region_{br_mapping[atlas_id]} {{ width: {value * 100:.2f}%; }} /* {acronym}: {values.loc[atlas_id]} */")
+            for (atlas_id, value, acronym) in zip(regions, values_n, acronyms)]
+
+        css = '''/* Region colors */\n\n'''
+        css += '\n'.join(s for _, s in sorted(region_colors,
+                         key=itemgetter(0)))
+
+        css += '''\n\n/* Bar plot */\n\n'''
+        css += '\n'.join(s for _, s in sorted(region_bars, key=itemgetter(0)))
 
         # Save the CSS file.
-        write_text(css, DATA_DIR / f'colors_{fet}.css')
+        write_text(css, DATA_DIR / f'regions_{fet}.css')
+
+
+def make_regions(dir):
+
+    from ibllib.atlas.regions import BrainRegions
+    br = BrainRegions()
+    order = br.order
+
+    # Load the brain regions dataframe.
+    br = pd.read_parquet(dir / 'brain_regions_for_viz.pqt')
+
+    # Only keep the brain regions appear in the features file.
+    df = pd.read_parquet(dir / 'features_for_viz.pqt')
+    keep = np.in1d(br['atlas_id'][order], df['atlas_id'].unique())
+    print(f"Keep {keep.sum()}/{len(keep)} brain regions.")
+    order = order[keep]
+
+    idx = br['idx'][order]
+    acronym = br['acronym'][order]
+    hex = br['hex'][order]
+
+    # Generate regions.html, to copy into index.html.
+    print("Generating regions.html...")
+    html = ''.join(
+        f'''
+    <li>
+        <div class="acronym region_{idx_}">{acronym_}</div>
+        <div class="bar_wrapper">
+            <div class="bar region_{idx_}"></div>
+        </div>
+    </li>''' for (idx_, acronym_) in zip(idx, acronym))
+    write_text(html, DATA_DIR / 'regions.html')
+
+    # Generate regions_colors.css, with the default brain region colors.
+    print("Generating region_colors.css")
+    css = '\n'.join(
+        f'''    --region-{idx_}: {hex_}; /* {acronym_} */ ''' for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
+
+    css = f'/* Default region colors */\n\n:root {{\n\n{css}\n\n}}\n'
+    css += ''.join(
+        dedent(f'''
+        /* {acronym_} */
+        #bar-plot .bar.region_{idx_} {{ background-color: var(--region-{idx_}); }}
+        #bar-plot .acronym.region_{idx_} {{ color: var(--region-{idx_}); }}
+        ''') for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
+    write_text(css, DATA_DIR / 'region_colors.css')
 
 
 # -------------------------------------------------------------------------------------------------
 # Features
 # -------------------------------------------------------------------------------------------------
-
-
 if __name__ == '__main__':
     path = DATA_DIR / "svg"
 
@@ -309,4 +365,6 @@ if __name__ == '__main__':
     # Test on 1 file.
     # print(get_figure_string(path / "coronal_286.svg"))
 
-    process_features(DATA_DIR / 'pqt')
+    # Make the JSON feature file and the CSS files.
+    # process_features(DATA_DIR / 'pqt')
+    make_regions(DATA_DIR / 'pqt')

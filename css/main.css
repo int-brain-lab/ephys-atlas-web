@@ -70,7 +70,7 @@ body {
 
 html,
 body {
-    height: calc(100vh - 150px);
+    /* height: calc(100vh - 150px); */
     margin: 0;
     padding: 0;
 }
@@ -78,7 +78,47 @@ body {
 
 
 body>.container {
+    /* height: 100vh; */
+}
+
+
+
+/*************************************************************************************************/
+/*  Columns                                                                                      */
+/*************************************************************************************************/
+
+#main-container {
+    /* margin-left: auto;
+    margin-right: auto; */
+}
+
+#main-row {
+    /* height: 100vh; */
+    height: calc(100vh - 150px);
+}
+
+.main-col {
+    border-width: 0;
+    border-style: solid;
     height: 100%;
+    padding: 8px;
+}
+
+#col-left {
+    border-color: red;
+    overflow-y: scroll;
+}
+
+#col-center {
+    border-color: green;
+    margin-left: 2%;
+    width: 41.33%;
+}
+
+#col-right {
+    border-color: blue;
+    margin-left: 2%;
+    width: 41.33%;
 }
 
 
@@ -150,7 +190,7 @@ body>.container {
 
 
 /*************************************************************************************************/
-/*  Body                                                                                         */
+/*  Headings                                                                                     */
 /*************************************************************************************************/
 
 h1,
@@ -205,35 +245,47 @@ h2 {
 
 
 
+
 /*************************************************************************************************/
-/*  Columns                                                                                      */
+/*  Bar plot                                                                                     */
 /*************************************************************************************************/
 
-#main-container {
-    margin-left: auto;
-    margin-right: auto;
+#bar-plot {
+    list-style: none;
 }
 
-.main-col {
-    border-width: 5px;
-    border-style: solid;
-    height: 100%;
-    padding: 12px;
-    margin: 0 12px;
+
+#bar-plot * {
+    margin: 0;
+    padding: 0;
 }
 
-#col-left {
-    border-color: red;
-    overflow-y: scroll;
+#bar-plot li {
+    margin: 0 0 8px 0;
+    padding: 2px 4px;
+    cursor: pointer;
 }
 
-#col-center {
-    border-color: green;
+#bar-plot li:hover {
+    background-color: #f2f6f7;
 }
 
-#col-right {
-    border-color: blue;
+#bar-plot .acronym {
+    /* display: inline; */
 }
+
+#bar-plot .bar_wrapper {
+    /* display: inline; */
+}
+
+#bar-plot .bar {
+    height: 10px;
+    background-color: red;
+}
+
+/* .acronym
+.bar_wrapper
+.bar */
 
 
 
@@ -244,7 +296,7 @@ h2 {
 svg {
     width: 100%;
     display: block;
-    border: 5px solid black;
+    border: 0 solid black;
 }
 
 #svg1 path {
@@ -253,13 +305,17 @@ svg {
 }
 
 #svg1 path:hover {
-    stroke-width: 1px;
+    /* stroke-width: 1px; */
     stroke: #000000ff;
+    filter: brightness(125%);
     cursor: pointer;
 }
 
 
 
+/*************************************************************************************************/
+/*  SVG slider                                                                                   */
+/*************************************************************************************************/
 
 #slice-range {
     width: 100%;
