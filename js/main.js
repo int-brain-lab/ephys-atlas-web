@@ -45,6 +45,31 @@ function throttle(func, wait, options) {
 
 
 
+function getOS() {
+    var userAgent = window.navigator.userAgent,
+        platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
+        macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+        windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+        iosPlatforms = ['iPhone', 'iPad', 'iPod'],
+        os = null;
+
+    if (macosPlatforms.indexOf(platform) !== -1) {
+        os = 'macOS';
+    } else if (iosPlatforms.indexOf(platform) !== -1) {
+        os = 'iOS';
+    } else if (windowsPlatforms.indexOf(platform) !== -1) {
+        os = 'Windows';
+    } else if (/Android/.test(userAgent)) {
+        os = 'Android';
+    } else if (/Linux/.test(platform)) {
+        os = 'Linux';
+    }
+
+    return os;
+}
+
+
+
 /*************************************************************************************************/
 /* SVG slices                                                                                    */
 /*************************************************************************************************/
@@ -268,7 +293,7 @@ function setupSlider(svgdb, svg) {
         let x = ev.deltaY;
 
         // HACK: handle scrolling with touchpad on mac
-        let k = navigator.userAgentData.platform == "macOS" ? 4 : 10;
+        let k = getOS() == "macOS" ? 4 : 24;
 
         if (x == 0) return;
         else if (x < 0)
