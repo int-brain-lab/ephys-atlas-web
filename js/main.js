@@ -322,33 +322,53 @@ function getStyle() {
 
 
 
-function hideRegions() {
-    let style = getStyle();
-    if (style.rules.length == 0) {
-        style.insertRule("#svg1 path { opacity: .35; }");
+class RegionSelector {
+    constructor() {
+        this.selected = new Set();
+    }
+
+    toggle(id) {
+        if (!this.selected.has(id))
+            this.selected.add(id);
+        else
+            this.selected.delete(id);
+    }
+
+    count() {
+        return this.selected.size;
+    }
+
+    makeCSS() {
+        let style = getStyle();
+
+        // Clear the CSS.
+        let n = style.cssRules.length;
+        for (let i = 0; i < n; i++) {
+            style.deleteRule(0);
+        }
+
+        let opacity = this.count() > 0 ? 0.35 : 1.0;
+        style.insertRule(`#svg1 path { opacity: ${opacity}; }`);
+
+        for (let id of this.selected) {
+            style.insertRule(`#svg1 path.region_${id} { opacity: 1; }`);
+        }
     }
 }
 
 
 
-function showRegions() {
-    let style = getStyle();
-    if (style.rules.length > 0) { style.deleteRule(0); }
-}
-
-
-
 function setupSelectRegions(svg, barPlot) {
+    let rs = new RegionSelector();
+
     // Click to select a region.
     svg.addEventListener('click', (e) => {
         if (e.target.tagName == 'path') {
-            // Hide all regions.
-            hideRegions();
-
-            // But show the selected one.
             let cls = e.target.classList[0];
-            let style = getStyle();
-            style.insertRule(`#svg1 path.${cls} { opacity: 1; }`);
+            let id = cls.substr(7);
+
+            rs.toggle(id);
+            rs.makeCSS();
         }
     });
 }
