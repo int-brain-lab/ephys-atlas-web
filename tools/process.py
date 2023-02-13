@@ -8,6 +8,7 @@
 from datetime import datetime, timezone
 import json
 import lxml.etree as le
+from math import isnan
 import os
 import re
 from operator import itemgetter
@@ -71,7 +72,7 @@ def get_day(file):
 
 
 def float_json(x):
-    return float(f'{x:.6g}')
+    return float(f'{x:.6g}') if not isnan(x) else None
 
 
 def save_json(d, filename):
@@ -241,24 +242,28 @@ def process_features(dir):
     fet_min = df.groupby('atlas_id').min()
     fet_max = df.groupby('atlas_id').max()
 
-    # Generate the Python dictionary with all feature/region values.
-    features_dict = {
-        fet: {br_mapping[atlas_id]: {  # the key is the brain region idx
-            'mean': float_json(fet_m.loc[atlas_id][fet]),
-            'std': float_json(fet_s.loc[atlas_id][fet]),
-            'min': float_json(fet_min.loc[atlas_id][fet]),
-            'max': float_json(fet_max.loc[atlas_id][fet]),
-        } for atlas_id in regions} for fet in features}
+    data = {fet: {br_mapping[atlas_id]:        # the key is the brain region idx
+            {
+                'mean': float_json(fet_m.loc[atlas_id][fet]),
+                'std': float_json(fet_s.loc[atlas_id][fet]),
+                'min': float_json(fet_min.loc[atlas_id][fet]),
+                'max': float_json(fet_max.loc[atlas_id][fet]),
+    } for atlas_id in regions} for fet in features}
 
-    # Collect statistics across regions, for each feature. Used for client bar plot.
-    for fet in features:
-        features_dict[fet]['mean'] = float_json(fet_m[fet].mean())
-        features_dict[fet]['std'] = float_json(fet_m[fet].std())
-        features_dict[fet]['min'] = float_json(fet_m[fet].min())
-        features_dict[fet]['max'] = float_json(fet_m[fet].max())
+    # Generate the Python dictionary with all feature/region values.
+    features_obj = [
+        {"feature": fet,
+         "data":   data[fet],
+         "statistics": {  # Collect statistics across regions, for each feature. Used for client bar plot.
+             'mean': float_json(fet_m[fet].mean()),
+             'std': float_json(fet_m[fet].std()),
+             'min': float_json(fet_m[fet].min()),
+             'max': float_json(fet_m[fet].max()),
+         }
+         } for fet in features]
 
     # Save the features.json file.
-    save_json(features_dict, DATA_DIR / 'features.json')
+    save_json(features_obj, DATA_DIR / 'features.json')
 
     # Generate CSS stylesheets for each feature.
     cmap = cm.get_cmap(COLORMAP, COLORMAP_VALUE_COUNT)

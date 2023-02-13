@@ -4,6 +4,7 @@
 /*************************************************************************************************/
 
 const DB_NAME = "IBLEphysAtlasDatabase";
+const DB_VERSION = 1;
 
 
 
@@ -70,19 +71,32 @@ function getOS() {
 
 
 
+async function downloadJSON(url) {
+    console.log(`downloading ${url}...`);
+    var r = await fetch(url);
+    var out = await r.json();
+    console.log("download finished");
+    return out;
+}
+
+
+
 /*************************************************************************************************/
 /* SVG slices                                                                                    */
 /*************************************************************************************************/
 
 async function downloadSlices() {
-    console.log("downloading the SVG data...");
+    return downloadJSON(`/data/slices.json`);
+}
 
-    var url = `/data/slices.json`;
-    var r = await fetch(url);
-    var slices = await r.json();
 
-    console.log("download finished");
-    return slices;
+
+/*************************************************************************************************/
+/* Features                                                                                      */
+/*************************************************************************************************/
+
+async function downloadFeatures() {
+    return downloadJSON(`/data/features.json`);
 }
 
 
@@ -130,10 +144,11 @@ class SVGDB {
     constructor() {
         this.db = new Dexie(DB_NAME);
 
-        this.db.version(1).stores({
+        this.db.version(DB_VERSION).stores({
             coronal: "idx,svg",
             horizontal: "idx,svg",
             sagittal: "idx,svg",
+            features: "feature,data,statistics",
         });
 
         let that = this;
@@ -143,20 +158,42 @@ class SVGDB {
             that.coronal = this.db.table("coronal");
             that.horizontal = this.db.table("horizontal");
             that.sagittal = this.db.table("sagittal");
+            that.features = this.db.table("features");
 
-            that.coronal.count().then((res) => {
+
+            // Fill the database with the SVG data.
+            that.coronal.count().then(async (res) => {
                 if (res == 0) {
-                    console.log("database seems to be empty, downloading the SVG slices...");
+                    console.log("filling the database with the SVG data...");
 
                     // Download the SVG slices.
-                    downloadSlices().then((slices) => {
+                    let slices = await downloadSlices();
 
-                        // Put the SVG data in the database.
-                        insertSlices(that.coronal, slices, "coronal");
-                        insertSlices(that.horizontal, slices, "horizontal");
-                        insertSlices(that.sagittal, slices, "sagittal");
+                    // Put the SVG data in the database.
+                    insertSlices(that.coronal, slices, "coronal");
+                    insertSlices(that.horizontal, slices, "horizontal");
+                    insertSlices(that.sagittal, slices, "sagittal");
 
-                        console.log("successfully loaded stores");
+                    console.log("successfully loaded slides");
+
+                }
+            }).catch((err) => {
+                console.error('failed to open db:', (err.stack || err));
+            });
+
+
+            // Fill the database with the features data.
+            that.features.count().then((res) => {
+                if (res == 0) {
+                    console.log("filling the database with the features...");
+
+                    downloadFeatures().then((features) => {
+                        // Put the feature data in the database.
+                        that.features.bulkPut(features).then(ev => {
+                            console.log(`successfully filled the features store`);
+                        }).catch(err => {
+                            console.error("error:", err);
+                        });
                     });
                 }
             });
@@ -167,6 +204,11 @@ class SVGDB {
 
     getSlice(axis, idx) {
         return getSlice(this[axis], idx);
+    }
+
+    async getFeature(feature, region_idx) {
+        let item = await this.features.get(feature);
+        return item["data"][region_idx];
     }
 }
 
