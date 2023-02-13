@@ -282,6 +282,8 @@ function setupHighlightRegions(svg, barPlot) {
 
 }
 
+
+
 function setupHighlightBars(svg, barPlot) {
     // Bars ==> SVG
     let bars = getBars(barPlot);
@@ -304,6 +306,51 @@ function setupHighlightBars(svg, barPlot) {
             }
         });
     }
+}
+
+
+
+
+/*************************************************************************************************/
+/* Region selection                                                                              */
+/*************************************************************************************************/
+
+function getStyle() {
+    let style = document.getElementById("style").sheet;
+    return style;
+}
+
+
+
+function hideRegions() {
+    let style = getStyle();
+    if (style.rules.length == 0) {
+        style.insertRule("#svg1 path { opacity: .35; }");
+    }
+}
+
+
+
+function showRegions() {
+    let style = getStyle();
+    if (style.rules.length > 0) { style.deleteRule(0); }
+}
+
+
+
+function setupSelectRegions(svg, barPlot) {
+    // Click to select a region.
+    svg.addEventListener('click', (e) => {
+        if (e.target.tagName == 'path') {
+            // Hide all regions.
+            hideRegions();
+
+            // But show the selected one.
+            let cls = e.target.classList[0];
+            let style = getStyle();
+            style.insertRule(`#svg1 path.${cls} { opacity: 1; }`);
+        }
+    });
 }
 
 
@@ -374,4 +421,7 @@ window.onload = async (evl) => {
     // Setup highlighting.
     setupHighlightRegions(svg, barPlot);
     setupHighlightBars(svg, barPlot);
+
+    // Setup selection.
+    setupSelectRegions(svg, barPlot);
 };
