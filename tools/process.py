@@ -219,6 +219,45 @@ def run_serial(dir, func):
         func(file)
 
 
+def run_single(file):
+    # 3. Apply Ramer-Douglas-Peucker Algorithm algorithm https://rdp.readthedocs.io/en/latest/ on all
+    #    SVGs.
+    # NOTE: assumed already done
+
+    # 4. Apply inkscape simplification with parallel processing below (slow), with simplification
+    #    parameter .0007 (in inkscape settings)
+    simplify(file)
+
+    # 5. Apply svgo independently on each file (and not in batch as svgo silently deletes all files!)
+    svgo(file)
+
+    # 6. Apply a simple regex in Python to remove all useless path ID (but keep the <g> region IDs)
+    remove_path_id(file)
+
+    # 7. Some SVG Python processing to cleanup the SVGs further.
+    clean_svg(file)
+
+    # 8. Create the slices.json file that will be used to fill the IndexedDB database on the client.
+    # make_slices_json(file)
+
+
+def run_all(path):
+    # Step 4.
+    run_parallel(path, simplify)
+
+    # Step 5.
+    run_parallel(path, svgo)
+
+    # Step 6.
+    run_parallel(path, remove_path_id)
+
+    # Step 7.
+    run_parallel(path, clean_svg)
+
+    # Step 8.
+    make_slices_json(path)
+
+
 def process_features(dir):
     # Take as input features_for_viz.pqt and brain_regions_for_viz.pqt, and generates files for the website.
 
@@ -354,25 +393,10 @@ def make_regions(dir):
 if __name__ == '__main__':
     path = DATA_DIR / "svg"
 
-    # # Step 4.
-    # run_parallel(path, simplify)
-
-    # # Step 5.
-    # run_parallel(path, svgo)
-
-    # # Step 6.
-    # run_parallel(path, remove_path_id)
-
-    # # Step 7.
-    # run_parallel(path, clean_svg)
-
-    # # Step 8.
-    # make_slices_json(path)
-
-    #
     # Test on 1 file.
+    run_single(DATA_DIR / "swanson.svg")
     # print(get_figure_string(path / "coronal_286.svg"))
 
     # Make the JSON feature file and the CSS files.
-    process_features(DATA_DIR / 'pqt')
+    # process_features(DATA_DIR / 'pqt')
     # make_regions(DATA_DIR / 'pqt')
