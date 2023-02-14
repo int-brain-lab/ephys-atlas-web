@@ -108,19 +108,22 @@ body>.container {
 #col1 {
     border-color: red;
     overflow-y: scroll;
-    max-width: 260px;
+    max-width: 250px;
 }
 
 #col2 {
     border-color: green;
-    /* margin-left: 2%; */
-    /* width: 41.33%; */
+    /* width: calc(50vw - 280px); */
 }
 
 #col3 {
     border-color: blue;
-    /* margin-left: 2%; */
-    /* width: 41.33%; */
+    /* width: calc(50vw - 280px); */
+}
+
+#col4 {
+    border-color: blue;
+    max-width: 250px;
 }
 
 
@@ -297,27 +300,27 @@ svg {
     border: 1px solid black;
 }
 
-#svg1 path {
+svg path {
     stroke: #00000077;
     stroke-width: 0.5px;
 }
 
-#svg1:hover {
+svg:hover {
     cursor: pointer;
 }
 
-#svg1 path.hover {
+svg path.hover {
     /* stroke-width: 1px; */
     stroke: #000000ff;
     filter: brightness(125%);
 }
 
-#svg1 path.selected {
+svg path.selected {
     /* neutralize the CSS set by hideRegions() */
     opacity: 1;
 }
 
-#svg1 path.selected.hover {}
+svg path.selected.hover {}
 
 
 

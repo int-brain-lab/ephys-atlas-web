@@ -349,10 +349,10 @@ class RegionSelector {
         }
 
         let opacity = this.count() > 0 ? 0.35 : 1.0;
-        style.insertRule(`#svg1 path { opacity: ${opacity}; }`);
+        style.insertRule(`svg path { opacity: ${opacity}; }`);
 
         for (let id of this.selected) {
-            style.insertRule(`#svg1 path.region_${id} { opacity: 1; }`);
+            style.insertRule(`svg path.region_${id} { opacity: 1; }`);
         }
     }
 }
@@ -390,6 +390,8 @@ function setSlice(axis, svgdb, slider) {
 }
 
 function setupSlider(axis, svgdb, svg) {
+    if (axis == "top") return;
+
     let slider = getSlider(axis);
     let MAX = 0;
     if (axis == "coronal") MAX = 1319;
@@ -454,4 +456,5 @@ window.onload = async (evl) => {
 
     setupSVG(svgdb, barPlot, "coronal");
     setupSVG(svgdb, barPlot, "sagittal");
+    setupSVG(svgdb, barPlot, "top");
 };
