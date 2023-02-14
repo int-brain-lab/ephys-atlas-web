@@ -148,6 +148,7 @@ class SVGDB {
             coronal: "idx,svg",
             horizontal: "idx,svg",
             sagittal: "idx,svg",
+            extra: "idx,svg",
             features: "feature,data,statistics",
         });
 
@@ -158,6 +159,7 @@ class SVGDB {
             that.coronal = this.db.table("coronal");
             that.horizontal = this.db.table("horizontal");
             that.sagittal = this.db.table("sagittal");
+            that.extra = this.db.table("extra");
             that.features = this.db.table("features");
 
 
@@ -173,6 +175,17 @@ class SVGDB {
                     insertSlices(that.coronal, slices, "coronal");
                     insertSlices(that.horizontal, slices, "horizontal");
                     insertSlices(that.sagittal, slices, "sagittal");
+
+                    // Extra
+                    let extra = [
+                        { "idx": "top", "svg": slices["top"] },
+                        { "idx": "swanson", "svg": slices["swanson"] },
+                    ];
+                    that.extra.bulkPut(extra).then(ev => {
+                        console.log(`successfully filled the extra store with the SVG data`);
+                    }).catch(err => {
+                        console.error("error:", err);
+                    });
 
                     console.log("successfully loaded slides");
 
@@ -204,6 +217,24 @@ class SVGDB {
 
     getSlice(axis, idx) {
         return getSlice(this[axis], idx);
+    }
+
+    getTop() {
+        this.extra.get("top").then((item) => {
+            if (item) {
+                let svg = item["svg"];
+                document.getElementById("figure_1").innerHTML = svg;
+            }
+        });
+    }
+
+    getSwanson() {
+        this.extra.get("swanson").then((item) => {
+            if (item) {
+                let svg = item["svg"];
+                document.getElementById("figure_1").innerHTML = svg;
+            }
+        });
     }
 
     async getFeature(feature, region_idx) {

@@ -77,7 +77,7 @@ def float_json(x):
 
 def save_json(d, filename):
     with open(filename, "w") as f:
-        json.dump(d, f)
+        json.dump(d, f, indent=1)
 
 
 def write_text(s, filename):
@@ -205,6 +205,10 @@ def make_slices_json(dir):
         svg = get_figure_string(file)
         if svg:
             out[ax].append({"idx": int(idx), "svg": svg})
+
+    out['top'] = get_figure_string(dir / "../top.svg")
+    out['swanson'] = get_figure_string(dir / "../swanson.svg")
+
     save_json(out, DATA_DIR / "slices.json")
 
 
@@ -388,13 +392,15 @@ def make_regions(dir):
 
 
 # -------------------------------------------------------------------------------------------------
-# Features
+# Entry-point
 # -------------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
     path = DATA_DIR / "svg"
 
     # Test on 1 file.
-    run_single(DATA_DIR / "swanson.svg")
+    # run_single(DATA_DIR / "swanson.svg")
+    # make_slices_json(path)
     # print(get_figure_string(path / "coronal_286.svg"))
 
     # Make the JSON feature file and the CSS files.
