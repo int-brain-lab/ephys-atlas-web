@@ -105,21 +105,22 @@ body>.container {
     padding: 8px;
 }
 
-#col-left {
+#col1 {
     border-color: red;
     overflow-y: scroll;
+    max-width: 260px;
 }
 
-#col-center {
+#col2 {
     border-color: green;
-    margin-left: 2%;
-    width: 41.33%;
+    /* margin-left: 2%; */
+    /* width: 41.33%; */
 }
 
-#col-right {
+#col3 {
     border-color: blue;
-    margin-left: 2%;
-    width: 41.33%;
+    /* margin-left: 2%; */
+    /* width: 41.33%; */
 }
 
 
@@ -293,7 +294,7 @@ h2 {
 svg {
     width: 100%;
     display: block;
-    border: 0 solid black;
+    border: 1px solid black;
 }
 
 #svg1 path {
@@ -324,7 +325,7 @@ svg {
 /*  SVG slider                                                                                   */
 /*************************************************************************************************/
 
-#slice-range {
+.slider {
     width: 100%;
     margin: 12px 0;
 }

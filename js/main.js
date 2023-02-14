@@ -123,11 +123,11 @@ function insertSlices(store, slices, axis) {
 
 
 
-function getSlice(table, idx) {
+function getSlice(axis, table, idx) {
     table.get(idx).then((item) => {
         if (item) {
             let svg = item["svg"];
-            document.getElementById("figure_1").innerHTML = svg;
+            document.getElementById(`figure-${axis}`).innerHTML = svg;
         }
     });
 }
@@ -148,7 +148,7 @@ class SVGDB {
             coronal: "idx,svg",
             horizontal: "idx,svg",
             sagittal: "idx,svg",
-            extra: "idx,svg",
+            // extra: "idx,svg",
             features: "feature,data,statistics",
         });
 
@@ -159,7 +159,6 @@ class SVGDB {
             that.coronal = this.db.table("coronal");
             that.horizontal = this.db.table("horizontal");
             that.sagittal = this.db.table("sagittal");
-            that.extra = this.db.table("extra");
             that.features = this.db.table("features");
 
 
@@ -175,17 +174,6 @@ class SVGDB {
                     insertSlices(that.coronal, slices, "coronal");
                     insertSlices(that.horizontal, slices, "horizontal");
                     insertSlices(that.sagittal, slices, "sagittal");
-
-                    // Extra
-                    let extra = [
-                        { "idx": "top", "svg": slices["top"] },
-                        { "idx": "swanson", "svg": slices["swanson"] },
-                    ];
-                    that.extra.bulkPut(extra).then(ev => {
-                        console.log(`successfully filled the extra store with the SVG data`);
-                    }).catch(err => {
-                        console.error("error:", err);
-                    });
 
                     console.log("successfully loaded slides");
 
@@ -216,25 +204,7 @@ class SVGDB {
     }
 
     getSlice(axis, idx) {
-        return getSlice(this[axis], idx);
-    }
-
-    getTop() {
-        this.extra.get("top").then((item) => {
-            if (item) {
-                let svg = item["svg"];
-                document.getElementById("figure_1").innerHTML = svg;
-            }
-        });
-    }
-
-    getSwanson() {
-        this.extra.get("swanson").then((item) => {
-            if (item) {
-                let svg = item["svg"];
-                document.getElementById("figure_1").innerHTML = svg;
-            }
-        });
+        return getSlice(axis, this[axis], idx);
     }
 
     async getFeature(feature, region_idx) {
@@ -249,8 +219,8 @@ class SVGDB {
 /* Highlighting                                                                                  */
 /*************************************************************************************************/
 
-function getSVG() {
-    return document.getElementById("figure_1");
+function getSVG(axis) {
+    return document.getElementById(`figure-${axis}`);
 }
 
 function getPaths(svg) {
@@ -410,20 +380,24 @@ function setupSelectRegions(svg, barPlot) {
 /* Slider                                                                                        */
 /*************************************************************************************************/
 
-function getSlider() {
-    return document.getElementById("slice-range");
+function getSlider(axis) {
+    return document.getElementById(`slider-${axis}`);
 }
 
-function setSlice(svgdb, slider) {
+function setSlice(axis, svgdb, slider) {
     let idx = Math.floor(slider.value);
-    svgdb.getSlice("coronal", idx);
+    svgdb.getSlice(axis, idx);
 }
 
-function setupSlider(svgdb, svg) {
-    let slider = getSlider();
+function setupSlider(axis, svgdb, svg) {
+    let slider = getSlider(axis);
+    let MAX = 0;
+    if (axis == "coronal") MAX = 1319;
+    if (axis == "horizontal") MAX = 799;
+    if (axis == "sagittal") MAX = 1139;
 
     slider.oninput = (ev) => {
-        setSlice(svgdb, ev.target);
+        setSlice(axis, svgdb, ev.target);
     };
 
     let bars = getBars(getBarPlot());
@@ -444,9 +418,9 @@ function setupSlider(svgdb, svg) {
         clearBars(bars);
 
         // Clipping.
-        slider.valueAsNumber = Math.min(1319, Math.max(0, slider.valueAsNumber));
+        slider.valueAsNumber = Math.min(MAX, Math.max(0, slider.valueAsNumber));
 
-        setSlice(svgdb, slider);
+        setSlice(axis, svgdb, slider);
     }, { passive: false });
 }
 
@@ -456,18 +430,12 @@ function setupSlider(svgdb, svg) {
 /* Entry-point                                                                                   */
 /*************************************************************************************************/
 
-window.onload = async (evl) => {
-    console.log("page loaded");
-    // deleteDatabase();
-
-    let svgdb = new SVGDB();
-
-    let svg = getSVG();
-    let barPlot = getBarPlot();
+function setupSVG(svgdb, barPlot, axis) {
+    let svg = getSVG(axis);
 
     // Setup slicing.
     // NOTE: parent's parent is SVG's container div.
-    setupSlider(svgdb, svg.parentNode.parentNode);
+    setupSlider(axis, svgdb, svg.parentNode.parentNode);
 
     // Setup highlighting.
     setupHighlightRegions(svg, barPlot);
@@ -475,4 +443,15 @@ window.onload = async (evl) => {
 
     // Setup selection.
     setupSelectRegions(svg, barPlot);
+}
+
+window.onload = async (evl) => {
+    console.log("page loaded");
+    // deleteDatabase();
+
+    let svgdb = new SVGDB();
+    let barPlot = getBarPlot();
+
+    setupSVG(svgdb, barPlot, "coronal");
+    setupSVG(svgdb, barPlot, "sagittal");
 };
