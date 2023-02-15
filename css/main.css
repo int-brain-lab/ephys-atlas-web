@@ -47,6 +47,7 @@
 :root {
     --main-accent-color: #0898d4;
     --bar-highlight-color: #f2f6f7;
+    --bar-select-color: #c6d6da;
 }
 
 * {

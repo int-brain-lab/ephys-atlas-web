@@ -73,6 +73,7 @@ class Selector {
             this.selected.add(id);
         else
             this.selected.delete(id);
+        this.makeCSS();
     }
 
     count() {
@@ -87,6 +88,7 @@ class Selector {
 
         for (let id of this.selected) {
             this.style.insertRule(`svg path.region_${id} { opacity: 1; }`);
+            this.style.insertRule(`ul#bar-plot > li.region_${id} { background-color: var(--bar-select-color); }`);
         }
     }
 };
@@ -115,6 +117,30 @@ function setupBarHighlighting() {
         if (e.target.tagName == 'LI') {
             let id = getRegionID(e.target);
             highlighter.highlight(id);
+        }
+    });
+}
+
+
+
+function setupSVGSelection(axis) {
+    const svg = getSVG(axis);
+    svg.addEventListener('click', (e) => {
+        if (e.target.tagName == 'path') {
+            let id = getRegionID(e.target);
+            selector.toggle(id);
+        }
+    });
+}
+
+
+
+function setupBarSelection() {
+    const bar = getBarPlot();
+    bar.addEventListener('click', (e) => {
+        if (e.target.tagName == 'LI') {
+            let id = getRegionID(e.target);
+            selector.toggle(id);
         }
     });
 }
