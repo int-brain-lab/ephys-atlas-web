@@ -51,7 +51,7 @@ class Highlighter {
 
         let id = this.highlighted;
 
-        this.style.insertRule(`svg path.region_${id} { stroke: #000f; filter: brightness(125%); }`);
+        this.style.insertRule(`svg path.region_${id} { stroke: #000f; fill: var(--main-accent-color); }`);
         this.style.insertRule(`#bar-plot li.region_${id} { background-color: var(--bar-highlight-color); }`);
     }
 };
