@@ -81,7 +81,7 @@ function setupSlider(axis) {
     let svg = getSVG(axis);
     let max = SLICE_MAX[axis];
 
-    svg.addEventListener('wheel', function (ev) {
+    svg.parentNode.addEventListener('wheel', function (ev) {
         ev.preventDefault();
 
         // Update the slider.
