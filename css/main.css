@@ -208,6 +208,10 @@ body {
 #bar-plot {
     list-style: none;
     padding-left: 10px;
+
+    /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
+    /* when using a SVG slider (it causes a full render of the bar plot */
+    height: 100vh;
 }
 
 
