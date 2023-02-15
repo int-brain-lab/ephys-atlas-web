@@ -151,3 +151,14 @@ function setupBarSelection() {
         }
     });
 }
+
+
+
+function setupFeatureDropdown() {
+    var dropdown = document.getElementById("feature-dropdown");
+    var featureStyle = document.getElementById("feature-style");
+    dropdown.addEventListener('change', (e) => {
+        let feature = e.target.value;
+        featureStyle.href = `data/regions_${feature}.css`;
+    });
+}
