@@ -23,8 +23,11 @@
 
     <!-- TODO: change when selecting another feature -->
     <link rel="stylesheet" href="data/regions_psd_gamma.css" />
-    <style id="style">
 
+    <style id="style-selector">
+    </style>
+
+    <style id="style-highlighter">
     </style>
 
 
@@ -84,7 +87,7 @@
     <!-- BAR -->
     <!-------------------------------------------------------------------------------------------->
 
-    <div id="bar">
+    <div id="bar0">
         A
     </div>
 
@@ -4309,7 +4312,7 @@
             </svg>
 
             <div id="slider-coronal-container">
-                <!-- <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2"> -->
+                <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2">
             </div>
 
         </div>
@@ -4692,8 +4695,9 @@
 
             </svg>
 
-            <div id="slider-sagittal-container"></div>
-            <!-- <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2"> -->
+            <div id="slider-sagittal-container">
+                <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2">
+            </div>
 
         </div>
 
@@ -6263,9 +6267,11 @@
 
                 </g>
             </svg>
-            <!-- <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2"> -->
 
-            <div id="slider-horizontal-container"></div>
+
+            <div id="slider-horizontal-container">
+                <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2">
+            </div>
 
         </div>
 
@@ -7407,8 +7413,12 @@
     </footer>
 
 
+    <script src="js/svgdb.js"></script>
+    <script src="js/selector.js"></script>
+    <script src="js/slice.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/react.js"></script>
+    <!-- <script src="js/react.js"></script>
+    <script src="js/main.js"></script> -->
 
 </body>
 
