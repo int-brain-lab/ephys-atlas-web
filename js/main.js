@@ -391,6 +391,7 @@ function setSlice(axis, svgdb, slider) {
 
 function setupSlider(axis, svgdb, svg) {
     if (axis == "top") return;
+    if (axis == "swanson") return;
 
     let slider = getSlider(axis);
     let MAX = 0;
@@ -456,5 +457,7 @@ window.onload = async (evl) => {
 
     setupSVG(svgdb, barPlot, "coronal");
     setupSVG(svgdb, barPlot, "sagittal");
+    setupSVG(svgdb, barPlot, "horizontal");
     setupSVG(svgdb, barPlot, "top");
+    setupSVG(svgdb, barPlot, "swanson");
 };

@@ -71,59 +71,8 @@ body {
 
 html,
 body {
-    /* height: calc(100vh - 150px); */
     margin: 0;
     padding: 0;
-}
-
-
-
-body>.container {
-    /* height: 100vh; */
-}
-
-
-
-/*************************************************************************************************/
-/*  Columns                                                                                      */
-/*************************************************************************************************/
-
-#main-container {
-    /* margin-left: auto;
-    margin-right: auto; */
-}
-
-#main-row {
-    /* height: 100vh; */
-    height: calc(100vh - 150px);
-}
-
-.main-col {
-    border-width: 0;
-    border-style: solid;
-    height: 100%;
-    padding: 8px;
-}
-
-#col1 {
-    border-color: red;
-    overflow-y: scroll;
-    max-width: 250px;
-}
-
-#col2 {
-    border-color: green;
-    /* width: calc(50vw - 280px); */
-}
-
-#col3 {
-    border-color: blue;
-    /* width: calc(50vw - 280px); */
-}
-
-#col4 {
-    border-color: blue;
-    max-width: 250px;
 }
 
 
@@ -195,58 +144,50 @@ body>.container {
 
 
 /*************************************************************************************************/
-/*  Headings                                                                                     */
+/*  Grid container                                                                               */
 /*************************************************************************************************/
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: roboto-condensed;
-    text-transform: uppercase;
-    font-size: 24pt;
-    margin: 30px 0;
-    /* font-variant: small-caps; */
+#container {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr 1fr 1fr;
+    height: calc(100vh - 150px);
 }
 
-h2 {
-    text-align: center;
-    border-style: solid;
-    border-width: 2px 0;
-    border-color: #eee;
-    font-weight: 300;
-    padding: 20px 0;
-    margin: 60px 0 40px 0;
-    color: #999;
-    background-color: #fcfcfc;
+#container>div {
+    border: 1px solid black;
+    overflow-y: auto;
 }
 
-
-
-/*************************************************************************************************/
-/*  Footer                                                                                       */
-/*************************************************************************************************/
-
-#footer {
-    text-align: center;
-    padding: 20px 0;
+#container #bar-plot-container {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
 }
 
-
-
-/*************************************************************************************************/
-/*  Unity widget                                                                                 */
-/*************************************************************************************************/
-
-#unity-canvas {
-    width: 100%;
-    background-image: url('/images/fallback.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    aspect-ratio: 1;
+#container #svg-coronal-container {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
 }
+
+#container #svg-sagittal-container {
+    grid-column: 3 / 5;
+    grid-row: 1 / 2;
+}
+
+#container #svg-top-container {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+
+#container #svg-horizontal-container {
+    grid-column: 3 / 4;
+    grid-row: 2 / 3;
+}
+
+#container #svg-swanson-container {
+    grid-column: 4 / 6;
+    grid-row: 2 / 3;
+}
+
 
 
 
@@ -294,6 +235,10 @@ h2 {
 /*  SVG                                                                                          */
 /*************************************************************************************************/
 
+div#container>.svg-wrapper {
+    overflow-y: hidden;
+}
+
 svg {
     width: 100%;
     display: block;
@@ -331,4 +276,60 @@ svg path.selected.hover {}
 .slider {
     width: 100%;
     margin: 12px 0;
+}
+
+
+
+/*************************************************************************************************/
+/*  Unity widget                                                                                 */
+/*************************************************************************************************/
+
+#unity-canvas {
+    width: 100%;
+    background-image: url('/images/fallback.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    aspect-ratio: 1;
+}
+
+
+
+/*************************************************************************************************/
+/*  Headings                                                                                     */
+/*************************************************************************************************/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: roboto-condensed;
+    text-transform: uppercase;
+    font-size: 24pt;
+    margin: 30px 0;
+    /* font-variant: small-caps; */
+}
+
+h2 {
+    text-align: center;
+    border-style: solid;
+    border-width: 2px 0;
+    border-color: #eee;
+    font-weight: 300;
+    padding: 20px 0;
+    margin: 60px 0 40px 0;
+    color: #999;
+    background-color: #fcfcfc;
+}
+
+
+
+/*************************************************************************************************/
+/*  Footer                                                                                       */
+/*************************************************************************************************/
+
+#footer {
+    text-align: center;
+    padding: 20px 0;
 }
