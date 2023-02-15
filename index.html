@@ -31,20 +31,13 @@
 
     <!-- Javascript -->
 
-    <!-- JQuery
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
-        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
-
-    <!-- JQuery UI
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
-        integrity="sha512-uto9mlQzrs59VwILcLiRYeLKPPbS/bT71da/OEBYEwcdNUk8jYIy+D176RYoop1Da+f9mvkYrmj5MCLZWEtQuA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
+    <!-- ReactJS -->
+    <!-- TODO: production, not development -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 
     <!-- Dexie -->
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-
-    <script src="js/main.js"></script>
 
 </head>
 
@@ -84,6 +77,16 @@
         TOP         614 x 461
         SWANSON    1012 x 461
      -->
+
+
+
+    <!-------------------------------------------------------------------------------------------->
+    <!-- BAR -->
+    <!-------------------------------------------------------------------------------------------->
+
+    <div id="bar">
+        A
+    </div>
 
 
 
@@ -4304,7 +4307,10 @@
                 </g>
 
             </svg>
-            <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2">
+
+            <div id="slider-coronal-container">
+                <!-- <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2"> -->
+            </div>
 
         </div>
 
@@ -4685,7 +4691,9 @@
                 </g>
 
             </svg>
-            <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2">
+
+            <div id="slider-sagittal-container"></div>
+            <!-- <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2"> -->
 
         </div>
 
@@ -6255,7 +6263,9 @@
 
                 </g>
             </svg>
-            <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2">
+            <!-- <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2"> -->
+
+            <div id="slider-horizontal-container"></div>
 
         </div>
 
@@ -6263,7 +6273,7 @@
         <!-- SWANSON -->
         <div id="svg-swanson-container" class="svg-wrapper">
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-swanson" version="1.1" viewBox="60 20 640 300">
+            <svg xmlns="http://www.w3.org/2000/svg" id="svg-swanson" version="1.1" viewBox="40 0 680 340">
                 <defs>
                     <style type="text/css">
                         * {
@@ -7395,6 +7405,10 @@
             <a href="https://www.internationalbrainlab.com/">International Brain Laboratory</a> &#8212; 2023
         </nav>
     </footer>
+
+
+    <script src="js/main.js"></script>
+    <script src="js/react.js"></script>
 
 </body>
 

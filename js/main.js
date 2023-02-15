@@ -12,37 +12,37 @@ const DB_VERSION = 1;
 /* Utils                                                                                         */
 /*************************************************************************************************/
 
-function throttle(func, wait, options) {
-    var context, args, result;
-    var timeout = null;
-    var previous = 0;
-    if (!options) options = {};
-    var later = function () {
-        previous = options.leading === false ? 0 : Date.now();
-        timeout = null;
-        result = func.apply(context, args);
-        if (!timeout) context = args = null;
-    };
-    return function () {
-        var now = Date.now();
-        if (!previous && options.leading === false) previous = now;
-        var remaining = wait - (now - previous);
-        context = this;
-        args = arguments;
-        if (remaining <= 0 || remaining > wait) {
-            if (timeout) {
-                clearTimeout(timeout);
-                timeout = null;
-            }
-            previous = now;
-            result = func.apply(context, args);
-            if (!timeout) context = args = null;
-        } else if (!timeout && options.trailing !== false) {
-            timeout = setTimeout(later, remaining);
-        }
-        return result;
-    };
-};
+// function throttle(func, wait, options) {
+//     var context, args, result;
+//     var timeout = null;
+//     var previous = 0;
+//     if (!options) options = {};
+//     var later = function () {
+//         previous = options.leading === false ? 0 : Date.now();
+//         timeout = null;
+//         result = func.apply(context, args);
+//         if (!timeout) context = args = null;
+//     };
+//     return function () {
+//         var now = Date.now();
+//         if (!previous && options.leading === false) previous = now;
+//         var remaining = wait - (now - previous);
+//         context = this;
+//         args = arguments;
+//         if (remaining <= 0 || remaining > wait) {
+//             if (timeout) {
+//                 clearTimeout(timeout);
+//                 timeout = null;
+//             }
+//             previous = now;
+//             result = func.apply(context, args);
+//             if (!timeout) context = args = null;
+//         } else if (!timeout && options.trailing !== false) {
+//             timeout = setTimeout(later, remaining);
+//         }
+//         return result;
+//     };
+// };
 
 
 
@@ -123,16 +123,16 @@ function insertSlices(store, slices, axis) {
 
 
 
-function getSlice(axis, table, idx) {
-    table.get(idx).then((item) => {
-        if (item) {
-            let svg = item["svg"];
-            document.getElementById(`figure-${axis}`).innerHTML = svg;
-        }
-    });
-}
+// function getSlice(axis, table, idx) {
+//     table.get(idx).then((item) => {
+//         if (item) {
+//             let svg = item["svg"];
+//             document.getElementById(`figure-${axis}`).innerHTML = svg;
+//         }
+//     });
+// }
 
-getSlice = throttle(getSlice, 10); // wait at least 10 ms between two successive calls
+// getSlice = throttle(getSlice, 10); // wait at least 10 ms between two successive calls
 
 
 
@@ -203,9 +203,9 @@ class SVGDB {
         });
     }
 
-    getSlice(axis, idx) {
-        return getSlice(axis, this[axis], idx);
-    }
+    // getSlice(axis, idx) {
+    //     return getSlice(axis, this[axis], idx);
+    // }
 
     async getFeature(feature, region_idx) {
         let item = await this.features.get(feature);
@@ -218,7 +218,7 @@ class SVGDB {
 /*************************************************************************************************/
 /* Highlighting                                                                                  */
 /*************************************************************************************************/
-
+/*
 function getSVG(axis) {
     return document.getElementById(`figure-${axis}`);
 }
@@ -308,14 +308,14 @@ function setupHighlightBars(svg, barPlot) {
         });
     }
 }
-
+*/
 
 
 
 /*************************************************************************************************/
 /* Region selection                                                                              */
 /*************************************************************************************************/
-
+/*
 function getStyle() {
     let style = document.getElementById("style").sheet;
     return style;
@@ -373,13 +373,13 @@ function setupSelectRegions(svg, barPlot) {
         }
     });
 }
-
+*/
 
 
 /*************************************************************************************************/
 /* Slider                                                                                        */
 /*************************************************************************************************/
-
+/*
 function getSlider(axis) {
     return document.getElementById(`slider-${axis}`);
 }
@@ -426,13 +426,13 @@ function setupSlider(axis, svgdb, svg) {
         setSlice(axis, svgdb, slider);
     }, { passive: false });
 }
-
+*/
 
 
 /*************************************************************************************************/
 /* Entry-point                                                                                   */
 /*************************************************************************************************/
-
+/*
 function setupSVG(svgdb, barPlot, axis) {
     let svg = getSVG(axis);
 
@@ -447,17 +447,17 @@ function setupSVG(svgdb, barPlot, axis) {
     // Setup selection.
     setupSelectRegions(svg, barPlot);
 }
-
-window.onload = async (evl) => {
-    console.log("page loaded");
+*/
+// window.onload = async (evl) => {
+    // console.log("page loaded");
     // deleteDatabase();
 
-    let svgdb = new SVGDB();
-    let barPlot = getBarPlot();
+    // let svgdb = new SVGDB();
+    // let barPlot = getBarPlot();
 
-    setupSVG(svgdb, barPlot, "coronal");
-    setupSVG(svgdb, barPlot, "sagittal");
-    setupSVG(svgdb, barPlot, "horizontal");
-    setupSVG(svgdb, barPlot, "top");
-    setupSVG(svgdb, barPlot, "swanson");
-};
+    // setupSVG(svgdb, barPlot, "coronal");
+    // setupSVG(svgdb, barPlot, "sagittal");
+    // setupSVG(svgdb, barPlot, "horizontal");
+    // setupSVG(svgdb, barPlot, "top");
+    // setupSVG(svgdb, barPlot, "swanson");
+// };

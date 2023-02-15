@@ -155,7 +155,7 @@ body {
 #container {
     display: grid;
     grid-template-columns: 200px 1fr 1fr 1fr 1fr;
-    height: calc(100vh - 120px);
+    height: calc(100vh - 160px);
 }
 
 #container>div {
@@ -292,7 +292,7 @@ svg path.selected.hover {}
 /*************************************************************************************************/
 
 .slider {
-    width: 80%;
+    width: 200px;
     margin: 12px auto;
 }
 
