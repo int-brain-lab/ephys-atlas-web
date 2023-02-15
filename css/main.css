@@ -46,8 +46,10 @@
 
 :root {
     --main-accent-color: #0898d4;
-    --bar-highlight-color: #f2f6f7;
-    --bar-select-color: #c6d6da;
+    --svg-highlight-color: #ff1e00;
+
+    --bar-highlight-color: #f2f2f2;
+    --bar-select-color: #e8e8e8;
 }
 
 * {
@@ -144,7 +146,7 @@ body {
 
 #header .menu-explore {
     font-weight: 500;
-    color: #0898d4;
+    color: --var(--main-accent-color);
 }
 
 
@@ -193,7 +195,6 @@ body {
 
 
 
-
 #container #svg-coronal-container {
     grid-column: 2 / 3;
     grid-row: 1 / 2;
@@ -218,9 +219,6 @@ body {
     grid-column: 4 / 6;
     grid-row: 2 / 3;
 }
-
-#svg-coronal {}
-
 
 
 
@@ -287,7 +285,7 @@ svg {
 }
 
 svg path {
-    stroke: #00000077;
+    stroke: #333;
     stroke-width: 0.5px;
 }
 
@@ -296,7 +294,7 @@ svg:hover {
 }
 
 svg path:hover {
-    stroke: #000000ff;
+    stroke: #000;
     filter: brightness(125%);
 }
 
