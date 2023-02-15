@@ -1,5 +1,6 @@
 
 const svgdb = new SVGDB();
+const feature = new Feature();
 const highlighter = new Highlighter();
 const selector = new Selector();
 
