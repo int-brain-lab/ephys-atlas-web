@@ -111,7 +111,6 @@ function setupSVGHighlighting(axis) {
 
     svg.addEventListener('mouseout', (e) => {
         if (e.target.tagName == 'path') {
-            // let id = getRegionID(e.target);
             highlighter.highlight(null);
         }
     });
@@ -121,12 +120,12 @@ function setupSVGHighlighting(axis) {
 
 function setupBarHighlighting() {
     const bar = getBarPlot();
-    bar.addEventListener('mousemove', (e) => {
+    bar.addEventListener('mousemove', throttle((e) => {
         if (e.target.tagName == 'LI') {
             let id = getRegionID(e.target);
             highlighter.highlight(id);
         }
-    });
+    }, 50));
 }
 
 

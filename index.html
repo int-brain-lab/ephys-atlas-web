@@ -22,13 +22,11 @@
     <link rel="stylesheet" href="data/region_colors.css" />
 
     <!-- TODO: change when selecting another feature -->
-    <link rel="stylesheet" href="data/regions_psd_gamma.css" />
+    <link rel="stylesheet" id="feature-style" href="data/regions_psd_gamma.css" />
 
-    <style id="style-selector">
-    </style>
-
-    <style id="style-highlighter">
-    </style>
+    <!-- Dynamic CSS styles -->
+    <style id="style-selector"></style>
+    <style id="style-highlighter"></style>
 
 
 
@@ -87,8 +85,17 @@
     <!-- BAR -->
     <!-------------------------------------------------------------------------------------------->
 
-    <div id="bar0">
-        A
+    <div id="feature-dropdown-container">
+        <select id="feature-dropdown">
+            <option value="psd_alpha">psd_alpha</option>
+            <option value="psd_beta">psd_beta</option>
+            <option value="psd_delta">psd_delta</option>
+            <option value="psd_gamma">psd_gamma</option>
+            <option value="psd_theta">psd_theta</option>
+            <option value="rms_ap">rms_ap</option>
+            <option value="rms_lf">rms_lf</option>
+            <option value="spike_rate">spike_rate</option>
+        </select>
     </div>
 
 
