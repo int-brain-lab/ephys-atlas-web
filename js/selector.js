@@ -84,10 +84,10 @@ class Selector {
         clearStyle(this.style);
 
         let opacity = this.count() > 0 ? 0.35 : 1.0;
-        this.style.insertRule(`svg path { opacity: ${opacity}; }`);
+        this.style.insertRule(`svg path { filter: opacity(${opacity}); }`);
 
         for (let id of this.selected) {
-            this.style.insertRule(`svg path.region_${id} { opacity: 1; }`);
+            this.style.insertRule(`svg path.region_${id} { filter: opacity(1); }`);
             this.style.insertRule(`ul#bar-plot > li.region_${id} { background-color: var(--bar-select-color); }`);
         }
     }

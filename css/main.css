@@ -278,13 +278,6 @@ svg path:hover {
     filter: brightness(125%);
 }
 
-svg path.selected {
-    /* neutralize the CSS set by hideRegions() */
-    opacity: 1;
-}
-
-svg path.selected.hover {}
-
 
 
 /*************************************************************************************************/
