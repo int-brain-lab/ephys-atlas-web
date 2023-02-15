@@ -101,10 +101,18 @@ class Selector {
 
 function setupSVGHighlighting(axis) {
     const svg = getSVG(axis);
+
     svg.addEventListener('mouseover', (e) => {
         if (e.target.tagName == 'path') {
             let id = getRegionID(e.target);
             highlighter.highlight(id);
+        }
+    });
+
+    svg.addEventListener('mouseout', (e) => {
+        if (e.target.tagName == 'path') {
+            // let id = getRegionID(e.target);
+            highlighter.highlight(null);
         }
     });
 };
