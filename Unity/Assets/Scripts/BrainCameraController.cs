@@ -32,9 +32,9 @@ public class BrainCameraController : MonoBehaviour
     private float lastLeftClick;
     private float lastRightClick;
 
-    private float totalYaw;
+    private float totalYaw = 45f;
     private float totalPitch;
-    private float totalSpin;
+    private float totalSpin = 135f;
 
     private bool blockBrainControl;
 
@@ -63,6 +63,8 @@ public class BrainCameraController : MonoBehaviour
     {
         lastLeftClick = Time.realtimeSinceStartup;
         lastRightClick = Time.realtimeSinceStartup;
+
+        ApplyBrainCameraPositionAndRotation();
     }
 
     // Update is called once per frame

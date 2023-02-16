@@ -36,6 +36,16 @@ public class MiniBrainManager : MonoBehaviour
             RegisterNode(node);
 
         Debug.Log("Areas loaded");
+
+        TestAreas();
+    }
+
+    private void TestAreas()
+    {
+        SetColor("VISp:FFFFFF");
+        SetColor("VISpl:FFFFFF");
+        SetColor("VISpm:FFFFFF");
+        SetColor("VISpor:FFFFFF");
     }
 
     private void Update()
@@ -50,7 +60,7 @@ public class MiniBrainManager : MonoBehaviour
     public void SetColor(string areaColor)
     {
         // parse the areaColor string
-        int uIdx = areaColor.IndexOf('_');
+        int uIdx = areaColor.IndexOf(':');
         string area = areaColor.Substring(0, uIdx);
         string color = areaColor.Substring(uIdx + 1, areaColor.Length - uIdx - 1);
 
@@ -66,6 +76,7 @@ public class MiniBrainManager : MonoBehaviour
         node.SetNodeModelVisibility_Left(true);
         node.SetNodeModelVisibility_Right(true);
         modelNodes.Add(node.ShortName, node);
+        Debug.Log(node.ShortName);
 
         if (node != null && node.NodeModelLeftGO != null)
         {
@@ -98,6 +109,11 @@ public class MiniBrainManager : MonoBehaviour
     private Dictionary<int, Vector3> originalTransformPositionsRight;
     private Dictionary<int, Vector3> cosmosVectors;
     [SerializeField] private GameObject parentGO;
+
+    public void SetPercentageExploded(float perc)
+    {
+        percentageExploded = Mathf.Clamp(perc, 0f, 1f);
+    }
 
     private void UpdateExploded()
     {
