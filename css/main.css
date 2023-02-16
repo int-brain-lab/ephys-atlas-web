@@ -191,6 +191,9 @@ body {
 #container #bar-plot-container {
     grid-column: 1 / 2;
     grid-row: 1 / 3;
+    position: relative;
+    top: 0;
+    left: 0;
 }
 
 
@@ -223,18 +226,53 @@ body {
 
 
 /*************************************************************************************************/
+/*  Bar scale                                                                                    */
+/*************************************************************************************************/
+
+#bar-scale {
+    background-color: #fff;
+    width: 182px;
+    height: 30px;
+    position: fixed;
+    display: inline;
+}
+
+#bar-scale .bar {
+    height: 10px;
+    background-color: #666;
+    margin: 0 12px;
+    width: calc(100% - 24px);
+}
+
+#bar-scale .min,
+#bar-scale .max {
+    display: inline;
+    position: absolute;
+}
+
+#bar-scale .min {
+    left: 12px;
+}
+
+#bar-scale .max {
+    right: 12px;
+}
+
+
+
+/*************************************************************************************************/
 /*  Bar plot                                                                                     */
 /*************************************************************************************************/
 
 #bar-plot {
     list-style: none;
     padding-left: 10px;
+    margin-top: 40px;
 
     /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
     /* when using a SVG slider (it causes a full render of the bar plot */
     height: 100vh;
 }
-
 
 #bar-plot * {
     margin: 0;

@@ -16,10 +16,18 @@ function getFeatureDropdown() {
 class Feature {
     constructor() {
         this.featureStyle = document.getElementById('feature-style');
+        this.featureMin = document.querySelector('#bar-scale .min');
+        this.featureMax = document.querySelector('#bar-scale .max');
     }
 
-    change(feature) {
+    async change(feature) {
         this.featureStyle.href = `data/regions_${feature}.css`;
+
+        let min = await svgdb.getFeatureStat(feature, "min");
+        this.featureMin.innerHTML = min.toPrecision(4);
+
+        let max = await svgdb.getFeatureStat(feature, "max");
+        this.featureMax.innerHTML = max.toPrecision(4);
     }
 };
 

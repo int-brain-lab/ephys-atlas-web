@@ -170,4 +170,10 @@ class SVGDB {
         let item = await this.features.get(feature);
         return item["data"][region_idx];
     }
+
+    async getFeatureStat(feature, stat) {
+        if (!this.features) return null;
+        let item = await this.features.get(feature);
+        return item["statistics"][stat];
+    }
 }
