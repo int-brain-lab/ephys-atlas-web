@@ -21,3 +21,19 @@
     data/regions_spike_rate.css
 ```
 3. Run `./run.sh`
+
+
+## Deployment
+
+Apache configuration file, for example `/etc/apache2/sites-available/ephysatlas.conf`:
+
+```
+<VirtualHost *:80>
+    ServerAdmin admin@internationalbrainlab.org
+    ServerName ephysatlas.internationalbrainlab.org
+    DocumentRoot /path/to/ephys-atlas-web
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
