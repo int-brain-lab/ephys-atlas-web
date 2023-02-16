@@ -9,15 +9,21 @@ SLICE_MAX = {
     sagittal: 1140
 }
 
-VLINE_OFFSET = {
-    sagittal: 20,
-}
+// LINE_OFFSET = {
+//     sagittal: 20,
+// }
 
 
 
 /*************************************************************************************************/
 /* Utils                                                                                         */
 /*************************************************************************************************/
+
+function clamp(x, min, max) {
+    return Math.min(max, Math.max(min, x));
+}
+
+
 
 function getSlider(axis) {
     return document.getElementById(`slider-${axis}`);
@@ -68,9 +74,11 @@ function setSliceSVG(axis, idx) {
 
     if (axis == 'sagittal') {
         let x = idx / SLICE_MAX[axis];
-        let offset = VLINE_OFFSET[axis];
-        x = offset + (100 - 2 * offset) * x;
-        document.getElementById('top-vline').style.left = `calc(${x}% + 5px)`;
+        x = clamp(x, .05, .95);
+        let scale = 225;
+        x = 236 + scale * (x - .5);
+        document.getElementById('top-vline').setAttribute("x1", x);
+        document.getElementById('top-vline').setAttribute("x2", x);
     }
 };
 setSliceSVG = throttle(setSliceSVG, 15);

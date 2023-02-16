@@ -320,14 +320,14 @@ svg:hover {
 /*  SVG hline vline                                                                              */
 /*************************************************************************************************/
 
-#top-vline {
+/* #top-vline {
     position: absolute;
     top: 10px;
     left: calc(50% + 5px);
     width: 2px;
     height: calc(100% - 60px);
     background-color: #333;
-}
+} */
 
 
 
