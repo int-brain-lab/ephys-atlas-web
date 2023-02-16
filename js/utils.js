@@ -133,7 +133,12 @@ function getOS() {
 
 async function downloadJSON(url) {
     console.debug(`downloading ${url}...`);
-    var r = await fetch(url);
+    var r = await fetch(url, {
+        headers: {
+            'Content-Encoding': 'gzip',
+            'Content-Type': 'application/json'
+        }
+    });
     var out = await r.json();
     console.debug("download finished");
     return out;
