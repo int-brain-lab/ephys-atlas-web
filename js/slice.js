@@ -9,6 +9,10 @@ SLICE_MAX = {
     sagittal: 1140
 }
 
+VLINE_OFFSET = {
+    sagittal: 20,
+}
+
 
 
 /*************************************************************************************************/
@@ -61,6 +65,14 @@ function throttle(func, wait, options) {
 
 function setSliceSVG(axis, idx) {
     svgdb.getSlice(axis, idx);
+
+    if (axis == 'sagittal') {
+        let x = idx / SLICE_MAX[axis];
+        let offset = VLINE_OFFSET[axis];
+        x = offset + (100 - 2 * offset) * x;
+        console.log(x);
+        document.getElementById('top-vline').style.left = `calc(${x}% + 5px)`;
+    }
 };
 setSliceSVG = throttle(setSliceSVG, 15);
 

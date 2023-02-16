@@ -271,10 +271,13 @@ body {
 /*************************************************************************************************/
 
 div#container>.svg-wrapper {
-    overflow-y: hidden;
+    overflow: hidden;
     align-items: center;
     justify-content: center;
     text-align: center;
+    position: relative;
+    top: 0;
+    left: 0;
 }
 
 svg {
@@ -282,6 +285,13 @@ svg {
     max-height: calc(100% - 40px);
     display: block;
     border: 0 solid black;
+}
+
+svg * {
+    stroke-linecap: butt;
+    stroke-linejoin: round;
+    fill: white;
+    stroke: black;
 }
 
 svg path {
@@ -302,6 +312,21 @@ svg:hover {
 .slider {
     width: 200px;
     margin: 12px auto;
+}
+
+
+
+/*************************************************************************************************/
+/*  SVG hline vline                                                                              */
+/*************************************************************************************************/
+
+#top-vline {
+    position: absolute;
+    top: 10px;
+    left: calc(50% + 5px);
+    width: 2px;
+    height: calc(100% - 60px);
+    background-color: #333;
 }
 
 
