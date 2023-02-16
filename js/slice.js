@@ -84,7 +84,7 @@ function setSliceSVG(axis, idx) {
         document.getElementById('coronal-vline').setAttribute("x1", w);
         document.getElementById('coronal-vline').setAttribute("x2", w);
 
-        let t = 237 + 220 * (x - .5);
+        let t = 237 + 215 * (x - .5);
         document.getElementById('horizontal-vline').setAttribute("x1", t);
         document.getElementById('horizontal-vline').setAttribute("x2", t);
     }
@@ -108,7 +108,7 @@ function setSliceSVG(axis, idx) {
     else if (axis == 'horizontal') {
         let y = idx / SLICE_MAX[axis];
 
-        let v = 169 + 232 * (y - .5);
+        let v = 169 + 224 * (y - .5);
         document.getElementById('coronal-hline').setAttribute("y1", v);
         document.getElementById('coronal-hline').setAttribute("y2", v);
 

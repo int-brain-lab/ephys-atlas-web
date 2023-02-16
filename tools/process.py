@@ -265,8 +265,11 @@ def run_all(path):
 def process_features(dir):
     # Take as input features_for_viz.pqt and brain_regions_for_viz.pqt, and generates files for the website.
 
-    df = pd.read_parquet(dir / 'features_for_viz.pqt')
+    df = pd.read_parquet(dir / 'features_for_viz_lateralised.pqt')
     br = pd.read_parquet(dir / 'brain_regions_for_viz.pqt')
+
+    # Lateralization.
+    df['atlas_id'] = -df['atlas_id'].abs()
 
     # Mapping atlas_id => idx
     br_mapping = {int(atlas_id): int(idx)
@@ -346,19 +349,20 @@ def process_features(dir):
 
 def make_regions(dir):
 
-    # from ibllib.atlas.regions import BrainRegions
-    # br = BrainRegions()
-    # order = br.order
+    from ibllib.atlas.regions import BrainRegions
+    br = BrainRegions()
+    order = br.order
     # print(order)
 
     # Load the brain regions dataframe.
     br = pd.read_parquet(dir / 'brain_regions_for_viz.pqt')
 
     # Only keep the brain regions appear in the features file.
-    df = pd.read_parquet(dir / 'features_for_viz.pqt')
+    df = pd.read_parquet(dir / 'features_for_viz_lateralised.pqt')
+    df['atlas_id'] = -df['atlas_id'].abs()
     keep = np.in1d(br['atlas_id'], df['atlas_id'].unique())
     print(f"Keep {keep.sum()}/{len(keep)} brain regions.")
-    # order = order[keep]
+    order = order[keep]
 
     idx = br['idx'][keep]
     acronym = br['acronym'][keep]
@@ -401,8 +405,7 @@ if __name__ == '__main__':
     # Test on 1 file.
     # run_single(DATA_DIR / "swanson.svg")
     # make_slices_json(path)
-    # print(get_figure_string(path / "coronal_286.svg"))
 
     # Make the JSON feature file and the CSS files.
-    # process_features(DATA_DIR / 'pqt')
-    # make_regions(DATA_DIR / 'pqt')
+    process_features(DATA_DIR / 'pqt')
+    make_regions(DATA_DIR / 'pqt')
