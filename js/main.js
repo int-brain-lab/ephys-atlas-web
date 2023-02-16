@@ -25,3 +25,4 @@ setupSlider('sagittal');
 setupSlider('horizontal');
 
 setupFeatureDropdown();
+setupUnity();
