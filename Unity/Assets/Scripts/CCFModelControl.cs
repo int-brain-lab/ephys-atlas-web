@@ -208,6 +208,9 @@ public class CCFModelControl : MonoBehaviour
                     cosmosRemap.Add(id, cosmos);
             }
         }
+
+        if (!loadDefaults)
+            defaultLoadedTaskSource.SetResult(true);
     }
 
     public List<CCFTreeNode> GetDefaultLoadedNodes()
