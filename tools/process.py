@@ -415,5 +415,5 @@ if __name__ == '__main__':
     # make_slices_json(path)
 
     # Make the JSON feature file and the CSS files.
-    process_features(DATA_DIR / 'pqt')
-    make_regions(DATA_DIR / 'pqt')
+    # process_features(DATA_DIR / 'pqt')
+    # make_regions(DATA_DIR / 'pqt')
