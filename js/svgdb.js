@@ -166,6 +166,7 @@ class SVGDB {
     }
 
     async getFeature(feature, region_idx) {
+        if (!this.features) return null;
         let item = await this.features.get(feature);
         return item["data"][region_idx];
     }

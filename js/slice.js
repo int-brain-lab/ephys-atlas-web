@@ -70,7 +70,6 @@ function setSliceSVG(axis, idx) {
         let x = idx / SLICE_MAX[axis];
         let offset = VLINE_OFFSET[axis];
         x = offset + (100 - 2 * offset) * x;
-        console.log(x);
         document.getElementById('top-vline').style.left = `calc(${x}% + 5px)`;
     }
 };
