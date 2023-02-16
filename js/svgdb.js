@@ -9,45 +9,6 @@ const DB_VERSION = 1;
 
 
 /*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-function getOS() {
-    var userAgent = window.navigator.userAgent,
-        platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
-        macosPlatforms = ['macOS', 'Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
-        windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
-        iosPlatforms = ['iPhone', 'iPad', 'iPod'],
-        os = null;
-
-    if (macosPlatforms.indexOf(platform) !== -1) {
-        os = 'macOS';
-    } else if (iosPlatforms.indexOf(platform) !== -1) {
-        os = 'iOS';
-    } else if (windowsPlatforms.indexOf(platform) !== -1) {
-        os = 'Windows';
-    } else if (/Android/.test(userAgent)) {
-        os = 'Android';
-    } else if (/Linux/.test(platform)) {
-        os = 'Linux';
-    }
-
-    return os;
-}
-
-
-
-async function downloadJSON(url) {
-    console.log(`downloading ${url}...`);
-    var r = await fetch(url);
-    var out = await r.json();
-    console.log("download finished");
-    return out;
-}
-
-
-
-/*************************************************************************************************/
 /* SVG downloading                                                                               */
 /*************************************************************************************************/
 
@@ -78,17 +39,6 @@ function deleteDatabase() {
 
 
 
-function insertSlices(store, slices, axis) {
-    // Put the SVG data in the database.
-    store.bulkPut(slices[axis]).then(ev => {
-        console.log(`successfully filled the '${axis}' store with the SVG slices`);
-    }).catch(err => {
-        console.error("error:", err);
-    });
-}
-
-
-
 /*************************************************************************************************/
 /* SVG class                                                                                     */
 /*************************************************************************************************/
@@ -106,8 +56,8 @@ class SVGDB {
         });
 
         let that = this;
-        this.db.open().then((ev) => {
-            console.log("opening the database");
+        this.db.open().then(async (ev) => {
+            console.debug("opening the database");
 
             that.coronal = this.db.table("coronal");
             that.horizontal = this.db.table("horizontal");
@@ -115,44 +65,65 @@ class SVGDB {
             that.features = this.db.table("features");
 
 
-            // Fill the database with the SVG data.
-            that.coronal.count().then(async (res) => {
-                if (res == 0) {
-                    console.log("filling the database with the SVG data...");
-
-                    // Download the SVG slices.
-                    let slices = await downloadSlices();
-
-                    // Put the SVG data in the database.
-                    insertSlices(that.coronal, slices, "coronal");
-                    insertSlices(that.horizontal, slices, "horizontal");
-                    insertSlices(that.sagittal, slices, "sagittal");
-
-                    console.log("successfully loaded slides");
-
-                }
-            }).catch((err) => {
-                console.error('failed to open db:', (err.stack || err));
-            });
-
-
             // Fill the database with the features data.
-            that.features.count().then((res) => {
-                if (res == 0) {
-                    console.log("filling the database with the features...");
+            let count = await that.features.count();
+            if (count == 0) {
+                splash.start();
 
-                    downloadFeatures().then((features) => {
-                        // Put the feature data in the database.
-                        that.features.bulkPut(features).then(ev => {
-                            console.log(`successfully filled the features store`);
-                        }).catch(err => {
-                            console.error("error:", err);
-                        });
-                    });
-                }
-            });
-        }).catch((err) => {
-            console.error('failed to open db:', (err.stack || err));
+                // 10%
+                splash.set(10);
+
+                console.log("loading the features...");
+
+                let features = await downloadFeatures();
+
+                // 20%
+                splash.set(20);
+
+                // Put the feature data in the database.
+                await that.features.bulkPut(features);
+
+                // 30%
+                splash.set(30);
+
+                console.log(`successfully loaded the features!`);
+            }
+
+            // Fill the database with the SVG data.
+            count = await that.coronal.count();
+            if (count == 0) {
+                console.log("loading the SVG data...");
+
+                // Download the SVG slices.
+                let slices = await downloadSlices();
+
+                // 40%
+                splash.set(40);
+
+                // Put the SVG data in the database.
+                await that.coronal.bulkPut(slices['coronal']);
+
+                // 60%
+                splash.set(60);
+
+                console.debug('done loading coronal slices');
+
+                await that.horizontal.bulkPut(slices['horizontal']);
+
+                // 80%
+                splash.set(80);
+
+                console.debug('done loading horizontal slices');
+
+                await that.sagittal.bulkPut(slices['sagittal']);
+                console.debug('done loading sagittal slices');
+
+                console.log("successfully loaded SVG data!");
+            }
+
+            // 100%
+            splash.set(100);
+
         });
     }
 

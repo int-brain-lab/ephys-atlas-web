@@ -1,15 +1,5 @@
 
 /*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-function getFeatureDropdown() {
-    return document.getElementById('feature-dropdown');
-};
-
-
-
-/*************************************************************************************************/
 /* Feature                                                                                       */
 /*************************************************************************************************/
 
@@ -24,10 +14,10 @@ class Feature {
         this.featureStyle.href = `data/regions_${feature}.css`;
 
         let min = await svgdb.getFeatureStat(feature, "min");
-        this.featureMin.innerHTML = min.toPrecision(4);
+        this.featureMin.innerHTML = displayNumber(min);
 
         let max = await svgdb.getFeatureStat(feature, "max");
-        this.featureMax.innerHTML = max.toPrecision(4);
+        this.featureMax.innerHTML = displayNumber(max);
     }
 };
 

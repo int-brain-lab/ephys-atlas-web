@@ -1,37 +1,5 @@
 
 /*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-function getSVG(axis) {
-    return document.getElementById(`figure-${axis}`);
-};
-
-
-
-function getBarPlot() {
-    return document.getElementById('bar-plot');
-};
-
-
-
-function getRegionID(obj) {
-    return obj.classList[0].substr(7);
-};
-
-
-
-function clearStyle(style) {
-    let n = style.cssRules.length;
-
-    for (let i = 0; i < n; i++) {
-        style.deleteRule(0);
-    }
-};
-
-
-
-/*************************************************************************************************/
 /* Highlighter                                                                                   */
 /*************************************************************************************************/
 
@@ -105,7 +73,7 @@ async function highlight(target) {
     let value = await svgdb.getFeature(feature, id);
     if (!value) return;
     let mean = value.mean;
-    let meanDisplay = Math.abs(mean) < .001 ? mean.toExponential(5) : mean.toPrecision(5);
+    let meanDisplay = displayNumber(mean);
 
     const info = document.getElementById('region-info');
     let name = REGIONS[id];

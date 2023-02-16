@@ -1,4 +1,5 @@
 
+const splash = new Splash();
 const svgdb = new SVGDB();
 const feature = new Feature();
 const highlighter = new Highlighter();
