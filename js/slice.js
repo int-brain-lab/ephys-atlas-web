@@ -75,10 +75,17 @@ function setSliceSVG(axis, idx) {
     if (axis == 'sagittal') {
         let x = idx / SLICE_MAX[axis];
         x = clamp(x, .05, .95);
-        let scale = 225;
-        x = 236 + scale * (x - .5);
+        x = 236 + 225 * (x - .5);
         document.getElementById('top-vline').setAttribute("x1", x);
         document.getElementById('top-vline').setAttribute("x2", x);
+    }
+
+    else if (axis == 'coronal') {
+        let y = idx / SLICE_MAX[axis];
+        y = clamp(y, .0, 1);
+        y = 174 + 268 * (y - .5);
+        document.getElementById('top-hline').setAttribute("y1", y);
+        document.getElementById('top-hline').setAttribute("y2", y);
     }
 };
 setSliceSVG = throttle(setSliceSVG, 15);
