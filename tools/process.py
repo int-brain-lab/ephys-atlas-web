@@ -380,6 +380,14 @@ def make_regions(dir):
     </li>''' for (idx_, acronym_) in zip(idx, acronym))
     write_text(html, DATA_DIR / 'regions.html')
 
+    # Generate regions.js, git tracked.
+    print("Generating regions.js...")
+    js = ''.join(
+        f'''
+    "{idx_}": "{acronym_}",''' for (idx_, acronym_) in zip(idx, acronym))
+    js = f'const REGIONS = {{\n{js}\n}}\n'
+    write_text(js, ROOT_DIR / 'js/regions.js')
+
     # Generate regions_colors.css, with the default brain region colors.
     print("Generating region_colors.css")
     css = '\n'.join(
