@@ -83,6 +83,10 @@ function setSliceSVG(axis, idx) {
         let w = 237 + 341 * (x - .5);
         document.getElementById('coronal-vline').setAttribute("x1", w);
         document.getElementById('coronal-vline').setAttribute("x2", w);
+
+        let t = 237 + 220 * (x - .5);
+        document.getElementById('horizontal-vline').setAttribute("x1", t);
+        document.getElementById('horizontal-vline').setAttribute("x2", t);
     }
 
     else if (axis == 'coronal') {
@@ -95,6 +99,10 @@ function setSliceSVG(axis, idx) {
         let w = 236 + 352 * (y - .5);
         document.getElementById('sagittal-vline').setAttribute("x1", w);
         document.getElementById('sagittal-vline').setAttribute("x2", w);
+
+        let t = 174 + 264 * (y - .5);
+        document.getElementById('horizontal-hline').setAttribute("y1", t);
+        document.getElementById('horizontal-hline').setAttribute("y2", t);
     }
 
     else if (axis == 'horizontal') {
