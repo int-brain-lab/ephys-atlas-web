@@ -65,13 +65,27 @@
     <!--
         BAR PLOT    400 x xxx
 
-        CORONAL     614 x 461   1320 (660)
         SAGITTAL    614 x 461   1140 (570)
-        UNITY         0 x 461
-
+        CORONAL     614 x 461   1320 (660)
         HORIZONTAL  614 x 461    800 (400)
+
         TOP         614 x 461
         SWANSON    1012 x 461
+        UNITY         0 x 461
+
+
+        x : SAGITTAL ml
+        nx = 1140 (570)
+        -5739 : 10 : 5651 + 10 (861)
+
+        y : CORONAL ap
+        ny = 1320 (660)
+        5400 : -10 : -7790 - 10
+
+        z : HORIZONTAL dv
+        nz = 800 (400)
+        332 : -10 : -7658 - 10
+
      -->
 
 
@@ -96,6 +110,14 @@
 
         <span>highlighted brain region: </span>
         <div id="region-info"></div>
+        <div id="coord">
+            <span class="coord-name">ml</span>
+            <span class="coord-value" id="coord-ml">-39</span>
+            <span class="coord-name">ap</span>
+            <span class="coord-value" id="coord-ap">-1200</span>
+            <span class="coord-name">dv</span>
+            <span class="coord-value" id="coord-dv">-3668</span>
+        </div>
     </div>
 
 

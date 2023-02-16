@@ -33,6 +33,9 @@ function setSliceSVG(axis, idx) {
         let t = 237 + 215 * (x - .5);
         document.getElementById('horizontal-vline').setAttribute("x1", t);
         document.getElementById('horizontal-vline').setAttribute("x2", t);
+
+        // ML coordinate.
+        document.getElementById('coord-ml').innerHTML = (-5739 + 10 * idx);
     }
 
     else if (axis == 'coronal') {
@@ -49,6 +52,9 @@ function setSliceSVG(axis, idx) {
         let t = 174 + 264 * (y - .5);
         document.getElementById('horizontal-hline').setAttribute("y1", t);
         document.getElementById('horizontal-hline').setAttribute("y2", t);
+
+        // AP coordinate.
+        document.getElementById('coord-ap').innerHTML = (5400 - 10 * idx);
     }
 
     else if (axis == 'horizontal') {
@@ -61,6 +67,9 @@ function setSliceSVG(axis, idx) {
         let w = 170 + 198 * (y - .5);
         document.getElementById('sagittal-hline').setAttribute("y1", w);
         document.getElementById('sagittal-hline').setAttribute("y2", w);
+
+        // DV coordinate.
+        document.getElementById('coord-dv').innerHTML = (332 - 10 * idx);
     }
 };
 setSliceSVG = throttle(setSliceSVG, 15);

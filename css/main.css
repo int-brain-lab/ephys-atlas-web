@@ -197,10 +197,23 @@ body {
 }
 
 
-
+#feature-dropdown-container span {
+    /* margin-right: 20px; */
+}
 
 #region-info {
     display: inline;
+    margin-right: 20px;
+}
+
+
+
+#coord {
+    display: inline;
+}
+
+#coord .coord-name {
+    font-weight: bold;
 }
 
 
