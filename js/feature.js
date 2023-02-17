@@ -19,14 +19,15 @@ class Feature {
         let max = await svgdb.getFeatureStat(feature, "max");
         this.featureMax.innerHTML = displayNumber(max);
 
-        for (const [idx, acronym] of Object.entries(REGIONS)) {
-            let p = document.querySelector(`path.region_${idx}`);
-            console.log(p);
-            let color = window.getComputedStyle(p).fill;
-            let hexcode = rgb2hex(color);
-            console.log(acronym, hexcode);
-            if (unity)
-                unity.SendMessage('main', 'SetColor', `${acronym}:${hexcode}`);
+        if (window.unity) {
+            for (const [idx, acronym] of Object.entries(REGIONS)) {
+                let p = document.querySelector(`path.region_${idx}`);
+                if (!p) continue;
+                let color = window.getComputedStyle(p).fill;
+                let hexcode = rgb2hex(color);
+                // console.log(acronym, hexcode);
+                window.unity.SendMessage('main', 'SetColor', `${acronym}:${hexcode}`);
+            }
         }
     }
 };

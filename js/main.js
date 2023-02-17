@@ -1,4 +1,5 @@
 
+window.unity = null;
 const splash = new Splash();
 const svgdb = new SVGDB();
 const feature = new Feature();
