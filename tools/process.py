@@ -20,7 +20,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-from pandas.core.groupby import SeriesGroupBy
+from pandas.core.groupby import DataFrameGroupBy
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, to_hex
@@ -320,7 +320,7 @@ class FeatureProcessor:
         self.df = df
 
         # df is a grouped DataFrame where atlas_id is the index.
-        if isinstance(df, SeriesGroupBy):
+        if isinstance(df, DataFrameGroupBy):
             self.fet_m = df.mean(numeric_only=True)
             self.fet_s = df.std(numeric_only=True)
             self.fet_min = df.min()
@@ -474,20 +474,20 @@ if __name__ == '__main__':
     ##############
 
     # Load a CSV file and remap to use the atlas_id instead of the acronym.
-    name = 'reward'
-    df = pd.read_csv(DATA_DIR / f'csv/{name}.csv')
-    df = df[df.columns[:4]]
-    df = df.dropna(subset=['region'])
+    for name in ('block', 'choice', 'reward', 'stimulus'):
+        df = pd.read_csv(DATA_DIR / f'csv/{name}.csv')
+        df = df[df.columns[:4]]
+        df = df.dropna(subset=['region'])
 
-    br = pd.read_parquet(DATA_DIR / 'pqt/brain_regions_for_viz.pqt')
-    br_mapping = {acronym: int(atlas_id)
-                  for atlas_id, acronym in zip(br['atlas_id'], br['acronym'])}
+        br = pd.read_parquet(DATA_DIR / 'pqt/brain_regions_for_viz.pqt')
+        br_mapping = {acronym: int(atlas_id)
+                      for atlas_id, acronym in zip(br['atlas_id'], br['acronym'])}
 
-    df['atlas_id'] = [br_mapping[acronym] for acronym in df['region']]
-    df = df.set_index('atlas_id')
-    df = df.drop(columns=['region'])
+        df['atlas_id'] = [br_mapping[acronym] for acronym in df['region']]
+        df = df.set_index('atlas_id')
+        df = df.drop(columns=['region'])
 
-    process_grouped(df, f"bwm_{name}")
+        process_grouped(df, f"bwm_{name}")
 
     ##############
 
