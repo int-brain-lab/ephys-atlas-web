@@ -307,7 +307,7 @@ def generate_regions_css(idx, hex, acronym):
         # bar-plot li.region_{idx_} .bar {{ background-color: var(--region-{idx_}); }}
         # bar-plot li.region_{idx_} .acronym {{ color: var(--region-{idx_}); }}
         ''') for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
-    write_text(css, DATA_DIR / 'region_colors.css')
+    write_text(css, DATA_DIR / 'css/region_colors.css')
 
 
 class FeatureProcessor:
@@ -385,7 +385,7 @@ class FeatureProcessor:
              }
              } for fet in self.features]
 
-        save_json(features_obj, DATA_DIR / filename)
+        save_json(features_obj, DATA_DIR / "json" / filename)
 
     def generate_features_css(self, values, filename):
         print(f"Generating {filename}")
@@ -425,11 +425,11 @@ class FeatureProcessor:
         css = css.replace('nan%', '0%')
 
         # Save the CSS file.
-        write_text(css, DATA_DIR / filename)
+        write_text(css, DATA_DIR / "css" / filename)
 
     def generate_features(self):
         # Generate the JSON feature file.
-        self.generate_features_js(f'features_{self.name}.js')
+        self.generate_features_js(f'features_{self.name}.json')
 
         # Generate one CSS file per feature.
         for fet in self.features:
