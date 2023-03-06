@@ -1,6 +1,6 @@
 
 function setupUnity() {
-    return;
+    console.debug("setup Unity");
     createUnityInstance(document.getElementById("unity-div"), {
         dataUrl: "data/webgl.data.gz",
         frameworkUrl: "data/webgl.framework.js.gz",

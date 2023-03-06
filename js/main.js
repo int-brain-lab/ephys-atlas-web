@@ -1,3 +1,4 @@
+const ENABLE_UNITY = false;
 
 window.unity = null;
 const splash = new Splash();
@@ -26,4 +27,6 @@ setupSlider('sagittal');
 setupSlider('horizontal');
 
 setupFeatureDropdown();
-setupUnity();
+if (ENABLE_UNITY) {
+    setupUnity();
+}
