@@ -11,7 +11,7 @@ class Feature {
     }
 
     async change(feature) {
-        this.featureStyle.href = `data/regions_${feature}.css`;
+        this.featureStyle.href = `data/css/regions_${feature}.css`;
 
         let min = await svgdb.getFeatureStat(feature, "min");
         this.featureMin.innerHTML = displayNumber(min);
