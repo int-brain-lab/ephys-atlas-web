@@ -16,7 +16,7 @@ SLICE_MAX = {
 /*************************************************************************************************/
 
 function setSliceSVG(axis, idx) {
-    svgdb.getSlice(axis, idx);
+    SVG.getSlice(axis, idx);
 
     if (axis == 'sagittal') {
         let x = idx / SLICE_MAX[axis];

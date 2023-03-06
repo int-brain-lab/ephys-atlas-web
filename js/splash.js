@@ -18,6 +18,10 @@ class Splash {
         this.splash.style.display = 'none';
     }
 
+    add(x) {
+        this.set(this.progress + x);
+    }
+
     set(value) {
         // console.log("set splash to", value);
         this.progress = value;

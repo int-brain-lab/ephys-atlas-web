@@ -19,16 +19,6 @@ async function downloadSlices() {
 
 
 /*************************************************************************************************/
-/* Features                                                                                      */
-/*************************************************************************************************/
-
-async function downloadFeatures() {
-    return downloadJSON(`/data/features.json`);
-}
-
-
-
-/*************************************************************************************************/
 /* SVG local database                                                                            */
 /*************************************************************************************************/
 
@@ -52,7 +42,6 @@ class SVGDB {
             horizontal: "idx,svg",
             sagittal: "idx,svg",
             // extra: "idx,svg",
-            features: "feature,data,statistics",
         });
 
         let that = this;
@@ -62,68 +51,49 @@ class SVGDB {
             that.coronal = this.db.table("coronal");
             that.horizontal = this.db.table("horizontal");
             that.sagittal = this.db.table("sagittal");
-            that.features = this.db.table("features");
-
-
-            // Fill the database with the features data.
-            let count = await that.features.count();
-            if (count == 0) {
-                splash.start();
-
-                // 10%
-                splash.set(10);
-
-                console.log("loading the features...");
-
-                let features = await downloadFeatures();
-
-                // 20%
-                splash.set(20);
-
-                // Put the feature data in the database.
-                await that.features.bulkPut(features);
-
-                // 30%
-                splash.set(30);
-
-                console.log(`successfully loaded the features!`);
-            }
 
             // Fill the database with the SVG data.
-            count = await that.coronal.count();
+            let count = await that.coronal.count();
             if (count == 0) {
                 console.log("loading the SVG data...");
 
                 // Download the SVG slices.
                 let slices = await downloadSlices();
+                console.debug('done downloading slices');
 
-                // 40%
-                splash.set(40);
+                // ***** SPLASH *****
+                SPLASH.add(30);
+                // ***** SPLASH *****
 
                 // Put the SVG data in the database.
                 await that.coronal.bulkPut(slices['coronal']);
-
-                // 60%
-                splash.set(60);
-
                 console.debug('done loading coronal slices');
 
+                // ***** SPLASH *****
+                SPLASH.add(20);
+                // ***** SPLASH *****
+
                 await that.horizontal.bulkPut(slices['horizontal']);
-
-                // 80%
-                splash.set(80);
-
                 console.debug('done loading horizontal slices');
+
+                // ***** SPLASH *****
+                SPLASH.add(20);
+                // ***** SPLASH *****
 
                 await that.sagittal.bulkPut(slices['sagittal']);
                 console.debug('done loading sagittal slices');
 
+                // ***** SPLASH *****
+                SPLASH.add(20);
+                // ***** SPLASH *****
+
                 console.log("successfully loaded SVG data!");
             }
-
-            // 100%
-            splash.set(100);
-
+            else {
+                // ***** SPLASH *****
+                SPLASH.add(90);
+                // ***** SPLASH *****
+            }
         });
     }
 
@@ -134,17 +104,5 @@ class SVGDB {
                 document.getElementById(`figure-${axis}`).innerHTML = svg;
             }
         });
-    }
-
-    async getFeature(feature, region_idx) {
-        if (!this.features) return null;
-        let item = await this.features.get(feature);
-        return item["data"][region_idx];
-    }
-
-    async getFeatureStat(feature, stat) {
-        if (!this.features) return null;
-        let item = await this.features.get(feature);
-        return item["statistics"][stat];
     }
 }

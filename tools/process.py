@@ -354,7 +354,7 @@ class FeatureProcessor:
         generate_regions_js(self.idx, self.acronym)
         generate_regions_css(self.idx, self.hex, self.acronym)
 
-    def generate_features_js(self, filename):
+    def generate_features_json(self, filename):
         print(f"Generating {filename}")
         # Each column of df corresponds to a feature.
         # acronyms = df.acronym.first()  # index is atlas_id
@@ -374,16 +374,16 @@ class FeatureProcessor:
             for atlas_id in self.regions} for fet in self.features}
 
         # Generate the Python dictionary with all feature/region values.
-        features_obj = [
-            {"feature": fet,
-             "data":   data[fet],
-             "statistics": {  # Collect statistics across regions, for each feature. Used for client bar plot.
-                 'mean': float_json(self.fet_m[fet].mean()),
-                 'std': float_json(self.fet_m[fet].std()),
-                 'min': float_json(self.fet_m[fet].min()),
-                 'max': float_json(self.fet_m[fet].max()),
-             }
-             } for fet in self.features]
+        features_obj = {fet:
+                        {"data":   data[fet],
+                         # Collect statistics across regions, for each feature. Used for bar plot.
+                         "statistics": {
+                            'mean': float_json(self.fet_m[fet].mean()),
+                            'std': float_json(self.fet_m[fet].std()),
+                            'min': float_json(self.fet_m[fet].min()),
+                            'max': float_json(self.fet_m[fet].max()),
+                        }
+                        } for fet in self.features}
 
         save_json(features_obj, DATA_DIR / "json" / filename)
 
@@ -429,7 +429,7 @@ class FeatureProcessor:
 
     def generate_features(self):
         # Generate the JSON feature file.
-        self.generate_features_js(f'features_{self.name}.json')
+        self.generate_features_json(f'features_{self.name}.json')
 
         # Generate one CSS file per feature.
         for fet in self.features:
@@ -456,23 +456,19 @@ def process_grouped(df, name):
     fp.generate_features()
 
 
-# -------------------------------------------------------------------------------------------------
-# Entry-point
-# -------------------------------------------------------------------------------------------------
-if __name__ == '__main__':
+def make_ephys_features():
+    # Process features.
+    df_sessions = pd.read_parquet(
+        DATA_DIR / 'pqt/features_for_viz_lateralised.pqt')
 
-    # # Process features.
-    # df_sessions = pd.read_parquet(
-    #     DATA_DIR / 'pqt/features_for_viz_lateralised.pqt')
+    # Lateralize the sessions DataFrame.
+    df_sessions = lateralize_features(df_sessions)
 
-    # # Lateralize the sessions DataFrame.
-    # df_sessions = lateralize_features(df_sessions)
+    # Process the DataFrame.
+    process_sessions(df_sessions, 'ephys')
 
-    # # Process the DataFrame.
-    # process_sessions(df_sessions, 'ephys')
 
-    ##############
-
+def make_bwm_features():
     # Load a CSV file and remap to use the atlas_id instead of the acronym.
     for name in ('block', 'choice', 'reward', 'stimulus'):
         df = pd.read_csv(DATA_DIR / f'csv/{name}.csv')
@@ -488,6 +484,15 @@ if __name__ == '__main__':
         df = df.drop(columns=['region'])
 
         process_grouped(df, f"bwm_{name}")
+
+
+# -------------------------------------------------------------------------------------------------
+# Entry-point
+# -------------------------------------------------------------------------------------------------
+
+if __name__ == '__main__':
+
+    make_ephys_features()
 
     ##############
 

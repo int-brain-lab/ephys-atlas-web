@@ -1,11 +1,19 @@
 const ENABLE_UNITY = false;
 
 window.unity = null;
-const splash = new Splash();
-const svgdb = new SVGDB();
-const feature = new Feature();
-const highlighter = new Highlighter();
-const selector = new Selector();
+
+const SPLASH = new Splash();
+SPLASH.start();
+SPLASH.set(0);
+
+// splash: 0->20 %
+const FEATURE = new Feature();
+
+// splash: 20->100 %
+const SVG = new SVGDB();
+
+const HIGHLIGHTER = new Highlighter();
+const SELECTOR = new Selector();
 
 setupSVGHighlighting('coronal');
 setupSVGHighlighting('sagittal');
