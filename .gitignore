@@ -53,7 +53,9 @@ sysinfo.txt
 *.apk
 *.unitypackage
 
-data/*.css
-data/*.json
+data/**/*.css
+data/**/*.js*
+data/**/*.svg
+data/**/*.csv
 data/*webgl*
 **/Builds/*

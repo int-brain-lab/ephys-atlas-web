@@ -21,6 +21,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 from pandas.core.groupby import DataFrameGroupBy
+import matplotlib as mpl
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, to_hex
@@ -51,8 +52,8 @@ Steps to cleanup the SVGs:
 # -------------------------------------------------------------------------------------------------
 
 ROOT_DIR = Path(__file__).parent.parent
-COLORMAP = 'viridis'
-COLORMAP_VALUE_COUNT = 128  # number of different values for the colormap
+COLORMAPS = ('viridis', 'magma')
+COLORMAP_VALUE_COUNT = 100  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
 NS = "http://www.w3.org/2000/svg"
@@ -100,6 +101,27 @@ def run_serial(dir, func):
 def lateralize_features(df):
     df['atlas_id'] = -df['atlas_id'].abs()
     return df
+
+
+# -------------------------------------------------------------------------------------------------
+# Colormaps
+# -------------------------------------------------------------------------------------------------
+
+def generate_colormaps():
+    out = {}
+    for name in COLORMAPS:
+        cmap = mpl.colormaps[name]
+        colors = cmap(np.linspace(0, 1, COLORMAP_VALUE_COUNT))[:, :3]
+        out[name] = [to_hex(c) for c in colors]
+    js = json.dumps(out)
+
+    # Generate regions.js, git tracked.
+    print("Generating colormaps.js...")
+    # js = ''.join(
+    #     f'''
+    # "{name}": "{values}",''' for name, values in out.items())
+    js = f'const COLORMAPS = {js}\n\n'
+    write_text(js, DATA_DIR / 'js/colormaps.js')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -292,7 +314,7 @@ def generate_regions_js(idx, acronym):
         f'''
     "{idx_}": "{acronym_}",''' for (idx_, acronym_) in zip(idx, acronym))
     js = f'const REGIONS = {{\n{js}\n}}\n'
-    write_text(js, ROOT_DIR / 'js/regions.js')
+    write_text(js, DATA_DIR / 'js/regions.js')
 
 
 def generate_regions_css(idx, hex, acronym):
@@ -304,8 +326,8 @@ def generate_regions_css(idx, hex, acronym):
     css += ''.join(
         dedent(f'''
         /* {acronym_} */
-        # bar-plot li.region_{idx_} .bar {{ background-color: var(--region-{idx_}); }}
-        # bar-plot li.region_{idx_} .acronym {{ color: var(--region-{idx_}); }}
+        #bar-plot li.region_{idx_} .bar {{ background-color: var(--region-{idx_}); }}
+        #bar-plot li.region_{idx_} .acronym {{ color: var(--region-{idx_}); }}
         ''') for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
     write_text(css, DATA_DIR / 'css/region_colors.css')
 
@@ -349,10 +371,16 @@ class FeatureProcessor:
         self.acronym = self.br['acronym']
         self.hex = self.br['hex']
 
+    # Regions
+    # ---------------------------------------------------------------------------------------------
+
     def generate_regions(self):
         generate_regions_html(self.idx, self.acronym)
         generate_regions_js(self.idx, self.acronym)
         generate_regions_css(self.idx, self.hex, self.acronym)
+
+    # Features
+    # ---------------------------------------------------------------------------------------------
 
     def generate_features_json(self, filename):
         print(f"Generating {filename}")
@@ -362,15 +390,20 @@ class FeatureProcessor:
         # All dataframe atlas_ids must be in the brain region atlas.
         assert(np.all(np.in1d(self.regions, self.atlas_id)))
 
-        data = {fet: {self.br_mapping[atlas_id]:        # the key is the brain region idx
-                      {
-            'mean': float_json(self.fet_m.loc[atlas_id][fet]),
-            'std': float_json(self.fet_s.loc[atlas_id][fet]),
-            'min': float_json(self.fet_min.loc[atlas_id][fet]),
-            'max': float_json(self.fet_max.loc[atlas_id][fet]),
-        }
-            if self.fet_s is not None else
-            {'mean': float_json(self.fet_m.loc[atlas_id][fet])}
+        if self.fet_s is not None:
+            dfs = (
+                ('mean', self.fet_m),
+                ('std', self.fet_s),
+                ('min', self.fet_min),
+                ('max', self.fet_max),
+            )
+        else:
+            dfs = (('mean', self.fet_m),)
+
+        data = {fet: {
+            self.br_mapping[atlas_id]:        # the key is the brain region idx
+            {stat: float_json(df.loc[atlas_id][fet])
+             for stat, df in dfs}
             for atlas_id in self.regions} for fet in self.features}
 
         # Generate the Python dictionary with all feature/region values.
@@ -378,63 +411,65 @@ class FeatureProcessor:
                         {"data":   data[fet],
                          # Collect statistics across regions, for each feature. Used for bar plot.
                          "statistics": {
-                            'mean': float_json(self.fet_m[fet].mean()),
-                            'std': float_json(self.fet_m[fet].std()),
-                            'min': float_json(self.fet_m[fet].min()),
-                            'max': float_json(self.fet_m[fet].max()),
+                            stat: {
+                                'mean': float_json(df[fet].mean()),
+                                'std': float_json(df[fet].std()),
+                                'min': float_json(df[fet].min()),
+                                'max': float_json(df[fet].max()),
+                            } for stat, df in dfs
                         }
                         } for fet in self.features}
 
         save_json(features_obj, DATA_DIR / "json" / filename)
 
-    def generate_features_css(self, values, filename):
-        print(f"Generating {filename}")
+    # def generate_features_css(self, values, filename):
+    #     print(f"Generating {filename}")
 
-        cmap = cm.get_cmap(COLORMAP, COLORMAP_VALUE_COUNT)
-        br_mapping = self.br_mapping
-        regions = self.atlas_id
-        acronyms = self.acronym
-        colors = self.hex
+    #     cmap = cm.get_cmap(COLORMAP, COLORMAP_VALUE_COUNT)
+    #     br_mapping = self.br_mapping
+    #     regions = self.atlas_id
+    #     acronyms = self.acronym
+    #     colors = self.hex
 
-        # Normalization.
-        norm = plt.Normalize(vmin=values.min(), vmax=values.max())
-        values_n = norm(values)
+    #     # Normalization.
+    #     norm = plt.Normalize(vmin=values.min(), vmax=values.max())
+    #     values_n = norm(values)
 
-        # Compute the color of each brain region, using a colormap.
-        colors = cmap(values_n)
+    #     # Compute the color of each brain region, using a colormap.
+    #     colors = cmap(values_n)
 
-        # Generate the CSS class rules.
-        region_colors = [
-            (br_mapping[atlas_id],
-             f"svg path.region_{br_mapping[atlas_id]} {{ fill: {to_hex(color)}; }} /* {acronym}: {values.loc[atlas_id]} */")
-            for (atlas_id, color, acronym) in zip(regions, colors, acronyms)]
+    #     # Generate the CSS class rules.
+    #     region_colors = [
+    #         (br_mapping[atlas_id],
+    #          f"svg path.region_{br_mapping[atlas_id]} {{ fill: {to_hex(color)}; }} /* {acronym}: {values.loc[atlas_id]} */")
+    #         for (atlas_id, color, acronym) in zip(regions, colors, acronyms)]
 
-        region_bars = [
-            (br_mapping[atlas_id],
-             f"#bar-plot li.region_{br_mapping[atlas_id]} .bar {{ width: {value * 100:.2f}%; }} /* {acronym}: {values.loc[atlas_id]} */")
-            for (atlas_id, value, acronym) in zip(regions, values_n, acronyms)]
+    #     region_bars = [
+    #         (br_mapping[atlas_id],
+    #          f"#bar-plot li.region_{br_mapping[atlas_id]} .bar {{ width: {value * 100:.2f}%; }} /* {acronym}: {values.loc[atlas_id]} */")
+    #         for (atlas_id, value, acronym) in zip(regions, values_n, acronyms)]
 
-        css = '''/* Region colors */\n\n'''
-        css += '\n'.join(s for _, s in sorted(region_colors,
-                         key=itemgetter(0)))
+    #     css = '''/* Region colors */\n\n'''
+    #     css += '\n'.join(s for _, s in sorted(region_colors,
+    #                      key=itemgetter(0)))
 
-        css += '''\n\n/* Bar plot */\n\n'''
-        css += '\n'.join(s for _, s in sorted(region_bars, key=itemgetter(0)))
+    #     css += '''\n\n/* Bar plot */\n\n'''
+    #     css += '\n'.join(s for _, s in sorted(region_bars, key=itemgetter(0)))
 
-        # HACK: remove NaNs
-        css = css.replace('nan%', '0%')
+    #     # HACK: remove NaNs
+    #     css = css.replace('nan%', '0%')
 
-        # Save the CSS file.
-        write_text(css, DATA_DIR / "css" / filename)
+    #     # Save the CSS file.
+    #     write_text(css, DATA_DIR / "css" / filename)
 
     def generate_features(self):
         # Generate the JSON feature file.
         self.generate_features_json(f'features_{self.name}.json')
 
-        # Generate one CSS file per feature.
-        for fet in self.features:
-            self.generate_features_css(
-                self.fet_m[fet], f'regions_{self.name}_{fet}.css')
+        # # Generate one CSS file per feature.
+        # for fet in self.features:
+        #     self.generate_features_css(
+        #         self.fet_m[fet], f'regions_{self.name}_{fet}.css')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -447,6 +482,7 @@ def process_sessions(df_sessions, name):
 
     # Feature processor.
     fp = FeatureProcessor(df, name)
+    fp.generate_regions()
     fp.generate_features()
 
 
@@ -492,7 +528,9 @@ def make_bwm_features():
 
 if __name__ == '__main__':
 
+    # generate_colormaps()
     make_ephys_features()
+    make_bwm_features()
 
     ##############
 

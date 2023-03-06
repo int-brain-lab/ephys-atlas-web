@@ -3,8 +3,45 @@
 /* Feature                                                                                       */
 /*************************************************************************************************/
 
+const DEFAULT_FEATURE = "psd_alpha";
+const DEFAULT_STAT = "mean";
+const DEFAULT_COLORMAP = "viridis";
+
+
 async function downloadFeatures(name) {
     return downloadJSON(`/data/json/features_${name}.json`);
+}
+
+
+
+function normalize_value(value, vmin, vmax) {
+    console.assert(vmin < vmax);
+    value = clamp(value, vmin, vmax);
+
+    let normalized = Math.floor(100 * (value - vmin) / (vmax - vmin));
+    console.assert(normalized >= 0);
+    console.assert(normalized <= 100);
+
+    return normalized;
+}
+
+
+
+function make_hex(cmap, normalized) {
+    return COLORMAPS[cmap][clamp(normalized, 0, 99)];
+}
+
+
+
+function make_region_color(cmap, region_idx, value, normalized) {
+    let hex = make_hex(cmap, normalized);
+    return `svg path.region_${region_idx} { fill: ${hex}; } /* FRP5: ${value} */`;
+}
+
+
+
+function make_region_bar(region_idx, value, normalized) {
+    return `#bar-plot li.region_${region_idx} .bar { width: ${normalized}%; } /* TTv: ${value} */`;
 }
 
 
@@ -12,39 +49,62 @@ async function downloadFeatures(name) {
 // One instance per feature set.
 class Feature {
     constructor() {
-        this.featureStyle = document.getElementById('feature-style');
+        // this.featureStyle = document.getElementById('feature-style');
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
-        this.stat = "mean";
+        this.stat = DEFAULT_STAT;
+        this.cmap = DEFAULT_COLORMAP;
 
-        this.set_set("ephys").then(() => {
-            let fet_name = Object.keys(this.features)[0];
+        this.style = document.getElementById('style-features').sheet;
+
+        this.set_feature_set("ephys").then(() => {
+            let fet_name = DEFAULT_FEATURE;
             this.set_feature(fet_name);
 
             // ***** SPLASH *****
             SPLASH.add(10);
             // ***** SPLASH *****
+
+            this.update();
         });
     }
 
-    async set_set(fet_set) {
+    async set_feature_set(fet_set) {
         // mapping fet_name: {data: {id: {mean...}, statistics: {mean: xxx, ...}}
         this.features = await downloadFeatures(fet_set || "ephys");
     }
 
-    // Change a feature within the current feature set.
-    set_feature(fet_name) {
-        // TODO: update the CSS colormap
-
+    update() {
         // mapping {data: {id: {mean...}, statistics: {mean: xxx, ...}}
-        this.fet_name = fet_name;
-        let fet = this.features[fet_name];
-        let data = fet["data"];
+        let fet = this.features[this.fet_name];
         let stats = fet["statistics"];
 
-        this.featureMin.innerHTML = displayNumber(stats["min"]);
-        this.featureMax.innerHTML = displayNumber(stats["max"]);
+        // mapping {idx: {mean...}, statistics: {mean: xxx, ...}
+        let data = fet["data"];
 
+        let vmin = stats[this.stat]["min"];
+        let vmax = stats[this.stat]["max"];
+
+        clearStyle(this.style);
+        let stl = "";
+        for (let region_idx in data) {
+            let value = data[region_idx][this.stat];
+            let normalized = normalize_value(value, vmin, vmax);
+
+            stl = make_region_color(this.cmap, region_idx, value, normalized);
+            this.style.insertRule(stl);
+
+            stl = make_region_bar(region_idx, value, normalized);
+            this.style.insertRule(stl);
+        }
+
+        this.featureMin.innerHTML = displayNumber(vmin);
+        this.featureMax.innerHTML = displayNumber(vmax);
+
+        this.update_unity();
+    }
+
+    update_unity() {
         // Update Unity.
         if (window.unity) {
             for (const [idx, acronym] of Object.entries(REGIONS)) {
@@ -58,9 +118,21 @@ class Feature {
         }
     }
 
+    // Change a feature within the current feature set.
+    set_feature(fet_name) {
+        this.fet_name = fet_name;
+        this.update();
+    }
+
     // set the stat: mean, std, min, max
     set_stat(stat) {
         this.stat = stat;
+        this.update();
+    }
+
+    set_colormap(cmap) {
+        this.cmap = cmap;
+        this.update();
     }
 
     get(region_idx) {

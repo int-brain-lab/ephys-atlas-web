@@ -6,10 +6,7 @@ const SPLASH = new Splash();
 SPLASH.start();
 SPLASH.set(0);
 
-// splash: 0->20 %
 const FEATURE = new Feature();
-
-// splash: 20->100 %
 const SVG = new SVGDB();
 
 const HIGHLIGHTER = new Highlighter();
