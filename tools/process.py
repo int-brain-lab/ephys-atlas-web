@@ -345,11 +345,13 @@ class FeatureProcessor:
         if isinstance(df, DataFrameGroupBy):
             self.fet_m = df.mean(numeric_only=True)
             self.fet_s = df.std(numeric_only=True)
+            self.fet_med = df.median(numeric_only=True)
             self.fet_min = df.min()
             self.fet_max = df.max()
         else:
             self.fet_m = df
             self.fet_s = None
+            self.fet_med = None
             self.fet_min = None
             self.fet_max = None
 
@@ -393,6 +395,7 @@ class FeatureProcessor:
         if self.fet_s is not None:
             dfs = (
                 ('mean', self.fet_m),
+                ('median', self.fet_med),
                 ('std', self.fet_s),
                 ('min', self.fet_min),
                 ('max', self.fet_max),
@@ -413,6 +416,7 @@ class FeatureProcessor:
                          "statistics": {
                             stat: {
                                 'mean': float_json(df[fet].mean()),
+                                'median': float_json(df[fet].median()),
                                 'std': float_json(df[fet].std()),
                                 'min': float_json(df[fet].min()),
                                 'max': float_json(df[fet].max()),
@@ -528,9 +532,9 @@ def make_bwm_features():
 
 if __name__ == '__main__':
 
-    generate_colormaps()
-    # make_ephys_features()
-    # make_bwm_features()
+    # generate_colormaps()
+    make_ephys_features()
+    make_bwm_features()
 
     ##############
 
