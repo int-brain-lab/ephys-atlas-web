@@ -33,6 +33,7 @@ setupSlider('horizontal');
 
 setupFeatureDropdown();
 setupColormapDropdown();
+setupStatDropdown();
 
 if (ENABLE_UNITY) {
     setupUnity();
