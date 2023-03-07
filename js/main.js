@@ -32,6 +32,8 @@ setupSlider('sagittal');
 setupSlider('horizontal');
 
 setupFeatureDropdown();
+setupColormapDropdown();
+
 if (ENABLE_UNITY) {
     setupUnity();
 }

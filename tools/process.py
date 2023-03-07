@@ -52,7 +52,7 @@ Steps to cleanup the SVGs:
 # -------------------------------------------------------------------------------------------------
 
 ROOT_DIR = Path(__file__).parent.parent
-COLORMAPS = ('viridis', 'magma')
+COLORMAPS = ('viridis', 'cividis', 'magma')
 COLORMAP_VALUE_COUNT = 100  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
@@ -528,9 +528,9 @@ def make_bwm_features():
 
 if __name__ == '__main__':
 
-    # generate_colormaps()
-    make_ephys_features()
-    make_bwm_features()
+    generate_colormaps()
+    # make_ephys_features()
+    # make_bwm_features()
 
     ##############
 

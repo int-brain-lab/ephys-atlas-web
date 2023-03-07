@@ -156,3 +156,11 @@ function setupFeatureDropdown() {
         FEATURE.set_feature(fet);
     });
 }
+
+function setupColormapDropdown() {
+    const dropdown = getColormapDropdown();
+    dropdown.addEventListener('change', (e) => {
+        let fet = e.target.value;
+        FEATURE.set_colormap(fet);
+    });
+}
