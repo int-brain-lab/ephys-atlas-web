@@ -349,6 +349,10 @@ body {
 
 #bar-plot .bar_wrapper {}
 
+#bar-plot li {
+    display: none;
+}
+
 #bar-plot .bar {
     height: 10px;
     background-color: #aaa;

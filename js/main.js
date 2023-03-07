@@ -31,6 +31,7 @@ setupSlider('coronal');
 setupSlider('sagittal');
 setupSlider('horizontal');
 
+setupFeatureSetDropdown();
 setupFeatureDropdown();
 setupColormapDropdown();
 setupStatDropdown();

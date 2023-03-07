@@ -3,7 +3,13 @@
 /* Feature                                                                                       */
 /*************************************************************************************************/
 
-const DEFAULT_FEATURE = "psd_alpha";
+const DEFAULT_FEATURE = {
+    "ephys": "psd_alpha",
+    "bwm_block": "decoding_median",
+    "bwm_choice": "decoding_median",
+    "bwm_reward": "decoding_median",
+    "bwm_stimulus": "values_median",
+};
 const DEFAULT_STAT = "mean";
 const DEFAULT_COLORMAP = "viridis";
 
@@ -58,7 +64,7 @@ class Feature {
         this.style = document.getElementById('style-features').sheet;
 
         this.set_feature_set("ephys").then(() => {
-            let fet_name = DEFAULT_FEATURE;
+            let fet_name = DEFAULT_FEATURE["ephys"];
             this.set_feature(fet_name);
 
             // ***** SPLASH *****
@@ -77,10 +83,16 @@ class Feature {
     update() {
         // mapping {data: {id: {mean...}, statistics: {mean: xxx, ...}}
         let fet = this.features[this.fet_name];
+        if (!fet) {
+            console.error(`feature ${this.fet_name} is invalid`);
+            return;
+        }
         let stats = fet["statistics"];
 
         // mapping {idx: {mean...}, statistics: {mean: xxx, ...}
         let data = fet["data"];
+
+        if (!stats[this.stat]) return;
 
         let vmin = stats[this.stat]["min"];
         let vmax = stats[this.stat]["max"];
@@ -96,6 +108,9 @@ class Feature {
 
             stl = make_region_bar(region_idx, value, normalized);
             this.style.insertRule(stl);
+
+            // All bars are hidden, except the ones that are present.
+            this.style.insertRule(`#bar-plot li.region_${region_idx}{display: block;}`);
         }
 
         this.featureMin.innerHTML = displayNumber(vmin);
@@ -149,6 +164,39 @@ class Feature {
 /* Setup                                                                                         */
 /*************************************************************************************************/
 
+function setupFeatureSetDropdown() {
+    const dropdown = getFeatureSetDropdown();
+    dropdown.addEventListener('change', (e) => {
+        let fet_set = e.target.value;
+
+        FEATURE.set_feature_set(fet_set).then(() => {
+            if (fet_set == "ephys") {
+                values = [
+                    "psd_alpha",
+                    "psd_beta",
+                    "psd_delta",
+                    "psd_gamma",
+                    "psd_theta",
+                    "rms_ap",
+                    "rms_lf",
+                    "spike_rate",
+                ];
+            }
+            else {
+                values = ["decoding_median", "single_cell_perc", "manifold_distance"];
+            }
+            setOptions(getFeatureDropdown(), values);
+
+            let fet_name = DEFAULT_FEATURE[fet_set];
+            FEATURE.set_feature(fet_name);
+
+            FEATURE.update();
+        });
+    });
+}
+
+
+
 function setupFeatureDropdown() {
     const dropdown = getFeatureDropdown();
     dropdown.addEventListener('change', (e) => {
@@ -157,6 +205,8 @@ function setupFeatureDropdown() {
     });
 }
 
+
+
 function setupColormapDropdown() {
     const dropdown = getColormapDropdown();
     dropdown.addEventListener('change', (e) => {
@@ -164,6 +214,8 @@ function setupColormapDropdown() {
         FEATURE.set_colormap(fet);
     });
 }
+
+
 
 function setupStatDropdown() {
     const dropdown = getStatDropdown();

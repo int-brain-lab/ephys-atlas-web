@@ -101,6 +101,13 @@ function getFeatureDropdown() {
 
 
 
+
+function getFeatureSetDropdown() {
+    return document.getElementById('feature-set-dropdown');
+};
+
+
+
 function getColormapDropdown() {
     return document.getElementById('colormap-dropdown');
 };
@@ -110,6 +117,18 @@ function getColormapDropdown() {
 function getStatDropdown() {
     return document.getElementById('stat-dropdown');
 };
+
+
+
+function setOptions(select, values) {
+    for (let a in select.options) { select.options.remove(0); }
+    for (let val of values) {
+        let opt = document.createElement('option');
+        opt.text = val;
+        opt.value = val;
+        select.add(opt);
+    }
+}
 
 
 
