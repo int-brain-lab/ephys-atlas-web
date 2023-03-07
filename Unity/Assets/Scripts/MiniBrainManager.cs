@@ -37,7 +37,7 @@ public class MiniBrainManager : MonoBehaviour
 
         Debug.Log("Areas loaded");
 
-        TestAreas();
+        //TestAreas();
     }
 
     private void TestAreas()
