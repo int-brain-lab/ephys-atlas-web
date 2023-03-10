@@ -138,6 +138,11 @@ public class CCFTreeNode
             Task<Mesh> meshTask = AddressablesRemoteLoader.LoadCCFMesh(path);
             await meshTask;
 
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                return;
+#endif
+
             _nodeModelGO = new GameObject(Name);
             _nodeModelGO.transform.SetParent(_nodeModelParentGO.transform);
             _nodeModelGO.AddComponent<MeshFilter>();
@@ -164,6 +169,11 @@ public class CCFTreeNode
             string path = ID + "L.obj";
             Task<Mesh> meshTask = AddressablesRemoteLoader.LoadCCFMesh(path);
             await meshTask;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                return;
+#endif
 
             // Create the left/right meshes
             _nodeModelLeftGO = new GameObject(Name + "_L");

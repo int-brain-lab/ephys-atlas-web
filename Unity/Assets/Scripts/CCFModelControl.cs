@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -222,18 +223,25 @@ public class CCFModelControl : MonoBehaviour
     /// Convenience function to load all beryl nodes and set visible (if they aren't already loaded)
     /// </summary>
     /// <returns>Beryl nodes</returns>
-    public async Task<List<CCFTreeNode>> LoadBerylNodes(bool full)
+    public async Task<List<CCFTreeNode>> LoadBerylNodes(bool full, Action<CCFTreeNode> callback)
     {
         List<Task> taskHandles = new List<Task>();
         foreach (CCFTreeNode node in berylNodes)
             if (!node.IsLoaded(full))
             {
-                node.LoadNodeModel(full, !full);
+                LoadWithCallbackHelper(node, full, callback);
                 taskHandles.Add(node.GetLoadedTask(full));
             }
         await Task.WhenAll(taskHandles);
 
         return berylNodes;
+    }
+
+    private async void LoadWithCallbackHelper(CCFTreeNode node, bool full, Action<CCFTreeNode> callback)
+    {
+        node.LoadNodeModel(full, !full);
+        await node.GetLoadedTask(full);
+        callback(node);
     }
 
     /// <summary>

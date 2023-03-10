@@ -8,7 +8,11 @@ public class MiniBrainManager : MonoBehaviour
     [SerializeField] AddressablesRemoteLoader _remoteLoader;
     [SerializeField] private BrainCameraController cameraController;
 
+    [SerializeField] private List<string> _materialNames;
+    [SerializeField] private List<Material> _materialOpts;
+
     Dictionary<string, CCFTreeNode> modelNodes;
+    private Dictionary<string, Material> _materials;
 
     private void Awake()
     {
@@ -16,6 +20,10 @@ public class MiniBrainManager : MonoBehaviour
         originalTransformPositionsRight = new Dictionary<int, Vector3>();
 
         modelNodes = new();
+
+        _materials = new();
+        for (int i = 0; i < _materialNames.Count; i++)
+            _materials.Add(_materialNames[i], _materialOpts[i]);
 
         RecomputeCosmosCenters();
     }
@@ -28,12 +36,12 @@ public class MiniBrainManager : MonoBehaviour
 
         await _modelControl.GetDefaultLoadedTask();
 
-        var loadTask = _modelControl.LoadBerylNodes(false);
+        var loadTask = _modelControl.LoadBerylNodes(false, RegisterNode);
 
         await loadTask;
 
-        foreach (var node in loadTask.Result)
-            RegisterNode(node);
+        //foreach (var node in loadTask.Result)
+        //    RegisterNode(node);
 
         Debug.Log("Areas loaded");
 
@@ -71,12 +79,24 @@ public class MiniBrainManager : MonoBehaviour
         node.SetColor(ParseHexColor(color));
     }
 
+    public void SetMaterial(string materialStr)
+    {
+        int uIdx = materialStr.IndexOf(':');
+        string area = materialStr.Substring(0, uIdx);
+        string material = materialStr.Substring(uIdx + 1, materialStr.Length - uIdx - 1);
+
+        Debug.Log(area);
+        Debug.Log(material);
+
+        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area));
+        node.SetMaterial(_materials[material]);
+    }
+
     public void RegisterNode(CCFTreeNode node)
     {
         node.SetNodeModelVisibility_Left(true);
         node.SetNodeModelVisibility_Right(true);
         modelNodes.Add(node.ShortName, node);
-        Debug.Log(node.ShortName);
 
         if (node != null && node.NodeModelLeftGO != null)
         {
