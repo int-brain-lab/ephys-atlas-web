@@ -35,6 +35,7 @@ setupFeatureSetDropdown();
 setupFeatureDropdown();
 setupColormapDropdown();
 setupStatDropdown();
+setupControlButtons();
 
 if (ENABLE_UNITY) {
     setupUnity();

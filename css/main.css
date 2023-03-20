@@ -226,8 +226,31 @@ body {
     cursor: pointer;
 }
 
-#control-panel .share button:hover {
+#control-panel button:hover {
     filter: brightness(110%);
+}
+
+#control-panel .advanced {
+    margin: 10px 0;
+}
+
+#control-panel .advanced summary {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#control-panel .advanced button#reset-button {
+    margin: 10px 0;
+    padding: 6px 10px;
+    font-size: 1.2em;
+    background-color: #FF5C00aa;
+    font-weight: bold;
+    border-radius: 8px;
+    width: 100%;
+    color: white;
+    border: 0;
+    text-align: center;
+    cursor: pointer;
 }
 
 #control-panel .text {
