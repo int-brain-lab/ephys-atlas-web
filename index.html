@@ -169,7 +169,7 @@
         </details>
     </div>
 
-    <div id="region-info">hello</div>
+    <div id="region-info"></div>
 
 
     <!-------------------------------------------------------------------------------------------->
@@ -3826,6 +3826,7 @@
 
             <div id="slider-coronal-container">
                 <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2">
+                <div class="slice-label">coronal projection</div>
                 <div class="coord-value" id="coord-ap">AP: -1200</div>
             </div>
 
@@ -3972,6 +3973,7 @@
 
             <div id="slider-sagittal-container">
                 <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2">
+                <div class="slice-label">sagittal projection</div>
                 <div class="coord-value" id="coord-ml">ML: -39</div>
             </div>
 
@@ -4110,6 +4112,11 @@
                     <line id="top-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333" stroke-width="1.5px" />
                 </g>
             </svg>
+
+            <div id="slider-top-container">
+                <input type="range" class="slider" style="visibility: hidden;">
+                <div class="slice-label">top projection</div>
+            </div>
         </div>
 
 
@@ -4552,6 +4559,7 @@
 
             <div id="slider-horizontal-container">
                 <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2">
+                <div class="slice-label">horizontal projection</div>
                 <div class="coord-value" id="coord-dv">DV: -3668</div>
             </div>
 
@@ -4962,6 +4970,10 @@
                 </g>
             </svg>
 
+            <div id="slider-top-container">
+                <input type="range" class="slider" style="visibility: hidden;">
+                <div class="slice-label">Swanson projection</div>
+            </div>
         </div>
 
 

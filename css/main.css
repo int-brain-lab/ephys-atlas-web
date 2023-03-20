@@ -478,11 +478,20 @@ svg:hover {
 
 .slider {
     width: 200px;
-    margin: 12px auto;
+    margin: 5px auto;
+}
+
+.slice-label {
+    color: #333;
+    font-size: 16px;
+    font-family: roboto-condensed;
+    text-transform: uppercase;
+    margin: 5px 0 0 0;
+    padding: 0;
 }
 
 .coord-value {
-    color: #666;
+    color: #333;
     font-family: roboto-condensed;
 }
 
