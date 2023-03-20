@@ -279,38 +279,17 @@ body {
     cursor: pointer;
 }
 
-#control-panel .text {
-    height: 50px;
-}
-
-/* #feature-dropdown-container {
-    margin: 12px 12px;
-}
-
-#feature-dropdown {
-    padding: 2px 4px;
-    margin: 0 12px 0 6px;
-}
-
-
-#feature-dropdown-container span {
-}
-
 #region-info {
-    display: inline;
-    margin-right: 20px;
+    visibility: hidden;
+    position: absolute;
+    background-color: #eef1f2;
+    opacity: 90%;
+    top: 0;
+    left: 0;
+    padding: 10px;
+    z-index: 1000;
 }
 
-
-
-#coord {
-    display: inline;
-}
-
-#coord .coord-name {
-    font-weight: bold;
-}
- */
 
 
 /*************************************************************************************************/

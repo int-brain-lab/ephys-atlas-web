@@ -66,7 +66,22 @@ class Selector {
 /* Setup                                                                                         */
 /*************************************************************************************************/
 
-async function highlight(target) {
+function setRegionInfoValue(id, value) {
+    const info = document.getElementById('region-info');
+    let name = REGIONS[id];
+    let meanDisplay = displayNumber(value);
+    info.innerHTML = `<strong>${name}</strong>: ${meanDisplay}`;
+}
+
+function setRegionInfoPosition(e) {
+    const info = document.getElementById('region-info');
+    info.style.left = `${e.clientX + 10}px`;
+    info.style.top = `${e.clientY + 10}px`;
+    info.style.visibility = "visible";
+}
+
+async function highlight(e) {
+    let target = e.target;
     let id = getRegionID(target);
 
     // Highlight the region.
@@ -77,26 +92,26 @@ async function highlight(target) {
     if (!value) return;
 
     // Update the region info bar.
-    const info = document.getElementById('region-info');
-    let name = REGIONS[id];
-    let meanDisplay = displayNumber(value);
-    info.innerHTML = `<strong>${name}</strong>: ${meanDisplay}`;
+    setRegionInfoValue(id, value);
+    setRegionInfoPosition(e);
 }
 
 
 
 function setupSVGHighlighting(axis) {
     const svg = getSVG(axis);
+    const info = document.getElementById('region-info');
 
     svg.addEventListener('mouseover', (e) => {
         if (e.target.tagName == 'path') {
-            highlight(e.target);
+            highlight(e);
         }
     });
 
     svg.addEventListener('mouseout', (e) => {
         if (e.target.tagName == 'path') {
             HIGHLIGHTER.highlight(null);
+            info.style.visibility = "hidden";
         }
     });
 };
@@ -107,7 +122,7 @@ function setupBarHighlighting() {
     const bar = getBarPlot();
     bar.addEventListener('mousemove', throttle((e) => {
         if (e.target.tagName == 'LI') {
-            highlight(e.target);
+            highlight(e);
         }
     }, 50));
 }
