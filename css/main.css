@@ -188,7 +188,53 @@ body {
 /*  Feature dropdown                                                                             */
 /*************************************************************************************************/
 
-#feature-dropdown-container {
+#control-panel {
+    background-color: #0898d414;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 16px;
+}
+
+#control-panel .label {
+    margin: 5px 0;
+}
+
+#control-panel .control {
+    margin: 0 0 16px 0;
+}
+
+#control-panel .control select {
+    width: 100%;
+    background-color: #ffff;
+}
+
+#control-panel .share {
+    margin: 16px 0;
+}
+
+#control-panel .share button {
+    padding: 6px 10px;
+    font-size: 1.2em;
+    background-color: #0898D4;
+    font-weight: bold;
+    border-radius: 8px;
+    width: 100%;
+    color: white;
+    border: 0;
+    text-align: center;
+    cursor: pointer;
+}
+
+#control-panel .share button:hover {
+    filter: brightness(110%);
+}
+
+#control-panel .text {
+    height: 50px;
+}
+
+/* #feature-dropdown-container {
     margin: 12px 12px;
 }
 
@@ -199,7 +245,6 @@ body {
 
 
 #feature-dropdown-container span {
-    /* margin-right: 20px; */
 }
 
 #region-info {
@@ -216,7 +261,7 @@ body {
 #coord .coord-name {
     font-weight: bold;
 }
-
+ */
 
 
 /*************************************************************************************************/
