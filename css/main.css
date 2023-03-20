@@ -93,7 +93,7 @@ body {
     justify-content: center;
 
     font-family: roboto-condensed;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 300;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -189,15 +189,38 @@ body {
 /*************************************************************************************************/
 
 #control-panel {
-    background-color: #0898d414;
+    background-color: #eef1f2;
+    border-radius: 8px;
+    color: #333;
+    opacity: 90%;
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 10px;
+    right: 10px;
+    width: 200px;
+    z-index: 100;
+}
+
+#control-panel>details {
     padding: 16px;
 }
 
+#control-panel>details>summary {
+    cursor: pointer;
+    font-weight: 500;
+
+    font-size: 16px;
+    text-transform: uppercase;
+    font-family: roboto-condensed;
+
+    transition: margin 150ms ease-out;
+}
+
+#control-panel>details[open]>summary {
+    margin-bottom: 20px;
+}
+
 #control-panel .label {
-    margin: 5px 0;
+    margin: 8px 0 4px 0;
 }
 
 #control-panel .control {
@@ -207,6 +230,11 @@ body {
 #control-panel .control select {
     width: 100%;
     background-color: #ffff;
+}
+
+#control-panel .control .slider {
+    display: block;
+    width: 100%;
 }
 
 #control-panel .share {
@@ -230,13 +258,11 @@ body {
     filter: brightness(110%);
 }
 
-#control-panel .advanced {
-    margin: 10px 0;
-}
-
 #control-panel .advanced summary {
-    font-weight: bold;
     cursor: pointer;
+    font-size: 16px;
+    text-transform: uppercase;
+    font-family: roboto-condensed;
 }
 
 #control-panel .advanced button#reset-button {
@@ -474,6 +500,11 @@ svg:hover {
 .slider {
     width: 200px;
     margin: 12px auto;
+}
+
+.coord-value {
+    color: #666;
+    font-family: roboto-condensed;
 }
 
 
