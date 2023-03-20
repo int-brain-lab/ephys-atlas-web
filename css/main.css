@@ -174,6 +174,26 @@ body {
     display: none;
 }
 
+#splash .loader {
+    display: inline-block;
+    border: 16px solid #3498db;
+    border-top: 16px solid #eee;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 #splash-loading {
     z-index: 20;
     padding-top: 300px;
@@ -300,7 +320,7 @@ body {
     display: grid;
     grid-template-columns: 200px 1fr 1fr 1fr 1fr;
     /* height: calc(100vh - 180px); */
-    height: 650px;
+    height: 700px;
     max-width: 1350px;
     margin: 0 auto;
 }

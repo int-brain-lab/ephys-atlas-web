@@ -7,7 +7,7 @@ class Splash {
     constructor() {
         this.progress = 0;
         this.splash = document.getElementById('splash');
-        this.loading = document.getElementById('splash-loading');
+        this.loading = document.querySelector('#splash-loading span.progress');
     }
 
     start() {
@@ -25,7 +25,7 @@ class Splash {
     set(value) {
         // console.log("set splash to", value);
         this.progress = value;
-        this.loading.innerHTML = `Loading... ${value}%`
+        this.loading.innerHTML = value.toString();
         if (value >= 100) {
             this.end();
         }
