@@ -373,23 +373,41 @@ body {
 
 
 /*************************************************************************************************/
-/*  Bar scale                                                                                    */
+/*  Bar header                                                                                   */
 /*************************************************************************************************/
 
-#bar-scale {
-    background-color: #fff;
-    width: 182px;
-    height: 30px;
+#bar-plot-header {
     position: fixed;
-    display: inline;
+    background-color: #fff;
+    width: 175px;
+    height: 68px;
+    margin-left: 10px;
+    padding: 0;
+}
+
+#bar-plot-search input#search-input {
+    width: 100%;
+    height: 100%;
+    margin: 0 0 10px 0;
+    padding: 4px 0;
+    background-color: #fafafa;
+    border: 0;
+}
+
+#bar-plot-search input#search-input:focus-visible {
+    outline: none;
+    background-color: #f0f0f0;
+}
+
+
+#bar-scale {
     font-size: 10pt;
 }
 
 #bar-scale .bar {
     height: 10px;
     background-color: #666;
-    margin: 0 12px;
-    width: calc(100% - 24px);
+    width: 100%;
 }
 
 #bar-scale .min,
@@ -415,7 +433,7 @@ body {
 #bar-plot {
     list-style: none;
     padding-left: 10px;
-    margin-top: 40px;
+    margin-top: 80px;
 
     /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
     /* when using a SVG slider (it causes a full render of the bar plot */
@@ -429,7 +447,7 @@ body {
 
 #bar-plot li {
     margin: 0 0 4px 0;
-    padding: 2px 4px 6px 4px;
+    padding: 2px 0 6px 0;
     cursor: pointer;
 }
 
@@ -440,10 +458,6 @@ body {
 #bar-plot li:hover {
     background-color: var(--bar-highlight-color);
 }
-
-#bar-plot .acronym {}
-
-#bar-plot .bar_wrapper {}
 
 #bar-plot li {
     display: none;

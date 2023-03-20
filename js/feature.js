@@ -67,6 +67,7 @@ class Feature {
         // this.colormapMaxRel = 100; // 0 = initial min, 100 = initial max
 
         this.style = document.getElementById('style-features').sheet;
+        this.styleSearch = document.getElementById('style-search').sheet;
 
         this.set_feature_set("ephys").then(() => {
             let fet_name = DEFAULT_FEATURE["ephys"];
@@ -131,6 +132,13 @@ class Feature {
         this.update_unity();
     }
 
+    search(query) {
+        clearStyle(this.styleSearch);
+        if (!query) return;
+        this.styleSearch.insertRule(`#bar-plot li{display: none !important;}`);
+        this.styleSearch.insertRule(`#bar-plot li[data-region*='${query}' i]{display: block !important;}`);
+    }
+
     update_unity() {
         // Update Unity.
         if (window.unity) {
@@ -182,6 +190,15 @@ updateFeature = throttle(updateFeature, 100);
 /*************************************************************************************************/
 /* Setup                                                                                         */
 /*************************************************************************************************/
+
+function setupSearchInput() {
+    const searchInput = document.getElementById("search-input");
+    searchInput.addEventListener("input", (e) => {
+        FEATURE.search(e.target.value);
+    });
+}
+
+
 
 function setupFeatureSetDropdown() {
     const dropdown = getFeatureSetDropdown();

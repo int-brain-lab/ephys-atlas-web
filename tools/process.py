@@ -298,7 +298,7 @@ def generate_regions_html(idx, acronym):
     print("Generating regions.html...")
     html = ''.join(
         f'''
-    <li class="region_{idx_}">
+    <li class="region_{idx_}" data-region="{acronym_}">
         <div class="acronym">{acronym_}</div>
         <div class="bar_wrapper">
             <div class="bar"></div>
@@ -534,7 +534,7 @@ if __name__ == '__main__':
 
     # generate_colormaps()
     make_ephys_features()
-    make_bwm_features()
+    # make_bwm_features()
 
     ##############
 

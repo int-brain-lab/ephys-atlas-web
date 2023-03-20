@@ -93,7 +93,6 @@ async function highlight(e) {
 
     // Update the region info bar.
     setRegionInfoValue(id, value);
-    setRegionInfoPosition(e);
 }
 
 
@@ -105,6 +104,7 @@ function setupSVGHighlighting(axis) {
     svg.addEventListener('mouseover', (e) => {
         if (e.target.tagName == 'path') {
             highlight(e);
+            setRegionInfoPosition(e);
         }
     });
 
