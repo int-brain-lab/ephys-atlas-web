@@ -61,6 +61,11 @@ class Feature {
         this.stat = DEFAULT_STAT;
         this.cmap = DEFAULT_COLORMAP;
 
+        this.colormapMin = document.getElementById('colormap-min');
+        this.colormapMax = document.getElementById('colormap-max');
+        // this.colormapMinRel = 0; // 0 = initial min, 100 = initial max
+        // this.colormapMaxRel = 100; // 0 = initial min, 100 = initial max
+
         this.style = document.getElementById('style-features').sheet;
 
         this.set_feature_set("ephys").then(() => {
@@ -94,16 +99,23 @@ class Feature {
 
         if (!stats[this.stat]) return;
 
+        // Initial vmin-vmax colormap range.
         let vmin = stats[this.stat]["min"];
         let vmax = stats[this.stat]["max"];
+
+        // Colormap range modifier using the min/max sliders.
+        let vdiff = vmax - vmin;
+        let vminMod = vmin + vdiff * parseInt(this.colormapMin.value, 10) / 100.0;
+        let vmaxMod = vmin + vdiff * parseInt(this.colormapMax.value, 10) / 100.0;
 
         clearStyle(this.style);
         let stl = "";
         for (let region_idx in data) {
             let value = data[region_idx][this.stat];
             let normalized = normalize_value(value, vmin, vmax);
+            let normalizedMod = normalize_value(value, vminMod, vmaxMod);
 
-            stl = make_region_color(this.cmap, region_idx, value, normalized);
+            stl = make_region_color(this.cmap, region_idx, value, normalizedMod);
             this.style.insertRule(stl);
 
             stl = make_region_bar(region_idx, value, normalized);
@@ -160,6 +172,13 @@ class Feature {
 
 
 
+function updateFeature() {
+    FEATURE.update();
+}
+updateFeature = throttle(updateFeature, 100);
+
+
+
 /*************************************************************************************************/
 /* Setup                                                                                         */
 /*************************************************************************************************/
@@ -190,7 +209,7 @@ function setupFeatureSetDropdown() {
             let fet_name = DEFAULT_FEATURE[fet_set];
             FEATURE.set_feature(fet_name);
 
-            FEATURE.update();
+            updateFeature();
         });
     });
 }
@@ -212,6 +231,20 @@ function setupColormapDropdown() {
     dropdown.addEventListener('change', (e) => {
         let fet = e.target.value;
         FEATURE.set_colormap(fet);
+    });
+}
+
+
+
+function setupColormapSliders() {
+    const sliderMin = document.getElementById('colormap-min');
+    sliderMin.addEventListener('input', (e) => {
+        updateFeature();
+    });
+
+    const sliderMax = document.getElementById('colormap-max');
+    sliderMax.addEventListener('input', (e) => {
+        updateFeature();
     });
 }
 

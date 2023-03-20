@@ -34,6 +34,7 @@ setupSlider('horizontal');
 setupFeatureSetDropdown();
 setupFeatureDropdown();
 setupColormapDropdown();
+setupColormapSliders();
 setupStatDropdown();
 setupControlButtons();
 
