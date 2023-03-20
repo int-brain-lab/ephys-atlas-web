@@ -2,9 +2,9 @@
 function setupUnity() {
     console.debug("setup Unity");
     createUnityInstance(document.getElementById("unity-div"), {
-        dataUrl: "data/unity/webgl.data.gz",
-        frameworkUrl: "data/unity/webgl.framework.js.gz",
-        codeUrl: "data/unity/webgl.wasm.gz",
+        dataUrl: "Build/webgl.data",
+        frameworkUrl: "Build/webgl.framework.js",
+        codeUrl: "Build/webgl.wasm",
         companyName: "Daniel Birman @ UW",
         productName: "ephys_atlas",
         productVersion: "0.1.0",
