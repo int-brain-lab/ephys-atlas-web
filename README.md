@@ -25,7 +25,7 @@ Get the following files from Cyrille and put them here:
 
 ```
 * pqt/brain_regions_for_viz.pqt
-* pqt/features_for_viz_lateralised.pqt
+* pqt/features_for_viz_mappings.pqt
 * csv/block|choice|reward|stimulus.csv
 ```
 

@@ -56,6 +56,7 @@ COLORMAPS = ('viridis', 'cividis', 'magma')
 COLORMAP_VALUE_COUNT = 100  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
+MAPPINGS = ('allen', 'beryl', 'cosmos')
 NS = "http://www.w3.org/2000/svg"
 SIMPLIFY_CMD = "inkscape --batch-process --actions='EditSelectAll;SelectionSimplify;FileSave;FileClose'"
 RE_PATH = re.compile(r'<path id="path[0-9]+"')
@@ -99,7 +100,9 @@ def run_serial(dir, func):
 
 
 def lateralize_features(df):
-    df['atlas_id'] = -df['atlas_id'].abs()
+    for c in df.columns:
+        if c.startswith('atlas_id'):
+            df[c] = -df[c].abs()
     return df
 
 
@@ -113,15 +116,9 @@ def generate_colormaps():
         cmap = mpl.colormaps[name]
         colors = cmap(np.linspace(0, 1, COLORMAP_VALUE_COUNT))[:, :3]
         out[name] = [to_hex(c) for c in colors]
-    js = json.dumps(out)
 
-    # Generate regions.js, git tracked.
-    print("Generating colormaps.js...")
-    # js = ''.join(
-    #     f'''
-    # "{name}": "{values}",''' for name, values in out.items())
-    js = f'const COLORMAPS = {js}\n\n'
-    write_text(js, DATA_DIR / 'js/colormaps.js')
+    print("Generating colormaps.json...")
+    save_json(out, DATA_DIR / 'json/colormaps.json')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -219,6 +216,8 @@ def clean_svg(file):
 
 
 def get_figure_string(file):
+    # NOTE: this function is obsolete now that the SVG files have been integrated in the slices.json file
+    return
     with open(file, 'r') as f:
         root = minidom.parse(f)
         figure = get_element(root, "g", "figure_1")
@@ -231,6 +230,9 @@ def get_figure_string(file):
 
 
 def make_slices_json(dir):
+    # NOTE: this function is obsolete now, further processing has been done by Mayo on slices.json.
+    # If this function is to be reused, these extra steps need to be redone.
+    return
     # step 8
     svg_files = sorted(dir.iterdir())
     out = {axis: [] for axis in AXES}
@@ -294,236 +296,181 @@ def run_all(path):
 # Region processing
 # -------------------------------------------------------------------------------------------------
 
-def generate_regions_html(idx, acronym):
-    print("Generating regions.html...")
-    html = ''.join(
-        f'''
-    <li class="region_{idx_}" data-region="{acronym_}">
-        <div class="acronym">{acronym_}</div>
-        <div class="bar_wrapper">
-            <div class="bar"></div>
-        </div>
-    </li>''' for (idx_, acronym_) in zip(idx, acronym))
-    write_text(html, DATA_DIR / 'regions.html')
+# mappings is a dictionary {mapping_name: [{idx, atlas_id, acronym, name, hex}]}
+def generate_regions_json(mappings):
+    print("Generating regions.json...")
+    filename = DATA_DIR / 'json/regions.json'
+    save_json(mappings, filename)
 
 
-def generate_regions_js(idx, acronym):
-    # Generate regions.js, git tracked.
-    print("Generating regions.js...")
-    js = ''.join(
-        f'''
-    "{idx_}": "{acronym_}",''' for (idx_, acronym_) in zip(idx, acronym))
-    js = f'const REGIONS = {{\n{js}\n}}\n'
-    write_text(js, DATA_DIR / 'js/regions.js')
-
-
-def generate_regions_css(idx, hex, acronym):
+def generate_regions_css(mappings):
     print("Generating region_colors.css")
-    css = '\n'.join(
-        f'''    --region-{idx_}: {hex_}; /* {acronym_} */ ''' for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
+    css = ''
+    for mapping, regions in mappings.items():
 
-    css = f'/* Default region colors */\n\n:root {{\n\n{css}\n\n}}\n'
-    css += ''.join(
-        dedent(f'''
-        /* {acronym_} */
-        #bar-plot li.region_{idx_} .bar {{ background-color: var(--region-{idx_}); }}
-        #bar-plot li.region_{idx_} .acronym {{ color: var(--region-{idx_}); }}
-        ''') for (idx_, hex_, acronym_) in zip(idx, hex, acronym))
+        colors = '\n'.join(
+            f'''    --region-{mapping}-{r['idx']}: {r['hex']}; /* {r['acronym']} */ '''
+            for r in regions)
+        css += f'/* Mapping {mapping}: default region colors */\n\n:root {{\n\n{colors}\n\n}}\n'
+
+        css += ''.join(
+            dedent(f'''
+            /* {r['acronym']} */
+            # bar-plot li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{r['idx']}); }}
+            # bar-plot li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{r['idx']}); }}
+            ''') for r in regions)
+
+        css += '\n\n'
     write_text(css, DATA_DIR / 'css/region_colors.css')
 
 
-class FeatureProcessor:
-    def __init__(self, df, name):
-        self.name = name
-        # Brain regions
-        self.br = pd.read_parquet(DATA_DIR / 'pqt/brain_regions_for_viz.pqt')
+def get_mappings():
+    # open the pqt files and return a mappings dictionary
+    # {mapping_name: [{idx: ..., atlas_id: ..., acronym: ..., name: ..., hex: ...}]}
+    out = {}
+    for mapping in MAPPINGS:
+        regions = pd.read_parquet(
+            DATA_DIR / f'pqt/{mapping}_regions.pqt')
+        out[mapping] = [
+            {
+                'idx': idx_,
+                'atlas_id': -abs(atlas_id_),
+                'acronym': acronym_,
+                'name': name_,
+                'hex': hex_,
+            }
+            for idx_, atlas_id_, acronym_, name_, hex_ in zip(
+                regions['idx'], regions['atlas_id'], regions['acronym'], regions['atlas_name'], regions['hex'])
+        ]
+    return out
 
-        # df is a DataFrame with atlas_id as index, and one or several features.
-        self.df = df
 
-        # df is a grouped DataFrame where atlas_id is the index.
-        if isinstance(df, DataFrameGroupBy):
-            self.fet_m = df.mean(numeric_only=True)
-            self.fet_s = df.std(numeric_only=True)
-            self.fet_med = df.median(numeric_only=True)
-            self.fet_min = df.min()
-            self.fet_max = df.max()
-        else:
-            self.fet_m = df
-            self.fet_s = None
-            self.fet_med = None
-            self.fet_min = None
-            self.fet_max = None
+def get_feature_names(df):
+    return [c for c in df.columns
+            if (not c.startswith('atlas_id') and
+                not c.startswith('acronym') and
+                not c.startswith('pid'))]
 
-        self.features = self.fet_m.columns
-        self.regions = self.fet_m.index  # should be atlas_id
 
-        # Keep the brain regions that appear in the DataFrame.
-        keep = np.in1d(self.br['atlas_id'], self.regions)
-        # print(f"Keep {keep.sum()}/{len(keep)} brain regions.")
-        self.br = self.br.loc[keep]
+def get_aggregates(df):
+    return {
+        'mean': df.mean(numeric_only=True),
+        'median': df.median(numeric_only=True),
+        'std': df.std(numeric_only=True),
+        'min': df.min(),
+        'max': df.max(),
+    }
 
-        # Mapping atlas_id => idx
-        self.br_mapping = {int(atlas_id): int(idx)
-                           for atlas_id, idx in zip(self.br['atlas_id'], self.br['idx'])}
 
-        # Brain regions attributes for all regions appearing in the DataFrame.
-        self.atlas_id = self.br['atlas_id']
-        self.idx = self.br['idx']
-        self.acronym = self.br['acronym']
-        self.hex = self.br['hex']
+# features dictionary:
+# {mapping: {fet: {data: {atlas_id: {stat: value}}}, statistics: {stat: {mean: value, std: value...}}}}}
 
-    # Regions
-    # ---------------------------------------------------------------------------------------------
+def generate_features_groupedby(br, mapping, df, feature_names):
+    assert isinstance(df, DataFrameGroupBy)
+    dfs = get_aggregates(df)
 
-    def generate_regions(self):
-        generate_regions_html(self.idx, self.acronym)
-        generate_regions_js(self.idx, self.acronym)
-        generate_regions_css(self.idx, self.hex, self.acronym)
+    # Keep the atlas_ids appearing in the groupby dataframe.
+    br.keep(mapping, dfs['mean'].index)
+    regions = br.get_regions(mapping)
 
-    # Features
-    # ---------------------------------------------------------------------------------------------
+    features = {
+        fet: {
+            'data': {},
+            'statistics': {},
+        } for fet in feature_names
+    }
 
-    def generate_features_json(self, filename):
-        print(f"Generating {filename}")
-        # Each column of df corresponds to a feature.
-        # acronyms = df.acronym.first()  # index is atlas_id
+    for fet in feature_names:
+        # Collect feature values.
+        for region in regions:
+            atlas_id = region['atlas_id']
 
-        # All dataframe atlas_ids must be in the brain region atlas.
-        assert(np.all(np.in1d(self.regions, self.atlas_id)))
+            features[fet]['data']['atlas_id'] = {
+                stat: float_json(dfg.loc[atlas_id][fet])
+                for stat, dfg in dfs.items()
+            }
 
-        if self.fet_s is not None:
-            dfs = (
-                ('mean', self.fet_m),
-                ('median', self.fet_med),
-                ('std', self.fet_s),
-                ('min', self.fet_min),
-                ('max', self.fet_max),
-            )
-        else:
-            dfs = (('mean', self.fet_m),)
+        # Collect statistics across regions, for each feature. Used for bar plot.
+        for stat, dfg in dfs.items():
+            features[fet]['statistics'][stat] = {
+                'mean': float_json(dfg[fet].mean()),
+                'median': float_json(dfg[fet].median()),
+                'std': float_json(dfg[fet].std()),
+                'min': float_json(dfg[fet].min()),
+                'max': float_json(dfg[fet].max()),
+            }
 
-        data = {fet: {
-            self.br_mapping[atlas_id]:        # the key is the brain region idx
-            {stat: float_json(df.loc[atlas_id][fet])
-             for stat, df in dfs}
-            for atlas_id in self.regions} for fet in self.features}
+    return features
 
-        # Generate the Python dictionary with all feature/region values.
-        features_obj = {fet:
-                        {"data":   data[fet],
-                         # Collect statistics across regions, for each feature. Used for bar plot.
-                         "statistics": {
-                            stat: {
-                                'mean': float_json(df[fet].mean()),
-                                'median': float_json(df[fet].median()),
-                                'std': float_json(df[fet].std()),
-                                'min': float_json(df[fet].min()),
-                                'max': float_json(df[fet].max()),
-                            } for stat, df in dfs
-                        }
-                        } for fet in self.features}
 
-        save_json(features_obj, DATA_DIR / "json" / filename)
+class BrainRegions:
+    def __init__(self):
+        self.mappings = get_mappings()
 
-    # def generate_features_css(self, values, filename):
-    #     print(f"Generating {filename}")
+        # for each mapping a dictionary atlas_id => idx
+        self.atlas_id_map = {
+            mapping: {
+                r['atlas_id']: r['idx']
+                for r in regions
+            } for mapping, regions in self.mappings.items()
+        }
 
-    #     cmap = cm.get_cmap(COLORMAP, COLORMAP_VALUE_COUNT)
-    #     br_mapping = self.br_mapping
-    #     regions = self.atlas_id
-    #     acronyms = self.acronym
-    #     colors = self.hex
+        # for each mapping, the list of region idx of regions to keep, or None if all are kept
+        self.kept = {mapping: None for mapping in MAPPINGS}
 
-    #     # Normalization.
-    #     norm = plt.Normalize(vmin=values.min(), vmax=values.max())
-    #     values_n = norm(values)
+    def keep(self, mapping, atlas_ids):
+        # for a given mapping, take a pandas Series with a bunch of atlas_ids, and
+        # will save the occurring regions to only keep those.
+        self.kept[mapping] = set(self.atlas_id_map[mapping][atlas_id]
+                                 for atlas_id in atlas_ids)
 
-    #     # Compute the color of each brain region, using a colormap.
-    #     colors = cmap(values_n)
-
-    #     # Generate the CSS class rules.
-    #     region_colors = [
-    #         (br_mapping[atlas_id],
-    #          f"svg path.region_{br_mapping[atlas_id]} {{ fill: {to_hex(color)}; }} /* {acronym}: {values.loc[atlas_id]} */")
-    #         for (atlas_id, color, acronym) in zip(regions, colors, acronyms)]
-
-    #     region_bars = [
-    #         (br_mapping[atlas_id],
-    #          f"#bar-plot li.region_{br_mapping[atlas_id]} .bar {{ width: {value * 100:.2f}%; }} /* {acronym}: {values.loc[atlas_id]} */")
-    #         for (atlas_id, value, acronym) in zip(regions, values_n, acronyms)]
-
-    #     css = '''/* Region colors */\n\n'''
-    #     css += '\n'.join(s for _, s in sorted(region_colors,
-    #                      key=itemgetter(0)))
-
-    #     css += '''\n\n/* Bar plot */\n\n'''
-    #     css += '\n'.join(s for _, s in sorted(region_bars, key=itemgetter(0)))
-
-    #     # HACK: remove NaNs
-    #     css = css.replace('nan%', '0%')
-
-    #     # Save the CSS file.
-    #     write_text(css, DATA_DIR / "css" / filename)
-
-    def generate_features(self):
-        # Generate the JSON feature file.
-        self.generate_features_json(f'features_{self.name}.json')
-
-        # # Generate one CSS file per feature.
-        # for fet in self.features:
-        #     self.generate_features_css(
-        #         self.fet_m[fet], f'regions_{self.name}_{fet}.css')
+    def get_regions(self, mapping):
+        # return the kept brain regions
+        return [r for r in self.mappings[mapping] if r['idx'] in self.kept[mapping]]
 
 
 # -------------------------------------------------------------------------------------------------
 # Feature processing
 # -------------------------------------------------------------------------------------------------
 
-def process_sessions(df_sessions, name):
-    # Group by atlas_id
-    df = df_sessions.groupby('atlas_id')
-
-    # Feature processor.
-    fp = FeatureProcessor(df, name)
-    fp.generate_regions()
-    fp.generate_features()
-
-
-def process_grouped(df, name):
-    # Feature processor.
-    fp = FeatureProcessor(df, name)
-    fp.generate_features()
-
-
-def make_ephys_features():
-    # Process features.
+def generate_ephys_features():
+    # Load features.
     df_sessions = pd.read_parquet(
-        DATA_DIR / 'pqt/features_for_viz_lateralised.pqt')
+        DATA_DIR / 'pqt/features_for_viz_mappings.pqt')
 
     # Lateralize the sessions DataFrame.
     df_sessions = lateralize_features(df_sessions)
+    feature_names = get_feature_names(df_sessions)
 
-    # Process the DataFrame.
-    process_sessions(df_sessions, 'ephys')
+    br = BrainRegions()
+
+    # Aggregate by region, for each mapping. We use the atlas_id_X where X is the first letter
+    # of the mapping.
+    out = {}
+    for mapping in MAPPINGS:
+        df = df_sessions.groupby(f'atlas_id_{mapping[0]}')
+        features = generate_features_groupedby(
+            br, mapping, df, feature_names)
+        out[mapping] = features
+
+    save_json(out, DATA_DIR / f"json/features_ephys.json")
 
 
-def make_bwm_features():
-    # Load a CSV file and remap to use the atlas_id instead of the acronym.
-    for name in ('block', 'choice', 'reward', 'stimulus'):
-        df = pd.read_csv(DATA_DIR / f'csv/{name}.csv')
-        df = df[df.columns[:4]]
-        df = df.dropna(subset=['region'])
+# def generate_bwm_features():
+#     br = BrainRegions()
 
-        br = pd.read_parquet(DATA_DIR / 'pqt/brain_regions_for_viz.pqt')
-        br_mapping = {acronym: int(atlas_id)
-                      for atlas_id, acronym in zip(br['atlas_id'], br['acronym'])}
+#     # Load a CSV file and remap to use the atlas_id instead of the acronym.
+#     for name in ('block', 'choice', 'reward', 'stimulus'):
+#         df = pd.read_csv(DATA_DIR / f'csv/{name}.csv')
+#         df = df[df.columns[:4]]
+#         df = df.dropna(subset=['region'])
 
-        df['atlas_id'] = [br_mapping[acronym] for acronym in df['region']]
-        df = df.set_index('atlas_id')
-        df = df.drop(columns=['region'])
+#         # df['atlas_id'] = [br_mapping[acronym] for acronym in df['region']]
+#         df = df.set_index('atlas_id')
+#         df = df.drop(columns=['region'])
 
-        process_grouped(df, f"bwm_{name}")
+#         # TODO
+#         # process_grouped(df, f"bwm_{name}")
 
 
 # -------------------------------------------------------------------------------------------------
@@ -533,8 +480,10 @@ def make_bwm_features():
 if __name__ == '__main__':
 
     # generate_colormaps()
-    make_ephys_features()
-    # make_bwm_features()
+    # mappings = get_mappings()
+    # generate_regions_json(mappings)
+    # generate_regions_css(mappings)
+    generate_ephys_features()
 
     ##############
 
