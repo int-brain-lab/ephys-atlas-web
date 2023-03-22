@@ -19,9 +19,8 @@
     <link rel="stylesheet" href="css/main.css" />
     <link rel="stylesheet" href="data/css/region_colors.css" />
 
-    <!-- <link rel="stylesheet" id="feature-style" href="data/css/regions_psd_alpha.css" /> -->
-
     <!-- Dynamic CSS styles -->
+    <style id="style-regions"></style>
     <style id="style-features"></style>
     <style id="style-selector"></style>
     <style id="style-highlighter"></style>
@@ -36,6 +35,9 @@
 
     <!-- Unity -->
     <script src="Build/webgl.loader.js"></script>
+
+    <!-- Top-level entry-point script -->
+    <script type="module" src="js/main.js"></script>
 
 </head>
 
@@ -288,7 +290,7 @@
         <!-- SWANSON -->
         <div id="svg-swanson-container" class="svg-wrapper">
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-swanson" version="1.1" viewBox="40 60 450 200">
+            <svg xmlns="http://www.w3.org/2000/svg" id="svg-swanson" version="1.1" viewBox="50 20 700 320">
                 <g id="figure-swanson">
                 </g>
             </svg>
@@ -318,18 +320,6 @@
             <a href="https://www.internationalbrainlab.com/">International Brain Laboratory</a> &#8212; 2023
         </nav>
     </footer>
-
-
-    <script src="data/js/colormaps.js"></script>
-    <script src="data/js/regions.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/splash.js"></script>
-    <script src="js/unity.js"></script>
-    <script src="js/svgdb.js"></script>
-    <script src="js/feature.js"></script>
-    <script src="js/selector.js"></script>
-    <script src="js/slice.js"></script>
-    <script src="js/main.js"></script>
 
 </body>
 

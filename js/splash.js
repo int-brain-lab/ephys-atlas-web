@@ -1,3 +1,6 @@
+export { Splash };
+
+
 
 /*************************************************************************************************/
 /* Splash                                                                                        */
@@ -23,7 +26,6 @@ class Splash {
     }
 
     set(value) {
-        // console.log("set splash to", value);
         this.progress = value;
         this.loading.innerHTML = value.toString();
         if (value >= 100) {

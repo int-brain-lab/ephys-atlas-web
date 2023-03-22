@@ -12,3 +12,16 @@ function setupUnity() {
         window.unity = unityInstance;
     });
 }
+
+
+
+function setUnityRegions(regions) {
+    for (const [idx, acronym] of Object.entries(regions)) {
+        let p = document.querySelector(`path.region_${idx}`);
+        if (!p) continue;
+        let color = window.getComputedStyle(p).fill;
+        let hexcode = rgb2hex(color);
+        // console.log(acronym, hexcode);
+        window.unity.SendMessage('main', 'SetColor', `${acronym}:${hexcode}`);
+    }
+}

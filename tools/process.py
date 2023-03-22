@@ -316,8 +316,8 @@ def generate_regions_css(mappings):
         css += ''.join(
             dedent(f'''
             /* {r['acronym']} */
-            # bar-plot li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{r['idx']}); }}
-            # bar-plot li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{r['idx']}); }}
+            #bar-plot li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{mapping}-{r['idx']}); }}
+            #bar-plot li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{mapping}-{r['idx']}); }}
             ''') for r in regions)
 
         css += '\n\n'
@@ -333,7 +333,7 @@ def get_mappings():
             DATA_DIR / f'pqt/{mapping}_regions.pqt')
         out[mapping] = [
             {
-                'idx': idx_,
+                'idx': abs(idx_),
                 'atlas_id': -abs(atlas_id_),
                 'acronym': acronym_,
                 'name': name_,
@@ -384,8 +384,9 @@ def generate_features_groupedby(br, mapping, df, feature_names):
         # Collect feature values.
         for region in regions:
             atlas_id = region['atlas_id']
+            region_idx = region['idx']
 
-            features[fet]['data']['atlas_id'] = {
+            features[fet]['data'][region_idx] = {
                 stat: float_json(dfg.loc[atlas_id][fet])
                 for stat, dfg in dfs.items()
             }
@@ -480,9 +481,9 @@ def generate_ephys_features():
 if __name__ == '__main__':
 
     # generate_colormaps()
-    # mappings = get_mappings()
-    # generate_regions_json(mappings)
-    # generate_regions_css(mappings)
+    mappings = get_mappings()
+    generate_regions_json(mappings)
+    generate_regions_css(mappings)
     generate_ephys_features()
 
     ##############

@@ -1,21 +1,20 @@
-
 /*************************************************************************************************/
 /* Math                                                                                          */
 /*************************************************************************************************/
 
-function clamp(x, min, max) {
+export function clamp(x, min, max) {
     return Math.min(max, Math.max(min, x));
 }
 
 
 
-function displayNumber(x) {
+export function displayNumber(x) {
     return Math.abs(x) < .001 ? x.toExponential(5) : x.toPrecision(5);
 }
 
 
 
-function rgb2hex(s) {
+export function rgb2hex(s) {
     var a = s.split("(")[1].split(")")[0];
     a = a.split(",");
     var b = a.map(function (x) {             //For each array element
@@ -28,12 +27,26 @@ function rgb2hex(s) {
 
 
 
+export function normalize_value(value, vmin, vmax) {
+    console.assert(value !== NaN);
+    console.assert(value !== undefined);
+    console.assert(vmin < vmax);
+    value = clamp(value, vmin, vmax);
+
+    let normalized = Math.floor(100 * (value - vmin) / (vmax - vmin));
+    console.assert(normalized >= 0);
+    console.assert(normalized <= 100);
+
+    return normalized;
+}
+
+
 
 /*************************************************************************************************/
 /* UI                                                                                            */
 /*************************************************************************************************/
 
-function throttle(func, wait, options) {
+export function throttle(func, wait, options) {
     var context, args, result;
     var timeout = null;
     var previous = 0;
@@ -71,64 +84,17 @@ function throttle(func, wait, options) {
 /* DOM                                                                                           */
 /*************************************************************************************************/
 
-function getSlider(axis) {
-    return document.getElementById(`slider-${axis}`);
-}
-
-
-
-function getSVG(axis) {
-    return document.getElementById(`figure-${axis}`);
-};
-
-
-
-function getBarPlot() {
+export function getBarPlot() {
     return document.getElementById('bar-plot');
 };
 
 
 
-function getRegionID(obj) {
+export function getRegionID(obj) {
     return obj.classList[0].substr(7);
 };
 
 
-
-function getFeatureDropdown() {
-    return document.getElementById('feature-dropdown');
-};
-
-
-
-
-function getFeatureSetDropdown() {
-    return document.getElementById('feature-set-dropdown');
-};
-
-
-
-function getColormapDropdown() {
-    return document.getElementById('colormap-dropdown');
-};
-
-
-
-function getStatDropdown() {
-    return document.getElementById('stat-dropdown');
-};
-
-
-
-function setOptions(select, values) {
-    for (let a in select.options) { select.options.remove(0); }
-    for (let val of values) {
-        let opt = document.createElement('option');
-        opt.text = val;
-        opt.value = val;
-        select.add(opt);
-    }
-}
 
 
 
@@ -136,7 +102,7 @@ function setOptions(select, values) {
 /* CSS                                                                                           */
 /*************************************************************************************************/
 
-function clearStyle(style) {
+export function clearStyle(style) {
     let n = style.cssRules.length;
 
     for (let i = 0; i < n; i++) {
@@ -150,7 +116,7 @@ function clearStyle(style) {
 /* Browser                                                                                       */
 /*************************************************************************************************/
 
-function getOS() {
+export function getOS() {
     var userAgent = window.navigator.userAgent,
         platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
         macosPlatforms = ['macOS', 'Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
@@ -175,7 +141,7 @@ function getOS() {
 
 
 
-async function downloadJSON(url) {
+export async function downloadJSON(url) {
     console.debug(`downloading ${url}...`);
     var r = await fetch(url, {
         headers: {
@@ -195,7 +161,7 @@ async function downloadJSON(url) {
 /* Control panel                                                                                 */
 /*************************************************************************************************/
 
-function setupControlButtons() {
+export function setupControlButtons() {
     let resetButton = document.getElementById('reset-button');
     resetButton.addEventListener('click', (e) => {
         if (window.confirm("Are you sure you want to delete the cache and re-download the data?")) {

@@ -1,44 +1,52 @@
-const ENABLE_UNITY = false;
+"use strict";
+// import { State } from "./state.js";
 
-window.unity = null;
+import { DB } from "./db.js";
+import { App } from "./app.js";
 
-const SPLASH = new Splash();
-SPLASH.start();
-SPLASH.set(0);
 
-const FEATURE = new Feature();
-const SVG = new SVGDB();
 
-const HIGHLIGHTER = new Highlighter();
-const SELECTOR = new Selector();
+// Load the data.
+let db = new DB();
+await db.load();
 
-setupSVGHighlighting('coronal');
-setupSVGHighlighting('sagittal');
-setupSVGHighlighting('horizontal');
-setupSVGHighlighting('top');
-setupSVGHighlighting('swanson');
+// Create the app.
+let app = new App(db);
+window.app = app;
 
-setupSVGSelection('coronal');
-setupSVGSelection('sagittal');
-setupSVGSelection('horizontal');
-setupSVGSelection('top');
-setupSVGSelection('swanson');
 
-setupBarHighlighting();
-setupBarSelection();
+// const ENABLE_UNITY = false;
 
-setupSlider('coronal');
-setupSlider('sagittal');
-setupSlider('horizontal');
+// window.unity = null;
 
-setupSearchInput();
-setupFeatureSetDropdown();
-setupFeatureDropdown();
-setupColormapDropdown();
-setupColormapSliders();
-setupStatDropdown();
-setupControlButtons();
 
-if (ENABLE_UNITY) {
-    setupUnity();
-}
+// setupSVGHighlighting('coronal');
+// setupSVGHighlighting('sagittal');
+// setupSVGHighlighting('horizontal');
+// setupSVGHighlighting('top');
+// setupSVGHighlighting('swanson');
+
+// setupSVGSelection('coronal');
+// setupSVGSelection('sagittal');
+// setupSVGSelection('horizontal');
+// setupSVGSelection('top');
+// setupSVGSelection('swanson');
+
+// setupBarHighlighting();
+// setupBarSelection();
+
+// setupSlider('coronal');
+// setupSlider('sagittal');
+// setupSlider('horizontal');
+
+// setupSearchInput();
+// setupFeatureSetDropdown();
+// setupFeatureDropdown();
+// setupColormapDropdown();
+// setupColormapSliders();
+// setupStatDropdown();
+// setupControlButtons();
+
+// if (ENABLE_UNITY) {
+//     setupUnity();
+// }
