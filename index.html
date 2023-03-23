@@ -66,41 +66,16 @@
 
 
 
-    <!--
-        BAR PLOT    400 x xxx
-
-        SAGITTAL    614 x 461   1140 (570)
-        CORONAL     614 x 461   1320 (660)
-        HORIZONTAL  614 x 461    800 (400)
-
-        TOP         614 x 461
-        SWANSON    1012 x 461
-        UNITY         0 x 461
-
-
-        x : SAGITTAL ml
-        nx = 1140 (570)
-        -5739 : 10 : 5651 + 10 (861)
-
-        y : CORONAL ap
-        ny = 1320 (660)
-        5400 : -10 : -7790 - 10
-
-        z : HORIZONTAL dv
-        nz = 800 (400)
-        332 : -10 : -7658 - 10
-
-     -->
-
-
-
     <!-------------------------------------------------------------------------------------------->
-    <!-- BAR -->
+    <!-- CONTROL PANEL -->
     <!-------------------------------------------------------------------------------------------->
 
     <div id="control-panel">
         <details open>
+            <!-- CONTROL PANEL HEADER -->
             <summary>control panel</summary>
+
+            <!-- FEATURE SET -->
             <div class="label">feature set</div>
 
             <div class="control">
@@ -113,35 +88,7 @@
                 </select>
             </div>
 
-            <div class="label">colormap</div>
-
-            <div class="control">
-                <select id="colormap-dropdown">
-                    <option value="viridis">viridis</option>
-                    <option value="cividis">cividis</option>
-                    <option value="magma">magma</option>
-                </select>
-            </div>
-
-            <div class="label">colormap range</div>
-
-            <div class="control">
-                <input type="range" min="0" max="100" value="0" class="slider" id="colormap-min">
-                <input type="range" min="0" max="100" value="100" class="slider" id="colormap-max">
-            </div>
-
-            <div class="label">statistic</div>
-
-            <div class="control">
-                <select id="stat-dropdown">
-                    <option value="mean">mean</option>
-                    <option value="median">median</option>
-                    <option value="std">std</option>
-                    <option value="min">min</option>
-                    <option value="max">max</option>
-                </select>
-            </div>
-
+            <!-- FEATURE -->
             <div class="label">feature</div>
 
             <div class="control">
@@ -157,10 +104,44 @@
                 </select>
             </div>
 
+            <!-- STAT -->
+            <div class="label">statistic</div>
+
+            <div class="control">
+                <select id="stat-dropdown">
+                    <option value="mean">mean</option>
+                    <option value="median">median</option>
+                    <option value="std">std</option>
+                    <option value="min">min</option>
+                    <option value="max">max</option>
+                </select>
+            </div>
+
+            <!-- COLORMAP -->
+            <div class="label">colormap</div>
+
+            <div class="control">
+                <select id="colormap-dropdown">
+                    <option value="viridis">viridis</option>
+                    <option value="cividis">cividis</option>
+                    <option value="magma">magma</option>
+                </select>
+            </div>
+
+            <!-- COLORMAP RANGE -->
+            <div class="label">colormap range</div>
+
+            <div class="control">
+                <input type="range" min="0" max="100" value="0" class="slider" id="colormap-min">
+                <input type="range" min="0" max="100" value="100" class="slider" id="colormap-max">
+            </div>
+
+            <!-- SHARE BUTTON -->
             <div class="share">
                 <button id="share-button">share</button>
             </div>
 
+            <!-- ADVANCED -->
             <div class="advanced">
                 <details>
                     <summary>Advanced</summary>
