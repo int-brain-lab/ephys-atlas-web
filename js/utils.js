@@ -164,20 +164,3 @@ export async function downloadJSON(url) {
     console.debug("download finished");
     return out;
 }
-
-
-
-
-/*************************************************************************************************/
-/* Control panel                                                                                 */
-/*************************************************************************************************/
-
-export function setupControlButtons() {
-    let resetButton = document.getElementById('reset-button');
-    resetButton.addEventListener('click', (e) => {
-        if (window.confirm("Are you sure you want to delete the cache and re-download the data?")) {
-            deleteDatabase();
-            location.reload();
-        }
-    });
-}

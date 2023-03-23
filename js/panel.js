@@ -1,3 +1,5 @@
+export { Panel };
+
 
 
 /*************************************************************************************************/
@@ -41,9 +43,11 @@ function setOptions(select, values, selected) {
 /*************************************************************************************************/
 
 class Panel {
-    constructor(state, features) {
+    constructor(db, state, features, region) {
+        this.db = db;
         this.state = state;
         this.features = features;
+        this.region = region;
 
         this.ifname = document.getElementById('feature-dropdown');
         this.ifset = document.getElementById('feature-set-dropdown');
@@ -51,6 +55,7 @@ class Panel {
         this.istat = document.getElementById('stat-dropdown');
         this.icmapmin = document.getElementById('colormap-min');
         this.icmapmax = document.getElementById('colormap-max');
+        this.ireset = document.getElementById('reset-button');
 
         // TODO: use the state to select the initial values of the DOM elements.
 
@@ -61,6 +66,7 @@ class Panel {
         this.setupColormap();
         this.setupColormapMin();
         this.setupColormapMax();
+        this.setupResetButton();
     }
 
     setupFset() {
@@ -84,7 +90,7 @@ class Panel {
 
             // Update the global state.
             this.state.fname = fname;
-            this.features.set_feature(this.state.fset, fname).then(() => { });
+            this.features.set_feature(this.state.fset, fname);
         });
     }
 
@@ -96,7 +102,7 @@ class Panel {
             this.state.stat = stat;
 
             // Update the component.
-            this.features.set_stat(stat).then(() => { });
+            this.features.set_stat(stat);
         });
     }
 
@@ -108,31 +114,40 @@ class Panel {
             this.state.colormap = colormap;
 
             // Update the component.
-            this.features.set_colormap(colormap).then(() => { });
+            this.features.set_colormap(colormap);
         });
     }
 
     setupColormapMin() {
-        this.icmapmin.addEventListener('change', (e) => {
+        this.icmapmin.addEventListener('input', (e) => {
             let cmin = e.target.value;
 
             // Update the global state.
             this.state.colormap_min = cmin;
 
             // Update the component.
-            this.features.set_colormap_range(cmin, this.state.colormap_max).then(() => { });
+            this.features.set_colormap_range(cmin, this.state.colormap_max);
         });
     }
 
     setupColormapMax() {
-        this.icmapmax.addEventListener('change', (e) => {
+        this.icmapmax.addEventListener('input', (e) => {
             let cmax = e.target.value;
 
             // Update the global state.
             this.state.colormap_max = cmax;
 
             // Update the component.
-            this.features.set_colormap_range(this.state.colormap_min, cmax).then(() => { });
+            this.features.set_colormap_range(this.state.colormap_min, cmax);
+        });
+    }
+
+    setupResetButton() {
+        this.ireset.addEventListener('click', (e) => {
+            if (window.confirm("Are you sure you want to delete the cache and re-download the data?")) {
+                this.db.deleteDatabase();
+                location.reload();
+            }
         });
     }
 };
