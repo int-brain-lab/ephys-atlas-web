@@ -16,7 +16,7 @@ class Feature {
         this.style = document.getElementById('style-features').sheet;
         this.featureName = document.getElementById('bar-fname');
 
-        this.setColormap(this.state.colormap);
+        this.setColormap(this.state.cmap);
     }
 
     /* Set functions                                                                             */
@@ -49,8 +49,8 @@ class Feature {
     /*********************************************************************************************/
 
     async setColormap(cmap) {
-        this.state.colormap = cmap;
-        this.colors = (await this.db.getColormap(this.state.colormap))['colors'];
+        this.state.cmap = cmap;
+        this.colors = (await this.db.getColormap(this.state.cmap))['colors'];
         this.update();
     }
 
@@ -58,8 +58,8 @@ class Feature {
         if (cmin >= cmax) {
             return;
         }
-        this.state.colormapMin = cmin;
-        this.state.colormapMax = cmax;
+        this.state.cmapmin = cmin;
+        this.state.cmapmax = cmax;
         this.update();
     }
 
@@ -95,16 +95,16 @@ class Feature {
         let stats = fet["statistics"];
 
         let mapping = this.state.mapping;
-        let cmap = this.state.colormap;
-        let cmin = this.state.colormapMin;
-        let cmax = this.state.colormapMax;
+        let cmap = this.state.cmap;
+        let cmin = this.state.cmapmin;
+        let cmax = this.state.cmapmax;
 
         // dict {idx: {mean...}, statistics: {mean: xxx, ...}
         let data = fet["data"];
 
         if (!stats[stat]) return;
 
-        // Initial vmin-vmax colormap range.
+        // Initial vmin-vmax cmap range.
         let vmin = stats[stat]["min"];
         let vmax = stats[stat]["max"];
 

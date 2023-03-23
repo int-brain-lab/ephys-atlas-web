@@ -114,10 +114,10 @@ class DB {
     /*********************************************************************************************/
 
     async addColormaps(progress) {
-        let colormaps = await downloadColormaps();
+        let cmaps = await downloadColormaps();
         let items = [];
-        for (let cmap in colormaps) {
-            items.push({ "name": cmap, "colors": colormaps[cmap] });
+        for (let cmap in cmaps) {
+            items.push({ "name": cmap, "colors": cmaps[cmap] });
         }
         await this.colormaps.bulkPut(items);
         this.splash.add(progress);
@@ -243,7 +243,7 @@ class DB {
         return await this[`regions`].get(mapping);
     }
 
-    async getColormap(colormap) {
-        return await this['colormaps'].get(colormap);
+    async getColormap(cmap) {
+        return await this.colormaps.get(cmap);
     }
 }

@@ -33,10 +33,29 @@ class Slice {
         this.dv = document.getElementById('coord-dv');
 
         this.setupSlices();
+        this.setState(state);
     }
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
+
+    setState(state) {
+        // Set the sliders.
+        for (let axis of SLICE_AXES) {
+            this[`slider_${axis}`].value = state[axis];
+            this[`set_${axis}`](state[axis]);
+            this._setSlice(axis, state[axis]);
+
+        }
+
+        // Set the bars.
+        this.set_coronal(state.coronal);
+        this.set_horizontal(state.horizontal);
+
+        // Set the SVGs.
+        this._setSlice('coronal', state.coronal);
+        this._setSlice('horizontal', state.horizontal);
+    }
 
     setupSlices() {
         // coronal, sagittal, horizontal
@@ -135,6 +154,9 @@ class Slice {
             if (item) {
                 let svg = item["svg"];
                 document.getElementById(`figure-${axis}`).innerHTML = svg;
+
+                // Update the global state.
+                this.state[axis] = idx;
             }
 
             // call setSagittal() etc to update the hlines and vlines.

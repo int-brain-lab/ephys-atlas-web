@@ -18,6 +18,11 @@ class App {
         this.db = db;
         this.state = new State();
 
+        this.init();
+        this.setupResetButton();
+    }
+
+    init() {
         this.highlighter = new Highlighter(this.state);
         this.selector = new Selector(this.state);
 
@@ -28,5 +33,20 @@ class App {
         this.slice = new Slice(this.db, this.state, this.tooltip, this.highlighter, this.selector);
 
         this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector);
+    }
+
+    setupResetButton() {
+        this.panel.ibreset.addEventListener('click', (e) => {
+            if (window.confirm("Are you sure you want to reset the view?")) {
+                this.state.init({});
+                this.init();
+                this.selector.clear();
+
+                // Reset the browser URL.
+                const url = new URL(window.location);
+                url.searchParams.set('state', '');
+                window.history.pushState(null, '', url.toString());
+            }
+        });
     }
 };

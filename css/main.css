@@ -285,11 +285,10 @@ body {
     font-family: roboto-condensed;
 }
 
-#control-panel .advanced button#reset-button {
+#control-panel .advanced button {
     margin: 10px 0;
     padding: 6px 10px;
     font-size: 1.2em;
-    background-color: #FF5C00aa;
     font-weight: bold;
     border-radius: 8px;
     width: 100%;
@@ -297,6 +296,14 @@ body {
     border: 0;
     text-align: center;
     cursor: pointer;
+}
+
+#reset-view-button {
+    background-color: #FF5C00aa;
+}
+
+#clear-cache-button {
+    background-color: #f88a4aaa;
 }
 
 #region-info {

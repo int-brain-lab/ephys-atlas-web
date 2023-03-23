@@ -24,8 +24,35 @@ const DEFAULT_STAT = "mean";
 
 const DEFAULT_MAPPING = "allen";
 const DEFAULT_SEARCH = "";
-const DEFAULT_HIGHLIGHTED = [];
-const DEFAULT_SELECTED = [];
+const DEFAULT_HIGHLIGHTED = null;
+// const DEFAULT_SELECTED = new Set();
+
+
+
+function encode(obj) {
+    if (!obj) return '';
+    return btoa(JSON.stringify(obj));
+}
+
+function decode(encoded) {
+    if (!encoded) return {};
+    return JSON.parse(atob(encoded));
+}
+
+function url2state() {
+    let query = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+    let state = decode(query.state);
+    return state;
+}
+
+function state2url(state) {
+    let url = new URL(window.location);
+    let params = url.searchParams;
+    params.set('state', encode(state));
+    return url.toString();
+}
 
 
 
@@ -35,30 +62,44 @@ const DEFAULT_SELECTED = [];
 
 class State {
     constructor() {
-        let query = new Proxy(new URLSearchParams(window.location.search), {
-            get: (searchParams, prop) => searchParams.get(prop),
-        });
+        this.fromURL();
+    }
 
+    init(state) {
         // Colormap.
-        this.colormap = query.colormap || DEFAULT_COLORMAP;
-        this.colormapMin = query.colormapMin || DEFAULT_COLORMAP_MIN;
-        this.colormapMax = query.colormapMax || DEFAULT_COLORMAP_MAX;
+        this.cmap = state.cmap || DEFAULT_COLORMAP;
+        this.cmapmin = state.cmapmin || DEFAULT_COLORMAP_MIN;
+        this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
 
         // Features.
-        this.fset = query.fset || DEFAULT_FSET;
-        this.fname = query.fname || DEFAULT_FEATURE[this.fset];
-        this.stat = query.stat || DEFAULT_STAT;
+        this.fset = state.fset || DEFAULT_FSET;
+        this.fname = state.fname || DEFAULT_FEATURE[this.fset];
+        this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.
-        this.coronal = query.coronal || (SLICE_MAX['coronal'] / 2);
-        this.sagittal = query.sagittal || (SLICE_MAX['sagittal'] / 2);
-        this.horizontal = query.horizontal || (SLICE_MAX['horizontal'] / 2);
+        this.coronal = parseInt(state.coronal) || (SLICE_MAX['coronal'] / 2);
+        this.sagittal = parseInt(state.sagittal) || (SLICE_MAX['sagittal'] / 2);
+        this.horizontal = parseInt(state.horizontal) || (SLICE_MAX['horizontal'] / 2);
 
         // Regions.
-        this.mapping = query.mapping || DEFAULT_MAPPING;
-        this.search = query.search || DEFAULT_SEARCH;
-        this.highlighted = query.highlighted || DEFAULT_HIGHLIGHTED;
-        this.selected = query.selected || DEFAULT_SELECTED;
+        this.mapping = state.mapping || DEFAULT_MAPPING;
+        this.search = state.search || DEFAULT_SEARCH;
+        this.highlighted = state.highlighted || DEFAULT_HIGHLIGHTED;
+        this.selected = new Set(state.selected || []);
+    }
+
+    fromURL() {
+        let state = url2state();
+        this.init(state);
+    }
+
+    toURL() {
+        // HACK: temporarily replace selected, a Set(), by an array, otherwise the JSON
+        // serialization won't work.
+        let cpy = { ...this };
+        cpy.selected = Array.from(cpy.selected);
+        let url = state2url(cpy);
+        return url;
     }
 
     setFset(fset) {

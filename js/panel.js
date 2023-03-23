@@ -40,9 +40,12 @@ class Panel {
         this.istat = document.getElementById('stat-dropdown');
         this.icmapmin = document.getElementById('colormap-min');
         this.icmapmax = document.getElementById('colormap-max');
-        this.ireset = document.getElementById('reset-button');
+        this.ibreset = document.getElementById('reset-view-button');
+        this.ibclear = document.getElementById('clear-cache-button');
+        this.ishare = document.getElementById('share-button');
 
-        // TODO: use the state to select the initial values of the DOM elements.
+        // Use the state to select the initial values of the DOM elements.
+        this.setState(this.state);
 
         // Setup the event callbacks that change the global state and update the components.
         this.setupMapping();
@@ -52,7 +55,20 @@ class Panel {
         this.setupColormap();
         this.setupColormapMin();
         this.setupColormapMax();
-        this.setupResetButton();
+        this.setupClearButton();
+        this.setupShareButton();
+    }
+
+    setState(state) {
+        this.imapping.value = state.mapping;
+
+        this.ifset.value = state.fset;
+        this.ifname.value = state.fname;
+        this.istat.value = state.stat;
+
+        this.icmap.value = state.cmap;
+        this.icmapmin.value = state.cmapmin;
+        this.icmapmax.value = state.cmapmax;
     }
 
     setupMapping() {
@@ -92,8 +108,7 @@ class Panel {
 
     setupColormap() {
         this.icmap.addEventListener('change', (e) => {
-            let colormap = e.target.value;
-            this.feature.setColormap(colormap);
+            this.feature.setColormap(e.target.value);
         });
     }
 
@@ -111,12 +126,25 @@ class Panel {
         this.icmapmax.addEventListener('input', (e) => { this._updateColormapRange(); });
     }
 
-    setupResetButton() {
-        this.ireset.addEventListener('click', (e) => {
-            if (window.confirm("Are you sure you want to delete the cache and re-download the data?")) {
+    setupClearButton() {
+        this.ibclear.addEventListener('click', (e) => {
+            if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
                 this.db.deleteDatabase();
                 location.reload();
             }
+        });
+    }
+
+    setupShareButton() {
+        this.ishare.addEventListener('click', (e) => {
+            let url = this.state.toURL();
+
+            // DEBUG
+            // window.location = url;
+
+            navigator.clipboard.writeText(url);
+            this.ishare.innerHTML = "copied!";
+            setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
         });
     }
 };
