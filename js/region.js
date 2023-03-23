@@ -152,6 +152,12 @@ class Region {
 
         // Hide all items except those that match the query, using a CSS selector.
         this.styleSearch.insertRule(`#bar-plot li{display: none !important;}`);
-        this.styleSearch.insertRule(`#bar-plot li[data-region*='${query}' i]{display: block !important;}`);
+        this.styleSearch.insertRule(`
+        #bar-plot li[data-acronym*='${query}' i],
+        #bar-plot li[data-name*='${query}' i]
+        {
+            display: block !important;
+        }
+        `);
     }
 };
