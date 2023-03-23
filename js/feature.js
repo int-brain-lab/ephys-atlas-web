@@ -27,6 +27,12 @@ class Feature {
         this.update();
     }
 
+    // Change the current feature set.
+    set_fset(fset) {
+        this.state.setFset(fset); // will also change the fname.
+        this.update();
+    }
+
     // Change a feature within the current feature set.
     set_fname(fname) {
         this.state.fname = fname;

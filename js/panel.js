@@ -1,5 +1,7 @@
 export { Panel };
 
+import { setOptions } from "./utils.js";
+
 
 
 /*************************************************************************************************/
@@ -16,25 +18,6 @@ const FEATURE_NAMES = {
     "bwm_reward": ["decoding_median", "single_cell_perc", "manifold_distance"],
     "bwm_stimulus": ["decoding_median", "single_cell_perc", "manifold_distance"],
 };
-
-
-
-/*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-function setOptions(select, values, selected) {
-    for (let _ in select.options) { select.options.remove(0); }
-    for (let val of values) {
-        let opt = document.createElement('option');
-        opt.text = val;
-        opt.value = val;
-        if (val == selected) {
-            opt.selected = true;
-        }
-        select.add(opt);
-    }
-}
 
 
 
@@ -73,24 +56,18 @@ class Panel {
         this.ifset.addEventListener('change', (e) => {
             let fset = e.target.value;
 
-            // Update the global state.
-            this.state.fset = fset;
-            this.state.fname = DEFAULT_FEATURE[fset];
+            // Update the global state and the Feature component.
+            this.features.set_fset(fset);
 
             // Update the feature options.
-            this.features.set_feature(fset, this.state.fname).then(() => {
-                setOptions(this.ifname, values, this.state.fname);
-            });
+            setOptions(this.ifname, FEATURE_NAMES[fset], this.state.fname);
         });
     }
 
     setupFname() {
         this.ifname.addEventListener('change', (e) => {
             let fname = e.target.value;
-
-            // Update the global state.
-            this.state.fname = fname;
-            this.features.set_feature(this.state.fset, fname);
+            this.features.set_fname(fname);
         });
     }
 

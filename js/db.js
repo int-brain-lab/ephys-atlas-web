@@ -234,7 +234,12 @@ class DB {
         console.assert(fset);
         console.assert(mapping);
         console.assert(fname);
-        return this[`features_${fset}`].get(`${mapping}_${fname}`);
+        let table = this[`features_${fset}`];
+        if (!table) {
+            console.error(`feature table for fset ${fset} does not exist`);
+            return;
+        }
+        return table.get(`${mapping}_${fname}`);
     }
 
     async getRegions(mapping) {

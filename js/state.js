@@ -60,4 +60,10 @@ class State {
         this.highlighted = query.highlighted || DEFAULT_HIGHLIGHTED;
         this.selected = query.selected || DEFAULT_SELECTED;
     }
+
+    setFset(fset) {
+        this.fset = fset;
+        this.fname = DEFAULT_FEATURE[fset];
+        this.stat = DEFAULT_STAT;
+    }
 };
