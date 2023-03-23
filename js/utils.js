@@ -31,7 +31,10 @@ export function rgb2hex(s) {
 export function normalizeValue(value, vmin, vmax) {
     console.assert(value !== NaN);
     console.assert(value !== undefined);
+
+    if (vmin >= vmax) return vmin;
     console.assert(vmin < vmax);
+
     value = clamp(value, vmin, vmax);
 
     let normalized = Math.floor(100 * (value - vmin) / (vmax - vmin));

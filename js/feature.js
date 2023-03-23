@@ -55,6 +55,9 @@ class Feature {
     }
 
     setColormapRange(cmin, cmax) {
+        if (cmin >= cmax) {
+            return;
+        }
         this.state.colormapMin = cmin;
         this.state.colormapMax = cmax;
         this.update();

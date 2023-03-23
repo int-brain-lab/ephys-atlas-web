@@ -100,14 +100,16 @@ class Panel {
     setupColormapMin() {
         this.icmapmin.addEventListener('input', (e) => {
             let cmin = e.target.value;
-            this.feature.setColormapRange(cmin, this.state.colormapMax);
+            if (cmin < this.state.colormapMax)
+                this.feature.setColormapRange(cmin, this.state.colormapMax);
         });
     }
 
     setupColormapMax() {
         this.icmapmax.addEventListener('input', (e) => {
             let cmax = e.target.value;
-            this.feature.setColormapRange(this.state.colormapMin, cmax);
+            if (cmax > this.state.colormapMin)
+                this.feature.setColormapRange(this.state.colormapMin, cmax);
         });
     }
 
