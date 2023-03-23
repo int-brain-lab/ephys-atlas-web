@@ -89,6 +89,7 @@ class Region {
     set_mapping(name) {
         this.state.mapping = name;
         this.make_region_items();
+        this.update();
     }
 
     async make_region_items() {
@@ -117,7 +118,7 @@ class Region {
         let values = features['data'];
 
         clearStyle(this.style);
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        let regions = (await this.db.getRegions(mapping))['data'];
         for (let region of regions) {
             let region_idx = region["idx"];
             let value = values[region_idx];
@@ -136,10 +137,12 @@ class Region {
 
     async getName(region_idx) {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
-        console.assert(0 <= region_idx && region_idx < regions.length);
-        let region = regions[region_idx];
-        console.assert(region);
-        return region['name'];
+        for (let region of regions) {
+            if (region['idx'] == region_idx) {
+                return region['name'];
+            }
+        }
+        console.error(`region #${region_idx} could not be found`);
     }
 
     search(query) {

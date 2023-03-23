@@ -20,9 +20,6 @@ const DB_TABLES = {
     "slices_top": "idx,svg",
     "slices_swanson": "idx,svg",
 
-    // "regions_allen": "idx,atlas_id,acronym,name,hex",
-    // "regions_beryl": "idx,atlas_id,acronym,name,hex",
-    // "regions_cosmos": "idx,atlas_id,acronym,name,hex",
     "regions": "mapping,data",
 
     "features_ephys": "fname,data,statistics",
