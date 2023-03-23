@@ -54,8 +54,15 @@ class Region {
         this.setupHighlight();
         this.setupSelection();
 
-        this.setMapping(this.state.mapping);
+        this.setState(this.state);
         this.update();
+    }
+
+    setState(state) {
+        this.setMapping(state.mapping);
+
+        this.searchInput.value = state.search;
+        this.search(state.search);
     }
 
     /* Setup functions                                                                           */
@@ -146,6 +153,8 @@ class Region {
     }
 
     search(query) {
+        this.state.search = query;
+
         clearStyle(this.styleSearch);
         if (!query) return;
 
