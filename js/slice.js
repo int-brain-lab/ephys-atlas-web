@@ -65,8 +65,6 @@ class Slice {
     }
 
     setupSlice(axis) {
-        console.log(`setup slice ${axis}`);
-
         let max = SLICE_MAX[axis];
 
         let slider = this[`slider_${axis}`];

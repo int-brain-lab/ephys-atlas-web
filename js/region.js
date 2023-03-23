@@ -104,8 +104,6 @@ class Region {
         let stat = this.state.stat;
         let mapping = this.state.mapping;
 
-        // TODO: display the fname in the left bar
-
         let features = await this.feature.getFeatures();
 
         // Find vmin and vmax.
@@ -151,7 +149,13 @@ class Region {
         if (!query) return;
 
         // Hide all items except those that match the query, using a CSS selector.
-        this.styleSearch.insertRule(`#bar-plot li{display: none !important;}`);
+        this.styleSearch.insertRule(`
+        #bar-plot li{
+            display: none !important;
+        }`
+        );
+
+        // Select with CSS the LI items that contain the query in their acronym or name.
         this.styleSearch.insertRule(`
         #bar-plot li[data-acronym*='${query}' i],
         #bar-plot li[data-name*='${query}' i]
