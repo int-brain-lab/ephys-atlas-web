@@ -41,8 +41,8 @@ class State {
 
         // Colormap.
         this.colormap = query.colormap || DEFAULT_COLORMAP;
-        this.colormap_min = query.colormap_min || DEFAULT_COLORMAP_MIN;
-        this.colormap_max = query.colormap_max || DEFAULT_COLORMAP_MAX;
+        this.colormapMin = query.colormapMin || DEFAULT_COLORMAP_MIN;
+        this.colormapMax = query.colormapMax || DEFAULT_COLORMAP_MAX;
 
         // Features.
         this.fset = query.fset || DEFAULT_FSET;

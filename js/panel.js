@@ -26,11 +26,12 @@ const FEATURE_NAMES = {
 /*************************************************************************************************/
 
 class Panel {
-    constructor(db, state, feature, region) {
+    constructor(db, state, feature, region, selector) {
         this.db = db;
         this.state = state;
         this.feature = feature;
         this.region = region;
+        this.selector = selector;
 
         this.imapping = document.getElementById('mapping-dropdown');
         this.ifname = document.getElementById('feature-dropdown');
@@ -57,8 +58,9 @@ class Panel {
     setupMapping() {
         this.imapping.addEventListener('change', (e) => {
             let mapping = e.target.value;
-            this.region.set_mapping(mapping);
-            this.feature.set_mapping(mapping);
+            this.region.setMapping(mapping);
+            this.feature.setMapping(mapping);
+            this.selector.clear();
         });
     }
 
@@ -67,7 +69,7 @@ class Panel {
             let fset = e.target.value;
 
             // Update the global state and the Feature component.
-            this.feature.set_fset(fset);
+            this.feature.setFset(fset);
 
             // Update the feature options.
             setOptions(this.ifname, FEATURE_NAMES[fset], this.state.fname);
@@ -77,35 +79,35 @@ class Panel {
     setupFname() {
         this.ifname.addEventListener('change', (e) => {
             let fname = e.target.value;
-            this.feature.set_fname(fname);
+            this.feature.setFname(fname);
         });
     }
 
     setupStat() {
         this.istat.addEventListener('change', (e) => {
             let stat = e.target.value;
-            this.feature.set_stat(stat);
+            this.feature.setStat(stat);
         });
     }
 
     setupColormap() {
         this.icmap.addEventListener('change', (e) => {
             let colormap = e.target.value;
-            this.feature.set_colormap(colormap);
+            this.feature.setColormap(colormap);
         });
     }
 
     setupColormapMin() {
         this.icmapmin.addEventListener('input', (e) => {
             let cmin = e.target.value;
-            this.feature.set_colormap_range(cmin, this.state.colormap_max);
+            this.feature.setColormapRange(cmin, this.state.colormapMax);
         });
     }
 
     setupColormapMax() {
         this.icmapmax.addEventListener('input', (e) => {
             let cmax = e.target.value;
-            this.feature.set_colormap_range(this.state.colormap_min, cmax);
+            this.feature.setColormapRange(this.state.colormapMin, cmax);
         });
     }
 

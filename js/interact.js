@@ -60,6 +60,11 @@ class Selector {
         this.makeCSS();
     }
 
+    clear() {
+        this.selected.clear();
+        clearStyle(this.style);
+    }
+
     count() {
         return this.selected.size;
     }
@@ -107,9 +112,9 @@ class Tooltip {
         this.info.style.visibility = 'hidden';
     }
 
-    async setText(region_idx) {
-        let name = await this.region.getName(region_idx);
-        let value = await this.feature.get(region_idx);
+    async setText(regionIdx) {
+        let name = await this.region.getName(regionIdx);
+        let value = await this.feature.get(regionIdx);
         let meanDisplay = displayNumber(value);
         this.info.innerHTML = `<strong>${name}</strong>: ${meanDisplay}`;
     }

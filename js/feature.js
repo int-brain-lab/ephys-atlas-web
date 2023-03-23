@@ -1,6 +1,6 @@
 export { Feature };
 
-import { clearStyle, clamp, normalize_value } from "./utils.js";
+import { clearStyle, clamp, normalizeValue } from "./utils.js";
 
 
 
@@ -16,31 +16,31 @@ class Feature {
         this.style = document.getElementById('style-features').sheet;
         this.featureName = document.getElementById('bar-fname');
 
-        this.set_colormap(this.state.colormap);
+        this.setColormap(this.state.colormap);
     }
 
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    set_mapping(name) {
+    setMapping(name) {
         this.state.mapping = name;
         this.update();
     }
 
     // Change the current feature set.
-    set_fset(fset) {
+    setFset(fset) {
         this.state.setFset(fset); // will also change the fname.
         this.update();
     }
 
     // Change a feature within the current feature set.
-    set_fname(fname) {
+    setFname(fname) {
         this.state.fname = fname;
         this.update();
     }
 
     // set the stat: mean, std, min, max
-    set_stat(stat) {
+    setStat(stat) {
         this.state.stat = stat;
         this.update();
     }
@@ -48,25 +48,25 @@ class Feature {
     /* Colormap functions                                                                        */
     /*********************************************************************************************/
 
-    async set_colormap(cmap) {
+    async setColormap(cmap) {
         this.state.colormap = cmap;
         this.colors = (await this.db.getColormap(this.state.colormap))['colors'];
         this.update();
     }
 
-    set_colormap_range(cmin, cmax) {
-        this.state.colormap_min = cmin;
-        this.state.colormap_max = cmax;
+    setColormapRange(cmin, cmax) {
+        this.state.colormapMin = cmin;
+        this.state.colormapMax = cmax;
         this.update();
     }
 
-    make_hex(normalized) {
+    makeHex(normalized) {
         return this.colors[clamp(normalized, 0, 99)];
     }
 
-    make_region_color(mapping, region_idx, value, normalized) {
-        let hex = this.make_hex(normalized);
-        return `svg path.${mapping}_region_${region_idx} { fill: ${hex}; } /* FRP5: ${value} */`;
+    makeRegionColor(mapping, regionIdx, value, normalized) {
+        let hex = this.makeHex(normalized);
+        return `svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* FRP5: ${value} */`;
     }
 
     /* Feature functions                                                                         */
@@ -93,8 +93,8 @@ class Feature {
 
         let mapping = this.state.mapping;
         let cmap = this.state.colormap;
-        let cmin = this.state.colormap_min;
-        let cmax = this.state.colormap_max;
+        let cmin = this.state.colormapMin;
+        let cmax = this.state.colormapMax;
 
         // dict {idx: {mean...}, statistics: {mean: xxx, ...}
         let data = fet["data"];
@@ -112,20 +112,20 @@ class Feature {
 
         clearStyle(this.style);
 
-        for (let region_idx in data) {
-            let value = data[region_idx][stat];
+        for (let regionIdx in data) {
+            let value = data[regionIdx][stat];
             // console.log(value);
-            let normalizedMod = normalize_value(value, vminMod, vmaxMod);
-            let stl = this.make_region_color(mapping, region_idx, value, normalizedMod);
+            let normalizedMod = normalizeValue(value, vminMod, vmaxMod);
+            let stl = this.makeRegionColor(mapping, regionIdx, value, normalizedMod);
             this.style.insertRule(stl);
         }
     }
 
-    async get(region_idx) {
+    async get(regionIdx) {
         // Return the feature value of a given region.
         // This depends on the currently-selected feature set, feature, stat.
         let data = (await this.getFeatures())['data'];
-        if (data && data[region_idx])
-            return data[region_idx][this.state.stat];
+        if (data && data[regionIdx])
+            return data[regionIdx][this.state.stat];
     }
 };

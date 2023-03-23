@@ -137,7 +137,7 @@ class Slice {
                 document.getElementById(`figure-${axis}`).innerHTML = svg;
             }
 
-            // call set_sagittal() etc to update the hlines and vlines.
+            // call setSagittal() etc to update the hlines and vlines.
             if (SLICE_AXES.includes(axis)) {
                 this[`set_${axis}`](idx);
             }

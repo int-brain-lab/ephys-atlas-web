@@ -384,9 +384,9 @@ def generate_features_groupedby(br, mapping, df, feature_names):
         # Collect feature values.
         for region in regions:
             atlas_id = region['atlas_id']
-            region_idx = region['idx']
+            regionIdx = region['idx']
 
-            features[fet]['data'][region_idx] = {
+            features[fet]['data'][regionIdx] = {
                 stat: float_json(dfg.loc[atlas_id][fet])
                 for stat, dfg in dfs.items()
             }
@@ -495,4 +495,4 @@ if __name__ == '__main__':
 
     # Make the JSON feature file and the CSS files.
     # process_features(DATA_DIR / 'pqt')
-    # make_regions(DATA_DIR / 'pqt')
+    # makeRegions(DATA_DIR / 'pqt')

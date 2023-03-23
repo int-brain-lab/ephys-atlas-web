@@ -27,6 +27,6 @@ class App {
 
         this.slice = new Slice(this.db, this.state, this.tooltip, this.highlighter, this.selector);
 
-        this.panel = new Panel(this.db, this.state, this.feature, this.region);
+        this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector);
     }
 };

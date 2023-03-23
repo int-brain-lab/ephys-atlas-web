@@ -1,6 +1,6 @@
 export { Region };
 
-import { clearStyle, normalize_value, displayNumber, throttle } from "./utils.js";
+import { clearStyle, normalizeValue, displayNumber, throttle } from "./utils.js";
 
 
 
@@ -8,13 +8,13 @@ import { clearStyle, normalize_value, displayNumber, throttle } from "./utils.js
 /* Region utils                                                                                  */
 /*************************************************************************************************/
 
-function make_region_bar(mapping, region_idx, value, normalized) {
-    return `#bar-plot li.${mapping}_region_${region_idx} .bar { width: ${normalized}%; } /* TTv: ${value} */`;
+function makeRegionBar(mapping, regionIdx, value, normalized) {
+    return `#bar-plot li.${mapping}_region_${regionIdx} .bar { width: ${normalized}%; } /* TTv: ${value} */`;
 }
 
 
 
-function make_region_item(mapping, idx, acronym, name) {
+function makeRegionItem(mapping, idx, acronym, name) {
     return `
     <li class="${mapping}_region_${idx}" data-acronym="${acronym}" data-name="${name}">
         <div class="acronym">${acronym}</div>
@@ -54,7 +54,7 @@ class Region {
         this.setupHighlight();
         this.setupSelection();
 
-        this.set_mapping(this.state.mapping);
+        this.setMapping(this.state.mapping);
         this.update();
     }
 
@@ -86,17 +86,17 @@ class Region {
     /* Region functions                                                                          */
     /*********************************************************************************************/
 
-    set_mapping(name) {
+    setMapping(name) {
         this.state.mapping = name;
-        this.make_region_items();
+        this.makeRegionItems();
         this.update();
     }
 
-    async make_region_items() {
+    async makeRegionItems() {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         let s = "";
         for (let region of regions) {
-            s += make_region_item(
+            s += makeRegionItem(
                 this.state.mapping, region["idx"], region["acronym"], region["name"]);
         }
         this.regionList.innerHTML = s;
@@ -120,29 +120,29 @@ class Region {
         clearStyle(this.style);
         let regions = (await this.db.getRegions(mapping))['data'];
         for (let region of regions) {
-            let region_idx = region["idx"];
-            let value = values[region_idx];
+            let regionIdx = region["idx"];
+            let value = values[regionIdx];
             if (!value) continue;
             value = value[stat];
 
-            let normalized = normalize_value(value, vmin, vmax);
+            let normalized = normalizeValue(value, vmin, vmax);
 
-            let stl = make_region_bar(mapping, region_idx, value, normalized);
+            let stl = makeRegionBar(mapping, regionIdx, value, normalized);
             this.style.insertRule(stl);
 
             // All bars are hidden, except the ones that are present.
-            this.style.insertRule(`#bar-plot li.${mapping}_region_${region_idx}{display: block;}`);
+            this.style.insertRule(`#bar-plot li.${mapping}_region_${regionIdx}{display: block;}`);
         }
     }
 
-    async getName(region_idx) {
+    async getName(regionIdx) {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         for (let region of regions) {
-            if (region['idx'] == region_idx) {
+            if (region['idx'] == regionIdx) {
                 return region['name'];
             }
         }
-        console.error(`region #${region_idx} could not be found`);
+        console.error(`region #${regionIdx} could not be found`);
     }
 
     search(query) {
