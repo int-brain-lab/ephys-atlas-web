@@ -427,9 +427,9 @@ body {
 
 
 #bar-fname {
-    margin: 18px auto 0 auto;
+    margin: 0 0 6px 0;
     text-align: center;
-    font-weight: 600;
+    /* font-weight: 600; */
     font-family: roboto-condensed;
 }
 

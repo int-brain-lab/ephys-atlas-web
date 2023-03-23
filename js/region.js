@@ -136,9 +136,6 @@ class Region {
     async getName(region_idx) {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         console.assert(0 <= region_idx && region_idx < regions.length);
-        // console.log(region_idx);
-        // console.log(regions);
-        // let region = regions.find((region) => { region['idx'] == region_idx });
         let region = regions[region_idx];
         console.assert(region);
         return region['name'];

@@ -14,6 +14,7 @@ class Feature {
         this.state = state;
 
         this.style = document.getElementById('style-features').sheet;
+        this.featureName = document.getElementById('bar-fname');
 
         this.set_colormap(this.state.colormap);
     }
@@ -71,6 +72,8 @@ class Feature {
     }
 
     async update() {
+        this.featureName.innerHTML = `feature: ${this.state.fname}`;
+
         let fet = (await this.getFeatures());
 
         if (!fet) {
