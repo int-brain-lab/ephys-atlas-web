@@ -1,7 +1,7 @@
 export { Slice };
 
 import { throttle, clamp, getOS } from "./utils.js";
-import { SLICE_MAX, SLICE_AXES } from "./constants.js";
+import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 
 
 
@@ -10,23 +10,14 @@ import { SLICE_MAX, SLICE_AXES } from "./constants.js";
 /*************************************************************************************************/
 
 class Slice {
-    constructor(db, state) {
+    constructor(db, state, tooltip, highlighter, selector) {
         this.setSlice = throttle(this._setSlice, 15);
 
         this.db = db;
         this.state = state;
-
-        for (let axis of SLICE_AXES) {
-            this[`svg_${axis}`] = document.getElementById(`figure-${axis}`);
-            this[`slider_${axis}`] = document.getElementById(`slider-${axis}`);
-
-            this.setupSlice(axis);
-
-            this._setSlice(axis, this.state[axis]);
-        }
-
-        this._setSlice('top', 0);
-        this._setSlice('swanson', 0);
+        this.tooltip = tooltip;
+        this.highlighter = highlighter;
+        this.selector = selector;
 
         this.tv = document.getElementById('top-vline');
         this.th = document.getElementById('top-hline');
@@ -41,6 +32,36 @@ class Slice {
         this.ap = document.getElementById('coord-ap');
         this.dv = document.getElementById('coord-dv');
 
+        this.setupSlices();
+
+
+    }
+
+    /* Setup functions                                                                           */
+    /*********************************************************************************************/
+
+    setupSlices() {
+        // coronal, sagittal, horizontal
+        for (let axis of SLICE_AXES) {
+            this[`svg_${axis}`] = document.getElementById(`figure-${axis}`);
+            this[`slider_${axis}`] = document.getElementById(`slider-${axis}`);
+
+            this.setupSlice(axis);
+            this.setupHighlighting(axis);
+            this.setupTooltip(axis);
+
+            this._setSlice(axis, this.state[axis]);
+        }
+
+        // top swanson
+        for (let axis of SLICE_STATIC_AXES) {
+            this[`svg_${axis}`] = document.getElementById(`figure-${axis}`);
+
+            this.setupHighlighting(axis);
+            this.setupTooltip(axis);
+
+            this._setSlice(axis, 0);
+        }
     }
 
     setupSlice(axis) {
@@ -75,6 +96,41 @@ class Slice {
             that.setSlice(axis, slider.valueAsNumber);
         }, { passive: false });
     };
+
+    setupHighlighting(axis) {
+        const svg = this[`svg_${axis}`];
+
+        svg.addEventListener('mouseover', (e) => {
+            if (e.target.tagName == 'path') {
+                this.highlighter.highlight(e);
+                this.tooltip.show(e);
+            }
+        });
+    }
+
+    setupSelection(axis) {
+        const svg = getSVG(axis);
+        svg.addEventListener('click', (e) => {
+            if (e.target.tagName == 'path') {
+                // let id = getRegionID(e.target);
+                SELECTOR.toggle(id);
+            }
+        });
+    }
+
+    setupTooltip(axis) {
+        const svg = this[`svg_${axis}`];
+
+        svg.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'path') {
+                this.highlighter.clear();
+                this.tooltip.hide();
+            }
+        });
+    };
+
+    /* Slicing functions                                                                         */
+    /*********************************************************************************************/
 
     _setSlice(axis, idx) {
         this.db.getSlice(axis, idx).then((item) => {

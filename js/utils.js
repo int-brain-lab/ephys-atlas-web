@@ -9,6 +9,7 @@ export function clamp(x, min, max) {
 
 
 export function displayNumber(x) {
+    if (!x) return '0';
     return Math.abs(x) < .001 ? x.toExponential(5) : x.toPrecision(5);
 }
 
@@ -90,11 +91,21 @@ export function getBarPlot() {
 
 
 
-export function getRegionID(obj) {
-    return obj.classList[0].substr(7);
+function getRegionIdx(mapping, obj) {
+    let r = /\d+/;
+    // Find the class name corresponding to the mapping.
+    for (let className of obj.classList) {
+        if (className.includes(mapping)) {
+            return parseInt(className.match(r)[0]);
+        }
+    }
 };
 
 
+
+export function e2idx(mapping, e) {
+    return getRegionIdx(mapping, e.target);
+}
 
 
 

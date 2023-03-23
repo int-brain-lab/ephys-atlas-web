@@ -1,6 +1,6 @@
 export { Region };
 
-import { clearStyle, normalize_value, displayNumber } from "./utils.js";
+import { clearStyle, normalize_value, displayNumber, throttle } from "./utils.js";
 
 
 
@@ -30,10 +30,12 @@ function make_region_item(mapping, idx, acronym, name) {
 /*************************************************************************************************/
 
 class Region {
-    constructor(db, state, feature) {
+    constructor(db, state, feature, highlighter, selector) {
         this.db = db;
         this.state = state;
         this.feature = feature;
+        this.highlighter = highlighter;
+        this.selector = selector;
 
         // this.vmin = 0;
         // this.vmax = 1;
@@ -47,13 +49,41 @@ class Region {
         this.styleSearch = document.getElementById('style-search').sheet;
 
         this.searchInput = document.getElementById("search-input");
-        this.searchInput.addEventListener("input", (e) => {
-            this.search(e.target.value);
-        });
+
+        this.setupSearch();
+        this.setupHighlight();
 
         this.set_mapping(this.state.mapping);
         this.update();
     }
+
+    /* Setup functions                                                                           */
+    /*********************************************************************************************/
+
+    setupSearch() {
+        this.searchInput.addEventListener("input", (e) => {
+            this.search(e.target.value);
+        });
+    }
+
+    setupHighlight() {
+        this.regionList.addEventListener('mousemove', throttle((e) => {
+            if (e.target.tagName == 'LI') {
+                this.highlighter.highlight(e);
+            }
+        }, 50));
+    }
+
+    setupSelection() {
+        this.regionList.addEventListener('click', (e) => {
+            if (e.target.tagName == 'LI') {
+                this.selector.toggle(e);
+            }
+        });
+    }
+
+    /* Region functions                                                                          */
+    /*********************************************************************************************/
 
     set_mapping(name) {
         this.state.mapping = name;
@@ -103,6 +133,17 @@ class Region {
             // All bars are hidden, except the ones that are present.
             this.style.insertRule(`#bar-plot li.${mapping}_region_${region_idx}{display: block;}`);
         }
+    }
+
+    async getName(region_idx) {
+        let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        console.assert(0 <= region_idx && region_idx < regions.length);
+        // console.log(region_idx);
+        // console.log(regions);
+        // let region = regions.find((region) => { region['idx'] == region_idx });
+        let region = regions[region_idx];
+        console.assert(region);
+        return region['name'];
     }
 
     search(query) {

@@ -18,6 +18,9 @@ class Feature {
         this.set_colormap(this.state.colormap);
     }
 
+    /* Set functions                                                                             */
+    /*********************************************************************************************/
+
     set_mapping(name) {
         this.state.mapping = name;
         this.update();
@@ -35,14 +38,11 @@ class Feature {
         this.update();
     }
 
-    async getFeatures() {
-        let fet = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
-        return fet;
-    }
+    /* Colormap functions                                                                        */
+    /*********************************************************************************************/
 
     async set_colormap(cmap) {
         this.state.colormap = cmap;
-        console.log(this.state.colormap);
         this.colors = (await this.db.getColormap(this.state.colormap))['colors'];
         this.update();
     }
@@ -60,6 +60,14 @@ class Feature {
     make_region_color(mapping, region_idx, value, normalized) {
         let hex = this.make_hex(normalized);
         return `svg path.${mapping}_region_${region_idx} { fill: ${hex}; } /* FRP5: ${value} */`;
+    }
+
+    /* Feature functions                                                                         */
+    /*********************************************************************************************/
+
+    async getFeatures() {
+        let fet = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        return fet;
     }
 
     async update() {

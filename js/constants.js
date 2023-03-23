@@ -10,6 +10,7 @@ export const SLICE_MAX = {
 };
 
 export const SLICE_AXES = Object.keys(SLICE_MAX);
+export const SLICE_STATIC_AXES = ['top', 'swanson'];
 
 
 
