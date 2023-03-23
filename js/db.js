@@ -68,40 +68,40 @@ class DB {
 
         console.debug("opening the database");
 
-        this.make_tables();
+        this.makeTables();
 
-        if (!await this.is_complete()) {
+        if (!await this.isComplete()) {
 
             console.log("downloading and caching the data...");
 
             let promises = [];
 
             // Colormaps.
-            promises.push(this.add_colormaps(1));
+            promises.push(this.addColormaps(1));
 
             // Regions.
-            let pregions = this.download_regions(2);
+            let pregions = this.downloadRegions(2);
             pregions.then((regions) => {
-                promises.push(this.add_regions(regions, 3));
+                promises.push(this.addRegions(regions, 3));
             });
             promises.push(pregions);
 
             // Features.
-            let pfeatures = this.download_features('ephys', 3);
+            let pfeatures = this.downloadFeatures('ephys', 3);
             pfeatures.then((features) => {
-                promises.push(this.add_features('ephys', features, 1));
+                promises.push(this.addFeatures('ephys', features, 1));
             });
             promises.push(pfeatures);
 
             // SVG slices.
-            let slices = await this.download_slices(20);
+            let slices = await this.downloadSlices(20);
             // NOTE: wait for the big download to finish here.
             // Once it's finished, we add the slice loading promises to the list.
-            promises.push(this.add_slices(slices, 'coronal', 20));
-            promises.push(this.add_slices(slices, 'horizontal', 20));
-            promises.push(this.add_slices(slices, 'sagittal', 20));
-            promises.push(this.add_slices(slices, 'top', 5));
-            promises.push(this.add_slices(slices, 'swanson', 5));
+            promises.push(this.addSlices(slices, 'coronal', 20));
+            promises.push(this.addSlices(slices, 'horizontal', 20));
+            promises.push(this.addSlices(slices, 'sagittal', 20));
+            promises.push(this.addSlices(slices, 'top', 5));
+            promises.push(this.addSlices(slices, 'swanson', 5));
 
             await Promise.all(promises);
             console.log("all done!");
@@ -113,7 +113,7 @@ class DB {
     /* Colormaps                                                                                 */
     /*********************************************************************************************/
 
-    async add_colormaps(progress) {
+    async addColormaps(progress) {
         let colormaps = await downloadColormaps();
         let items = [];
         for (let cmap in colormaps) {
@@ -126,14 +126,14 @@ class DB {
     /* Regions                                                                                   */
     /*********************************************************************************************/
 
-    async download_regions(progress) {
+    async downloadRegions(progress) {
         let regions = await downloadRegions();
         console.debug('done downloading regions');
         this.splash.add(progress);
         return regions;
     }
 
-    async add_regions(regions, progress) {
+    async addRegions(regions, progress) {
         let items = [];
         for (let mapping in regions) {
             items.push({
@@ -149,14 +149,14 @@ class DB {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async download_features(fset, progress) {
+    async downloadFeatures(fset, progress) {
         let features = await downloadFeatures(fset);
         console.debug('done downloading features');
         this.splash.add(progress);
         return features;
     }
 
-    async add_features(fset, features, progress) {
+    async addFeatures(fset, features, progress) {
         // features: {mapping: {fname: {data: ..., statistics: ...}}}
         console.assert(features);
         // console.log(features);
@@ -181,14 +181,14 @@ class DB {
     /* Slices                                                                                    */
     /*********************************************************************************************/
 
-    async download_slices(progress) {
+    async downloadSlices(progress) {
         let slices = await downloadSlices();
         console.debug('done downloading slices');
         this.splash.add(progress);
         return slices;
     }
 
-    async add_slices(slices, axis, progress) {
+    async addSlices(slices, axis, progress) {
         let items = slices[axis];
         // HACK: these two particular axes do not have a list of strings as there is only 1 slice
         if (axis == "top" || axis == "swanson") {
@@ -204,13 +204,13 @@ class DB {
     /* Internal                                                                                  */
     /*********************************************************************************************/
 
-    make_tables() {
+    makeTables() {
         for (let name in DB_TABLES) {
             this[name] = this.db.table(name);
         }
     }
 
-    async is_complete() {
+    async isComplete() {
         return await this.slices_swanson.count() > 0;
     }
 
