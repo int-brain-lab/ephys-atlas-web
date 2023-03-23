@@ -97,20 +97,18 @@ class Panel {
         });
     }
 
+    _updateColormapRange() {
+        let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
+        let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
+        this.feature.setColormapRange(cmin, cmax);
+    }
+
     setupColormapMin() {
-        this.icmapmin.addEventListener('input', (e) => {
-            let cmin = e.target.value;
-            if (cmin < this.state.colormapMax)
-                this.feature.setColormapRange(cmin, this.state.colormapMax);
-        });
+        this.icmapmin.addEventListener('input', (e) => { this._updateColormapRange(); });
     }
 
     setupColormapMax() {
-        this.icmapmax.addEventListener('input', (e) => {
-            let cmax = e.target.value;
-            if (cmax > this.state.colormapMin)
-                this.feature.setColormapRange(this.state.colormapMin, cmax);
-        });
+        this.icmapmax.addEventListener('input', (e) => { this._updateColormapRange(); });
     }
 
     setupResetButton() {
