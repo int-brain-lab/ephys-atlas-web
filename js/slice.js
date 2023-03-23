@@ -33,8 +33,6 @@ class Slice {
         this.dv = document.getElementById('coord-dv');
 
         this.setupSlices();
-
-
     }
 
     /* Setup functions                                                                           */
@@ -48,6 +46,7 @@ class Slice {
 
             this.setupSlice(axis);
             this.setupHighlighting(axis);
+            this.setupSelection(axis);
             this.setupTooltip(axis);
 
             this._setSlice(axis, this.state[axis]);
@@ -58,6 +57,7 @@ class Slice {
             this[`svg_${axis}`] = document.getElementById(`figure-${axis}`);
 
             this.setupHighlighting(axis);
+            this.setupSelection(axis);
             this.setupTooltip(axis);
 
             this._setSlice(axis, 0);
@@ -107,11 +107,11 @@ class Slice {
     }
 
     setupSelection(axis) {
-        const svg = getSVG(axis);
+        const svg = this[`svg_${axis}`];
+
         svg.addEventListener('click', (e) => {
             if (e.target.tagName == 'path') {
-                // let id = getRegionID(e.target);
-                SELECTOR.toggle(id);
+                this.selector.toggle(e);
             }
         });
     }

@@ -74,11 +74,6 @@ class Panel {
     setupStat() {
         this.istat.addEventListener('change', (e) => {
             let stat = e.target.value;
-
-            // Update the global state.
-            this.state.stat = stat;
-
-            // Update the component.
             this.features.set_stat(stat);
         });
     }
@@ -86,11 +81,6 @@ class Panel {
     setupColormap() {
         this.icmap.addEventListener('change', (e) => {
             let colormap = e.target.value;
-
-            // Update the global state.
-            this.state.colormap = colormap;
-
-            // Update the component.
             this.features.set_colormap(colormap);
         });
     }
@@ -98,11 +88,6 @@ class Panel {
     setupColormapMin() {
         this.icmapmin.addEventListener('input', (e) => {
             let cmin = e.target.value;
-
-            // Update the global state.
-            this.state.colormap_min = cmin;
-
-            // Update the component.
             this.features.set_colormap_range(cmin, this.state.colormap_max);
         });
     }
@@ -110,11 +95,6 @@ class Panel {
     setupColormapMax() {
         this.icmapmax.addEventListener('input', (e) => {
             let cmax = e.target.value;
-
-            // Update the global state.
-            this.state.colormap_max = cmax;
-
-            // Update the component.
             this.features.set_colormap_range(this.state.colormap_min, cmax);
         });
     }

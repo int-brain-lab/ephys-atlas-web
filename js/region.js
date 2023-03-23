@@ -52,6 +52,7 @@ class Region {
 
         this.setupSearch();
         this.setupHighlight();
+        this.setupSelection();
 
         this.set_mapping(this.state.mapping);
         this.update();
