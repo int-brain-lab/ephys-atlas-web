@@ -4,6 +4,7 @@ import { Feature } from "./feature.js";
 import { Region } from "./region.js";
 import { Highlighter, Selector, Tooltip } from "./interact.js";
 import { Panel } from "./panel.js";
+import { Unity } from "./unity.js";
 
 export { App };
 
@@ -33,6 +34,8 @@ class App {
         this.slice = new Slice(this.db, this.state, this.tooltip, this.highlighter, this.selector);
 
         this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector);
+
+        this.unity = new Unity();
     }
 
     setupResetButton() {

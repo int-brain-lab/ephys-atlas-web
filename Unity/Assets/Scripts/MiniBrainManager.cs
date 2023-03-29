@@ -16,34 +16,41 @@ public class MiniBrainManager : MonoBehaviour
 
     private void Awake()
     {
-        originalTransformPositionsLeft = new Dictionary<int, Vector3>();
-        originalTransformPositionsRight = new Dictionary<int, Vector3>();
+        Debug.Log("Awake");
+        //originalTransformPositionsLeft = new Dictionary<int, Vector3>();
+        //originalTransformPositionsRight = new Dictionary<int, Vector3>();
 
-        modelNodes = new();
+        //modelNodes = new();
 
-        _materials = new();
-        for (int i = 0; i < _materialNames.Count; i++)
-            _materials.Add(_materialNames[i], _materialOpts[i]);
+        //_materials = new();
+        //for (int i = 0; i < _materialNames.Count; i++)
+        //    _materials.Add(_materialNames[i], _materialOpts[i]);
 
-        RecomputeCosmosCenters();
+        //RecomputeCosmosCenters();
+        //Debug.Log("Done recomputing centers");
     }
 
     private async void Start()
     {
-        await _remoteLoader.GetCatalogLoadedTask();
+        Debug.Log("Start");
+        //await _remoteLoader.GetCatalogLoadedTask();
 
-        _modelControl.LateStart(false);
+        //Debug.Log("Catalog loaded");
+        //_modelControl.LateStart(false);
+        //Debug.Log("Model control late start done");
 
-        await _modelControl.GetDefaultLoadedTask();
+        //await _modelControl.GetDefaultLoadedTask();
+        //Debug.Log("Default areas finished");
 
-        var loadTask = _modelControl.LoadBerylNodes(false, RegisterNode);
+        //var loadTask = _modelControl.LoadBerylNodes(false, RegisterNode);
+        //Debug.Log("Individual areas loading");
 
-        await loadTask;
+        //await loadTask;
 
-        //foreach (var node in loadTask.Result)
-        //    RegisterNode(node);
+        ////foreach (var node in loadTask.Result)
+        ////    RegisterNode(node);
 
-        Debug.Log("Areas loaded");
+        //Debug.Log("Areas loaded");
 
         //TestAreas();
     }
