@@ -1,3 +1,4 @@
+export { Unity };
 
 class Unity {
   constructor() {
