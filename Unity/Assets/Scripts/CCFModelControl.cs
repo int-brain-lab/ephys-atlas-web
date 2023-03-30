@@ -229,8 +229,10 @@ public class CCFModelControl : MonoBehaviour
         foreach (CCFTreeNode node in berylNodes)
             if (!node.IsLoaded(full))
             {
+                Debug.Log($"Requesting {node.ShortName}");
                 LoadWithCallbackHelper(node, full, callback);
                 taskHandles.Add(node.GetLoadedTask(full));
+                await Task.Delay(10);
             }
         await Task.WhenAll(taskHandles);
 

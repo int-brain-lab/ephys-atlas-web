@@ -4,9 +4,9 @@ class Unity {
   constructor() {
     console.debug("setup Unity");
     createUnityInstance(document.getElementById("unity-canvas"), {
-        dataUrl: "Build/webgl.data.gz",
-        frameworkUrl: "Build/webgl.framework.js.gz",
-        codeUrl: "Build/webgl.wasm.gz",
+        dataUrl: "Build/webgl.data.unityweb",
+        frameworkUrl: "Build/webgl.framework.js.unityweb",
+        codeUrl: "Build/webgl.wasm.unityweb",
         companyName: "Daniel Birman @ UW",
         productName: "ephys_atlas",
         productVersion: "0.1.0",

@@ -17,40 +17,40 @@ public class MiniBrainManager : MonoBehaviour
     private void Awake()
     {
         Debug.Log("Awake");
-        //originalTransformPositionsLeft = new Dictionary<int, Vector3>();
-        //originalTransformPositionsRight = new Dictionary<int, Vector3>();
+        originalTransformPositionsLeft = new Dictionary<int, Vector3>();
+        originalTransformPositionsRight = new Dictionary<int, Vector3>();
 
-        //modelNodes = new();
+        modelNodes = new();
 
-        //_materials = new();
-        //for (int i = 0; i < _materialNames.Count; i++)
-        //    _materials.Add(_materialNames[i], _materialOpts[i]);
+        _materials = new();
+        for (int i = 0; i < _materialNames.Count; i++)
+            _materials.Add(_materialNames[i], _materialOpts[i]);
 
-        //RecomputeCosmosCenters();
-        //Debug.Log("Done recomputing centers");
+        RecomputeCosmosCenters();
+        Debug.Log("Done recomputing centers");
     }
 
     private async void Start()
     {
         Debug.Log("Start");
-        //await _remoteLoader.GetCatalogLoadedTask();
+        await _remoteLoader.GetCatalogLoadedTask();
 
-        //Debug.Log("Catalog loaded");
-        //_modelControl.LateStart(false);
-        //Debug.Log("Model control late start done");
+        Debug.Log("Catalog loaded");
+        _modelControl.LateStart(false);
+        Debug.Log("Model control late start done");
 
-        //await _modelControl.GetDefaultLoadedTask();
-        //Debug.Log("Default areas finished");
+        await _modelControl.GetDefaultLoadedTask();
+        Debug.Log("Default areas finished");
 
-        //var loadTask = _modelControl.LoadBerylNodes(false, RegisterNode);
-        //Debug.Log("Individual areas loading");
+        var loadTask = _modelControl.LoadBerylNodes(false, RegisterNode);
+        Debug.Log("Individual areas loading");
 
-        //await loadTask;
+        await loadTask;
 
-        ////foreach (var node in loadTask.Result)
-        ////    RegisterNode(node);
+        //foreach (var node in loadTask.Result)
+        //    RegisterNode(node);
 
-        //Debug.Log("Areas loaded");
+        Debug.Log("Areas loaded");
 
         //TestAreas();
     }
@@ -99,10 +99,24 @@ public class MiniBrainManager : MonoBehaviour
         node.SetMaterial(_materials[material]);
     }
 
+    public void SetVisibility(string visibleStr)
+    {
+        int uIdx = visibleStr.IndexOf(':');
+        string area = visibleStr.Substring(0, uIdx);
+        bool visible = bool.Parse(visibleStr.Substring(uIdx + 1, visibleStr.Length - uIdx - 1));
+
+        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area));
+        node.SetNodeModelVisibility_Left(visible);
+        node.SetNodeModelVisibility_Right(visible);
+    }
+
     public void RegisterNode(CCFTreeNode node)
     {
+        Debug.Log($"Registering {node.ShortName}");
         node.SetNodeModelVisibility_Left(true);
         node.SetNodeModelVisibility_Right(true);
+        node.SetShaderProperty("_Alpha", 1f);
+        
         modelNodes.Add(node.ShortName, node);
 
         if (node != null && node.NodeModelLeftGO != null)
