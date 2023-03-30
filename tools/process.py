@@ -62,6 +62,7 @@ SIMPLIFY_CMD = "inkscape --batch-process --actions='EditSelectAll;SelectionSimpl
 RE_PATH = re.compile(r'<path id="path[0-9]+"')
 RE_WHITESPACE = re.compile(r'\s+(?=<)')
 STYLE = "* { stroke-linecap: butt; stroke-linejoin: round; fill: white; stroke: black; }"
+ROOT_ID = 997 # skip the root to avoid bug with lateralization
 
 
 # -------------------------------------------------------------------------------------------------
@@ -334,7 +335,7 @@ def get_mappings():
         out[mapping] = [
             {
                 'idx': abs(idx_),
-                'atlas_id': -abs(atlas_id_),
+                'atlas_id': atlas_id_,
                 'acronym': acronym_,
                 'name': name_,
                 'hex': hex_,
@@ -366,6 +367,7 @@ def get_aggregates(df):
 # {mapping: {fet: {data: {atlas_id: {stat: value}}}, statistics: {stat: {mean: value, std: value...}}}}}
 
 def generate_features_groupedby(br, mapping, df, feature_names):
+    print(f"Generating features for mapping {mapping}")
     assert isinstance(df, DataFrameGroupBy)
     dfs = get_aggregates(df)
 
@@ -423,7 +425,7 @@ class BrainRegions:
         # for a given mapping, take a pandas Series with a bunch of atlas_ids, and
         # will save the occurring regions to only keep those.
         self.kept[mapping] = set(self.atlas_id_map[mapping][atlas_id]
-                                 for atlas_id in atlas_ids)
+                                 for atlas_id in atlas_ids if abs(atlas_id) != ROOT_ID)
 
     def get_regions(self, mapping):
         # return the kept brain regions
