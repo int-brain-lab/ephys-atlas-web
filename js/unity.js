@@ -12,10 +12,6 @@ class Unity {
         productVersion: "0.1.0",
     }).then((unityInstance) => {
         window.unity = unityInstance;
-
-        // run example code
-        this.setColor();
-        this.setVisibility();
     });
   }
   
@@ -29,6 +25,12 @@ class Unity {
   setVisibility(selected) {
     // example code
     window.unity.SendMessage('main', 'SetVisibility', 'VISp:false');
+  }
+
+  loadedCallback() {
+    // run example code
+    this.setColor();
+    this.setVisibility();
   }
 }
 
