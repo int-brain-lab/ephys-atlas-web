@@ -89,7 +89,8 @@ class Panel {
 
         // HACK: only Beryl is available for bwm
         if (fset == 'bwm') {
-            this.state.mapping = this.imapping.value = 'beryl';
+            this.imapping.value = 'beryl';
+            setMapping(this.imapping.value);
         }
     }
 
