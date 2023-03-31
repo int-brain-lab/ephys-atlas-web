@@ -1,9 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class MiniBrainManager : MonoBehaviour
 {
+    [DllImport("__Internal")]
+    private static extern void UnityLoaded();
+
     [SerializeField] CCFModelControl _modelControl;
     [SerializeField] AddressablesRemoteLoader _remoteLoader;
     [SerializeField] private BrainCameraController cameraController;
@@ -51,8 +55,7 @@ public class MiniBrainManager : MonoBehaviour
         //    RegisterNode(node);
 
         Debug.Log("Areas loaded");
-
-        //TestAreas();
+        UnityLoaded();
     }
 
     private void TestAreas()

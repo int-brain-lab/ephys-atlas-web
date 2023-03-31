@@ -15,14 +15,14 @@ class Unity {
     });
   }
   
- setColor(regions) {
+ setColor() {
   // example code demonstrating usage - I'm using acronyms here but we could replace w/ atlas ID numbers if that's easier
     window.unity.SendMessage('main', 'SetColor', 'VISpl:FFFFFF');
     window.unity.SendMessage('main', 'SetColor', 'VISpm:FFFFFF');
     window.unity.SendMessage('main', 'SetColor', 'VISpor:FFFFFF');
 }
 
-  setVisibility(selected) {
+  setVisibility() {
     // example code
     window.unity.SendMessage('main', 'SetVisibility', 'VISp:false');
   }
