@@ -21,9 +21,9 @@ class Unity {
   
  setColor(regions) {
   // example code demonstrating usage - I'm using acronyms here but we could replace w/ atlas ID numbers if that's easier
-    window.unity.SendMessage('main', 'VISpl', 'VISp:FFFFFF');
-    window.unity.SendMessage('main', 'VISpm', 'VISp:FFFFFF');
-    window.unity.SendMessage('main', 'VISpor', 'VISp:FFFFFF');
+    window.unity.SendMessage('main', 'SetColor', 'VISp:FFFFFF');
+    window.unity.SendMessage('main', 'SetColor', 'VISp:FFFFFF');
+    window.unity.SendMessage('main', 'SetColor', 'VISp:FFFFFF');
 }
 
   setVisibility(selected) {
