@@ -61,3 +61,5 @@ data/*webgl*
 **/Builds/*
 data/unity/webgl.data
 data/unity/webgl.wasm
+Unity/Assets/AddressableAssetsData/link.xml
+Unity/Assets/AddressableAssetsData/link.xml.meta

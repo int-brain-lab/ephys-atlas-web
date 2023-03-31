@@ -12,18 +12,23 @@ class Unity {
         productVersion: "0.1.0",
     }).then((unityInstance) => {
         window.unity = unityInstance;
+
+        // run example code
+        this.setColor();
+        this.setVisibility();
     });
   }
   
- setUnityRegions(regions) {
-  // for (const [idx, acronym] of Object.entries(regions)) {
-  //     let p = document.querySelector(`path.region_${idx}`);
-  //     if (!p) continue;
-  //     let color = window.getComputedStyle(p).fill;
-  //     let hexcode = rgb2hex(color);
-  //     // console.log(acronym, hexcode);
-  //     window.unity.SendMessage('main', 'SetColor', `${acronym}:${hexcode}`);
-  // }
+ setColor(regions) {
+  // example code demonstrating usage - I'm using acronyms here but we could replace w/ atlas ID numbers if that's easier
+    window.unity.SendMessage('main', 'VISpl', 'VISp:FFFFFF');
+    window.unity.SendMessage('main', 'VISpm', 'VISp:FFFFFF');
+    window.unity.SendMessage('main', 'VISpor', 'VISp:FFFFFF');
+}
+
+  setVisibility(selected) {
+    // example code
+    window.unity.SendMessage('main', 'SetVisibility', 'VISp:false');
   }
 }
 
