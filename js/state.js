@@ -13,12 +13,9 @@ const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
 
 const DEFAULT_FSET = "ephys";
-const DEFAULT_FEATURE = {
+export const DEFAULT_FEATURE = {
     "ephys": "psd_alpha",
-    "bwm_block": "decoding_median",
-    "bwm_choice": "decoding_median",
-    "bwm_reward": "decoding_median",
-    "bwm_stimulus": "values_median",
+    "bwm": "block_decoding",
 };
 const DEFAULT_STAT = "mean";
 
@@ -102,9 +99,11 @@ class State {
         return url;
     }
 
-    setFset(fset) {
+    setFset(fset, fname) {
+        console.assert(fset);
         this.fset = fset;
-        this.fname = DEFAULT_FEATURE[fset];
+        this.fname = fname || this.fname;
+        console.assert(this.fname);
         this.stat = DEFAULT_STAT;
     }
 };

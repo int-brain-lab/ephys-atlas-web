@@ -29,6 +29,8 @@ export function rgb2hex(s) {
 
 
 export function normalizeValue(value, vmin, vmax) {
+    if (value == NaN || value == undefined) return value;
+
     console.assert(value !== NaN);
     console.assert(value !== undefined);
 

@@ -1,6 +1,7 @@
 export { Panel };
 
 import { setOptions } from "./utils.js";
+import { DEFAULT_FEATURE } from "./state.js";
 
 
 
@@ -11,12 +12,15 @@ import { setOptions } from "./utils.js";
 const FEATURE_NAMES = {
     "ephys": [
         "psd_alpha", "psd_beta", "psd_delta", "psd_gamma", "psd_theta",
-        "rms_ap", "rms_lf", "spike_rate",],
+        "rms_ap", "rms_lf", "spike_rate",
+    ],
 
-    "bwm_block": ["decoding_median", "single_cell_perc", "manifold_distance"],
-    "bwm_choice": ["decoding_median", "single_cell_perc", "manifold_distance"],
-    "bwm_reward": ["decoding_median", "single_cell_perc", "manifold_distance"],
-    "bwm_stimulus": ["decoding_median", "single_cell_perc", "manifold_distance"],
+    "bwm": [
+        "block_decoding", "block_single_cell", "block_manifold",
+        "choice_decoding", "choice_single_cell", "choice_manifold",
+        "reward_decoding", "reward_single_cell", "reward_manifold",
+        "stimulus_decoding", "stimulus_single_cell", "stimulus_manifold",
+    ],
 };
 
 
@@ -62,18 +66,42 @@ class Panel {
     setState(state) {
         this.imapping.value = state.mapping;
 
-        this.ifset.value = state.fset;
-        this.ifname.value = state.fname;
         this.istat.value = state.stat;
 
         this.icmap.value = state.cmap;
         this.icmapmin.value = state.cmapmin;
         this.icmapmax.value = state.cmapmax;
+
+        this.setFeatureOptions(state.fset, state.fname);
+        this.ifset.value = state.fset; // set the fset dropdown value
+        this.ifname.value = state.fname; // set the fname dropdown value
+        // this.feature.setFname(state.fname);
+    }
+
+    setFeatureOptions(fset, fname) {
+        // Update the global state and the Feature component.
+        // this.feature.setFset(fset);
+
+        // Update the feature options.
+        fname = fname || DEFAULT_FEATURE[fset];
+        console.assert(FEATURE_NAMES[fset].includes(fname));
+        setOptions(this.ifname, FEATURE_NAMES[fset], fname);
+
+        // HACK: only Beryl is available for bwm
+        if (fset == 'bwm') {
+            this.state.mapping = this.imapping.value = 'beryl';
+        }
     }
 
     setupMapping() {
         this.imapping.addEventListener('change', (e) => {
             let mapping = e.target.value;
+
+            // HACK: only Beryl is available for bwm
+            if (this.state.fset == 'bwm' && mapping != 'beryl') {
+                return;
+            }
+
             this.region.setMapping(mapping);
             this.feature.setMapping(mapping);
             this.selector.clear();
@@ -83,12 +111,8 @@ class Panel {
     setupFset() {
         this.ifset.addEventListener('change', (e) => {
             let fset = e.target.value;
-
-            // Update the global state and the Feature component.
-            this.feature.setFset(fset);
-
-            // Update the feature options.
-            setOptions(this.ifname, FEATURE_NAMES[fset], this.state.fname);
+            this.setFeatureOptions(fset); // fname argument not specified => use fset default
+            this.feature.setFset(fset, this.ifname.value);
         });
     }
 

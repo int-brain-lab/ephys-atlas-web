@@ -1,6 +1,7 @@
 export { Feature };
 
 import { clearStyle, clamp, normalizeValue } from "./utils.js";
+import { DEFAULT_FEATURE } from "./state.js";
 
 
 
@@ -28,8 +29,8 @@ class Feature {
     }
 
     // Change the current feature set.
-    setFset(fset) {
-        this.state.setFset(fset); // will also change the fname.
+    setFset(fset, fname) {
+        this.state.setFset(fset, fname); // will also change the fname.
         this.update();
     }
 
@@ -86,7 +87,7 @@ class Feature {
         let fet = (await this.getFeatures());
 
         if (!fet) {
-            console.error(`feature ${this.state.fname} is invalid`);
+            console.error(`feature ${this.state.fname} is invalid (fset is ${this.state.fset})`);
             return;
         }
         let stat = this.state.stat;
@@ -127,7 +128,12 @@ class Feature {
     async get(regionIdx) {
         // Return the feature value of a given region.
         // This depends on the currently-selected feature set, feature, stat.
-        let data = (await this.getFeatures())['data'];
+        let data = (await this.getFeatures());
+        if (!data) {
+            // console.warn(`unable to get feature for region ${regionIdx}`);
+            return;
+        }
+        data = data['data'];
         if (data && data[regionIdx])
             return data[regionIdx][this.state.stat];
     }

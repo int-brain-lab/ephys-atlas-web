@@ -23,7 +23,9 @@ const DB_TABLES = {
     "regions": "mapping,data",
 
     "features_ephys": "fname,data,statistics",
+    "features_bwm": "fname,data,statistics",
 }
+const FEATURE_SETS = ["ephys", "bwm"];
 
 
 
@@ -87,11 +89,13 @@ class DB {
             promises.push(pregions);
 
             // Features.
-            let pfeatures = this.downloadFeatures('ephys', 3);
-            pfeatures.then((features) => {
-                promises.push(this.addFeatures('ephys', features, 1));
-            });
-            promises.push(pfeatures);
+            for (let fset of FEATURE_SETS) {
+                let pfeatures = this.downloadFeatures(fset, 1.5);
+                pfeatures.then((features) => {
+                    promises.push(this.addFeatures(fset, features, 1));
+                });
+                promises.push(pfeatures);
+            }
 
             // SVG slices.
             let slices = await this.downloadSlices(20);

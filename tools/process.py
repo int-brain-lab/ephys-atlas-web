@@ -62,7 +62,7 @@ SIMPLIFY_CMD = "inkscape --batch-process --actions='EditSelectAll;SelectionSimpl
 RE_PATH = re.compile(r'<path id="path[0-9]+"')
 RE_WHITESPACE = re.compile(r'\s+(?=<)')
 STYLE = "* { stroke-linecap: butt; stroke-linejoin: round; fill: white; stroke: black; }"
-ROOT_ID = 997 # skip the root to avoid bug with lateralization
+ROOT_ID = 997  # skip the root to avoid bug with lateralization
 
 
 # -------------------------------------------------------------------------------------------------
@@ -388,10 +388,12 @@ def generate_features_groupedby(br, mapping, df, feature_names):
             atlas_id = region['atlas_id']
             regionIdx = region['idx']
 
-            features[fet]['data'][regionIdx] = {
+            d = {
                 stat: float_json(dfg.loc[atlas_id][fet])
-                for stat, dfg in dfs.items()
+                for stat, dfg in dfs.items() if dfg is not None and ~np.isnan(dfg.loc[atlas_id][fet])
             }
+            if d:
+                features[fet]['data'][regionIdx] = d
 
         # Collect statistics across regions, for each feature. Used for bar plot.
         for stat, dfg in dfs.items():
@@ -459,21 +461,27 @@ def generate_ephys_features():
     save_json(out, DATA_DIR / f"json/features_ephys.json")
 
 
-# def generate_bwm_features():
-#     br = BrainRegions()
+def generate_bwm_features():
+    # Load features.
+    df_sessions = pd.read_parquet(DATA_DIR / 'pqt/bwm_features.pqt')
 
-#     # Load a CSV file and remap to use the atlas_id instead of the acronym.
-#     for name in ('block', 'choice', 'reward', 'stimulus'):
-#         df = pd.read_csv(DATA_DIR / f'csv/{name}.csv')
-#         df = df[df.columns[:4]]
-#         df = df.dropna(subset=['region'])
+    # Lateralize the sessions DataFrame.
+    df_sessions = lateralize_features(df_sessions)
+    feature_names = get_feature_names(df_sessions)
 
-#         # df['atlas_id'] = [br_mapping[acronym] for acronym in df['region']]
-#         df = df.set_index('atlas_id')
-#         df = df.drop(columns=['region'])
+    br = BrainRegions()
 
-#         # TODO
-#         # process_grouped(df, f"bwm_{name}")
+    # Aggregate by region, for each mapping. We use the atlas_id_X where X is the first letter
+    # of the mapping.
+    out = {}
+    # NOTE: only Beryl is supported for the BWM features
+    for mapping in ('beryl',):
+        df = df_sessions.groupby(f'atlas_id_{mapping[0]}')
+        features = generate_features_groupedby(
+            br, mapping, df, feature_names)
+        out[mapping] = features
+
+    save_json(out, DATA_DIR / f"json/features_bwm.json")
 
 
 # -------------------------------------------------------------------------------------------------
@@ -483,10 +491,11 @@ def generate_ephys_features():
 if __name__ == '__main__':
 
     # generate_colormaps()
-    mappings = get_mappings()
-    generate_regions_json(mappings)
-    generate_regions_css(mappings)
-    generate_ephys_features()
+    # mappings = get_mappings()
+    # generate_regions_json(mappings)
+    # generate_regions_css(mappings)
+    # generate_ephys_features()
+    generate_bwm_features()
 
     ##############
 
