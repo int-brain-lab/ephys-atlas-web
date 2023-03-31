@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -226,17 +227,27 @@ public class CCFModelControl : MonoBehaviour
     public async Task<List<CCFTreeNode>> LoadBerylNodes(bool full, Action<CCFTreeNode> callback)
     {
         List<Task> taskHandles = new List<Task>();
+        foreach (var node in berylNodes)
+            taskHandles.Add(node.GetLoadedTask(full));
+
+        StartCoroutine(LoadNodeHelper(full, callback));
+
+        await Task.WhenAll(taskHandles);
+
+        return berylNodes;
+    }
+
+    public IEnumerator LoadNodeHelper(bool full, Action<CCFTreeNode> callback)
+    {
         foreach (CCFTreeNode node in berylNodes)
             if (!node.IsLoaded(full))
             {
                 Debug.Log($"Requesting {node.ShortName}");
                 LoadWithCallbackHelper(node, full, callback);
-                taskHandles.Add(node.GetLoadedTask(full));
-                await Task.Delay(10);
+                // Task.Delay not usable in WebGL
+                //await Task.Delay(10);
+                yield return new WaitForSeconds(0.010f);
             }
-        await Task.WhenAll(taskHandles);
-
-        return berylNodes;
     }
 
     private async void LoadWithCallbackHelper(CCFTreeNode node, bool full, Action<CCFTreeNode> callback)
