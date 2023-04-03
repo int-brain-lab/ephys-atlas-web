@@ -35,7 +35,7 @@ class App {
 
         this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector);
 
-        this.unity = new Unity();
+        this.unity = new Unity(this.region, this.feature);
     }
 
     setupResetButton() {

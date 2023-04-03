@@ -6,6 +6,14 @@ import { DEFAULT_FEATURE } from "./state.js";
 
 
 /*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+
+
+
+
+/*************************************************************************************************/
 /* Feature                                                                                       */
 /*************************************************************************************************/
 
@@ -68,8 +76,7 @@ class Feature {
         return this.colors[clamp(normalized, 0, 99)];
     }
 
-    makeRegionColor(mapping, regionIdx, value, normalized) {
-        let hex = this.makeHex(normalized);
+    makeRegionColor(mapping, regionIdx, value, hex) {
         return `svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* FRP5: ${value} */`;
     }
 
@@ -120,8 +127,26 @@ class Feature {
             let value = data[regionIdx][stat];
             // console.log(value);
             let normalizedMod = normalizeValue(value, vminMod, vmaxMod);
-            let stl = this.makeRegionColor(mapping, regionIdx, value, normalizedMod);
+            let hex = this.makeHex(normalizedMod);
+            let stl = this.makeRegionColor(mapping, regionIdx, value, hex);
             this.style.insertRule(stl);
+        }
+    }
+
+    getColor(regionIdx) {
+        const ruleList = this.style.cssRules;
+        const CSS_REGEX = new RegExp(`svg path\.${this.state.mapping}_region_${regionIdx} \{ fill: (.+); \}`);
+        for (let rule of ruleList) {
+            let m = rule.cssText.match(CSS_REGEX);
+            if (m) {
+                let rgb = m[1];
+                rgb = rgb.split(',');
+                let r = parseInt(rgb[0].substring(4));
+                let g = parseInt(rgb[1]);
+                let b = parseInt(rgb[2]);
+                let hex = `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
+                return hex;
+            }
         }
     }
 

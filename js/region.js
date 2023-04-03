@@ -142,14 +142,22 @@ class Region {
         }
     }
 
-    async getName(regionIdx) {
+    async getAttribute(regionIdx, attribute) {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         for (let region of regions) {
             if (region['idx'] == regionIdx) {
-                return region['name'];
+                return region[attribute];
             }
         }
         console.error(`region #${regionIdx} could not be found`);
+    }
+
+    async getName(regionIdx) {
+        return await this.getAttribute(regionIdx, 'name');
+    }
+
+    async getAcronym(regionIdx) {
+        return await this.getAttribute(regionIdx, 'acronym');
     }
 
     search(query) {
