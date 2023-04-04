@@ -141,9 +141,15 @@ class Feature {
             if (m) {
                 let rgb = m[1];
                 rgb = rgb.split(',');
+
                 let r = parseInt(rgb[0].substring(4));
                 let g = parseInt(rgb[1]);
                 let b = parseInt(rgb[2]);
+
+                r = r.toString(16).padStart(2, '0');
+                g = g.toString(16).padStart(2, '0');
+                b = b.toString(16).padStart(2, '0');
+
                 let hex = `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
                 return hex;
             }

@@ -1,9 +1,11 @@
 export { Unity };
 
 class Unity {
-    constructor(region, feature) {
+    constructor(db, state, region, feature) {
         console.debug("setup Unity");
 
+        this.db = db;
+        this.state = state;
         this.region = region;
         this.feature = feature;
         this.instance = null;
@@ -24,7 +26,6 @@ class Unity {
     }
 
     setupSlider() {
-
         this.slider = document.getElementById('slider-unity');
 
         this.slider.oninput = (e) => {
@@ -37,7 +38,7 @@ class Unity {
     }
 
     async setColors() {
-        let regions = (await this.region.db.getRegions(this.region.state.mapping))['data'];
+        let regions = (await this.db.getRegions(this.state.mapping))['data'];
         if (!this.instance) return;
 
         // console.log(regions);
@@ -53,8 +54,28 @@ class Unity {
         }
     }
 
+    async setVisibility() {
+        let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        if (!this.instance) return;
+
+        // console.log(regions);
+        for (let region of regions) {
+            let regionIdx = region['idx'];
+            let acronym = region['acronym'];
+            let v = this.state.selected.has(regionIdx);
+            this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
+        }
+    }
+
+    update() {
+        // HACK: only update this view with the Beryl mapping.
+        if (this.state.mapping == 'beryl') {
+            this.setColors();
+            this.setVisibility();
+        }
+    }
+
     loadedCallback() {
-        this.setColors();
-        // this.instance.SendMessage('main', 'SetVisibility', 'VISp:false');
+        this.update();
     }
 }

@@ -30,12 +30,13 @@ const FEATURE_NAMES = {
 /*************************************************************************************************/
 
 class Panel {
-    constructor(db, state, feature, region, selector) {
+    constructor(db, state, feature, region, selector, unity) {
         this.db = db;
         this.state = state;
         this.feature = feature;
         this.region = region;
         this.selector = selector;
+        this.unity = unity;
 
         this.imapping = document.getElementById('mapping-dropdown');
         this.ifname = document.getElementById('feature-dropdown');
@@ -87,7 +88,7 @@ class Panel {
         console.assert(FEATURE_NAMES[fset].includes(fname));
         setOptions(this.ifname, FEATURE_NAMES[fset], fname);
 
-        // HACK: only Beryl is available for bwm
+        // HACK: only Beryl is available for BWM.
         if (fset == 'bwm') {
             this.imapping.value = 'beryl';
             this.region.setMapping(this.imapping.value);
@@ -114,6 +115,8 @@ class Panel {
             let fset = e.target.value;
             this.setFeatureOptions(fset); // fname argument not specified => use fset default
             this.feature.setFset(fset, this.ifname.value);
+
+            this.unity.update();
         });
     }
 
@@ -121,6 +124,8 @@ class Panel {
         this.ifname.addEventListener('change', (e) => {
             let fname = e.target.value;
             this.feature.setFname(fname);
+
+            this.unity.update();
         });
     }
 
@@ -128,12 +133,16 @@ class Panel {
         this.istat.addEventListener('change', (e) => {
             let stat = e.target.value;
             this.feature.setStat(stat);
+
+            this.unity.update();
         });
     }
 
     setupColormap() {
         this.icmap.addEventListener('change', (e) => {
             this.feature.setColormap(e.target.value);
+
+            this.unity.update();
         });
     }
 
@@ -141,6 +150,8 @@ class Panel {
         let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
         let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
         this.feature.setColormapRange(cmin, cmax);
+
+        this.unity.update();
     }
 
     setupColormapMin() {
