@@ -83,13 +83,7 @@ public class MiniBrainManager : MonoBehaviour
         string areaStr = areaColor.Substring(0, uIdx);
         string color = areaColor.Substring(uIdx + 1, areaColor.Length - uIdx - 1);
 
-        //Debug.Log($"Area {areaStr} converts to atlas ID {_modelControl.Acronym2ID(areaStr)}");
-
         CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(areaStr));
-
-        Debug.Log(color);
-        Color newColor = ParseHexColor(color);
-        Debug.Log(newColor);
 
         node.SetColor(ParseHexColor(color));
     }
@@ -100,9 +94,6 @@ public class MiniBrainManager : MonoBehaviour
         int areaIdx = int.Parse(materialStr.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
         string material = materialStr.Substring(uIdx + 1, materialStr.Length - uIdx - 1);
 
-        Debug.Log(areaIdx);
-        Debug.Log(material);
-
         CCFTreeNode node = _modelControl.GetNode(areaIdx);
         node.SetMaterial(_materials[material]);
     }
@@ -110,17 +101,39 @@ public class MiniBrainManager : MonoBehaviour
     public void SetVisibility(string visibleStr)
     {
         int uIdx = visibleStr.IndexOf(':');
-        int areaIdx = int.Parse(visibleStr.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
+        string areaStr = visibleStr.Substring(0, uIdx);
         bool visible = bool.Parse(visibleStr.Substring(uIdx + 1, visibleStr.Length - uIdx - 1));
 
-        CCFTreeNode node = _modelControl.GetNode(areaIdx);
+        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(areaStr));
         node.SetNodeModelVisibility_Left(visible);
+        node.SetNodeModelVisibility_Right(visible);
+    }
+
+    public void SetVisibilityLeft(string visibleStr)
+    {
+        int uIdx = visibleStr.IndexOf(':');
+        string areaStr = visibleStr.Substring(0, uIdx);
+        bool visible = bool.Parse(visibleStr.Substring(uIdx + 1, visibleStr.Length - uIdx - 1));
+
+        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(areaStr));
+        node.SetNodeModelVisibility_Left(visible);
+    }
+
+    public void SetVisibilityRight(string visibleStr)
+    {
+        int uIdx = visibleStr.IndexOf(':');
+        string areaStr = visibleStr.Substring(0, uIdx);
+        bool visible = bool.Parse(visibleStr.Substring(uIdx + 1, visibleStr.Length - uIdx - 1));
+
+        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(areaStr));
         node.SetNodeModelVisibility_Right(visible);
     }
 
     public void RegisterNode(CCFTreeNode node)
     {
+#if UNITY_EDITOR
         Debug.Log($"Registering {node.ShortName}");
+#endif  
         node.SetNodeModelVisibility_Left(true);
         node.SetNodeModelVisibility_Right(true);
         node.SetShaderProperty("_Alpha", 1f);
@@ -138,7 +151,7 @@ public class MiniBrainManager : MonoBehaviour
 
     public static Color ParseHexColor(string hexString)
     {
-        Color color = new Color();
+        Color color;
         ColorUtility.TryParseHtmlString(hexString, out color);
         return color;
     }
