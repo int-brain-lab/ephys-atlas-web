@@ -79,13 +79,17 @@ public class MiniBrainManager : MonoBehaviour
     {
         // parse the areaColor string
         int uIdx = areaColor.IndexOf(':');
-        int areaIdx = int.Parse(areaColor.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
+        //int areaIdx = int.Parse(areaColor.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
+        string areaStr = areaColor.Substring(0, uIdx);
         string color = areaColor.Substring(uIdx + 1, areaColor.Length - uIdx - 1);
 
-        Debug.Log(areaIdx);
-        Debug.Log(color);
+        Debug.Log($"Area {areaStr} converts to atlas ID {_modelControl.Acronym2ID(areaStr)}");
 
-        CCFTreeNode node = _modelControl.GetNode(areaIdx);
+        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(areaStr));
+
+        Color newColor = ParseHexColor(color);
+        Debug.Log(newColor);
+
         node.SetColor(ParseHexColor(color));
     }
 
