@@ -66,3 +66,4 @@ Unity/Assets/AddressableAssetsData/link.xml.meta
 Build/
 StreamingAssets/
 *.pem
+**/Unity/Assets/AddressableAssets/AllenCCF/*

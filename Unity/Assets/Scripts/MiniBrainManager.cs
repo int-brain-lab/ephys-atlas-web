@@ -48,6 +48,13 @@ public class MiniBrainManager : MonoBehaviour
 
         await loadTask;
 
+        // Set the root node to be transparent and light grey
+        CCFTreeNode rootNode = _modelControl.GetNode(8);
+        rootNode.LoadNodeModel(true, false);
+        rootNode.SetMaterial(_materialOpts[_materialNames.IndexOf("transparent-unlit")]);
+        rootNode.SetShaderProperty("_Alpha", 0.1f);
+        rootNode.SetColor(Color.gray);
+
         UnityLoaded();
     }
 
@@ -81,6 +88,11 @@ public class MiniBrainManager : MonoBehaviour
 
         CCFTreeNode node = _modelControl.GetNode(areaIdx);
         node.SetMaterial(_materials[material]);
+    }
+
+    public void ShowRoot(int rootVisible)
+    {
+        _modelControl.GetNode(8).SetNodeModelVisibility_Full(rootVisible == 1);
     }
 
     public void SetVisibility(string visibleStr)
