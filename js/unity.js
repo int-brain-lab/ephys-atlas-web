@@ -31,7 +31,7 @@ class Unity {
             if (color) {
                 color = color.substring(1).toUpperCase();
                 console.log(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
-                this.instance.SendMessage('main', 'SetColor', `${acronym}:${color}`);
+                this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
                 // this.instance.SendMessage('main', 'SetVisibility', 'VISp:false');
             }
         }
