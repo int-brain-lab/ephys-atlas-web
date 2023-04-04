@@ -74,41 +74,41 @@ public class MiniBrainManager : MonoBehaviour
     /// <summary>
     /// Set an area to a color
     /// </summary>
-    /// <param name="areaColor">string of format area_color</param>
+    /// <param name="areaColor">"area_idx:hex_color"</param>
     public void SetColor(string areaColor)
     {
         // parse the areaColor string
         int uIdx = areaColor.IndexOf(':');
-        string area = areaColor.Substring(0, uIdx);
+        int areaIdx = int.Parse(areaColor.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
         string color = areaColor.Substring(uIdx + 1, areaColor.Length - uIdx - 1);
 
-        Debug.Log(area);
+        Debug.Log(areaIdx);
         Debug.Log(color);
 
-        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area));
+        CCFTreeNode node = _modelControl.GetNode(areaIdx);
         node.SetColor(ParseHexColor(color));
     }
 
     public void SetMaterial(string materialStr)
     {
         int uIdx = materialStr.IndexOf(':');
-        string area = materialStr.Substring(0, uIdx);
+        int areaIdx = int.Parse(materialStr.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
         string material = materialStr.Substring(uIdx + 1, materialStr.Length - uIdx - 1);
 
-        Debug.Log(area);
+        Debug.Log(areaIdx);
         Debug.Log(material);
 
-        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area));
+        CCFTreeNode node = _modelControl.GetNode(areaIdx);
         node.SetMaterial(_materials[material]);
     }
 
     public void SetVisibility(string visibleStr)
     {
         int uIdx = visibleStr.IndexOf(':');
-        string area = visibleStr.Substring(0, uIdx);
+        int areaIdx = int.Parse(visibleStr.Substring(0, uIdx), System.Globalization.NumberStyles.Any);
         bool visible = bool.Parse(visibleStr.Substring(uIdx + 1, visibleStr.Length - uIdx - 1));
 
-        CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area));
+        CCFTreeNode node = _modelControl.GetNode(areaIdx);
         node.SetNodeModelVisibility_Left(visible);
         node.SetNodeModelVisibility_Right(visible);
     }
