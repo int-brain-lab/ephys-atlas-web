@@ -239,15 +239,22 @@ public class CCFModelControl : MonoBehaviour
 
     public IEnumerator LoadNodeHelper(bool full, Action<CCFTreeNode> callback)
     {
-        foreach (CCFTreeNode node in berylNodes)
+        for (int i = 0; i < berylNodes.Count; i++)
+        {
+            CCFTreeNode node = berylNodes[i];
+        //foreach (CCFTreeNode node in berylNodes)
             if (!node.IsLoaded(full))
             {
                 //Debug.Log($"Requesting {node.ShortName}");
                 LoadWithCallbackHelper(node, full, callback);
                 // Task.Delay not usable in WebGL
                 //await Task.Delay(10);
-                yield return new WaitForSeconds(0.001f);
+
+                // load 10 things and then wait a frame
+                if (i % 10 == 0)
+                    yield return null;
             }
+        }
     }
 
     private async void LoadWithCallbackHelper(CCFTreeNode node, bool full, Action<CCFTreeNode> callback)

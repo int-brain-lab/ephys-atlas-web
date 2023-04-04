@@ -20,7 +20,10 @@ public class MiniBrainManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("Awake");
+#if !UNITY_EDITOR && UNITY_WEBGL
+        WebGLInput.captureAllKeyboardInput = false;
+#endif
+
         originalTransformPositionsLeft = new Dictionary<int, Vector3>();
         originalTransformPositionsRight = new Dictionary<int, Vector3>();
 
@@ -31,39 +34,21 @@ public class MiniBrainManager : MonoBehaviour
             _materials.Add(_materialNames[i], _materialOpts[i]);
 
         RecomputeCosmosCenters();
-        Debug.Log("Done recomputing centers");
     }
 
     private async void Start()
     {
-        Debug.Log("Start");
         await _remoteLoader.GetCatalogLoadedTask();
 
-        Debug.Log("Catalog loaded");
         _modelControl.LateStart(false);
-        Debug.Log("Model control late start done");
 
         await _modelControl.GetDefaultLoadedTask();
-        Debug.Log("Default areas finished");
 
         var loadTask = _modelControl.LoadBerylNodes(false, RegisterNode);
-        Debug.Log("Individual areas loading");
 
         await loadTask;
 
-        //foreach (var node in loadTask.Result)
-        //    RegisterNode(node);
-
-        Debug.Log("Areas loaded");
         UnityLoaded();
-    }
-
-    private void TestAreas()
-    {
-        SetColor("VISp:FFFFFF");
-        SetColor("VISpl:FFFFFF");
-        SetColor("VISpm:FFFFFF");
-        SetColor("VISpor:FFFFFF");
     }
 
     private void Update()
@@ -133,7 +118,7 @@ public class MiniBrainManager : MonoBehaviour
     {
 #if UNITY_EDITOR
         Debug.Log($"Registering {node.ShortName}");
-#endif  
+#endif
         node.SetNodeModelVisibility_Left(true);
         node.SetNodeModelVisibility_Right(true);
         node.SetShaderProperty("_Alpha", 1f);
@@ -156,7 +141,7 @@ public class MiniBrainManager : MonoBehaviour
         return color;
     }
 
-    #region explosions
+#region explosions
 
     //    // Exploding
     [Range(0,1), SerializeField] private float percentageExploded = 0f;
@@ -220,5 +205,5 @@ public class MiniBrainManager : MonoBehaviour
 
         parentGO.SetActive(false);
     }
-    #endregion
+#endregion
 }
