@@ -7,8 +7,10 @@ class Unity {
         this.region = region;
         this.feature = feature;
         this.instance = null;
-        let that = this;
 
+        this.setupSlider();
+
+        let that = this;
         createUnityInstance(document.getElementById("unity-canvas"), {
             dataUrl: "Build/webgl.data",
             frameworkUrl: "Build/webgl.framework.js",
@@ -21,8 +23,23 @@ class Unity {
         });
     }
 
+    setupSlider() {
+
+        this.slider = document.getElementById('slider-unity');
+
+        this.slider.oninput = (e) => {
+            let value = e.target.value / 100.0;
+            if (this.instance) {
+                this.instance.SendMessage('main', 'SetPercentageExploded', value);
+            }
+        };
+
+    }
+
     async setColors() {
         let regions = (await this.region.db.getRegions(this.region.state.mapping))['data'];
+        if (!this.instance) return;
+
         // console.log(regions);
         for (let region of regions) {
             let regionIdx = region['idx'];
@@ -30,14 +47,14 @@ class Unity {
             let color = this.feature.getColor(regionIdx);
             if (color) {
                 color = color.substring(1).toUpperCase();
-                // console.log(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
+                console.log(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
                 this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
-                // this.instance.SendMessage('main', 'SetVisibility', 'VISp:false');
             }
         }
     }
 
     loadedCallback() {
         this.setColors();
+        // this.instance.SendMessage('main', 'SetVisibility', 'VISp:false');
     }
 }
