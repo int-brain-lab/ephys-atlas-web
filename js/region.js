@@ -15,8 +15,12 @@ function makeRegionBar(mapping, regionIdx, value, normalized) {
 
 
 function makeRegionItem(mapping, idx, acronym, name) {
+    let hemisphere = name.includes("(left") ? "left" : "right";
     return `
-    <li class="${mapping}_region_${idx}" data-acronym="${acronym}" data-name="${name}">
+    <li class="${mapping}_region_${idx}"
+        data-acronym="${acronym}"
+        data-name="${name}"
+        data-hemisphere="${hemisphere}">
         <div class="acronym">${acronym}</div>
         <div class="bar_wrapper"><div class="bar"></div></div>
     </li>
@@ -45,8 +49,8 @@ class Region {
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
 
-        this.style = document.getElementById('style-regions').sheet;
-        this.styleSearch = document.getElementById('style-search').sheet;
+        // this.style = document.getElementById('style-regions').sheet;
+        // this.styleSearch = document.getElementById('style-search').sheet;
 
         this.searchInput = document.getElementById("search-input");
 
@@ -124,10 +128,15 @@ class Region {
 
         let values = features['data'];
 
-        clearStyle(this.style);
+        let search = this.state.search || '';
+        search = search.toLowerCase();
+
+        let style = '';
         let regions = (await this.db.getRegions(mapping))['data'];
         for (let region of regions) {
             let regionIdx = region["idx"];
+            let name = region["name"];
+            let acronym = region["acronym"];
             let value = values[regionIdx];
             if (!value) continue;
             value = value[stat];
@@ -135,11 +144,24 @@ class Region {
             let normalized = normalizeValue(value, vmin, vmax);
 
             let stl = makeRegionBar(mapping, regionIdx, value, normalized);
-            this.style.insertRule(stl);
+            // this.style.insertRule(stl);
+            style += `${stl}\n`;
 
-            // All bars are hidden, except the ones that are present.
-            this.style.insertRule(`#bar-plot li.${mapping}_region_${regionIdx}{display: block;}`);
+            // Implement search.
+            let filter = (
+                !search ||
+                name.toLowerCase().includes(search) ||
+                acronym.toLowerCase().includes(search));
+            let display = filter ? 'block' : 'none';
+
+            stl = `#bar-plot li.${mapping}_region_${regionIdx}{display: ${display};}`;
+            style += `${stl}\n`;
+            // this.style.insertRule(stl);
         }
+
+        document.getElementById('style-regions').textContent = style;
+        // clearStyle(this.style);
+        // this.style.cssText = style;
     }
 
     async getAttribute(regionIdx, attribute) {
@@ -162,24 +184,31 @@ class Region {
 
     search(query) {
         this.state.search = query;
+        this.update();
+        return;
 
-        clearStyle(this.styleSearch);
-        if (!query) return;
+        // let mapping = this.state.mapping;
 
-        // Hide all items except those that match the query, using a CSS selector.
-        this.styleSearch.insertRule(`
-        #bar-plot li{
-            display: none !important;
-        }`
-        );
+        // clearStyle(this.styleSearch);
+        // if (!query) return;
 
-        // Select with CSS the LI items that contain the query in their acronym or name.
-        this.styleSearch.insertRule(`
-        #bar-plot li[data-acronym*='${query}' i],
-        #bar-plot li[data-name*='${query}' i]
-        {
-            display: block !important;
-        }
-        `);
+        // // TODO: only keep li items with a non-null value
+
+        // // Hide all items except those that match the query, using a CSS selector.
+        // this.styleSearch.insertRule(`
+        // #bar-plot li{
+        //     /*display: none !important;*/
+        //     /* visibility: hidden; */
+        // }`
+        // );
+
+        // // Select with CSS the LI items that contain the query in their acronym or name.
+        // this.styleSearch.insertRule(`
+        // #bar-plot li[data-hemisphere$='left'][class^='${mapping}'][data-acronym*='${query}' i],
+        // #bar-plot li[data-hemisphere$='left'][class^='${mapping}'][data-name*='${query}' i]
+        // {
+        //     visibility: visible;
+        // }
+        // `);
     }
 };

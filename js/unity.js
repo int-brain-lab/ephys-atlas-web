@@ -2,7 +2,8 @@ export { Unity };
 
 class Unity {
     constructor(db, state, region, feature) {
-        console.debug("setup Unity");
+        return;
+        console.log("setting up Unity");
 
         this.db = db;
         this.state = state;
@@ -22,6 +23,7 @@ class Unity {
             productVersion: "0.1.0",
         }).then((unityInstance) => {
             that.instance = unityInstance;
+            console.log("Unity loaded");
         });
     }
 
@@ -65,6 +67,8 @@ class Unity {
             let v = this.state.selected.has(regionIdx);
             this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
         }
+
+        this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
     }
 
     update() {

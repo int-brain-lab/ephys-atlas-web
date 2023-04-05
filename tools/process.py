@@ -297,6 +297,27 @@ def run_all(path):
 # Region processing
 # -------------------------------------------------------------------------------------------------
 
+def get_mappings():
+    # open the pqt files and return a mappings dictionary
+    # {mapping_name: [{idx: ..., atlas_id: ..., acronym: ..., name: ..., hex: ...}]}
+    out = {}
+    for mapping in MAPPINGS:
+        regions = pd.read_parquet(
+            DATA_DIR / f'pqt/{mapping}_regions.pqt')
+        out[mapping] = [
+            {
+                'idx': abs(idx_),
+                'atlas_id': atlas_id_,
+                'acronym': acronym_,
+                'name': name_,
+                'hex': hex_,
+            }
+            for idx_, atlas_id_, acronym_, name_, hex_ in zip(
+                regions['idx'], regions['atlas_id'], regions['acronym'], regions['atlas_name'], regions['hex'])
+        ]
+    return out
+
+
 # mappings is a dictionary {mapping_name: [{idx, atlas_id, acronym, name, hex}]}
 def generate_regions_json(mappings):
     print("Generating regions.json...")
@@ -323,27 +344,6 @@ def generate_regions_css(mappings):
 
         css += '\n\n'
     write_text(css, DATA_DIR / 'css/region_colors.css')
-
-
-def get_mappings():
-    # open the pqt files and return a mappings dictionary
-    # {mapping_name: [{idx: ..., atlas_id: ..., acronym: ..., name: ..., hex: ...}]}
-    out = {}
-    for mapping in MAPPINGS:
-        regions = pd.read_parquet(
-            DATA_DIR / f'pqt/{mapping}_regions.pqt')
-        out[mapping] = [
-            {
-                'idx': abs(idx_),
-                'atlas_id': atlas_id_,
-                'acronym': acronym_,
-                'name': name_,
-                'hex': hex_,
-            }
-            for idx_, atlas_id_, acronym_, name_, hex_ in zip(
-                regions['idx'], regions['atlas_id'], regions['acronym'], regions['atlas_name'], regions['hex'])
-        ]
-    return out
 
 
 def get_feature_names(df):
@@ -491,8 +491,8 @@ def generate_bwm_features():
 if __name__ == '__main__':
 
     # generate_colormaps()
-    # mappings = get_mappings()
-    # generate_regions_json(mappings)
+    mappings = get_mappings()
+    generate_regions_json(mappings)
     # generate_regions_css(mappings)
     # generate_ephys_features()
     generate_bwm_features()
