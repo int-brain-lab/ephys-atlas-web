@@ -2,7 +2,6 @@ export { Unity };
 
 class Unity {
     constructor(db, state, region, feature) {
-        return;
         console.log("setting up Unity");
 
         this.db = db;
