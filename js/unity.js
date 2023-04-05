@@ -2,7 +2,6 @@ export { Unity };
 
 class Unity {
     constructor(db, state, region, feature) {
-        return;
         console.log("setting up Unity");
 
         this.db = db;
@@ -50,7 +49,7 @@ class Unity {
             let color = this.feature.getColor(regionIdx);
             if (color) {
                 color = color.substring(1).toUpperCase();
-                console.log(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
+                console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
                 this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
             }
         }
@@ -64,7 +63,8 @@ class Unity {
         for (let region of regions) {
             let regionIdx = region['idx'];
             let acronym = region['acronym'];
-            let v = this.state.selected.has(regionIdx);
+            let v = this.state.selected.has(regionIdx) ? 1 : 0;
+            // console.log(v);
             this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
         }
 
@@ -75,7 +75,7 @@ class Unity {
         // HACK: only update this view with the Beryl mapping.
         if (this.state.mapping == 'beryl') {
             this.setColors();
-            this.setVisibility();
+            // this.setVisibility();
         }
     }
 

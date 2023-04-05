@@ -3,4 +3,4 @@
 # - mkcert -install
 # - mkcert localhost
 
-http-server -p 8000 -S -C localhost.pem -K localhost-key.pem
+http-server -p 8456 -S -C localhost.pem -K localhost-key.pem

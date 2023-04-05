@@ -139,8 +139,8 @@ class Panel {
     }
 
     setupColormap() {
-        this.icmap.addEventListener('change', (e) => {
-            this.feature.setColormap(e.target.value);
+        this.icmap.addEventListener('change', async (e) => {
+            await this.feature.setColormap(e.target.value);
 
             this.unity.update();
         });
