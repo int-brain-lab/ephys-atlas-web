@@ -28,14 +28,14 @@ public class AddressablesRemoteLoader : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        addressablesStorageRemotePath = string.Format("{0}/{1}", addressablesStorageRemotePath, buildVersion);
+        //addressablesStorageRemotePath = string.Format("{0}/{1}", addressablesStorageRemotePath, buildVersion);
 
-        catalogTargetSetSource = new TaskCompletionSource<bool>();
-        catalogTargetSetTask = catalogTargetSetSource.Task;
+        //catalogTargetSetSource = new TaskCompletionSource<bool>();
+        //catalogTargetSetTask = catalogTargetSetSource.Task;
 
-        if (!delayCatalogLoad) {
-            LoadCatalog();
-        }
+        //if (!delayCatalogLoad) {
+        //    LoadCatalog();
+        //}
 
         // Warning: I think there must be a better way to do this, but because we only initialize this Task
         // in Awake() we **CANNOT** call any of the Load() functions from another classes Awake() function.
@@ -61,19 +61,19 @@ public class AddressablesRemoteLoader : MonoBehaviour
         this.addressablesStorageRemotePath = newAddressablesStorageRemotePath;
     }
 
-    public void LoadCatalog() {
-        RuntimePlatform platform = Application.platform;
-        if (platform == RuntimePlatform.WindowsPlayer || platform == RuntimePlatform.WindowsEditor)
-            addressablesStorageTargetPath = addressablesStorageRemotePath + "/StandaloneWindows64/catalog_" + buildVersion + fileEnding;
-        else if (platform == RuntimePlatform.WebGLPlayer)
-            addressablesStorageTargetPath = addressablesStorageRemotePath + "/WebGL/catalog_" + buildVersion + fileEnding;
-        else if (platform == RuntimePlatform.OSXEditor)
-            addressablesStorageTargetPath = addressablesStorageRemotePath + "/StandaloneOSX/catalog_" + buildVersion + fileEnding;
-        else {
-            Debug.LogError(string.Format("Running on {0} we do NOT have a built Addressables Storage bundle",platform));
-        }
-        catalogTargetSetSource.SetResult(true);
-    }
+    //public void LoadCatalog() {
+    //    RuntimePlatform platform = Application.platform;
+    //    if (platform == RuntimePlatform.WindowsPlayer || platform == RuntimePlatform.WindowsEditor)
+    //        addressablesStorageTargetPath = addressablesStorageRemotePath + "/StandaloneWindows64/catalog_" + buildVersion + fileEnding;
+    //    else if (platform == RuntimePlatform.WebGLPlayer)
+    //        addressablesStorageTargetPath = addressablesStorageRemotePath + "/WebGL/catalog_" + buildVersion + fileEnding;
+    //    else if (platform == RuntimePlatform.OSXEditor)
+    //        addressablesStorageTargetPath = addressablesStorageRemotePath + "/StandaloneOSX/catalog_" + buildVersion + fileEnding;
+    //    else {
+    //        Debug.LogError(string.Format("Running on {0} we do NOT have a built Addressables Storage bundle",platform));
+    //    }
+    //    catalogTargetSetSource.SetResult(true);
+    //}
 
     public Task GetCatalogLoadedTask() {
         return catalogLoadedTask;
@@ -89,21 +89,21 @@ public class AddressablesRemoteLoader : MonoBehaviour
     /// </summary>
     public async Task<bool> AsyncLink2Catalog()
     {
-        await catalogTargetSetTask;
+//        await catalogTargetSetTask;
 
-#if UNITY_EDITOR
-        Debug.Log("(AddressablesStorage) Loading catalog v" + buildVersion);
-#endif
+//#if UNITY_EDITOR
+//        Debug.Log("(AddressablesStorage) Loading catalog v" + buildVersion);
+//#endif
         bool finished = true;
         //Load a catalog and automatically release the operation handle.
-        Debug.Log("Loading content catalog from: " + GetAddressablesPath());
+        //Debug.Log("Loading content catalog from: " + GetAddressablesPath());
 
-        AsyncOperationHandle<IResourceLocator> catalogLoadHandle
-            = Addressables.LoadContentCatalogAsync(GetAddressablesPath(), true);
+        //AsyncOperationHandle<IResourceLocator> catalogLoadHandle
+        //    = Addressables.LoadContentCatalogAsync(GetAddressablesPath(), true);
 
-        await catalogLoadHandle.Task;
+        //await catalogLoadHandle.Task;
 
-        Debug.Log("Content catalog loaded");
+        //Debug.Log("Content catalog loaded");
         return finished;
     }
 
@@ -146,7 +146,7 @@ public class AddressablesRemoteLoader : MonoBehaviour
 
         await catalogLoadedTask;
 
-        string path = "Assets/AddressableAssets/AllenCCF/ontology_structure_minimal.csv";
+        string path = "Assets/AddressableAssets/ontology_structure_minimal.csv";
 
         AsyncOperationHandle loadHandle = Addressables.LoadAssetAsync<TextAsset>(path);
         await loadHandle.Task;
@@ -157,72 +157,72 @@ public class AddressablesRemoteLoader : MonoBehaviour
         return returnText;
     }
 
-    public static async Task<Texture3D> LoadAnnotationTexture()
-    {
-#if UNITY_EDITOR
-        Debug.Log("Loading Allen CCF annotation texture");
-#endif
+//    public static async Task<Texture3D> LoadAnnotationTexture()
+//    {
+//#if UNITY_EDITOR
+//        Debug.Log("Loading Allen CCF annotation texture");
+//#endif
 
-        // Wait for the catalog to load if this hasn't already happened
-        await catalogLoadedTask;
+//        // Wait for the catalog to load if this hasn't already happened
+//        await catalogLoadedTask;
 
-        // Catalog is loaded, load the Texture3D object
-        string path = "Assets/AddressableAssets/Textures/AnnotationDatasetTexture3DAlpha.asset";
+//        // Catalog is loaded, load the Texture3D object
+//        string path = "Assets/AddressableAssets/Textures/AnnotationDatasetTexture3DAlpha.asset";
 
-        AsyncOperationHandle loadHandle = Addressables.LoadAssetAsync<Texture3D>(path);
-        await loadHandle.Task;
+//        AsyncOperationHandle loadHandle = Addressables.LoadAssetAsync<Texture3D>(path);
+//        await loadHandle.Task;
 
-        Texture3D returnTexture = (Texture3D)loadHandle.Result;
-        //Addressables.Release(loadHandle);
+//        Texture3D returnTexture = (Texture3D)loadHandle.Result;
+//        //Addressables.Release(loadHandle);
 
-        return returnTexture;
-    }
+//        return returnTexture;
+//    }
 
-    public static async Task<byte[]> LoadVolumeIndexes()
-    {
-#if UNITY_EDITOR
-        Debug.Log("Loading volume indexes");
-#endif
+//    public static async Task<byte[]> LoadVolumeIndexes()
+//    {
+//#if UNITY_EDITOR
+//        Debug.Log("Loading volume indexes");
+//#endif
 
-        // Wait for the catalog to load if this hasn't already happened
-        await catalogLoadedTask;
+//        // Wait for the catalog to load if this hasn't already happened
+//        await catalogLoadedTask;
 
-        string volumePath = "Assets/AddressableAssets/Datasets/volume_indexes.bytes";
+//        string volumePath = "Assets/AddressableAssets/Datasets/volume_indexes.bytes";
         
-        AsyncOperationHandle loadHandle = Addressables.LoadAssetAsync<TextAsset>(volumePath);
-        await loadHandle.Task;
+//        AsyncOperationHandle loadHandle = Addressables.LoadAssetAsync<TextAsset>(volumePath);
+//        await loadHandle.Task;
 
-        byte[] resultText = ((TextAsset)loadHandle.Result).bytes;
-        Addressables.Release(loadHandle);
+//        byte[] resultText = ((TextAsset)loadHandle.Result).bytes;
+//        Addressables.Release(loadHandle);
 
-        return resultText;
-    }
+//        return resultText;
+//    }
 
-    /// <summary>
-    /// Loads the annotation data to be reconstructed by the VolumeDatasetManager
-    /// </summary>
-    /// <returns>List of TextAssets where [0] is the index and [1] is the map</returns>
-    public static async Task<(byte[] index, byte[] map)> LoadAnnotationIndexMap()
-    {
-#if UNITY_EDITOR
-        Debug.Log("Loading annotation index mapping");
-#endif
+//    /// <summary>
+//    /// Loads the annotation data to be reconstructed by the VolumeDatasetManager
+//    /// </summary>
+//    /// <returns>List of TextAssets where [0] is the index and [1] is the map</returns>
+//    public static async Task<(byte[] index, byte[] map)> LoadAnnotationIndexMap()
+//    {
+//#if UNITY_EDITOR
+//        Debug.Log("Loading annotation index mapping");
+//#endif
 
-        // Wait for the catalog to load if this hasn't already happened
-        await catalogLoadedTask;
+//        // Wait for the catalog to load if this hasn't already happened
+//        await catalogLoadedTask;
 
-        string annIndexPath = "Assets/AddressableAssets/Datasets/ann/annotation_indexes.bytes";
-        AsyncOperationHandle indexHandle = Addressables.LoadAssetAsync<TextAsset>(annIndexPath);
-        await indexHandle.Task;
+//        string annIndexPath = "Assets/AddressableAssets/Datasets/ann/annotation_indexes.bytes";
+//        AsyncOperationHandle indexHandle = Addressables.LoadAssetAsync<TextAsset>(annIndexPath);
+//        await indexHandle.Task;
 
-        string annMapPath = "Assets/AddressableAssets/Datasets/ann/annotation_map.bytes";
-        AsyncOperationHandle mapHandle = Addressables.LoadAssetAsync<TextAsset>(annMapPath);
-        await mapHandle.Task;
+//        string annMapPath = "Assets/AddressableAssets/Datasets/ann/annotation_map.bytes";
+//        AsyncOperationHandle mapHandle = Addressables.LoadAssetAsync<TextAsset>(annMapPath);
+//        await mapHandle.Task;
 
-        (byte[] index, byte[] map) data = (((TextAsset)indexHandle.Result).bytes, ((TextAsset)mapHandle.Result).bytes );
-        Addressables.Release(indexHandle);
-        Addressables.Release(mapHandle);
+//        (byte[] index, byte[] map) data = (((TextAsset)indexHandle.Result).bytes, ((TextAsset)mapHandle.Result).bytes );
+//        Addressables.Release(indexHandle);
+//        Addressables.Release(mapHandle);
 
-        return data;
-    }
+//        return data;
+//    }
 }

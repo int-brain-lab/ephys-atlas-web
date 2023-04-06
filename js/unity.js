@@ -48,7 +48,15 @@ class Unity {
       for (let region of regions) {
           // let regionIdx = region['idx'];
           // let acronym = region['acronym'];
-          acronyms.push(region['acronym']);
+          let acronym = region['acronym'];
+
+          if (region['atlas_id'] < 0) {
+            acronym = 'l' + acronym;
+          }
+          else {
+            acronym = 'r' + acronym;
+          }
+          acronyms.push(acronym);
           // if (color) {
           //     color = color.substring(1).toUpperCase();
           //     // console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
@@ -90,6 +98,9 @@ class Unity {
 
         let visibility = [];
 
+        if (this.state.selected.length > 0) {
+
+        }
         // console.log(regions);
         for (let region of regions) {
             let regionIdx = region['idx'];
@@ -99,8 +110,11 @@ class Unity {
             // this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
         }
 
-        this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
-        this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
+        if (visibility.length > 0) {
+          this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
+          this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
+        }
+
     }
 
     async update() {

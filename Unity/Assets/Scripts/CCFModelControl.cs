@@ -230,14 +230,14 @@ public class CCFModelControl : MonoBehaviour
         foreach (var node in berylNodes)
             taskHandles.Add(node.GetLoadedTask(full));
 
-        StartCoroutine(LoadNodeHelper(full, callback));
+        LoadNodeHelper(full, callback);
 
         await Task.WhenAll(taskHandles);
 
         return berylNodes;
     }
 
-    public IEnumerator LoadNodeHelper(bool full, Action<CCFTreeNode> callback)
+    public void LoadNodeHelper(bool full, Action<CCFTreeNode> callback)
     {
         for (int i = 0; i < berylNodes.Count; i++)
         {
@@ -251,8 +251,8 @@ public class CCFModelControl : MonoBehaviour
                 //await Task.Delay(10);
 
                 // load 10 things and then wait a frame
-                if (i % 10 == 0)
-                    yield return null;
+                //if (i % 10 == 0)
+                //    yield return null;
             }
         }
     }

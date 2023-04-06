@@ -19,6 +19,7 @@ public class MiniBrainManager : MonoBehaviour
     private Dictionary<string, Material> _materials;
 
     private List<CCFTreeNode> _areas;
+    private List<bool> _areaSideLeft;
 
     private void Awake()
     {
@@ -57,7 +58,9 @@ public class MiniBrainManager : MonoBehaviour
         rootNode.SetShaderProperty("_Alpha", 0.1f);
         rootNode.SetColor(Color.gray);
 
+#if !UNITY_EDITOR && UNITY_WEBGL
         UnityLoaded();
+#endif
     }
 
     private void Update()
@@ -128,37 +131,43 @@ public class MiniBrainManager : MonoBehaviour
         node.SetNodeModelVisibility_Right(visible);
     }
 
-    #region Plural
+#region Plural
     /// <summary>
     /// Set the list of areas that will be re-used when setting plural colors or visibilities
     /// </summary>
     /// <param name="areas"></param>
     public void SetAreas(string areas)
     {
+        Debug.Log(areas);
         _areas = new();
+        _areaSideLeft = new();
 
         string[] areaAcronyms = areas.Split(",");
 
 
         foreach (string area in areaAcronyms)
         {
+            _areaSideLeft.Add(area.Substring(0, 1) == "l");
+
             _areas.Add(_modelControl.GetNode(_modelControl.Acronym2ID(area)));
         }
     }
 
     public void SetColors(string colors)
     {
+        Debug.Log(colors);
         string[] hexColors = colors.Split(",");
 
         if (hexColors.Length != _areas.Count)
             throw new System.Exception("Number of areas set by SetAreas must match number of colors in SetColors");
 
         for (int i = 0; i < hexColors.Length; i++)
-            _areas[i].SetColor(ParseHexColor(hexColors[i]));
+            _areas[i].SetColorOneSided(ParseHexColor(hexColors[i]), _areaSideLeft[i]);
     }
 
     public void SetVisibilities(string visibilities)
     {
+        Debug.Log(visibilities);
         string[] visibility = visibilities.Split(",");
 
         if (visibility.Length != _areas.Count)
@@ -166,36 +175,38 @@ public class MiniBrainManager : MonoBehaviour
 
         for (int i = 0; i < visibility.Length; i++)
         {
-            _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
-            _areas[i].SetNodeModelVisibility_Right(bool.Parse(visibility[i]));
+            if (_areaSideLeft[i])
+                _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+            else
+                _areas[i].SetNodeModelVisibility_Right(bool.Parse(visibility[i]));
         }
     }
-    public void SetVisibilitiesLeft(string visibilities)
-    {
-        string[] visibility = visibilities.Split(",");
+    //public void SetVisibilitiesLeft(string visibilities)
+    //{
+    //    string[] visibility = visibilities.Split(",");
 
-        if (visibility.Length != _areas.Count)
-            throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
+    //    if (visibility.Length != _areas.Count)
+    //        throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
 
-        for (int i = 0; i < visibility.Length; i++)
-        {
-            _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
-        }
-    }
-    public void SetVisibilitiesRight(string visibilities)
-    {
-        string[] visibility = visibilities.Split(",");
+    //    for (int i = 0; i < visibility.Length; i++)
+    //    {
+    //        _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+    //    }
+    //}
+    //public void SetVisibilitiesRight(string visibilities)
+    //{
+    //    string[] visibility = visibilities.Split(",");
 
-        if (visibility.Length != _areas.Count)
-            throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
+    //    if (visibility.Length != _areas.Count)
+    //        throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
 
-        for (int i = 0; i < visibility.Length; i++)
-        {
-            _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
-        }
-    }
+    //    for (int i = 0; i < visibility.Length; i++)
+    //    {
+    //        _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+    //    }
+    //}
 
-    #endregion
+#endregion
 
     public void RegisterNode(CCFTreeNode node)
     {
