@@ -62,6 +62,8 @@ class Selector {
         else
             this.state.selected.delete(idx);
         this.makeCSS();
+
+        app.unity.setVisibility();
     }
 
     count() {
