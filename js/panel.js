@@ -116,7 +116,8 @@ class Panel {
             this.setFeatureOptions(fset); // fname argument not specified => use fset default
             this.feature.setFset(fset, this.ifname.value);
 
-            this.unity.update();
+            if (this.unity)
+                this.unity.update();
         });
     }
 
@@ -125,7 +126,8 @@ class Panel {
             let fname = e.target.value;
             this.feature.setFname(fname);
 
-            this.unity.update();
+            if (this.unity)
+                this.unity.update();
         });
     }
 
@@ -134,7 +136,8 @@ class Panel {
             let stat = e.target.value;
             this.feature.setStat(stat);
 
-            this.unity.update();
+            if (this.unity)
+                this.unity.update();
         });
     }
 
@@ -142,7 +145,8 @@ class Panel {
         this.icmap.addEventListener('change', async (e) => {
             await this.feature.setColormap(e.target.value);
 
-            this.unity.update();
+            if (this.unity)
+                this.unity.update();
         });
     }
 
@@ -151,7 +155,8 @@ class Panel {
         let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
         this.feature.setColormapRange(cmin, cmax);
 
-        this.unity.update();
+        if (this.unity)
+            this.unity.update();
     }
 
     setupColormapMin() {

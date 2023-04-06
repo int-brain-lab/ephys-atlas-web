@@ -502,6 +502,7 @@ div#container>.svg-wrapper {
     align-items: center;
     justify-content: center;
     text-align: center;
+
     position: relative;
     top: 0;
     left: 0;
@@ -531,6 +532,51 @@ svg path {
 
 svg:hover {
     cursor: pointer;
+}
+
+
+
+/*************************************************************************************************/
+/*  Maximizers                                                                                   */
+/*************************************************************************************************/
+
+div#container .maximizer {
+    font-size: 14pt;
+    color: #999;
+    cursor: pointer;
+
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+div#container #maximizer-sagittal {
+    right: 100px;
+}
+
+div#container #maximizer-swanson {
+    right: 50px;
+}
+
+div#container .maximizer:hover {
+    filter: brightness(115%);
+}
+
+
+
+div#container .maximized {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    background-color: #fafafafa;
+}
+
+div#container .maximized .maximizer {
+    right: 10px !important;
 }
 
 

@@ -89,7 +89,7 @@ class Feature {
     }
 
     async update() {
-        this.featureName.innerHTML = `feature: ${this.state.fname}`;
+        this.featureName.innerHTML = `fet: ${this.state.fname}`;
 
         let fet = (await this.getFeatures());
 
