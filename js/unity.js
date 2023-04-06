@@ -38,6 +38,7 @@ class Unity {
 
     }
 
+    // Tell Unity what mapping we are using
     async setAreas() {
       let regions = (await this.db.getRegions(this.state.mapping))['data'];
       if (!this.instance) return;
@@ -46,8 +47,6 @@ class Unity {
       let acronyms = []
 
       for (let region of regions) {
-          // let regionIdx = region['idx'];
-          // let acronym = region['acronym'];
           let acronym = region['acronym'];
 
           if (region['atlas_id'] < 0) {
@@ -57,22 +56,16 @@ class Unity {
             acronym = 'r' + acronym;
           }
           acronyms.push(acronym);
-          // if (color) {
-          //     color = color.substring(1).toUpperCase();
-          //     // console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
-          //     acronyms.push(acronym);
-          // }
       }
 
       this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
     }
 
+    // Set the colors for the current mapping 
     async setColors() {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         if (!this.instance) return;
 
-        // console.log(regions);
-        // let acronyms = []
         let colors = []
 
         for (let region of regions) {
@@ -80,35 +73,29 @@ class Unity {
             // let acronym = region['acronym'];
             let color = this.feature.getColor(regionIdx);
             if (color) {
-                // color = color.substring(1).toUpperCase();
-                // console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
-                // acronyms.push(acronym);
                 colors.push(`${color.toUpperCase()}`);
-                // this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
             }
             else {
               colors.push('#FFFFFF');
             }
         }
 
-        // this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
         this.instance.SendMessage('main', 'SetColors', colors.toString());
     }
 
+    // Set the visibility of regions, for use when regions are selected
     async setVisibility() {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         if (!this.instance) return;
 
         let visibility = [];
 
+        console.log(this.state.selected);
         if (this.state.selected.length > 0) {
           // console.log(regions);
           for (let region of regions) {
               let regionIdx = region['idx'];
-              // let acronym = region['acronym'];
               visibility.push(this.state.selected.has(regionIdx));
-              // console.log(v);
-              // this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
           }
         }
         else {
@@ -122,12 +109,9 @@ class Unity {
     }
 
     async update() {
-        // HACK: only update this view with the Beryl mapping.
-        if (this.state.mapping == 'beryl') {
-          await this.setAreas();
-          await this.setColors();
-          this.setVisibility();
-        }
+        await this.setAreas();
+        await this.setColors();
+        this.setVisibility();
     }
 
     loadedCallback() {
