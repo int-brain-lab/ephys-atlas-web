@@ -135,7 +135,6 @@ public class MiniBrainManager : MonoBehaviour
     /// <param name="areas"></param>
     public void SetAreas(string areas)
     {
-        Debug.Log(areas);
         _areas = new();
 
         string[] areaAcronyms = areas.Split(",");
@@ -149,7 +148,6 @@ public class MiniBrainManager : MonoBehaviour
 
     public void SetColors(string colors)
     {
-        Debug.Log(colors);
         string[] hexColors = colors.Split(",");
 
         if (hexColors.Length != _areas.Count)
@@ -157,6 +155,44 @@ public class MiniBrainManager : MonoBehaviour
 
         for (int i = 0; i < hexColors.Length; i++)
             _areas[i].SetColor(ParseHexColor(hexColors[i]));
+    }
+
+    public void SetVisibilities(string visibilities)
+    {
+        string[] visibility = visibilities.Split(",");
+
+        if (visibility.Length != _areas.Count)
+            throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
+
+        for (int i = 0; i < visibility.Length; i++)
+        {
+            _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+            _areas[i].SetNodeModelVisibility_Right(bool.Parse(visibility[i]));
+        }
+    }
+    public void SetVisibilitiesLeft(string visibilities)
+    {
+        string[] visibility = visibilities.Split(",");
+
+        if (visibility.Length != _areas.Count)
+            throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
+
+        for (int i = 0; i < visibility.Length; i++)
+        {
+            _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+        }
+    }
+    public void SetVisibilitiesRight(string visibilities)
+    {
+        string[] visibility = visibilities.Split(",");
+
+        if (visibility.Length != _areas.Count)
+            throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
+
+        for (int i = 0; i < visibility.Length; i++)
+        {
+            _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+        }
     }
 
     #endregion
