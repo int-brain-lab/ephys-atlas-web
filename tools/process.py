@@ -5,26 +5,29 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
-from datetime import datetime, timezone
+import base64
+import gzip
 import json
-import lxml.etree as le
-from math import isnan
 import os
 import re
+from datetime import datetime, timezone
+from math import isnan
 from operator import itemgetter
-from textwrap import dedent
 from pathlib import Path
+from textwrap import dedent
 from xml.dom import minidom
 
-from joblib import Parallel, delayed
-from tqdm import tqdm
+import lxml.etree as le
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pandas.core.groupby import DataFrameGroupBy
-import matplotlib as mpl
+from ibllib.atlas.regions import BrainRegions
+from joblib import Parallel, delayed
 from matplotlib import cm
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap, to_hex
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap, to_hex
+from pandas.core.groupby import DataFrameGroupBy
+from tqdm import tqdm
 
 
 # -------------------------------------------------------------------------------------------------
@@ -84,6 +87,56 @@ def save_json(d, filename):
         json.dump(d, f, indent=1)
 
 
+def base64_encode(input_string):
+    encoded_bytes = base64.b64encode(input_string.encode('utf-8'))
+    encoded_string = encoded_bytes.decode('utf-8')
+    return encoded_string
+
+
+def base64_decode(encoded_string):
+    decoded_bytes = base64.b64decode(encoded_string.encode('utf-8'))
+    decoded_string = decoded_bytes.decode('utf-8')
+    return decoded_string
+
+
+def gzip_compress(input_string):
+    compressed_bytes = gzip.compress(input_string.encode('utf-8'))
+    encoded_bytes = base64.b64encode(compressed_bytes)
+    encoded_string = encoded_bytes.decode('utf-8')
+    return encoded_string
+
+
+def gzip_decompress(compressed_string):
+    decoded_bytes = base64.b64decode(compressed_string.encode('utf-8'))
+    decompressed_bytes = gzip.decompress(decoded_bytes)
+    original_string = decompressed_bytes.decode('utf-8')
+    return original_string
+
+
+def searchunsorted(arr, search):
+    sidx = np.argsort(arr)
+    return np.searchsorted(arr, search, sorter=sidx)
+
+
+def acronym2idx(br, mapping, my_acronyms):
+    region_idxs = np.unique(br.mappings[mapping])
+    region_acronyms = br.acronym[region_idxs]
+    return region_idxs[searchunsorted(region_acronyms, my_acronyms)]
+
+
+def encode_numpy_array(arr):
+    arr_bytes = arr.tobytes()
+    encoded_bytes = base64.b64encode(arr_bytes)
+    return encoded_bytes.decode('utf-8')
+
+
+def decode_numpy_array(encoded_str, dtype):
+    encoded_bytes_str = encoded_str.encode('utf-8')
+    encoded_bytes = base64.b64decode(encoded_bytes_str)
+    arr = np.frombuffer(encoded_bytes, dtype=dtype)
+    return arr
+
+
 def write_text(s, filename):
     with open(filename, "w") as f:
         f.write(s)
@@ -105,6 +158,16 @@ def lateralize_features(df):
         if c.startswith('atlas_id'):
             df[c] = -df[c].abs()
     return df
+
+
+def get_stats(v):
+    return {
+        'mean': float_json(np.mean(v)),
+        'median': float_json(np.median(v)),
+        'std': float_json(np.std(v)),
+        'min': float_json(np.min(v)),
+        'max': float_json(np.max(v)),
+    }
 
 
 # -------------------------------------------------------------------------------------------------
@@ -397,18 +460,12 @@ def generate_features_groupedby(br, mapping, df, feature_names):
 
         # Collect statistics across regions, for each feature. Used for bar plot.
         for stat, dfg in dfs.items():
-            features[fet]['statistics'][stat] = {
-                'mean': float_json(dfg[fet].mean()),
-                'median': float_json(dfg[fet].median()),
-                'std': float_json(dfg[fet].std()),
-                'min': float_json(dfg[fet].min()),
-                'max': float_json(dfg[fet].max()),
-            }
+            features[fet]['statistics'][stat] = get_stats(dfg[fet])
 
     return features
 
 
-class BrainRegions:
+class FeatureBrainRegions:
     def __init__(self):
         self.mappings = get_mappings()
 
@@ -447,7 +504,7 @@ def generate_ephys_features():
     df_sessions = lateralize_features(df_sessions)
     feature_names = get_feature_names(df_sessions)
 
-    br = BrainRegions()
+    br = FeatureBrainRegions()
 
     # Aggregate by region, for each mapping. We use the atlas_id_X where X is the first letter
     # of the mapping.
@@ -469,7 +526,7 @@ def generate_bwm_features():
     df_sessions = lateralize_features(df_sessions)
     feature_names = get_feature_names(df_sessions)
 
-    br = BrainRegions()
+    br = FeatureBrainRegions()
 
     # Aggregate by region, for each mapping. We use the atlas_id_X where X is the first letter
     # of the mapping.
@@ -485,17 +542,127 @@ def generate_bwm_features():
 
 
 # -------------------------------------------------------------------------------------------------
-# Entry-point
+# Custom features
 # -------------------------------------------------------------------------------------------------
 
+class FeatureGenerator:
+    def __init__(self, mapping='Beryl'):
+        self.br = BrainRegions()
+        self.mapping = mapping
+        self.values = {}  # mapping (name, stat) => values
+        self.idx = None
+
+    def set_acronyms(self, acronyms):
+        self.idx = acronym2idx(
+            self.br, self.mapping, acronyms).astype(np.int32)
+        assert self.idx.ndim == 1
+
+    def add_values(self, name, values, stat='mean'):
+        if self.idx is None:
+            raise ValueError(
+                f'you need to call set_acronyms(region_acronyms) first')
+        if len(values) != len(self.idx):
+            raise ValueError(
+                f'values should have {len(self.idx)} values, not {len(values)}')
+        self.values[(name, stat)] = np.asarray(values, np.float32)
+
+    def compress(self, s):
+        # TODO: option for gzip_compress()
+        return s
+
+    def decompress(self, s):
+        return s
+
+    def encode(self):
+        assert self.idx is not None
+        assert len(self.values) > 0
+        obj = {
+            'mapping': self.mapping,
+            'region_idx': encode_numpy_array(self.idx),
+            'data': [
+                (name, stat, encode_numpy_array(values)) for (name, stat), values in self.values.items()
+            ]
+        }
+        return base64_encode(self.compress(json.dumps(obj)))
+
+    def decode(self, s):
+        obj = json.loads(self.decompress(base64_decode(s)))
+        assert obj['mapping'] == self.mapping
+
+        # self.set_acronyms(obj['acronyms'])
+        self.idx = decode_numpy_array(obj['region_idx'], np.int32)
+
+        for name, stat, b64_data in obj['data']:
+            values = decode_numpy_array(b64_data, np.float32)
+            self.add_values(name, values, stat=stat)
+
+    def __repr__(self):
+        return f'<FeatureGenerator {self.mapping=} with {len(self.values)} set(s) of {self.idx.size} values>'
+
+
+def generate_custom_features():
+    mapping = 'Allen'
+
+    fg = FeatureGenerator(mapping)
+    br = fg.br
+
+    acronyms = np.unique(br.acronym[br.mappings[mapping]])
+    values = np.random.randn(acronyms.size)
+
+    fg.set_acronyms(acronyms)
+    fg.add_values("fname", values)
+    fg.add_values("fname2", values+1)
+    fg.add_values("fname3", values+2)
+    fg.add_values("fname4", values+3)
+    fg.add_values("fname5", values+4)
+    s = fg.encode()
+    print(len(s))
+    fg.decode(s)
+    return
+
+    feature_data = {}
+    fset = 'fset'
+    feature_data[fset] = {
+        mapping: {
+            'fname': {"data": {}, "statistics": {}},
+            'fname2': {"data": {}, "statistics": {}}
+        }
+    }
+
+    for idx, v in zip(fg.idx, values):
+        feature_data[fset][mapping]['fname']["data"][f'{idx}'] = {
+            "mean": float_json(v), }
+        feature_data[fset][mapping]['fname2']["data"][f'{idx}'] = {
+            "mean": float_json(v+1), }
+    # feature_data[feature][mapping][feature1]["statistics"]["mean"] = get_stats(
+    #     vals_mean)
+    # feature_data[feature][mapping][feature1]["statistics"]["median"] = get_stats(
+    #     vals_median)
+
+    # for acr, v in zip(acronyms, vals2):
+    #     feature_data[feature][mapping][feature2]["data"][f'{idx}'] = {
+    #         "mean": float_json(v)}
+    # feature_data[feature][mapping][feature2]["statistics"]["mean"] = get_stats(
+    #     vals2)
+
+    # print(feature_data)
+    s2 = base64_encode(gzip_compress(json.dumps(feature_data, indent=1)))
+    print(len(s2))
+    print(len(s) / float(len(s2)))
+
+
+# -------------------------------------------------------------------------------------------------
+# Entry-point
+# -------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
 
     # generate_colormaps()
-    mappings = get_mappings()
-    generate_regions_json(mappings)
+    # mappings = get_mappings()
+    # generate_regions_json(mappings)
     # generate_regions_css(mappings)
     # generate_ephys_features()
-    generate_bwm_features()
+    # generate_bwm_features()
+    generate_custom_features()
 
     ##############
 
