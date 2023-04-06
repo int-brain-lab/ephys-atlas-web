@@ -345,7 +345,7 @@ body {
     left: 0;
 }
 
-
+/* TOP ROW */
 
 #container #svg-coronal-container {
     grid-column: 2 / 3;
@@ -357,24 +357,26 @@ body {
     grid-row: 1 / 2;
 }
 
-#container #svg-top-container {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
+#container #svg-horizontal-container {
+    grid-column: 5 / 6;
+    grid-row: 1 / 2;
 }
 
-#container #svg-horizontal-container {
-    grid-column: 3 / 4;
-    grid-row: 2 / 3;
-}
+/* BOTTOM ROW */
 
 #container #svg-swanson-container {
-    grid-column: 4 / 6;
+    grid-column: 2 / 4;
     grid-row: 2 / 3;
 }
 
 #container #unity-container {
+    grid-column: 4 / 5;
+    grid-row: 2 / 3;
+}
+
+#container #svg-top-container {
     grid-column: 5 / 6;
-    grid-row: 1 / 2;
+    grid-row: 2 / 3;
 }
 
 
