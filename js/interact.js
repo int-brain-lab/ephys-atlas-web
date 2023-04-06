@@ -18,8 +18,6 @@ class Highlighter {
     highlight(e) {
         this.state.highlighted = e2idx(this.state.mapping, e);
         this.makeCSS();
-
-        app.unity.setColors();
     }
 
     clear() {
