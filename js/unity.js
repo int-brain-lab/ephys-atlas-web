@@ -59,8 +59,8 @@ class Unity {
             }
         }
 
-        this.instance.SendMessage('main','SetAreas',acronyms.ToString());
-        this.instance.SendMessage('main','SetColors',colors.ToString());
+        this.instance.SendMessage('main','SetAreas',acronyms.toString());
+        this.instance.SendMessage('main','SetColors',colors.toString());
     }
 
     async setVisibility() {
