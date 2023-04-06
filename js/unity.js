@@ -104,6 +104,9 @@ class Unity {
           }
         }
 
+        console.log(this.state.selected.length > 0 ? 1 : 0);
+        console.log(visibility.toString());
+
         this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
     }
