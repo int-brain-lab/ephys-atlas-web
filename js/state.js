@@ -19,7 +19,7 @@ export const DEFAULT_FEATURE = {
 };
 const DEFAULT_STAT = "mean";
 
-const DEFAULT_MAPPING = "allen";
+const DEFAULT_MAPPING = "beryl";
 const DEFAULT_SEARCH = "";
 const DEFAULT_HIGHLIGHTED = null;
 // const DEFAULT_SELECTED = new Set();
