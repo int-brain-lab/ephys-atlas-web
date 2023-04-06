@@ -43,6 +43,9 @@ class Unity {
         if (!this.instance) return;
 
         // console.log(regions);
+        acronyms = []
+        colors = []
+
         for (let region of regions) {
             let regionIdx = region['idx'];
             let acronym = region['acronym'];
@@ -50,9 +53,14 @@ class Unity {
             if (color) {
                 color = color.substring(1).toUpperCase();
                 console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
-                this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
+                acronyms.push(acronym);
+                colors.push('#${color');
+                // this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
             }
         }
+
+        this.instance.SendMessage('main','SetAreas',acronyms.ToString());
+        this.instance.SendMessage('main','SetColors',colors.ToString());
     }
 
     async setVisibility() {

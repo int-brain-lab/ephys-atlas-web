@@ -18,6 +18,8 @@ public class MiniBrainManager : MonoBehaviour
     Dictionary<string, CCFTreeNode> modelNodes;
     private Dictionary<string, Material> _materials;
 
+    private List<CCFTreeNode> _areas;
+
     private void Awake()
     {
 #if !UNITY_EDITOR && UNITY_WEBGL
@@ -125,6 +127,39 @@ public class MiniBrainManager : MonoBehaviour
         CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(areaStr));
         node.SetNodeModelVisibility_Right(visible);
     }
+
+    #region Plural
+    /// <summary>
+    /// Set the list of areas that will be re-used when setting plural colors or visibilities
+    /// </summary>
+    /// <param name="areas"></param>
+    public void SetAreas(string areas)
+    {
+        Debug.Log(areas);
+        _areas = new();
+
+        string[] areaAcronyms = areas.Split(",");
+
+
+        foreach (string area in areaAcronyms)
+        {
+            _areas.Add(_modelControl.GetNode(_modelControl.Acronym2ID(area)));
+        }
+    }
+
+    public void SetColors(string colors)
+    {
+        Debug.Log(colors);
+        string[] hexColors = colors.Split(",");
+
+        if (hexColors.Length != _areas.Count)
+            throw new System.Exception("Number of areas set by SetAreas must match number of colors in SetColors");
+
+        for (int i = 0; i < hexColors.Length; i++)
+            _areas[i].SetColor(ParseHexColor(hexColors[i]));
+    }
+
+    #endregion
 
     public void RegisterNode(CCFTreeNode node)
     {
