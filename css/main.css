@@ -50,6 +50,8 @@
 
     --bar-highlight-color: #f2f2f2;
     --bar-select-color: #e8e8e8;
+
+    --left-panel-width: 150px;
 }
 
 * {
@@ -216,7 +218,7 @@ body {
     position: absolute;
     top: 10px;
     left: calc(50% + 500px);
-    width: 200px;
+    width: var(--left-panel-width);
     z-index: 100;
 }
 
@@ -325,7 +327,7 @@ body {
 
 #container {
     display: grid;
-    grid-template-columns: 200px 1fr 1fr 1fr 1fr;
+    grid-template-columns: var(--left-panel-width) 1fr 1fr 1fr 1fr;
     /* height: calc(100vh - 180px); */
     height: 700px;
     max-width: 1350px;
@@ -388,7 +390,7 @@ body {
 #bar-plot-header {
     position: fixed;
     background-color: #fff;
-    width: 175px;
+    width: calc(var(--left-panel-width) - 25px);
     height: 100px;
     margin-left: 10px;
     padding: 0 10px 0 0;
@@ -438,6 +440,7 @@ body {
 #bar-fname {
     margin: 0 0 6px 0;
     text-align: center;
+    white-space: nowrap;
     /* font-weight: 600; */
     font-family: roboto-condensed;
 }
@@ -456,7 +459,7 @@ body {
 
     /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
     /* when using a SVG slider (it causes a full render of the bar plot */
-    height: 100vh;
+    height: 50vh;
 }
 
 #bar-plot * {
