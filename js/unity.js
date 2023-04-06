@@ -102,22 +102,23 @@ class Unity {
         let visibility = [];
 
         if (this.state.selected.length > 0) {
-
+          // console.log(regions);
+          for (let region of regions) {
+              let regionIdx = region['idx'];
+              // let acronym = region['acronym'];
+              visibility.push(this.state.selected.has(regionIdx));
+              // console.log(v);
+              // this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
+          }
         }
-        // console.log(regions);
-        for (let region of regions) {
-            let regionIdx = region['idx'];
-            // let acronym = region['acronym'];
-            visibility.push(this.state.selected.has(regionIdx));
-            // console.log(v);
-            // this.instance.SendMessage('main', 'SetVisibility', `${acronym}:#${v}`);
+        else {
+          for (let region of regions) {
+            visibility.push(true);
+          }
         }
 
-        if (visibility.length > 0) {
-          this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
-          this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
-        }
-
+        this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
+        this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
     }
 
     async update() {
@@ -125,7 +126,7 @@ class Unity {
         if (this.state.mapping == 'beryl') {
           await this.setAreas();
           await this.setColors();
-          // this.setVisibility();
+          this.setVisibility();
         }
     }
 
