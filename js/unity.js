@@ -43,8 +43,8 @@ class Unity {
         if (!this.instance) return;
 
         // console.log(regions);
-        acronyms = []
-        colors = []
+        let acronyms = []
+        let colors = []
 
         for (let region of regions) {
             let regionIdx = region['idx'];
