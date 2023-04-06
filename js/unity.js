@@ -90,8 +90,8 @@ class Unity {
 
         let visibility = [];
 
-        console.log(this.state.selected);
-        if (this.state.selected.length > 0) {
+        console.log(app.state.selected);
+        if (app.state.selected.length > 0) {
           // console.log(regions);
           for (let region of regions) {
               let regionIdx = region['idx'];
@@ -104,10 +104,10 @@ class Unity {
           }
         }
 
-        console.log(this.state.selected.length > 0 ? 1 : 0);
+        console.log(app.state.selected.length > 0 ? 1 : 0);
         console.log(visibility.toString());
 
-        this.instance.SendMessage('main', 'ShowRoot', this.state.selected.length > 0 ? 1 : 0);
+        this.instance.SendMessage('main', 'ShowRoot', app.state.selected.length > 0 ? 1 : 0);
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
     }
 
