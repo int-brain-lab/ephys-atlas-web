@@ -47,12 +47,13 @@ class Unity {
 
       for (let region of regions) {
           // let regionIdx = region['idx'];
-          let acronym = region['acronym'];
-          if (color) {
-              color = color.substring(1).toUpperCase();
-              // console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
-              acronyms.push(acronym);
-          }
+          // let acronym = region['acronym'];
+          acronyms.push(region['acronym']);
+          // if (color) {
+          //     color = color.substring(1).toUpperCase();
+          //     // console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
+          //     acronyms.push(acronym);
+          // }
       }
 
       this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
@@ -91,7 +92,7 @@ class Unity {
 
         // console.log(regions);
         for (let region of regions) {
-            // let regionIdx = region['idx'];
+            let regionIdx = region['idx'];
             // let acronym = region['acronym'];
             visibility.push(this.state.selected.has(regionIdx));
             // console.log(v);
