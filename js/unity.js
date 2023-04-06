@@ -68,7 +68,7 @@ class Unity {
         let colors = []
 
         for (let region of regions) {
-            // let regionIdx = region['idx'];
+            let regionIdx = region['idx'];
             // let acronym = region['acronym'];
             let color = this.feature.getColor(regionIdx);
             if (color) {
