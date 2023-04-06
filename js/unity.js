@@ -86,6 +86,9 @@ class Unity {
                 colors.push(`${color.toUpperCase()}`);
                 // this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
             }
+            else {
+              colors.push('#FFFFFF');
+            }
         }
 
         // this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
