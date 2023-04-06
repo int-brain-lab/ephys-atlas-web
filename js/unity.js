@@ -103,11 +103,11 @@ class Unity {
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
     }
 
-    update() {
+    async update() {
         // HACK: only update this view with the Beryl mapping.
         if (this.state.mapping == 'beryl') {
-          this.setAreas();
-          this.setColors();
+          await this.setAreas();
+          await this.setColors();
             // this.setColors();
           this.setVisibility();
         }
