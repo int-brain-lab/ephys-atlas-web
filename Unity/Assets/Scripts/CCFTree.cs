@@ -188,7 +188,7 @@ public class CCFTreeNode
             leftRend.receiveShadows = false;
             leftRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             _nodeModelLeftGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
-            _nodeModelLeftGO.AddComponent<MeshCollider>();
+            //_nodeModelLeftGO.AddComponent<MeshCollider>();
 
             _nodeModelLeftGO.transform.localPosition = Vector3.zero;
             _nodeModelLeftGO.transform.localRotation = Quaternion.identity;

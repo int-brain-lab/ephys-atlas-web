@@ -125,8 +125,7 @@ class Unity {
         if (this.state.mapping == 'beryl') {
           await this.setAreas();
           await this.setColors();
-            // this.setColors();
-          this.setVisibility();
+          // this.setVisibility();
         }
     }
 
