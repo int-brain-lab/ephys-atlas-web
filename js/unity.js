@@ -54,7 +54,7 @@ class Unity {
                 color = color.substring(1).toUpperCase();
                 console.debug(`in Unity, setting color of region #${regionIdx} (${acronym}) to #${color}`)
                 acronyms.push(acronym);
-                colors.push('#${color');
+                colors.push('#${color}');
                 // this.instance.SendMessage('main', 'SetColor', `${acronym}:#${color}`);
             }
         }
