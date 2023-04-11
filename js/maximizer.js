@@ -41,10 +41,23 @@ class Maximizer {
                 this.maximize(e.target.parentElement);
             });
         }
+
+        let that = this;
+        document.body.addEventListener('keydown', function (e) {
+            if (e.key == "Escape") {
+                that.clear();
+            }
+        });
     }
 
     maximize(item) {
         if (item)
             item.classList.toggle("maximized");
+    }
+
+    clear() {
+        for (let maximizer of this.maximizers) {
+            maximizer.parentElement.classList.remove("maximized");
+        }
     }
 };

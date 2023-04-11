@@ -556,16 +556,17 @@ div#container .maximizer {
     right: 10px;
 }
 
+div#container .maximizer:hover {
+    filter: brightness(115%);
+    background-color: #d0d0d0;
+}
+
 div#container #maximizer-sagittal {
     right: 100px;
 }
 
 div#container #maximizer-swanson {
     right: 50px;
-}
-
-div#container .maximizer:hover {
-    filter: brightness(115%);
 }
 
 

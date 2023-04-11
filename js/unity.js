@@ -4,6 +4,9 @@ class Unity {
     constructor(db, state, region, feature) {
         console.log("setting up Unity");
 
+        // DEBUG
+        // return;
+
         this.db = db;
         this.state = state;
         this.region = region;
