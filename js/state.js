@@ -1,6 +1,7 @@
 export { State };
 
 import { SLICE_MAX } from "./constants.js";
+import { encode, decode } from "./utils.js";
 
 
 
@@ -25,17 +26,6 @@ const DEFAULT_SEARCH = "";
 const DEFAULT_HIGHLIGHTED = null;
 
 
-
-function encode(obj) {
-    if (!obj) return '';
-    return btoa(JSON.stringify(obj));
-}
-
-function decode(encoded) {
-    if (!encoded) return {};
-    return JSON.parse(atob(encoded));
-}
-
 function url2state() {
     let query = new Proxy(new URLSearchParams(window.location.search), {
         get: (searchParams, prop) => searchParams.get(prop),
@@ -43,6 +33,7 @@ function url2state() {
     let state = decode(query.state);
     return state;
 }
+
 
 function state2url(state) {
     let url = new URL(window.location);

@@ -546,8 +546,10 @@ def generate_bwm_features():
 # -------------------------------------------------------------------------------------------------
 
 class FeatureGenerator:
-    def __init__(self, mapping='Beryl'):
+    def __init__(self, fset='', mapping='Beryl'):
+        assert fset
         self.br = BrainRegions()
+        self.fset = fset
         self.mapping = mapping
         self.values = {}  # mapping (name, stat) => values
         self.idx = None
@@ -577,22 +579,32 @@ class FeatureGenerator:
         assert self.idx is not None
         assert len(self.values) > 0
         obj = {
+            'fset': self.fset,
             'mapping': self.mapping,
             'region_idx': encode_numpy_array(self.idx),
-            'data': [
-                (name, stat, encode_numpy_array(values)) for (name, stat), values in self.values.items()
-            ]
+            'features': [],
+            'statistics': {},
         }
+        for (name, stat), values in self.values.items():
+            stats = {}
+            stats['mean'] = float(values.mean())
+            stats['median'] = float(np.median(values))
+            stats['min'] = float(values.min())
+            stats['max'] = float(values.max())
+            stats['std'] = float(values.std())
+            obj['features'].append(
+                (name, stat, encode_numpy_array(values), stats))
         return base64_encode(self.compress(json.dumps(obj)))
 
     def decode(self, s):
         obj = json.loads(self.decompress(base64_decode(s)))
         assert obj['mapping'] == self.mapping
+        assert obj['fset'] == self.fset
 
-        # self.set_acronyms(obj['acronyms'])
+        # Set the list of regions.
         self.idx = decode_numpy_array(obj['region_idx'], np.int32)
 
-        for name, stat, b64_data in obj['data']:
+        for name, stat, b64_data, statistics in obj['features']:
             values = decode_numpy_array(b64_data, np.float32)
             self.add_values(name, values, stat=stat)
 
@@ -603,52 +615,20 @@ class FeatureGenerator:
 def generate_custom_features():
     mapping = 'Allen'
 
-    fg = FeatureGenerator(mapping)
+    fg = FeatureGenerator('custom', mapping)
     br = fg.br
 
     acronyms = np.unique(br.acronym[br.mappings[mapping]])
-    values = np.random.randn(acronyms.size)
+    values1 = np.random.randn(acronyms.size)
+    values2 = np.random.randn(acronyms.size)
 
     fg.set_acronyms(acronyms)
-    fg.add_values("fname", values)
-    fg.add_values("fname2", values+1)
-    fg.add_values("fname3", values+2)
-    fg.add_values("fname4", values+3)
-    fg.add_values("fname5", values+4)
+    fg.add_values("fname1", values1)
+    fg.add_values("fname2", values2)
     s = fg.encode()
-    print(len(s))
+    with open('custom_features', 'w') as f:
+        f.write(s)
     fg.decode(s)
-    return
-
-    feature_data = {}
-    fset = 'fset'
-    feature_data[fset] = {
-        mapping: {
-            'fname': {"data": {}, "statistics": {}},
-            'fname2': {"data": {}, "statistics": {}}
-        }
-    }
-
-    for idx, v in zip(fg.idx, values):
-        feature_data[fset][mapping]['fname']["data"][f'{idx}'] = {
-            "mean": float_json(v), }
-        feature_data[fset][mapping]['fname2']["data"][f'{idx}'] = {
-            "mean": float_json(v+1), }
-    # feature_data[feature][mapping][feature1]["statistics"]["mean"] = get_stats(
-    #     vals_mean)
-    # feature_data[feature][mapping][feature1]["statistics"]["median"] = get_stats(
-    #     vals_median)
-
-    # for acr, v in zip(acronyms, vals2):
-    #     feature_data[feature][mapping][feature2]["data"][f'{idx}'] = {
-    #         "mean": float_json(v)}
-    # feature_data[feature][mapping][feature2]["statistics"]["mean"] = get_stats(
-    #     vals2)
-
-    # print(feature_data)
-    s2 = base64_encode(gzip_compress(json.dumps(feature_data, indent=1)))
-    print(len(s2))
-    print(len(s) / float(len(s2)))
 
 
 # -------------------------------------------------------------------------------------------------
