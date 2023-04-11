@@ -508,7 +508,7 @@ div#container>.svg-wrapper {
     left: 0;
 }
 
-svg {
+.svg-wrapper svg {
     width: 100%;
     max-height: calc(100% - 96px);
     display: block;
@@ -518,19 +518,19 @@ svg {
     /* border: 0 solid black; */
 }
 
-svg * {
+.svg-wrapper svg * {
     stroke-linecap: butt;
     stroke-linejoin: round;
     fill: white;
     stroke: black;
 }
 
-svg path {
+.svg-wrapper svg path {
     stroke: #333;
     stroke-width: 0.5px;
 }
 
-svg:hover {
+.svg-wrapper svg:hover {
     cursor: pointer;
 }
 
@@ -542,8 +542,14 @@ svg:hover {
 
 div#container .maximizer {
     font-size: 14pt;
-    color: #999;
     cursor: pointer;
+    width: 16px;
+    height: 16px;
+    background-image: url("../images/max.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    /* z-index: 100; */
 
     position: absolute;
     top: 10px;
