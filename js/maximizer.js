@@ -31,14 +31,8 @@ class Maximizer {
             this.maxTop,
         ]
 
-        // Use the state to select the initial values of the DOM elements.
-        this.setState(this.state);
-
         // Setup the maximizers.
         this.setupMaximizers();
-    }
-
-    setState(state) {
     }
 
     setupMaximizers() {

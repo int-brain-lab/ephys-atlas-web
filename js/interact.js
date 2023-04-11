@@ -63,6 +63,7 @@ class Selector {
             this.state.selected.delete(idx);
         this.makeCSS();
 
+        // HACK: use an event system here instead
         app.unity.setVisibility();
     }
 

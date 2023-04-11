@@ -26,16 +26,22 @@ class Unity {
         });
     }
 
+    setExploded(value) {
+        if (typeof value == "string")
+            value = parseFloat(value);
+        this.state.exploded = value;
+        if (this.instance) {
+            this.instance.SendMessage('main', 'SetPercentageExploded', value);
+        }
+    }
+
     setupSlider() {
         this.slider = document.getElementById('slider-unity');
+        this.slider.value = this.state.exploded;
 
         this.slider.oninput = (e) => {
-            let value = e.target.value / 100.0;
-            if (this.instance) {
-                this.instance.SendMessage('main', 'SetPercentageExploded', value);
-            }
+            this.setExploded(e.target.value);
         };
-
     }
 
     // Tell Unity what mapping we are using
@@ -44,18 +50,12 @@ class Unity {
 
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
 
-        // console.log(regions);
+        // Construct the list of region acronyms to send to Unity.
         let acronyms = []
-
         for (let region of regions) {
             let acronym = region['acronym'];
-
-            if (region['atlas_id'] < 0) {
-                acronym = 'l' + acronym;
-            }
-            else {
-                acronym = 'r' + acronym;
-            }
+            let h = region['atlas_id'] < 0 ? 'l' : 'r';
+            acronym = h + acronym;
             acronyms.push(acronym);
         }
 
@@ -69,17 +69,10 @@ class Unity {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
 
         let colors = []
-
         for (let region of regions) {
             let regionIdx = region['idx'];
-            // let acronym = region['acronym'];
-            let color = this.feature.getColor(regionIdx);
-            if (color) {
-                colors.push(`${color.toUpperCase()}`);
-            }
-            else {
-                colors.push('#FFFFFF');
-            }
+            let color = this.feature.getColor(regionIdx) || '#FFFFFF';
+            colors.push(`${color.toUpperCase()}`);
         }
 
         this.instance.SendMessage('main', 'SetColors', colors.toString());
@@ -92,10 +85,9 @@ class Unity {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
 
         let visibility = [];
-        let anySelected = app.state.selected.size > 0;
+        let anySelected = this.state.selected.size > 0;
 
         if (anySelected) {
-            // console.log(regions);
             for (let region of regions) {
                 let regionIdx = region['idx'];
                 visibility.push(this.state.selected.has(regionIdx));
@@ -109,11 +101,12 @@ class Unity {
 
         this.instance.SendMessage('main', 'ShowRoot', anySelected ? 1 : 0);
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
+        this.setExploded(this.state.exploded);
     }
 
     async update() {
         await this.setAreas();
-        await this.setColors();
+        this.setColors();
         this.setVisibility();
     }
 

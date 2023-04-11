@@ -107,6 +107,9 @@ class Panel {
             this.region.setMapping(mapping);
             this.feature.setMapping(mapping);
             this.selector.clear();
+
+            if (this.unity)
+                this.unity.update();
         });
     }
 

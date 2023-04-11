@@ -18,11 +18,11 @@ export const DEFAULT_FEATURE = {
     "bwm": "block_decoding",
 };
 const DEFAULT_STAT = "mean";
+const DEFAULT_EXPLODED = 0;
 
 const DEFAULT_MAPPING = "beryl";
 const DEFAULT_SEARCH = "";
 const DEFAULT_HIGHLIGHTED = null;
-// const DEFAULT_SELECTED = new Set();
 
 
 
@@ -77,6 +77,9 @@ class State {
         this.coronal = parseInt(state.coronal) || (SLICE_MAX['coronal'] / 2);
         this.sagittal = parseInt(state.sagittal) || (SLICE_MAX['sagittal'] / 2);
         this.horizontal = parseInt(state.horizontal) || (SLICE_MAX['horizontal'] / 2);
+
+        // Unity exploded.
+        this.exploded = parseFloat(state.exploded) || DEFAULT_EXPLODED;
 
         // Regions.
         this.mapping = state.mapping || DEFAULT_MAPPING;
