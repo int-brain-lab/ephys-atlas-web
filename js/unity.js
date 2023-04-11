@@ -40,31 +40,33 @@ class Unity {
 
     // Tell Unity what mapping we are using
     async setAreas() {
-      let regions = (await this.db.getRegions(this.state.mapping))['data'];
-      if (!this.instance) return;
+        if (!this.instance) return;
 
-      // console.log(regions);
-      let acronyms = []
+        let regions = (await this.db.getRegions(this.state.mapping))['data'];
 
-      for (let region of regions) {
-          let acronym = region['acronym'];
+        // console.log(regions);
+        let acronyms = []
 
-          if (region['atlas_id'] < 0) {
-            acronym = 'l' + acronym;
-          }
-          else {
-            acronym = 'r' + acronym;
-          }
-          acronyms.push(acronym);
-      }
+        for (let region of regions) {
+            let acronym = region['acronym'];
 
-      this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
+            if (region['atlas_id'] < 0) {
+                acronym = 'l' + acronym;
+            }
+            else {
+                acronym = 'r' + acronym;
+            }
+            acronyms.push(acronym);
+        }
+
+        this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
     }
 
-    // Set the colors for the current mapping 
+    // Set the colors for the current mapping
     async setColors() {
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
         if (!this.instance) return;
+
+        let regions = (await this.db.getRegions(this.state.mapping))['data'];
 
         let colors = []
 
@@ -76,7 +78,7 @@ class Unity {
                 colors.push(`${color.toUpperCase()}`);
             }
             else {
-              colors.push('#FFFFFF');
+                colors.push('#FFFFFF');
             }
         }
 
@@ -85,23 +87,24 @@ class Unity {
 
     // Set the visibility of regions, for use when regions are selected
     async setVisibility() {
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
         if (!this.instance) return;
+
+        let regions = (await this.db.getRegions(this.state.mapping))['data'];
 
         let visibility = [];
         let anySelected = app.state.selected.size > 0;
-        
+
         if (anySelected) {
-          // console.log(regions);
-          for (let region of regions) {
-              let regionIdx = region['idx'];
-              visibility.push(this.state.selected.has(regionIdx));
-          }
+            // console.log(regions);
+            for (let region of regions) {
+                let regionIdx = region['idx'];
+                visibility.push(this.state.selected.has(regionIdx));
+            }
         }
         else {
-          for (let region of regions) {
-            visibility.push(true);
-          }
+            for (let region of regions) {
+                visibility.push(true);
+            }
         }
 
         this.instance.SendMessage('main', 'ShowRoot', anySelected ? 1 : 0);
