@@ -470,8 +470,6 @@ body {
 }
 
 #bar-plot li {
-    margin: 0 0 4px 0;
-    padding: 2px 0 6px 0;
     cursor: pointer;
 }
 
@@ -487,9 +485,21 @@ body {
     display: none;
 }
 
+#bar-plot .acronym {
+    display: inline-block;
+    width: 60px;
+    font-size: 11pt;
+    white-space: nowrap;
+}
+
+#bar-plot .bar_wrapper {
+    display: inline-block;
+    width: calc(95% - 60px);
+}
+
 #bar-plot .bar {
+    display: inline-block;
     height: 10px;
-    background-color: #aaa;
 }
 
 
