@@ -118,6 +118,7 @@ class Panel {
             let fset = e.target.value;
             this.setFeatureOptions(fset); // fname argument not specified => use fset default
             this.feature.setFset(fset, this.ifname.value);
+            this.region.update();
 
             if (this.unity)
                 this.unity.update();
@@ -128,6 +129,7 @@ class Panel {
         this.ifname.addEventListener('change', (e) => {
             let fname = e.target.value;
             this.feature.setFname(fname);
+            this.region.update();
 
             if (this.unity)
                 this.unity.update();
@@ -138,6 +140,7 @@ class Panel {
         this.istat.addEventListener('change', (e) => {
             let stat = e.target.value;
             this.feature.setStat(stat);
+            this.region.update();
 
             if (this.unity)
                 this.unity.update();
