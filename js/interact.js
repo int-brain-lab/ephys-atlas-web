@@ -88,7 +88,7 @@ class Selector {
         }
         for (let id of this.state.selected) {
             this.style.insertRule(`svg path.${mapping}_region_${id} { stroke-width: 3px; fill-opacity: 1.0; }`);
-            this.style.insertRule(`ul#bar-plot > li.${mapping}_region_${id} { background-color: var(--bar-select-color); }`);
+            this.style.insertRule(`ul#bar-plot-list > li.${mapping}_region_${id} { background-color: var(--bar-select-color); }`);
         }
     }
 };
