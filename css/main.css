@@ -313,6 +313,7 @@ body {
     visibility: hidden;
     position: absolute;
     background-color: #eef1f2;
+    max-width: 250px;
     opacity: 90%;
     top: 0;
     left: 0;

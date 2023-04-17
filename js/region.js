@@ -164,14 +164,18 @@ class Region {
         // this.style.cssText = style;
     }
 
-    async getAttribute(regionIdx, attribute) {
+    async getInfo(regionIdx) {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
         for (let region of regions) {
             if (region['idx'] == regionIdx) {
-                return region[attribute];
+                return region;
             }
         }
         console.error(`region #${regionIdx} could not be found`);
+    }
+
+    async getAttribute(regionIdx, attribute) {
+        return await this.getInfo(reginIdx)[attribute];
     }
 
     async getName(regionIdx) {

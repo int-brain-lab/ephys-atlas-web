@@ -115,10 +115,12 @@ class Tooltip {
     }
 
     async setText(regionIdx) {
-        let name = await this.region.getName(regionIdx);
+        let info = await this.region.getInfo(regionIdx);
+        let name = info['name'];
+        let acronym = info['acronym'];
         let value = await this.feature.get(regionIdx);
         let meanDisplay = displayNumber(value);
-        this.info.innerHTML = `<strong>${name}</strong>: ${meanDisplay}`;
+        this.info.innerHTML = `<strong>${acronym}, ${name}</strong><br>${meanDisplay}`;
     }
 
     async setPosition(e) {
