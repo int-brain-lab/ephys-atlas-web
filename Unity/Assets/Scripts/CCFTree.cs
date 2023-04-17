@@ -344,7 +344,6 @@ public class CCFTreeNode
 
     public void SetNodeModelVisibility_Full(bool visible)
     {
-        Debug.Log(visible);
         if (_nodeModelGO != null)
             _nodeModelGO.SetActive(visible);
     }

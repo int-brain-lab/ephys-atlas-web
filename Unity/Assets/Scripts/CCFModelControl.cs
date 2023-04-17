@@ -32,8 +32,9 @@ public class CCFModelControl : MonoBehaviour
     private bool useCosmosRemap;
 
     // node lists (for convenience)
-    private List<CCFTreeNode> berylNodes;
-    private List<CCFTreeNode> cosmosNodes;
+    //private List<CCFTreeNode> berylNodes;
+    //private List<CCFTreeNode> cosmosNodes;
+    private List<CCFTreeNode> allNodes;
 
     [SerializeField] private bool overrideNetwork;
 
@@ -60,8 +61,10 @@ public class CCFModelControl : MonoBehaviour
         ccfAreaNames = new Dictionary<int, string>();
         berylRemap = new Dictionary<int, int>();
         cosmosRemap = new Dictionary<int, int>();
-        berylNodes = new List<CCFTreeNode>();
-        cosmosNodes = new List<CCFTreeNode>();
+
+        //berylNodes = new List<CCFTreeNode>();
+        //cosmosNodes = new List<CCFTreeNode>();
+        allNodes = new();
 
         defaultBrainRegionMaterial = brainRegionMaterials[brainRegionMaterialNames.IndexOf("default")];
 
@@ -145,6 +148,7 @@ public class CCFModelControl : MonoBehaviour
             string name = (string)data[i]["name"];
             string shortName = (string)data[i]["acronym"];
             string hexColorString = data[i]["color_hex_code"].ToString();
+            bool exists = bool.Parse(data[i]["exists"].ToString().ToLower());
             Color color = ParseHexColor(hexColorString);
 
             if (name.Equals("root"))
@@ -157,11 +161,13 @@ public class CCFModelControl : MonoBehaviour
                 CCFTreeNode node = tree.addNode(parent, id, atlas_id, depth, name, shortName, color);
 
                 // check if this node is cosmos or beryl
-                if (!missing.Contains(id))
-                    if (id == cosmos)
-                        cosmosNodes.Add(node);
-                    else if (id == beryl)
-                        berylNodes.Add(node);
+                if (exists)
+                    allNodes.Add(node);
+                    //if (id == cosmos)
+                    //    cosmosNodes.Add(node);
+                    //else if (id == beryl)
+                    //    berylNodes.Add(node);
+
 
                 // If this node should be visible by default, load it now
                 if (loadDefaults)
@@ -227,21 +233,21 @@ public class CCFModelControl : MonoBehaviour
     public async Task<List<CCFTreeNode>> LoadBerylNodes(bool full, Action<CCFTreeNode> callback)
     {
         List<Task> taskHandles = new List<Task>();
-        foreach (var node in berylNodes)
+        foreach (var node in allNodes)
             taskHandles.Add(node.GetLoadedTask(full));
 
         LoadNodeHelper(full, callback);
 
         await Task.WhenAll(taskHandles);
 
-        return berylNodes;
+        return allNodes;
     }
 
     public void LoadNodeHelper(bool full, Action<CCFTreeNode> callback)
     {
-        for (int i = 0; i < berylNodes.Count; i++)
+        for (int i = 0; i < allNodes.Count; i++)
         {
-            CCFTreeNode node = berylNodes[i];
+            CCFTreeNode node = allNodes[i];
         //foreach (CCFTreeNode node in berylNodes)
             if (!node.IsLoaded(full))
             {
@@ -268,19 +274,19 @@ public class CCFModelControl : MonoBehaviour
     /// Convenience function to load all cosmos nodes and set visible (if they aren't already loaded)
     /// </summary>
     /// <returns>Cosmos nodes</returns>
-    public async Task<List<CCFTreeNode>> LoadCosmosNodes(bool full)
-    {
-        List<Task> taskHandles = new List<Task>();
-        foreach (CCFTreeNode node in cosmosNodes)
-            if (!node.IsLoaded(full))
-            {
-                node.LoadNodeModel(full, !full);
-                taskHandles.Add(node.GetLoadedTask(full));
-            }
-        await Task.WhenAll(taskHandles);
+    //public async Task<List<CCFTreeNode>> LoadCosmosNodes(bool full)
+    //{
+    //    List<Task> taskHandles = new List<Task>();
+    //    foreach (CCFTreeNode node in cosmosNodes)
+    //        if (!node.IsLoaded(full))
+    //        {
+    //            node.LoadNodeModel(full, !full);
+    //            taskHandles.Add(node.GetLoadedTask(full));
+    //        }
+    //    await Task.WhenAll(taskHandles);
 
-        return cosmosNodes;
-    }
+    //    return cosmosNodes;
+    //}
 
     public CCFTreeNode GetNode(int ID)
     {

@@ -30,6 +30,7 @@ public class MiniBrainManager : MonoBehaviour
         originalTransformPositionsLeft = new Dictionary<int, Vector3>();
         originalTransformPositionsRight = new Dictionary<int, Vector3>();
 
+        _areas = new();
         modelNodes = new();
 
         _materials = new();
@@ -145,6 +146,12 @@ public class MiniBrainManager : MonoBehaviour
     /// <param name="areas"></param>
     public void SetAreas(string areas)
     {
+        foreach (CCFTreeNode node in _areas)
+        {
+            node.SetNodeModelVisibility_Left(false);
+            node.SetNodeModelVisibility_Right(false);
+        }
+
         _areas = new();
         _areaSideLeft = new();
 
@@ -155,7 +162,14 @@ public class MiniBrainManager : MonoBehaviour
         {
             _areaSideLeft.Add(area.Substring(0, 1) == "l");
 
-            _areas.Add(_modelControl.GetNode(_modelControl.Acronym2ID(area.Substring(1, area.Length - 1))));
+            CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area.Substring(1, area.Length - 1)));
+            
+            if (node != null)
+            {
+                node.SetNodeModelVisibility_Left(true);
+                node.SetNodeModelVisibility_Right(true);
+            }
+            _areas.Add(node);
         }
     }
 
@@ -191,30 +205,6 @@ public class MiniBrainManager : MonoBehaviour
                     _areas[i].SetNodeModelVisibility_Right(bool.Parse(visibility[i]));
         }
     }
-    //public void SetVisibilitiesLeft(string visibilities)
-    //{
-    //    string[] visibility = visibilities.Split(",");
-
-    //    if (visibility.Length != _areas.Count)
-    //        throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
-
-    //    for (int i = 0; i < visibility.Length; i++)
-    //    {
-    //        _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
-    //    }
-    //}
-    //public void SetVisibilitiesRight(string visibilities)
-    //{
-    //    string[] visibility = visibilities.Split(",");
-
-    //    if (visibility.Length != _areas.Count)
-    //        throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
-
-    //    for (int i = 0; i < visibility.Length; i++)
-    //    {
-    //        _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
-    //    }
-    //}
 
 #endregion
 
@@ -223,8 +213,8 @@ public class MiniBrainManager : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log($"Registering {node.ShortName}");
 #endif
-        node.SetNodeModelVisibility_Left(true);
-        node.SetNodeModelVisibility_Right(true);
+        node.SetNodeModelVisibility_Left(false);
+        node.SetNodeModelVisibility_Right(false);
         node.SetShaderProperty("_Alpha", 1f);
         
         modelNodes.Add(node.ShortName, node);
@@ -277,15 +267,20 @@ public class MiniBrainManager : MonoBehaviour
             Vector3 flipVector = new Vector3(1f, 1f, -1f);
             foreach (CCFTreeNode node in modelNodes.Values)
             {
-                int cosmos = _modelControl.GetCosmosID(node.ID);
-                Transform nodeTLeft = node.NodeModelLeftGO.transform;
-                Transform nodeTright = node.NodeModelRightGO.transform;
+                int cosmosID = _modelControl.GetCosmosID(node.ID);
+                if (cosmosVectors.ContainsKey(cosmosID))
+                {
+                    Transform nodeTLeft = node.NodeModelLeftGO.transform;
+                    Transform nodeTright = node.NodeModelRightGO.transform;
 
-                nodeTLeft.localPosition = originalTransformPositionsLeft[node.ID] +
-                    cosmosVectors[cosmos] * percentageExploded;
+                    Vector3 coord = cosmosVectors[cosmosID];
 
-                nodeTright.localPosition = originalTransformPositionsRight[node.ID] +
-                        Vector3.Scale(cosmosVectors[cosmos], flipVector) * percentageExploded;
+                    nodeTLeft.localPosition = originalTransformPositionsLeft[node.ID] +
+                        coord * percentageExploded;
+
+                    nodeTright.localPosition = originalTransformPositionsRight[node.ID] +
+                            Vector3.Scale(coord, flipVector) * percentageExploded;
+                }
             }
         }
     }
