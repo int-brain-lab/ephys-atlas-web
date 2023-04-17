@@ -52,6 +52,7 @@
     --bar-select-color: #e8e8e8;
 
     --left-panel-width: 150px;
+    --left-panel-header-height: 100px;
 }
 
 * {
@@ -330,7 +331,6 @@ body {
 #container {
     display: grid;
     grid-template-columns: var(--left-panel-width) 1fr 1fr 1fr 1fr;
-    /* height: calc(100vh - 180px); */
     height: 700px;
     max-width: 1350px;
     margin: 0 auto;
@@ -390,12 +390,11 @@ body {
 /*************************************************************************************************/
 
 #bar-plot-header {
-    position: fixed;
     background-color: #fff;
-    width: calc(var(--left-panel-width) - 25px);
-    height: 100px;
-    margin-left: 10px;
-    padding: 0 10px 0 0;
+    width: var(--left-panel-width);
+    height: var(--left-panel-header-height);
+    margin: 0;
+    padding: 0;
 }
 
 #bar-plot-search input#search-input {
@@ -453,20 +452,26 @@ body {
 /*  Bar plot                                                                                     */
 /*************************************************************************************************/
 
+#container #bar-plot-container {
+    overflow-y: inherit;
+}
+
 #bar-plot {
     list-style: none;
-    padding-left: 10px;
-    padding-right: 10px;
-    margin-top: 100px;
 
     /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
     /* when using a SVG slider (it causes a full render of the bar plot */
-    height: 50vh;
+    height: calc(100vh - 85px - 100px - 40px);
 }
 
 #bar-plot * {
     margin: 0;
     padding: 0;
+}
+
+#bar-plot ul {
+    overflow-y: auto;
+    height: 100%;
 }
 
 #bar-plot li {
@@ -487,14 +492,14 @@ body {
 
 #bar-plot .acronym {
     display: inline-block;
-    width: 60px;
-    font-size: 11pt;
+    width: 50px;
+    font-size: 10pt;
     white-space: nowrap;
 }
 
 #bar-plot .bar_wrapper {
     display: inline-block;
-    width: calc(95% - 60px);
+    width: calc(95% - 50px);
 }
 
 #bar-plot .bar {
@@ -699,6 +704,9 @@ h2 {
 /*************************************************************************************************/
 
 #footer {
+    grid-column: 1 / 6;
+    grid-row: 3 / 4;
+
     text-align: center;
     padding: 10px 0;
 }

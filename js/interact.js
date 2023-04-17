@@ -116,6 +116,7 @@ class Tooltip {
 
     async setText(regionIdx) {
         let info = await this.region.getInfo(regionIdx);
+        if (!info) return;
         let name = info['name'];
         let acronym = info['acronym'];
         let value = await this.feature.get(regionIdx);

@@ -41,16 +41,10 @@ class Region {
         this.highlighter = highlighter;
         this.selector = selector;
 
-        // this.vmin = 0;
-        // this.vmax = 1;
-
         // UL element with the list of brain regions.
-        this.regionList = document.getElementById('bar-plot');
+        this.regionList = document.getElementById('bar-plot-list');
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
-
-        // this.style = document.getElementById('style-regions').sheet;
-        // this.styleSearch = document.getElementById('style-search').sheet;
 
         this.searchInput = document.getElementById("search-input");
 
@@ -172,7 +166,7 @@ class Region {
                 return region;
             }
         }
-        console.error(`region #${regionIdx} could not be found`);
+        console.warn(`region #${regionIdx} could not be found`);
     }
 
     async getAttribute(regionIdx, attribute) {
