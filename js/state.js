@@ -1,6 +1,6 @@
 export { State };
 
-import { SLICE_MAX } from "./constants.js";
+import { SLICE_MAX, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
 
 
@@ -65,9 +65,9 @@ class State {
         this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.
-        this.coronal = parseInt(state.coronal) || (SLICE_MAX['coronal'] / 2);
-        this.sagittal = parseInt(state.sagittal) || (SLICE_MAX['sagittal'] / 2);
-        this.horizontal = parseInt(state.horizontal) || (SLICE_MAX['horizontal'] / 2);
+        this.coronal = parseInt(state.coronal) || (SLICE_DEFAULT['coronal']);
+        this.sagittal = parseInt(state.sagittal) || (SLICE_DEFAULT['sagittal']);
+        this.horizontal = parseInt(state.horizontal) || (SLICE_DEFAULT['horizontal']);
 
         // Unity exploded.
         this.exploded = parseFloat(state.exploded) || DEFAULT_EXPLODED;
