@@ -30,11 +30,16 @@ class Unity {
     }
 
     setExploded(value) {
-        if (typeof value == "string")
-            value = parseFloat(value);
-        this.state.exploded = value;
-        if (this.instance) {
-            this.instance.SendMessage('main', 'SetPercentageExploded', value);
+        if (this.state.selected.size > 0) {
+            this.instance.SendMessage('main', 'SetPercentageExploded', 0);
+        }
+        else {
+            if (typeof value == "string")
+                value = parseFloat(value);
+            this.state.exploded = value;
+            if (this.instance) {
+                this.instance.SendMessage('main', 'SetPercentageExploded', value);
+            }
         }
     }
 
@@ -111,6 +116,7 @@ class Unity {
         await this.setAreas();
         this.setColors();
         this.setVisibility();
+        this.setExploded();
     }
 
     loadedCallback() {
