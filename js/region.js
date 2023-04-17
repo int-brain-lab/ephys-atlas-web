@@ -105,6 +105,7 @@ class Region {
 
     async makeRegionItems() {
         let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        regions = regions.sort((a, b) => a['idx'] - b['idx']);
         let s = "";
         for (let region of regions) {
             s += makeRegionItem(

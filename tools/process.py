@@ -12,7 +12,7 @@ import os
 import re
 from datetime import datetime, timezone
 from math import isnan
-from operator import itemgetter
+from operator import itemgetter, attrgetter
 from pathlib import Path
 from textwrap import dedent
 from xml.dom import minidom
@@ -378,6 +378,7 @@ def get_mappings():
             for idx_, atlas_id_, acronym_, name_, hex_ in zip(
                 regions['idx'], regions['atlas_id'], regions['acronym'], regions['atlas_name'], regions['hex'])
         ]
+        out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
     return out
 
 
@@ -637,12 +638,12 @@ def generate_custom_features():
 if __name__ == '__main__':
 
     # generate_colormaps()
-    # mappings = get_mappings()
-    # generate_regions_json(mappings)
-    # generate_regions_css(mappings)
+    mappings = get_mappings()
+    generate_regions_json(mappings)
+    generate_regions_css(mappings)
     # generate_ephys_features()
     # generate_bwm_features()
-    generate_custom_features()
+    # generate_custom_features()
 
     ##############
 
