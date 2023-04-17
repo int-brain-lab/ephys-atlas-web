@@ -402,8 +402,8 @@ def generate_regions_css(mappings):
         css += ''.join(
             dedent(f'''
             /* {r['acronym']} */
-            #bar-plot li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{mapping}-{r['idx']}); }}
-            #bar-plot li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{mapping}-{r['idx']}); }}
+            #bar-plot-container li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{mapping}-{r['idx']}); }}
+            #bar-plot-container li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{mapping}-{r['idx']}); }}
             ''') for r in regions)
 
         css += '\n\n'

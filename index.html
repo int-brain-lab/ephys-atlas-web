@@ -182,27 +182,45 @@
 
         <!-- BAR PLOT -->
         <div id="bar-plot-container">
+
+
+            <!-- BAR HEADER -->
             <div id="bar-plot-header">
 
+                <!-- FEATURE NAME -->
                 <div id="bar-fname"></div>
 
+                <!-- FEATURE SEARCH BAR -->
                 <div id="bar-plot-search">
                     <input type="text" id="search-input" placeholder="type a region acronym...">
                 </div>
 
+                <!-- FEATURE SCALE -->
                 <div id="bar-scale">
                     <div class="bar"></div>
-                    <div class="min"></div>
-                    <div class="max"></div>
+                    <div class="wrapper">
+                        <div class="min"></div>
+                        <div class="max"></div>
+                    </div>
+                </div>
+
+                <!-- SELECTED REGIONS -->
+                <div id="bar-selected-wrapper">
+                    <div id="bar-selected-title">
+                        Selected regions: (<a href="javascript:app.selector.clear(); app.region.clearSelection();">clear</a>)
+                    </div>
+                    <ul id="bar-selected-list">
+                    </ul>
                 </div>
 
             </div>
 
-            <div id="bar-plot">
-                <ul id="bar-plot-list">
 
-                </ul>
+            <!-- REGION LIST -->
+            <div id="bar-plot">
+                <ul id="bar-plot-list"></ul>
             </div>
+
         </div>
 
 
@@ -323,10 +341,8 @@
             </div>
         </div>
 
-        <!-------------------------------------------------------------------------------------------->
-        <!-- FOOTER -->
-        <!-------------------------------------------------------------------------------------------->
 
+        <!-- FOOTER -->
         <footer id="footer">
             <nav>
                 <a href="https://www.internationalbrainlab.com/">International Brain Laboratory</a> &#8212; 2023

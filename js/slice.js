@@ -10,11 +10,12 @@ import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 /*************************************************************************************************/
 
 class Slice {
-    constructor(db, state, tooltip, highlighter, selector) {
+    constructor(db, state, region, tooltip, highlighter, selector) {
         this.setSlice = throttle(this._setSlice, 15);
 
         this.db = db;
         this.state = state;
+        this.region = region;
         this.tooltip = tooltip;
         this.highlighter = highlighter;
         this.selector = selector;
@@ -131,6 +132,8 @@ class Slice {
         svg.addEventListener('click', (e) => {
             if (e.target.tagName == 'path') {
                 this.selector.toggle(e);
+
+                this.region.updateSelection();
             }
         });
     }

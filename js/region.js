@@ -1,6 +1,6 @@
 export { Region };
 
-import { clearStyle, normalizeValue, displayNumber, throttle } from "./utils.js";
+import { clearStyle, normalizeValue, displayNumber, throttle, getRegionIdx } from "./utils.js";
 
 
 
@@ -9,7 +9,7 @@ import { clearStyle, normalizeValue, displayNumber, throttle } from "./utils.js"
 /*************************************************************************************************/
 
 function makeRegionBar(mapping, regionIdx, value, normalized) {
-    return `#bar-plot li.${mapping}_region_${regionIdx} .bar { width: ${normalized}%; } /* TTv: ${value} */`;
+    return `#bar-plot-container li.${mapping}_region_${regionIdx} .bar { width: ${normalized}%; } /* TTv: ${value} */`;
 }
 
 
@@ -43,6 +43,7 @@ class Region {
 
         // UL element with the list of brain regions.
         this.regionList = document.getElementById('bar-plot-list');
+        this.selectedBar = document.getElementById('bar-selected-list');
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
 
@@ -83,7 +84,11 @@ class Region {
     setupSelection() {
         this.regionList.addEventListener('click', (e) => {
             if (e.target.tagName == 'LI') {
+                // Update the Selector object.
                 this.selector.toggle(e);
+
+                // Update the "selected regions" area in the bar plot header.
+                this.updateSelection();
             }
         });
     }
@@ -139,7 +144,6 @@ class Region {
             let normalized = normalizeValue(value, vmin, vmax);
 
             let stl = makeRegionBar(mapping, regionIdx, value, normalized);
-            // this.style.insertRule(stl);
             style += `${stl}\n`;
 
             // Implement search.
@@ -151,12 +155,11 @@ class Region {
 
             stl = `#bar-plot li.${mapping}_region_${regionIdx}{display: ${display};}`;
             style += `${stl}\n`;
-            // this.style.insertRule(stl);
         }
 
         document.getElementById('style-regions').textContent = style;
-        // clearStyle(this.style);
-        // this.style.cssText = style;
+
+        this.updateSelection();
     }
 
     async getInfo(regionIdx) {
@@ -179,6 +182,30 @@ class Region {
 
     async getAcronym(regionIdx) {
         return await this.getAttribute(regionIdx, 'acronym');
+    }
+
+    getSelectedRegionElements() {
+        /* Return the list of LI elements that are selected. */
+        let out = [];
+        for (let child of this.regionList.children) {
+            let idx = getRegionIdx(this.state.mapping, child);
+            if (this.state.selected.has(idx)) {
+                out.push(child);
+            }
+        }
+        return out;
+    }
+
+    clearSelection() {
+        this.selectedBar.innerHTML = '';
+    }
+
+    updateSelection() {
+        // Update the selected bar.
+        this.clearSelection();
+        for (let item of this.getSelectedRegionElements()) {
+            this.selectedBar.appendChild(item.cloneNode(true))
+        }
     }
 
     search(query) {

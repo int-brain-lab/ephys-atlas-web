@@ -1,6 +1,6 @@
 export { Highlighter, Selector, Tooltip };
 
-import { e2idx, clearStyle, displayNumber } from "./utils.js";
+import { e2idx, clearStyle, displayNumber, getRegionIdx } from "./utils.js";
 
 
 
@@ -47,6 +47,7 @@ class Selector {
         console.assert(state);
         this.state = state;
         this.style = document.getElementById('style-selector').sheet;
+        this.selectedBar = document.getElementById('bar-selected-list');
         this.makeCSS();
     }
 
@@ -57,10 +58,17 @@ class Selector {
 
     toggle(e) {
         let idx = e2idx(this.state.mapping, e);
-        if (!this.state.selected.has(idx))
+
+        // Selected.
+        if (!this.state.selected.has(idx)) {
             this.state.selected.add(idx);
-        else
+        }
+
+        // Unselected.
+        else {
             this.state.selected.delete(idx);
+        }
+
         this.makeCSS();
 
         // HACK: use an event system here instead

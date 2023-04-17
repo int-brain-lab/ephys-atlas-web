@@ -105,13 +105,13 @@ export function setOptions(select, values, selected) {
 
 
 
-export function getBarPlot() {
-    return document.getElementById('bar-plot');
-};
+// export function getBarPlot() {
+//     return document.getElementById('bar-plot');
+// };
 
 
 
-function getRegionIdx(mapping, obj) {
+export function getRegionIdx(mapping, obj) {
     let r = /\d+/;
     // Find the class name corresponding to the mapping.
     for (let className of obj.classList) {

@@ -32,7 +32,7 @@ class App {
         this.region = new Region(this.db, this.state, this.feature, this.highlighter, this.selector);
         this.tooltip = new Tooltip(this.state, this.region, this.feature);
 
-        this.slice = new Slice(this.db, this.state, this.tooltip, this.highlighter, this.selector);
+        this.slice = new Slice(this.db, this.state, this.region, this.tooltip, this.highlighter, this.selector);
 
         this.unity = new Unity(this.db, this.state, this.region, this.feature);
 

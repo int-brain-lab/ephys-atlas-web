@@ -52,7 +52,6 @@
     --bar-select-color: #e8e8e8;
 
     --left-panel-width: 150px;
-    --left-panel-header-height: 100px;
 }
 
 * {
@@ -344,6 +343,8 @@ body {
 #container #bar-plot-container {
     grid-column: 1 / 2;
     grid-row: 1 / 3;
+
+    /* HACK: necessary for absolute positioning of scale min/max values */
     position: relative;
     top: 0;
     left: 0;
@@ -386,13 +387,46 @@ body {
 
 
 /*************************************************************************************************/
+/*  Bar plot container                                                                           */
+/*************************************************************************************************/
+
+/*
+div#container
+
+    div#bar-plot-container
+        div#bar-plot-header
+
+        div#bar-plot
+            ul#bar-plot
+*/
+
+#bar-plot-container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+#bar-plot-header {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 100px;
+}
+
+#bar-plot {
+    flex-grow: 1;
+}
+
+
+
+/*************************************************************************************************/
 /*  Bar header                                                                                   */
 /*************************************************************************************************/
 
 #bar-plot-header {
     background-color: #fff;
     width: var(--left-panel-width);
-    height: var(--left-panel-header-height);
     margin: 0;
     padding: 0;
 }
@@ -402,6 +436,7 @@ body {
     height: 100%;
     margin: 0 0 10px 0;
     padding: 4px 0;
+    font-size: 10pt;
     background-color: #fafafa;
     border: 0;
 }
@@ -412,8 +447,13 @@ body {
 }
 
 
+
 #bar-scale {
     font-size: 10pt;
+}
+
+#bar-scale .wrapper {
+    height: 20px;
 }
 
 #bar-scale .bar {
@@ -433,7 +473,7 @@ body {
 }
 
 #bar-scale .max {
-    right: 10px;
+    right: 0;
 }
 
 
@@ -447,38 +487,44 @@ body {
 }
 
 
+#bar-plot-container #bar-selected-wrapper {
+    border: 0 solid #aaa;
+    border-width: 2px 0;
+    background-color: #eee;
+    margin: 2px 0;
+    padding: 2px 0;
+    font-size: 10pt;
+}
+
+#bar-plot-container #bar-selected-title {
+    margin: 2px 0 5px 0;
+}
+
+
 
 /*************************************************************************************************/
 /*  Bar plot                                                                                     */
 /*************************************************************************************************/
 
-#container #bar-plot-container {
-    overflow-y: inherit;
-}
-
 #bar-plot {
+    overflow-y: inherit;
     list-style: none;
 
-    /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
+    /* OLD NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
     /* when using a SVG slider (it causes a full render of the bar plot */
-    height: calc(100vh - 85px - 100px - 40px);
+
+    /* = all viewport - header - bar header - footer */
+    /* height: calc(100vh - 85px - 100px - 40px - 8px); */
+    width: 100%;
+    height: 100%;
 }
 
-#bar-plot * {
+#bar-plot-container * {
     margin: 0;
     padding: 0;
 }
 
-#bar-plot ul {
-    overflow-y: auto;
-    height: 100%;
-}
-
-#bar-plot li {
-    cursor: pointer;
-}
-
-#bar-plot li * {
+#bar-plot-container li * {
     pointer-events: none;
 }
 
@@ -488,21 +534,22 @@ body {
 
 #bar-plot li {
     display: none;
+    cursor: pointer;
 }
 
-#bar-plot .acronym {
+#bar-plot-container .acronym {
     display: inline-block;
     width: 50px;
     font-size: 10pt;
     white-space: nowrap;
 }
 
-#bar-plot .bar_wrapper {
+#bar-plot-container .bar_wrapper {
     display: inline-block;
     width: calc(95% - 50px);
 }
 
-#bar-plot .bar {
+#bar-plot-container .bar {
     display: inline-block;
     height: 10px;
 }
