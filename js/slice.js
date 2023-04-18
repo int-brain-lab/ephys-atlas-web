@@ -34,11 +34,21 @@ class Slice {
         this.dv = document.getElementById('coord-dv');
 
         this.setupSlices();
-        this.setState(state);
     }
 
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
+    init() {
+        // coronal, sagittal, horizontal
+        for (let axis of SLICE_AXES) {
+            this._setSlice(axis, this.state[axis]);
+        }
+
+        // top swanson
+        for (let axis of SLICE_STATIC_AXES) {
+            this._setSlice(axis, 0);
+        }
+
+        this.setState(this.state);
+    }
 
     setState(state) {
         // Set the sliders.
@@ -58,6 +68,9 @@ class Slice {
         this._setSlice('horizontal', state.horizontal);
     }
 
+    /* Setup functions                                                                           */
+    /*********************************************************************************************/
+
     setupSlices() {
         // coronal, sagittal, horizontal
         for (let axis of SLICE_AXES) {
@@ -68,8 +81,6 @@ class Slice {
             this.setupHighlighting(axis);
             this.setupSelection(axis);
             this.setupTooltip(axis);
-
-            this._setSlice(axis, this.state[axis]);
         }
 
         // top swanson
@@ -79,8 +90,6 @@ class Slice {
             this.setupHighlighting(axis);
             this.setupSelection(axis);
             this.setupTooltip(axis);
-
-            this._setSlice(axis, 0);
         }
     }
 

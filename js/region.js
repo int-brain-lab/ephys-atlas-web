@@ -52,7 +52,9 @@ class Region {
         this.setupSearch();
         this.setupHighlight();
         this.setupSelection();
+    }
 
+    init() {
         this.setState(this.state);
         this.update();
     }
@@ -183,6 +185,9 @@ class Region {
     async getAcronym(regionIdx) {
         return await this.getAttribute(regionIdx, 'acronym');
     }
+
+    /* Selection functions                                                                       */
+    /*********************************************************************************************/
 
     getSelectedRegionElements() {
         /* Return the list of LI elements that are selected. */

@@ -56,10 +56,12 @@ async function downloadRegions() {
 /*************************************************************************************************/
 
 class DB {
-    constructor() {
-        this.splash = new Splash();
-        this.splash.start();
-        this.splash.set(0);
+    constructor(splash) {
+        this.splash = splash
+
+        // Declare the total splash progress for this component.
+        this.total = 6 + (3 * FEATURE_SETS.length) + 60;
+        this.splash.addTotal(this.total);
 
         this.db = new Dexie(DB_NAME);
         this.db.version(DB_VERSION).stores(DB_TABLES);
@@ -78,6 +80,9 @@ class DB {
 
             let promises = [];
 
+
+            // add to splash total: 6
+
             // Colormaps.
             promises.push(this.addColormaps(1));
 
@@ -88,30 +93,38 @@ class DB {
             });
             promises.push(pregions);
 
+
+            // add to splash total: 3 * FEATURE_SETS.length
+
             // Features.
             for (let fset of FEATURE_SETS) {
-                let pfeatures = this.downloadFeatures(fset, 1.5);
+                let pfeatures = this.downloadFeatures(fset, 2);
                 pfeatures.then((features) => {
                     promises.push(this.addFeatures(fset, features, 1));
                 });
                 promises.push(pfeatures);
             }
 
+
+            // add to splash total: 60
+
             // SVG slices.
             let slices = await this.downloadSlices(20);
+
             // NOTE: wait for the big download to finish here.
             // Once it's finished, we add the slice loading promises to the list.
-            promises.push(this.addSlices(slices, 'coronal', 20));
-            promises.push(this.addSlices(slices, 'horizontal', 20));
-            promises.push(this.addSlices(slices, 'sagittal', 20));
+            promises.push(this.addSlices(slices, 'coronal', 10));
+            promises.push(this.addSlices(slices, 'horizontal', 10));
+            promises.push(this.addSlices(slices, 'sagittal', 10));
             promises.push(this.addSlices(slices, 'top', 5));
             promises.push(this.addSlices(slices, 'swanson', 5));
 
             await Promise.all(promises);
             console.log("all done!");
         }
-
-        this.splash.end();
+        else {
+            this.splash.add(this.total);
+        }
     }
 
     /* Colormaps                                                                                 */

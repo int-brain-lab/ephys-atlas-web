@@ -49,9 +49,6 @@ class Panel {
         this.ibclear = document.getElementById('clear-cache-button');
         this.ishare = document.getElementById('share-button');
 
-        // Use the state to select the initial values of the DOM elements.
-        this.setState(this.state);
-
         // Setup the event callbacks that change the global state and update the components.
         this.setupMapping();
         this.setupFset();
@@ -62,7 +59,16 @@ class Panel {
         this.setupColormapMax();
         this.setupClearButton();
         this.setupShareButton();
+        this.setupResetButton();
     }
+
+    init() {
+        // Use the state to select the initial values of the DOM elements.
+        this.setState(this.state);
+    }
+
+    /* Set functions                                                                             */
+    /*********************************************************************************************/
 
     setState(state) {
         this.imapping.value = state.mapping;
@@ -94,6 +100,9 @@ class Panel {
             this.region.setMapping(this.imapping.value);
         }
     }
+
+    /* Setup functions                                                                           */
+    /*********************************************************************************************/
 
     setupMapping() {
         this.imapping.addEventListener('change', (e) => {
@@ -178,6 +187,21 @@ class Panel {
             if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
                 this.db.deleteDatabase();
                 location.reload();
+            }
+        });
+    }
+
+    setupResetButton() {
+        this.ibreset.addEventListener('click', (e) => {
+            if (window.confirm("Are you sure you want to reset the view?")) {
+                this.state.init({});
+                this.init();
+                this.selector.clear();
+
+                // Reset the browser URL.
+                const url = new URL(window.location);
+                url.searchParams.set('state', '');
+                window.history.pushState(null, '', url.toString());
             }
         });
     }

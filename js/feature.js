@@ -24,7 +24,9 @@ class Feature {
 
         this.style = document.getElementById('style-features').sheet;
         this.featureName = document.getElementById('bar-fname');
+    }
 
+    init() {
         this.setColormap(this.state.cmap);
     }
 

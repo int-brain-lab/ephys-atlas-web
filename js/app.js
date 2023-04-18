@@ -1,6 +1,9 @@
 import { State } from "./state.js";
+import { Splash } from "./splash.js";
 import { Slice } from "./slice.js";
 import { Feature } from "./feature.js";
+import { DB } from "./db.js";
+import { CustomFeature } from "./custom_feature.js";
 import { Region } from "./region.js";
 import { Highlighter, Selector, Tooltip } from "./interact.js";
 import { Panel } from "./panel.js";
@@ -16,43 +19,40 @@ export { App };
 /*************************************************************************************************/
 
 class App {
-    constructor(db) {
-        this.db = db;
+    constructor() {
+        // Create the State.
         this.state = new State();
 
-        this.init();
-        this.setupResetButton();
-    }
+        // Create the Splash.
+        this.splash = new Splash();
 
-    init() {
+        // Create the components.
         this.highlighter = new Highlighter(this.state);
         this.selector = new Selector(this.state);
+        this.maximizer = new Maximizer(this.state);
+
+        this.db = new DB(this.splash);
 
         this.feature = new Feature(this.db, this.state);
         this.region = new Region(this.db, this.state, this.feature, this.highlighter, this.selector);
         this.tooltip = new Tooltip(this.state, this.region, this.feature);
-
+        this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
         this.slice = new Slice(this.db, this.state, this.region, this.tooltip, this.highlighter, this.selector);
-
-        this.unity = new Unity(this.db, this.state, this.region, this.feature);
-
         this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector, this.unity);
-
-        this.maximizer = new Maximizer(this.state);
+        // TODO
+        // this.custom_feature = new CustomFeature(this.db);
     }
 
-    setupResetButton() {
-        this.panel.ibreset.addEventListener('click', (e) => {
-            if (window.confirm("Are you sure you want to reset the view?")) {
-                this.state.init({});
-                this.init();
-                this.selector.clear();
-
-                // Reset the browser URL.
-                const url = new URL(window.location);
-                url.searchParams.set('state', '');
-                window.history.pushState(null, '', url.toString());
-            }
+    init() {
+        // Load the data.
+        this.splash.start();
+        this.db.load().then(() => {
+            this.feature.init();
+            this.region.init();
+            this.unity.init();
+            this.slice.init();
+            this.panel.init();
         });
     }
+
 };

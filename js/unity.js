@@ -1,20 +1,38 @@
 export { Unity };
 
+
+
+/*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+const UNITY_SPLASH_TOTAL = 50;
+
+
+
+/*************************************************************************************************/
+/* Unity                                                                                         */
+/*************************************************************************************************/
+
 class Unity {
-    constructor(db, state, region, feature) {
+    constructor(splash, db, state, region, feature) {
         console.log("setting up Unity");
 
-        // DEBUG
-        // return;
-
+        this.splash = splash;
         this.db = db;
         this.state = state;
         this.region = region;
         this.feature = feature;
         this.instance = null;
 
-        this.setupSlider();
+        // Declare the total splash progress for this component.
+        this.total
+        this.splash.addTotal(UNITY_SPLASH_TOTAL);
 
+        this.setupSlider();
+    }
+
+    init() {
         let that = this;
         createUnityInstance(document.getElementById("unity-canvas"), {
             dataUrl: "Build/webgl.data",
@@ -25,11 +43,11 @@ class Unity {
             productVersion: "0.1.0",
         }).then((unityInstance) => {
             that.instance = unityInstance;
-            console.log("Unity loaded");
         });
     }
 
     setExploded(value) {
+        if (value == undefined) return;
         if (this.state.selected.size > 0) {
             this.instance.SendMessage('main', 'SetPercentageExploded', 0);
         }
@@ -120,6 +138,8 @@ class Unity {
     }
 
     loadedCallback() {
+        console.log("unity has loaded!");
+        this.splash.add(UNITY_SPLASH_TOTAL);
         this.update();
     }
 }
