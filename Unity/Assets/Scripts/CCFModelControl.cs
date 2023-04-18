@@ -48,8 +48,6 @@ public class CCFModelControl : MonoBehaviour
     private Task defaultLoadedTask;
     private List<Task<bool>> defaultLoadedNodesTasks;
 
-    private int[] missing = { 738, 995 };
-
     private bool started;
 
     private void Awake()
@@ -102,12 +100,12 @@ public class CCFModelControl : MonoBehaviour
         return defaultLoadedTask;
     }
 
-    public void LateStart(bool loadDefaults)
+    public void LateStart()
     {
         Debug.Log("Ontology start called");
         if (!overrideNetwork) return;
 
-        LoadCSVData(loadDefaults);
+        LoadCSVData();
         started = true;
     }
 
@@ -125,7 +123,7 @@ public class CCFModelControl : MonoBehaviour
     /// Load the ontology CSV file (Resources/AllenCCF/ontology_structure_minimal)
     /// Also loads the current default set of areas, set by defaultNodes
     /// </summary>
-    private async void LoadCSVData(bool loadDefaults)
+    private async void LoadCSVData()
     {
         Debug.Log("(CCFMC) Starting remote load of ontology structure file");
 
@@ -168,29 +166,6 @@ public class CCFModelControl : MonoBehaviour
                     //else if (id == beryl)
                     //    berylNodes.Add(node);
 
-
-                // If this node should be visible by default, load it now
-                if (loadDefaults)
-                {
-                    if (loadBerylDepth)
-                    {
-                        if (id == beryl && !missing.Contains(id))
-                        {
-                            node.LoadNodeModel(true, true);
-                            defaultLoadedNodesTasks.Add(node.GetLoadedTask(true));
-                            defaultLoadedNodesTasks.Add(node.GetLoadedTask(false));
-                            defaultLoadedNodes.Add(node);
-                        }
-                    }
-                    else if (defaultNodes.Contains(id))
-                    {
-                        // Note: it's fine not to await this asynchronous call, we don't need to use the node model for anything in this function
-                        node.LoadNodeModel(true, false);
-                        defaultLoadedNodesTasks.Add(node.GetLoadedTask(true));
-                        defaultLoadedNodes.Add(node);
-                    }
-                }
-
                 // Keep track of the colors of areas in the dictionary, these are used to color e.g. neurons in different areas with different colors
                 if (!ccfAreaColors.ContainsKey(id))
                     ccfAreaColors.Add(id, color);
@@ -217,8 +192,7 @@ public class CCFModelControl : MonoBehaviour
             }
         }
 
-        if (!loadDefaults)
-            defaultLoadedTaskSource.SetResult(true);
+        defaultLoadedTaskSource.SetResult(true);
     }
 
     public List<CCFTreeNode> GetDefaultLoadedNodes()

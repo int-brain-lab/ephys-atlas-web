@@ -44,7 +44,7 @@ public class MiniBrainManager : MonoBehaviour
     {
         await _remoteLoader.GetCatalogLoadedTask();
 
-        _modelControl.LateStart(false);
+        _modelControl.LateStart();
 
         await _modelControl.GetDefaultLoadedTask();
 
@@ -268,7 +268,7 @@ public class MiniBrainManager : MonoBehaviour
             foreach (CCFTreeNode node in modelNodes.Values)
             {
                 int cosmosID = _modelControl.GetCosmosID(node.ID);
-                if (cosmosVectors.ContainsKey(cosmosID))
+                if (cosmosVectors.ContainsKey(cosmosID) && node.NodeModelLeftGO != null)
                 {
                     Transform nodeTLeft = node.NodeModelLeftGO.transform;
                     Transform nodeTright = node.NodeModelRightGO.transform;

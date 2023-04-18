@@ -13,6 +13,7 @@ public class CCFTree
     public CCFTree(int rootID, int atlasID, string rootName, Color color, Material material)
     {
         brainModelParent = GameObject.Find("BrainAreas").transform;
+        Debug.Log(brainModelParent.name);
 
         root = new CCFTreeNode(rootID, atlasID, 0, null, rootName, "", color, material, brainModelParent);
         brainRegionMaterial = material;
@@ -122,43 +123,48 @@ public class CCFTreeNode
         return full ? _loadedSourceFull.Task : _loadedSourceSeparated.Task;
     }
 
-    public async void LoadNodeModel(bool loadFull, bool loadSeparated)
+    public void LoadNodeModel(bool loadFull, bool loadSeparated)
     {
         if (_nodeModelParentGO == null)
         {
-            _nodeModelParentGO = new GameObject(Name);
-            _nodeModelParentGO.transform.parent = _brainModelParent;
-            _nodeModelParentGO.transform.localPosition = Vector3.zero;
-            _nodeModelParentGO.transform.localRotation = Quaternion.identity;
+            Transform _nodeModelParentT = _brainModelParent.transform.Find(Name);
+            if (_nodeModelParentT != null)
+                _nodeModelParentGO = _brainModelParent.transform.Find(Name).gameObject;
+            else
+            {
+                _loadedSourceFull.SetResult(true);
+                _loadedSourceSeparated.SetResult(true);
+                return;
+            }
         }
 
         if (loadFull && _nodeModelGO == null)
         {
-            string path = ID + ".obj";
-            Task<Mesh> meshTask = AddressablesRemoteLoader.LoadCCFMesh(path);
-            await meshTask;
+//            string path = ID + ".obj";
+//            Task<Mesh> meshTask = AddressablesRemoteLoader.LoadCCFMesh(path);
+//            await meshTask;
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-                return;
-#endif
+//#if UNITY_EDITOR
+//            if (!Application.isPlaying)
+//                return;
+//#endif
 
-            _nodeModelGO = new GameObject(Name);
-            _nodeModelGO.transform.SetParent(_nodeModelParentGO.transform);
-            _nodeModelGO.AddComponent<MeshFilter>();
-            _nodeModelGO.AddComponent<MeshRenderer>();
-            _nodeModelGO.layer = 13;
-            _nodeModelGO.tag = "BrainRegion";
+            _nodeModelGO = _nodeModelParentGO.transform.Find(Name).gameObject;
+            //_nodeModelGO.transform.SetParent(_nodeModelParentGO.transform);
+            //_nodeModelGO.AddComponent<MeshFilter>();
+            //_nodeModelGO.AddComponent<MeshRenderer>();
+            //_nodeModelGO.layer = 13;
+            //_nodeModelGO.tag = "BrainRegion";
             Renderer rend = _nodeModelGO.GetComponent<Renderer>();
             rend.material = _material;
             rend.material.SetColor("_Color", color);
             rend.receiveShadows = false;
             rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            _nodeModelGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
+            //_nodeModelGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
 
-            _nodeModelGO.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
-            _nodeModelGO.transform.localPosition = Vector3.zero;
-            _nodeModelGO.transform.localRotation = Quaternion.identity;
+            //_nodeModelGO.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
+            //_nodeModelGO.transform.localPosition = Vector3.zero;
+            //_nodeModelGO.transform.localRotation = Quaternion.identity;
             _nodeModelGO.SetActive(false);
 
             _loadedSourceFull.SetResult(true);
@@ -166,51 +172,53 @@ public class CCFTreeNode
 
         if (loadSeparated && _nodeModelLeftGO == null)
         {
-            string path = ID + "L.obj";
-            Task<Mesh> meshTask = AddressablesRemoteLoader.LoadCCFMesh(path);
-            await meshTask;
+            _nodeModelLeftGO = _nodeModelParentGO.transform.Find($"{Name}_L").gameObject;
+            _nodeModelRightGO = _nodeModelParentGO.transform.Find($"{Name}_R").gameObject;
+//            string path = ID + "L.obj";
+//            Task<Mesh> meshTask = AddressablesRemoteLoader.LoadCCFMesh(path);
+//            await meshTask;
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-                return;
-#endif
+//#if UNITY_EDITOR
+//            if (!Application.isPlaying)
+//                return;
+//#endif
 
-            // Create the left/right meshes
-            _nodeModelLeftGO = new GameObject(Name + "_L");
-            _nodeModelLeftGO.transform.SetParent(_nodeModelParentGO.transform);
-            _nodeModelLeftGO.AddComponent<MeshFilter>();
-            _nodeModelLeftGO.AddComponent<MeshRenderer>();
-            _nodeModelLeftGO.layer = 13;
-            _nodeModelLeftGO.tag = "BrainRegion";
+//            // Create the left/right meshes
+//            _nodeModelLeftGO = new GameObject(Name + "_L");
+//            _nodeModelLeftGO.transform.SetParent(_nodeModelParentGO.transform);
+//            _nodeModelLeftGO.AddComponent<MeshFilter>();
+//            _nodeModelLeftGO.AddComponent<MeshRenderer>();
+//            _nodeModelLeftGO.layer = 13;
+//            _nodeModelLeftGO.tag = "BrainRegion";
             Renderer leftRend = _nodeModelLeftGO.GetComponent<Renderer>();
             leftRend.material = _material;
             leftRend.material.SetColor("_Color", color);
             leftRend.receiveShadows = false;
             leftRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            _nodeModelLeftGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
-            //_nodeModelLeftGO.AddComponent<MeshCollider>();
+//            _nodeModelLeftGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
 
-            _nodeModelLeftGO.transform.localPosition = Vector3.zero;
-            _nodeModelLeftGO.transform.localRotation = Quaternion.identity;
+//            _nodeModelLeftGO.transform.localPosition = Vector3.zero;
+//            _nodeModelLeftGO.transform.localRotation = Quaternion.identity;
             _nodeModelLeftGO.SetActive(false);
 
-            // Create the right meshes
-            _nodeModelRightGO = new GameObject(Name + "_R");
-            _nodeModelRightGO.transform.SetParent(_nodeModelParentGO.transform);
-            _nodeModelRightGO.AddComponent<MeshFilter>();
-            _nodeModelRightGO.AddComponent<MeshRenderer>();
-            _nodeModelRightGO.layer = 13;
-            _nodeModelRightGO.tag = "BrainRegion";
+//            // Create the right meshes
+
+//            _nodeModelRightGO = new GameObject(Name + "_R");
+//            _nodeModelRightGO.transform.SetParent(_nodeModelParentGO.transform);
+//            _nodeModelRightGO.AddComponent<MeshFilter>();
+//            _nodeModelRightGO.AddComponent<MeshRenderer>();
+//            _nodeModelRightGO.layer = 13;
+//            _nodeModelRightGO.tag = "BrainRegion";
             Renderer rightRend = _nodeModelRightGO.GetComponent<Renderer>();
             rightRend.material = _material;
             rightRend.material.SetColor("_Color", color);
             rightRend.receiveShadows = false;
             rightRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            _nodeModelRightGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
+            //            _nodeModelRightGO.GetComponent<MeshFilter>().mesh = meshTask.Result;
 
-            _nodeModelRightGO.transform.localScale = new Vector3(1f, 1f, -1f);
-            _nodeModelRightGO.transform.localPosition = new Vector3(0f, 0f, 11.4f);
-            _nodeModelRightGO.transform.localRotation = Quaternion.identity;
+            //            _nodeModelRightGO.transform.localScale = new Vector3(1f, 1f, -1f);
+            //            _nodeModelRightGO.transform.localPosition = new Vector3(0f, 0f, 11.4f);
+            //            _nodeModelRightGO.transform.localRotation = Quaternion.identity;
             _nodeModelRightGO.SetActive(false);
 
             _loadedSourceSeparated.SetResult(true);
