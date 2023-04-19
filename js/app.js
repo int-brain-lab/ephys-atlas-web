@@ -49,7 +49,8 @@ class App {
         this.db.load().then(() => {
             this.feature.init();
             this.region.init();
-            this.unity.init();
+            if (this.unity)
+                this.unity.init();
             this.slice.init();
             this.panel.init();
         });

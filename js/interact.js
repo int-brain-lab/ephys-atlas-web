@@ -72,7 +72,8 @@ class Selector {
         this.makeCSS();
 
         // HACK: use an event system here instead
-        app.unity.setVisibility();
+        if (app.unity)
+            app.unity.setVisibility();
     }
 
     count() {

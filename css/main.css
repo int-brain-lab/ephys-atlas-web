@@ -540,14 +540,14 @@ div#container
 
 #bar-plot-container .acronym {
     display: inline-block;
-    width: 50px;
+    width: 60px;
     font-size: 10pt;
     white-space: nowrap;
 }
 
 #bar-plot-container .bar_wrapper {
     display: inline-block;
-    width: calc(95% - 50px);
+    width: calc(95% - 60px);
 }
 
 #bar-plot-container .bar {

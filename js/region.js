@@ -109,6 +109,10 @@ class Region {
         regions = regions.sort((a, b) => a['idx'] - b['idx']);
         let s = "";
         for (let region of regions) {
+
+            // NOTE: skip void region
+            if (region["acronym"] == "void") continue;
+
             s += makeRegionItem(
                 this.state.mapping, region["idx"], region["acronym"], region["name"]);
         }
