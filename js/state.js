@@ -9,7 +9,7 @@ import { encode, decode } from "./utils.js";
 /* Default state                                                                                 */
 /*************************************************************************************************/
 
-const DEFAULT_COLORMAP = "viridis";
+const DEFAULT_COLORMAP = "magma";
 const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
 
