@@ -48,16 +48,11 @@ class Unity {
 
     setExploded(value) {
         if (value == undefined) return;
-        if (this.state.selected.size > 0) {
-            this.instance.SendMessage('main', 'SetPercentageExploded', 0);
-        }
-        else {
-            if (typeof value == "string")
-                value = parseFloat(value);
-            this.state.exploded = value;
-            if (this.instance) {
-                this.instance.SendMessage('main', 'SetPercentageExploded', value);
-            }
+        if (typeof value == "string")
+            value = parseFloat(value);
+        this.state.exploded = value;
+        if (this.instance) {
+            this.instance.SendMessage('main', 'SetPercentageExploded', value);
         }
     }
 
