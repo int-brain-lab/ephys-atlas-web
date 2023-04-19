@@ -411,7 +411,7 @@ div#container
 #bar-plot-header {
     flex-grow: 0;
     flex-shrink: 0;
-    flex-basis: 100px;
+    /* flex-basis: 100px; */
 }
 
 #bar-plot {
@@ -427,6 +427,8 @@ div#container
 #bar-plot-header {
     background-color: #fff;
     width: var(--left-panel-width);
+    height: 150px;
+    overflow-y: scroll;
     margin: 0;
     padding: 0;
 }
@@ -448,8 +450,11 @@ div#container
 
 
 
-#bar-scale {
-    font-size: 10pt;
+#bar-plot-container #bar-scale {
+    display: inline-block;
+    margin: 0 0 0 60px;
+    font-size: 8pt;
+    width: calc(100% - 60px);
 }
 
 #bar-scale .wrapper {
@@ -469,11 +474,11 @@ div#container
 }
 
 #bar-scale .min {
-    left: 0;
+    left: 60px;
 }
 
 #bar-scale .max {
-    right: 0;
+    right: 12px;
 }
 
 
