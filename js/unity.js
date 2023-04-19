@@ -125,16 +125,16 @@ class Unity {
             }
         }
 
-        this.instance.SendMessage('main', 'ShowRoot', anySelected ? 1 : 0);
+        this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
         this.setExploded(this.state.exploded);
     }
 
     async update() {
         await this.setAreas();
-        this.setColors();
-        this.setVisibility();
         this.setExploded();
+        this.setVisibility();
+        this.setColors();
     }
 
     loadedCallback() {

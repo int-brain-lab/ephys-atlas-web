@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -20,7 +20,7 @@ public class MiniBrainManager : MonoBehaviour
 
     private List<CCFTreeNode> _areas;
     private List<bool> _areaSideLeft;
-
+    private List<CCFTreeNode> _cosmosAreasSelected;
     private void Awake()
     {
 #if !UNITY_EDITOR && UNITY_WEBGL
@@ -29,6 +29,7 @@ public class MiniBrainManager : MonoBehaviour
 
         originalTransformPositionsLeft = new Dictionary<int, Vector3>();
         originalTransformPositionsRight = new Dictionary<int, Vector3>();
+        _cosmosAreasSelected = new();
 
         _areas = new();
         modelNodes = new();
@@ -52,7 +53,7 @@ public class MiniBrainManager : MonoBehaviour
 
         await loadTask;
 
-        // Set the root node to be transparent and light grey
+
         CCFTreeNode rootNode = _modelControl.GetNode(8);
         rootNode.LoadNodeModel(true, false);
         rootNode.SetMaterial(_materialOpts[_materialNames.IndexOf("transparent-unlit")]);
@@ -101,11 +102,6 @@ public class MiniBrainManager : MonoBehaviour
 
         CCFTreeNode node = _modelControl.GetNode(areaIdx);
         node.SetMaterial(_materials[material]);
-    }
-
-    public void ShowRoot(int rootVisible)
-    {
-        _modelControl.GetNode(8).SetNodeModelVisibility_Full(rootVisible == 1);
     }
 
     public void SetVisibility(string visibleStr)
@@ -166,8 +162,18 @@ public class MiniBrainManager : MonoBehaviour
             
             if (node != null)
             {
-                node.SetNodeModelVisibility_Left(true);
-                node.SetNodeModelVisibility_Right(true);
+                // reset color
+                node.SetColor(node.DefaultColor);
+
+                if (_areaSideLeft[^1])
+                {
+                    // default to default color
+                    node.SetNodeModelVisibility_Left(true);
+                }
+                else
+                {
+                    node.SetNodeModelVisibility_Right(true);
+                }
             }
             _areas.Add(node);
         }
@@ -192,21 +198,84 @@ public class MiniBrainManager : MonoBehaviour
     public void SetVisibilities(string visibilities)
     {
         string[] visibility = visibilities.Split(",");
+        bool[] visibilityb = visibility.Select(x => bool.Parse(x)).ToArray();
 
         if (visibility.Length != _areas.Count)
             throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
 
+        // some areas are selected
+        if (_anySelected)
+        {
+            _cosmosAreasSelected.Clear();
+        }
+
         for (int i = 0; i < visibility.Length; i++)
         {
             if (_areas[i] != null)
+            {
+                if (_anySelected && visibilityb[i])
+                {
+                    CCFTreeNode cosmosArea = _modelControl.GetNode(_modelControl.GetCosmosID(_areas[i].AtlasID));
+                    if (!_cosmosAreasSelected.Contains(cosmosArea))
+                        _cosmosAreasSelected.Add(cosmosArea);
+                }
                 if (_areaSideLeft[i])
-                    _areas[i].SetNodeModelVisibility_Left(bool.Parse(visibility[i]));
+                    _areas[i].SetNodeModelVisibility_Left(visibilityb[i]);
                 else
-                    _areas[i].SetNodeModelVisibility_Right(bool.Parse(visibility[i]));
+                    _areas[i].SetNodeModelVisibility_Right(visibilityb[i]);
+            }
+        }
+
+        if (_anySelected)
+        {
+            // make the cosmos areas visible
+            foreach (CCFTreeNode node in _cosmosAreasSelected)
+            {
+                node.SetNodeModelVisibility_Left(true);
+                node.SetNodeModelVisibility_Right(true);
+            }
         }
     }
 
-#endregion
+    #endregion
+
+    #region Cosmos transparency
+    private bool _anySelected;
+
+    public void AreaSelected(int selected)
+    {
+        // Anytime areas are selected we need to show either the root node, or the cosmos nodes that are parents
+        // of the current visible nodes
+        _anySelected = selected == 1;
+
+        if (percentageExploded == 0)
+        {
+            // show the full root node
+            _modelControl.GetNode(8).SetNodeModelVisibility_Full(_anySelected);
+        }
+        else
+        {
+            // Set the cosmos nodes to be transparent and light grey
+            foreach (int cosmosID in cosmosIDs)
+            {
+                CCFTreeNode cosmoNode = _modelControl.GetNode(cosmosID);
+                if (_anySelected)
+                {
+                    cosmoNode.SetMaterial(_materialOpts[_materialNames.IndexOf("transparent-unlit")]);
+                    cosmoNode.SetShaderProperty("_Alpha", 0.1f);
+                    cosmoNode.SetColor(Color.gray);
+                }
+                else
+                {
+                    cosmoNode.SetMaterial(_materialOpts[_materialNames.IndexOf("opaque-lit")]);
+                    cosmoNode.SetShaderProperty("_Alpha", 1.0f);
+                    cosmoNode.SetColor(cosmoNode.DefaultColor);
+                }
+            }
+        }
+    }
+
+    #endregion
 
     public void RegisterNode(CCFTreeNode node)
     {
