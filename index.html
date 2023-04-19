@@ -18,6 +18,7 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="css/main.css" />
     <link rel="stylesheet" href="data/css/region_colors.css" />
+    <link rel="stylesheet" id="style-default-regions" href="data/css/default_region_colors_beryl.css" />
 
     <!-- Dynamic CSS styles -->
     <style id="style-regions"></style>
@@ -190,11 +191,6 @@
                 <!-- FEATURE NAME -->
                 <div id="bar-fname"></div>
 
-                <!-- FEATURE SEARCH BAR -->
-                <div id="bar-plot-search">
-                    <input type="text" id="search-input" placeholder="type a region acronym...">
-                </div>
-
                 <!-- FEATURE SCALE -->
                 <div id="bar-scale">
                     <div class="bar"></div>
@@ -207,10 +203,15 @@
                 <!-- SELECTED REGIONS -->
                 <div id="bar-selected-wrapper">
                     <div id="bar-selected-title">
-                        Selected regions: (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>)
+                        Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>)
                     </div>
                     <ul id="bar-selected-list">
                     </ul>
+                </div>
+
+                <!-- FEATURE SEARCH BAR -->
+                <div id="bar-plot-search">
+                    <input type="text" id="search-input" placeholder="type a region acronym...">
                 </div>
 
             </div>

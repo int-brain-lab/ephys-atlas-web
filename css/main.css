@@ -427,7 +427,7 @@ div#container
 #bar-plot-header {
     background-color: #fff;
     width: var(--left-panel-width);
-    height: 150px;
+    /* height: 150px; */
     overflow-y: scroll;
     margin: 0;
     padding: 0;
@@ -503,6 +503,7 @@ div#container
 
 #bar-plot-container #bar-selected-title {
     margin: 2px 0 5px 0;
+    font-size: 9pt;
 }
 
 
@@ -512,7 +513,7 @@ div#container
 /*************************************************************************************************/
 
 #bar-plot {
-    overflow-y: inherit;
+    overflow-y: scroll;
     list-style: none;
 
     /* OLD NOTE:  for some reason, not putting this causes bad performance issue on Chrome */

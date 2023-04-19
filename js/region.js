@@ -124,6 +124,10 @@ class Region {
         let mapping = this.state.mapping;
 
         let features = await this.feature.getFeatures();
+        if (!features) {
+            console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
+            return;
+        }
 
         // Find vmin and vmax.
         let stats = features['statistics'][stat];

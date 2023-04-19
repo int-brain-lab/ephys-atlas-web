@@ -23,10 +23,12 @@ class Feature {
         this.state = state;
 
         this.style = document.getElementById('style-features').sheet;
+        this.defaultStyle = document.getElementById('style-default-regions');
         this.featureName = document.getElementById('bar-fname');
     }
 
     init() {
+        this.setDefaultColors();
         this.setColormap(this.state.cmap);
     }
 
@@ -86,17 +88,25 @@ class Feature {
     /*********************************************************************************************/
 
     async getFeatures() {
+        // dict {mapping: {data: {idx: {mean...}, statistics: {mean: xxx, ...}, statistics: {mean: {mean: ...}, ...}}}
         let fet = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
         return fet;
     }
 
+    setDefaultColors() {
+        this.defaultStyle.href = `data/css/default_region_colors_${this.state.mapping}.css`;
+    }
+
     async update() {
         this.featureName.innerHTML = `fet: ${this.state.fname}`;
+        this.setDefaultColors();
 
         let fet = (await this.getFeatures());
 
         if (!fet) {
-            console.error(`feature ${this.state.fname} is invalid (fset is ${this.state.fset})`);
+            // Default colors: the original region colors. Nothing to do apart from clearing the extra feature-dependent styling.
+            console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
+            clearStyle(this.style);
             return;
         }
         let stat = this.state.stat;

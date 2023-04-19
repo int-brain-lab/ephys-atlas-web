@@ -389,8 +389,23 @@ def generate_regions_json(mappings):
     save_json(mappings, filename)
 
 
+def generate_default_regions_css(mappings, mapping):
+    print(f"Generating default region colors for mapping {mapping}")
+    css = f'/* default SVG path background color for mapping {mapping} */\n'
+    css = ''.join(
+        dedent(f'''
+        svg path.{mapping}_region_{r['idx']} {{ fill: var(--region-{mapping}-{r['idx']}); /* {r['acronym']} */ }}''') for r in mappings[mapping])
+    css += '\n\n'
+    write_text(css, DATA_DIR / f'css/default_region_colors_{mapping}.css')
+
+
 def generate_regions_css(mappings):
     print("Generating region_colors.css")
+
+    # Default region colors.
+    for mapping in MAPPINGS:
+        generate_default_regions_css(mappings, mapping)
+
     css = ''
     for mapping, regions in mappings.items():
 

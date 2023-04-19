@@ -92,7 +92,8 @@ class Panel {
         // Update the feature options.
         fname = fname || DEFAULT_FEATURE[fset];
         console.assert(FEATURE_NAMES[fset].includes(fname));
-        setOptions(this.ifname, FEATURE_NAMES[fset], fname);
+        let options = ['-- default --', ...FEATURE_NAMES[fset]];
+        setOptions(this.ifname, options, fname);
 
         // HACK: only Beryl is available for BWM.
         if (fset == 'bwm') {
