@@ -92,7 +92,7 @@ class Unity {
         let colors = []
         for (let region of regions) {
             let regionIdx = region['idx'];
-            let color = this.feature.getColor(regionIdx) || '#FFFFFF';
+            let color = this.feature.getColor(regionIdx) || '-';
             colors.push(`${color.toUpperCase()}`);
         }
 

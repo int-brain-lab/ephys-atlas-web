@@ -190,7 +190,10 @@ public class MiniBrainManager : MonoBehaviour
         {
             if (_areas[i] != null)
             {
-                _areas[i].SetColorOneSided(ParseHexColor(hexColors[i]), _areaSideLeft[i]);
+                if (hexColors[i].Equals("-"))
+                    _areas[i].SetColorOneSided(_areas[i].DefaultColor, _areaSideLeft[i]);
+                else
+                    _areas[i].SetColorOneSided(ParseHexColor(hexColors[i]), _areaSideLeft[i]);
             }
         }
     }
@@ -226,7 +229,7 @@ public class MiniBrainManager : MonoBehaviour
             }
         }
 
-        if (_anySelected)
+        if (_anySelected && percentageExploded != 0)
         {
             // make the cosmos areas visible
             foreach (CCFTreeNode node in _cosmosAreasSelected)
@@ -235,12 +238,24 @@ public class MiniBrainManager : MonoBehaviour
                 node.SetNodeModelVisibility_Right(true);
             }
         }
+        else
+        {
+            // hide your kids
+            foreach (int ID in cosmosIDs)
+            {
+                CCFTreeNode node = _modelControl.GetNode(ID);
+
+                node.SetNodeModelVisibility_Left(false);
+                node.SetNodeModelVisibility_Right(false);
+            }
+        }
     }
 
     #endregion
 
     #region Cosmos transparency
     private bool _anySelected;
+    private int[] cosmosIDs = { 313, 315, 512, 549, 623, 698, 703, 1065, 1089, 1097 };
 
     public void AreaSelected(int selected)
     {
@@ -252,6 +267,14 @@ public class MiniBrainManager : MonoBehaviour
         {
             // show the full root node
             _modelControl.GetNode(8).SetNodeModelVisibility_Full(_anySelected);
+            // hide the cosmos nodes
+            foreach (int ID in cosmosIDs)
+            {
+                CCFTreeNode node = _modelControl.GetNode(ID);
+
+                node.SetNodeModelVisibility_Left(false);
+                node.SetNodeModelVisibility_Right(false);
+            }
         }
         else
         {
