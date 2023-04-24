@@ -51,7 +51,7 @@
     --bar-highlight-color: #f2f2f2;
     --bar-select-color: #e8e8e8;
 
-    --left-panel-width: 150px;
+    --left-panel-width: 160px;
 }
 
 * {
@@ -205,9 +205,8 @@ body {
 
 
 
-
 /*************************************************************************************************/
-/*  Feature dropdown                                                                             */
+/*  Control panel                                                                                */
 /*************************************************************************************************/
 
 #control-panel {
@@ -258,23 +257,6 @@ body {
 #control-panel .control .slider {
     display: block;
     width: 100%;
-}
-
-#control-panel .share {
-    margin: 16px 0;
-}
-
-#control-panel .share button {
-    padding: 6px 10px;
-    font-size: 1.2em;
-    background-color: #0898D4;
-    font-weight: bold;
-    border-radius: 8px;
-    width: 100%;
-    color: white;
-    border: 0;
-    text-align: center;
-    cursor: pointer;
 }
 
 #control-panel button:hover {
@@ -385,6 +367,33 @@ body {
 }
 
 
+/*************************************************************************************************/
+/*  Share button                                                                                 */
+/*************************************************************************************************/
+
+#share-wrapper {
+    margin: 0;
+    position: fixed;
+    top: 10px;
+    left: 20px;
+    z-index: 1000;
+
+}
+
+#share-button {
+    padding: 8px 14px;
+    font-size: 1.2em;
+    background-color: #0898D4;
+    font-weight: bold;
+    border-radius: 8px;
+    width: 100%;
+    color: white;
+    border: 0;
+    text-align: center;
+    cursor: pointer;
+}
+
+
 
 /*************************************************************************************************/
 /*  Bar plot container                                                                           */
@@ -424,25 +433,55 @@ div#container
 /*  Bar header                                                                                   */
 /*************************************************************************************************/
 
-#bar-plot-header {
-    background-color: #fff;
+#bar-plot-container #bar-plot-header {
+    border: 1px solid #aaa;
+    background-color: #eee;
     width: var(--left-panel-width);
-    /* height: 150px; */
     overflow-y: scroll;
     margin: 0;
-    padding: 0;
+    padding: 5px;
 }
 
-#bar-plot-search p {
-    font-size: 9pt;
+#bar-plot-header * {
+    font-size: 10pt;
 }
+
+
+
+/*************************************************************************************************/
+/*  Feature selector                                                                             */
+/*************************************************************************************************/
+
+#control-panel .label {
+    margin: 8px 0 4px 0;
+}
+
+#bar-plot-header .control select {
+    width: 100%;
+    margin-top: 2px;
+    background-color: #ffff;
+}
+
+#bar-plot-header .label {
+    display: inline-block;
+    width: 41.8%;
+}
+
+#bar-plot-header .control {
+    display: inline-block;
+    width: 55%;
+}
+
+
+
+/*************************************************************************************************/
+/*  Region search                                                                                */
+/*************************************************************************************************/
 
 #bar-plot-search input#search-input {
     width: 100%;
     height: 100%;
-    margin: 0 0 10px 0;
     padding: 4px 0;
-    font-size: 9pt;
     background-color: #ddd;
     border: 0;
 }
@@ -454,10 +493,13 @@ div#container
 
 
 
+/*************************************************************************************************/
+/*  Bar scale                                                                                    */
+/*************************************************************************************************/
+
 #bar-plot-container #bar-scale {
     display: inline-block;
     margin: 0 0 0 60px;
-    font-size: 8pt;
     width: calc(100% - 60px);
 }
 
@@ -487,13 +529,9 @@ div#container
 
 
 
-/* #bar-fname {
-    margin: 0 0 6px 0;
-    text-align: center;
-    white-space: nowrap;
-    font-family: roboto-condensed;
-} */
-
+/*************************************************************************************************/
+/*  Selected regions                                                                             */
+/*************************************************************************************************/
 
 #bar-plot-container #bar-selected-wrapper {
     border: 0 solid #aaa;
@@ -501,12 +539,10 @@ div#container
     background-color: #eee;
     margin: 2px 0;
     padding: 2px 0;
-    font-size: 10pt;
 }
 
 #bar-plot-container #bar-selected-title {
     margin: 2px 0 5px 0;
-    font-size: 9pt;
 }
 
 
@@ -605,6 +641,10 @@ div#container>.svg-wrapper {
 
 .svg-wrapper svg:hover {
     cursor: pointer;
+}
+
+.svg-wrapper svg path.beryl_region_1 {
+    cursor: auto;
 }
 
 
