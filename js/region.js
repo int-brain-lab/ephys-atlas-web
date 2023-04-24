@@ -92,15 +92,17 @@ class Region {
     }
 
     setupSelection() {
-        this.regionList.addEventListener('click', (e) => {
-            if (e.target.tagName == 'LI') {
-                // Update the Selector object.
-                this.selector.toggle(e);
+        for (let container of [this.regionList, this.selectedBar]) {
+            container.addEventListener('click', (e) => {
+                if (e.target.tagName == 'LI') {
+                    // Update the Selector object.
+                    this.selector.toggle(e);
 
-                // Update the "selected regions" area in the bar plot header.
-                this.updateSelection();
-            }
-        });
+                    // Update the "selected regions" area in the bar plot header.
+                    this.updateSelection();
+                }
+            });
+        }
     }
 
     /* Region functions                                                                          */

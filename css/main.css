@@ -574,14 +574,17 @@ div#container
     pointer-events: none;
 }
 
-#bar-plot li:hover {
+#bar-plot-container li {
+    cursor: pointer;
+}
+
+#bar-plot-container li:hover {
     background-color: var(--bar-highlight-color);
 }
 
 #bar-plot li {
     margin-bottom: -5px;
     display: none;
-    cursor: pointer;
 }
 
 #bar-plot-container .acronym {
