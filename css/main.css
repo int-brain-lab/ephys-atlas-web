@@ -464,12 +464,12 @@ div#container
 
 #bar-plot-header .label {
     display: inline-block;
-    width: 41.8%;
+    width: 30%;
 }
 
 #bar-plot-header .control {
     display: inline-block;
-    width: 55%;
+    width: calc(100% - 30% - 5px);
 }
 
 
@@ -504,7 +504,7 @@ div#container
 }
 
 #bar-scale .wrapper {
-    height: 20px;
+    height: 12px;
 }
 
 #bar-scale .bar {

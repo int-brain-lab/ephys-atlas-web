@@ -1,6 +1,6 @@
 export { Panel };
 
-import { setOptions } from "./utils.js";
+import { clamp, setOptions } from "./utils.js";
 import { DEFAULT_FEATURE } from "./state.js";
 
 
@@ -66,6 +66,7 @@ class Panel {
         this.setupClearButton();
         this.setupShareButton();
         this.setupResetButton();
+        this.setupKeyboardShortcuts();
     }
 
     init() {
@@ -89,6 +90,14 @@ class Panel {
         this.ifset.value = state.fset; // set the fset dropdown value
         this.ifname.value = state.fname; // set the fname dropdown value
         // this.feature.setFname(state.fname);
+    }
+
+    setFname(fname) {
+        this.feature.setFname(fname);
+        this.region.update();
+
+        if (this.unity)
+            this.unity.update();
     }
 
     setFeatureOptions(fset, fname) {
@@ -143,12 +152,7 @@ class Panel {
 
     setupFname() {
         this.ifname.addEventListener('change', (e) => {
-            let fname = e.target.value;
-            this.feature.setFname(fname);
-            this.region.update();
-
-            if (this.unity)
-                this.unity.update();
+            this.setFname(e.target.value);
         });
     }
 
@@ -224,6 +228,21 @@ class Panel {
             navigator.clipboard.writeText(url);
             this.ishare.innerHTML = "copied!";
             setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+        });
+    }
+
+    setupKeyboardShortcuts() {
+        window.addEventListener('keypress', (e) => {
+            // NOTE: do not trigger the event when filling in the search bar
+            if (e.target.id != "search-input") {
+
+                // Cycle through the feature names.
+                if (e.key == "f" || e.key == "d") {
+                    let dir = e.key == "f" ? +1 : -1;
+                    this.ifname.selectedIndex = clamp(this.ifname.selectedIndex + dir, 0, this.ifname.length - 1);
+                    this.setFname(this.ifname.value);
+                }
+            }
         });
     }
 };
