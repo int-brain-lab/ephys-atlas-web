@@ -28,12 +28,25 @@ const DEFAULT_MAPPING = "beryl";
 const DEFAULT_SEARCH = "";
 const DEFAULT_HIGHLIGHTED = null;
 
+const ALIAS_STATES = {
+    "bwm_choice": "eyJjbWFwIjoiY2l2aWRpcyIsImNtYXBtaW4iOjIyLCJjbWFwbWF4Ijo4MSwiZnNldCI6ImVwaHlzIiwiZm5hbWUiOiJwc2RfZGVsdGEiLCJzdGF0Ijoic3RkIiwiY29yb25hbCI6OTI0LCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6bnVsbCwic2VsZWN0ZWQiOlsxODYzLDE4NTksMjE1NF0sInRvcCI6MCwic3dhbnNvbiI6MH0",
+};
+
 
 function url2state() {
     let query = new Proxy(new URLSearchParams(window.location.search), {
         get: (searchParams, prop) => searchParams.get(prop),
     });
-    let state = decode(query.state);
+    let state = {};
+
+    // Alias states.
+    if (query.alias) {
+        state = decode(ALIAS_STATES[query.alias]);
+    }
+    else if (query.state) {
+        state = decode(query.state);
+    }
+
     return state;
 }
 
@@ -41,6 +54,7 @@ function url2state() {
 function state2url(state) {
     let url = new URL(window.location);
     let params = url.searchParams;
+    params.delete('alias');
     params.set('state', encode(state));
     return url.toString();
 }
