@@ -6,6 +6,17 @@ import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 
 
 /*************************************************************************************************/
+/* Util functions                                                                                */
+/*************************************************************************************************/
+
+function isRoot(e) {
+    /* Return if an event is on the root region. */
+    return e.target.classList.contains("beryl_region_1");
+}
+
+
+
+/*************************************************************************************************/
 /* Slice                                                                                         */
 /*************************************************************************************************/
 
@@ -129,6 +140,10 @@ class Slice {
 
         svg.addEventListener('mouseover', (e) => {
             if (e.target.tagName == 'path') {
+
+                // HACK: disable root
+                if (isRoot(e)) return;
+
                 this.highlighter.highlight(e);
                 this.tooltip.show(e);
             }
@@ -140,6 +155,10 @@ class Slice {
 
         svg.addEventListener('click', (e) => {
             if (e.target.tagName == 'path') {
+
+                // HACK: disable root
+                if (isRoot(e)) return;
+
                 this.selector.toggle(e);
 
                 this.region.updateSelection();
