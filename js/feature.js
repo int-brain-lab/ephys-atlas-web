@@ -24,7 +24,7 @@ class Feature {
 
         this.style = document.getElementById('style-features').sheet;
         this.defaultStyle = document.getElementById('style-default-regions');
-        this.featureName = document.getElementById('bar-fname');
+        // this.featureName = document.getElementById('bar-fname');
     }
 
     init() {
@@ -98,7 +98,7 @@ class Feature {
     }
 
     async update() {
-        this.featureName.innerHTML = `fet: ${this.state.fname}`;
+        // this.featureName.innerHTML = `fet: ${this.state.fname}`;
         this.setDefaultColors();
 
         let fet = (await this.getFeatures());

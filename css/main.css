@@ -487,13 +487,12 @@ div#container
 
 
 
-#bar-fname {
+/* #bar-fname {
     margin: 0 0 6px 0;
     text-align: center;
     white-space: nowrap;
-    /* font-weight: 600; */
     font-family: roboto-condensed;
-}
+} */
 
 
 #bar-plot-container #bar-selected-wrapper {
