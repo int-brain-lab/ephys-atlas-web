@@ -1,6 +1,6 @@
 export { Region };
 
-import { clearStyle, normalizeValue, displayNumber, throttle, getRegionIdx } from "./utils.js";
+import { clearStyle, normalizeValue, displayNumber, throttle, getRegionIdx, clamp } from "./utils.js";
 
 
 
@@ -65,6 +65,14 @@ class Region {
     init() {
         this.setState(this.state);
         this.update();
+        this.setColormap();
+    }
+
+    setColormap() {
+        this.db.getColormap(this.state.cmap).then((c) => {
+            this.colors = c['colors'];
+            this.updateColormap(this.state.cmapmin, this.state.cmapmax);
+        });
     }
 
     setState(state) {
@@ -129,6 +137,31 @@ class Region {
         this.regionList.innerHTML = s;
     }
 
+    updateColormap(cmin, cmax) {
+        if (!this.colors) return;
+        let colors = this.colors;
+        let nTotal = colors.length;
+        let barScale = document.querySelector('#bar-scale .colorbar');
+        let n = 50;
+        let child = null;
+        if (barScale.children.length == 0) {
+            for (let i = 0; i < n; i++) {
+                child = document.createElement('div');
+                child.classList.add(`bar-${i}`);
+                barScale.appendChild(child);
+            }
+        }
+        let children = barScale.children;
+        let x = 0;
+        for (let i = 0; i < n; i++) {
+            child = children[i];
+            x = i * 100.0 / n;
+            x = (x - cmin) / (cmax - cmin);
+            x = clamp(x, 0, .9999);
+            child.style.backgroundColor = colors[Math.floor(x * nTotal)];
+        }
+    }
+
     async update() {
         let stat = this.state.stat;
         let mapping = this.state.mapping;
@@ -143,6 +176,7 @@ class Region {
         let stats = features['statistics'][stat];
         let vmin = stats['min'];
         let vmax = stats['max'];
+
         this.featureMin.innerHTML = displayNumber(vmin);
         this.featureMax.innerHTML = displayNumber(vmax);
 

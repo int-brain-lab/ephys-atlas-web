@@ -170,6 +170,8 @@ class Panel {
     setupColormap() {
         this.icmap.addEventListener('change', async (e) => {
             await this.feature.setColormap(e.target.value);
+            this.region.colors = null; // HACK: force taking the colors from this.db
+            this.region.setColormap();
 
             if (this.unity)
                 this.unity.update();
@@ -180,6 +182,7 @@ class Panel {
         let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
         let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
         this.feature.setColormapRange(cmin, cmax);
+        this.region.updateColormap(cmin, cmax);
 
         if (this.unity)
             this.unity.update();
