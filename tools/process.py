@@ -547,14 +547,21 @@ def generate_bwm_features():
     # Aggregate by region, for each mapping. We use the atlas_id_X where X is the first letter
     # of the mapping.
     out = {}
+    fsets = ('block', 'choice', 'reward', 'stimulus')
+    fnames = ('decoding', 'single_cell', 'manifold')
     # NOTE: only Beryl is supported for the BWM features
-    for mapping in ('beryl',):
-        df = df_sessions.groupby(f'atlas_id_{mapping[0]}')
-        features = generate_features_groupedby(
-            br, mapping, df, feature_names)
-        out[mapping] = features
 
-    save_json(out, DATA_DIR / f"json/features_bwm.json")
+    for fset in fsets:
+        for mapping in ('beryl',):
+            df = df_sessions.groupby(f'atlas_id_{mapping[0]}')
+            features = generate_features_groupedby(
+                br, mapping, df, feature_names)
+            # features is a dict {block_decoding: {data: ..., statistics: ...}}
+            # out[mapping] = features
+            out[mapping] = {
+                fname: features[f'{fset}_{fname}'] for fname in fnames
+            }
+        save_json(out, DATA_DIR / f"json/features_bwm_{fset}.json")
 
 
 # -------------------------------------------------------------------------------------------------
@@ -650,14 +657,15 @@ def generate_custom_features():
 # -------------------------------------------------------------------------------------------------
 # Entry-point
 # -------------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
 
     # generate_colormaps()
-    mappings = get_mappings()
-    generate_regions_json(mappings)
-    generate_regions_css(mappings)
+    # mappings = get_mappings()
+    # generate_regions_json(mappings)
+    # generate_regions_css(mappings)
     # generate_ephys_features()
-    # generate_bwm_features()
+    generate_bwm_features()
     # generate_custom_features()
 
     ##############

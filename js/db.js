@@ -10,7 +10,14 @@ import { downloadJSON } from "./utils.js";
 /*************************************************************************************************/
 
 const DB_NAME = "IBLEphysAtlasDatabase";
-const DB_VERSION = 1;
+
+/*
+Changelog of the DB versions
+1       initial version
+2       2023-04-23          replaced "bwm" fset by "bwm_block", "bwm_choice" etc
+*/
+
+const DB_VERSION = 2;
 const DB_TABLES = {
     "colormaps": "name,colors",
 
@@ -23,9 +30,12 @@ const DB_TABLES = {
     "regions": "mapping,data",
 
     "features_ephys": "fname,data,statistics",
-    "features_bwm": "fname,data,statistics",
+    "features_bwm_block": "fname,data,statistics",
+    "features_bwm_choice": "fname,data,statistics",
+    "features_bwm_reward": "fname,data,statistics",
+    "features_bwm_stimulus": "fname,data,statistics",
 }
-const FEATURE_SETS = ["ephys", "bwm"];
+const FEATURE_SETS = ["ephys", "bwm_block", "bwm_choice", "bwm_reward", "bwm_stimulus"];
 
 
 
@@ -64,7 +74,11 @@ class DB {
         this.splash.addTotal(this.total);
 
         this.db = new Dexie(DB_NAME);
-        this.db.version(DB_VERSION).stores(DB_TABLES);
+        this.db.version(DB_VERSION).stores(DB_TABLES).upgrade(tx => {
+            console.warn("database version has increased, deleting the existing database");
+            this.deleteDatabase();
+            // this.load();
+        });
     }
 
     async load() {
@@ -233,6 +247,7 @@ class DB {
 
     deleteDatabase() {
         console.warn("deleting the database");
+        this.db.close();
         Dexie.delete(DB_NAME);
     }
 

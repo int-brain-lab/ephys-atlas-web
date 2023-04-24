@@ -15,11 +15,17 @@ const FEATURE_NAMES = {
         "rms_ap", "rms_lf", "spike_rate",
     ],
 
-    "bwm": [
-        "block_decoding", "block_single_cell", "block_manifold",
-        "choice_decoding", "choice_single_cell", "choice_manifold",
-        "reward_decoding", "reward_single_cell", "reward_manifold",
-        "stimulus_decoding", "stimulus_single_cell", "stimulus_manifold",
+    "bwm_block": [
+        "decoding", "single_cell", "manifold",
+    ],
+    "bwm_choice": [
+        "decoding", "single_cell", "manifold",
+    ],
+    "bwm_reward": [
+        "decoding", "single_cell", "manifold",
+    ],
+    "bwm_stimulus": [
+        "decoding", "single_cell", "manifold",
     ],
 };
 
@@ -96,7 +102,7 @@ class Panel {
         setOptions(this.ifname, options, fname);
 
         // HACK: only Beryl is available for BWM.
-        if (fset == 'bwm') {
+        if (fset.includes('bwm_')) {
             this.imapping.value = 'beryl';
             this.region.setMapping(this.imapping.value);
         }
@@ -110,7 +116,7 @@ class Panel {
             let mapping = e.target.value;
 
             // HACK: only Beryl is available for bwm
-            if (this.state.fset == 'bwm' && mapping != 'beryl') {
+            if (this.state.fset.includes('bwm_') && mapping != 'beryl') {
                 return;
             }
 

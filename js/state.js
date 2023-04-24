@@ -16,7 +16,10 @@ const DEFAULT_COLORMAP_MAX = 100;
 const DEFAULT_FSET = "ephys";
 export const DEFAULT_FEATURE = {
     "ephys": "psd_alpha",
-    "bwm": "block_decoding",
+    "bwm_block": "decoding",
+    "bwm_choice": "decoding",
+    "bwm_reward": "decoding",
+    "bwm_stimulus": "decoding",
 };
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
