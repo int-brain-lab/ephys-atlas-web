@@ -204,6 +204,7 @@ class Panel {
                 this.state.init({});
                 this.init();
                 this.selector.clear();
+                // TODO: fix this with the new event system
 
                 // Reset the browser URL.
                 const url = new URL(window.location);

@@ -517,6 +517,7 @@ div#container
 #bar-scale .max {
     display: inline;
     position: absolute;
+    font-size: 8pt;
 }
 
 #bar-scale .min {
@@ -524,7 +525,7 @@ div#container
 }
 
 #bar-scale .max {
-    right: 12px;
+    right: 16px;
 }
 
 

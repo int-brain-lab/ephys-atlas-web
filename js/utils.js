@@ -2,6 +2,10 @@
 /* Math                                                                                          */
 /*************************************************************************************************/
 
+const DISPLAY_NUMBER_PRECISION = 4;
+
+
+
 export function clamp(x, min, max) {
     return Math.min(max, Math.max(min, x));
 }
@@ -10,7 +14,9 @@ export function clamp(x, min, max) {
 
 export function displayNumber(x) {
     if (!x) return '0';
-    return Math.abs(x) < .001 ? x.toExponential(5) : x.toPrecision(5);
+    return (Math.abs(x) < .001 ?
+        x.toExponential(DISPLAY_NUMBER_PRECISION) :
+        x.toPrecision(DISPLAY_NUMBER_PRECISION));
 }
 
 
