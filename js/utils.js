@@ -119,9 +119,10 @@ export function setOptions(select, values, selected) {
 
 export function getRegionIdx(mapping, obj) {
     let r = /\d+/;
+    let mapping_ = mapping + "_";
     // Find the class name corresponding to the mapping.
     for (let className of obj.classList) {
-        if (className.includes(mapping)) {
+        if (className.includes(mapping_)) {
             return parseInt(className.match(r)[0]);
         }
     }

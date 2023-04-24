@@ -217,6 +217,7 @@ class Region {
         /* Return the list of LI elements that are selected. */
         let out = [];
         for (let child of this.regionList.children) {
+            if (window.getComputedStyle(child, null).display == 'none') continue;
             let idx = getRegionIdx(this.state.mapping, child);
             if (this.state.selected.has(idx)) {
                 out.push(child);
