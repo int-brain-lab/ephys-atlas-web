@@ -225,7 +225,12 @@ class Panel {
             // DEBUG
             // window.location = url;
 
+            // Copy the URL to the clipboard.
             navigator.clipboard.writeText(url);
+
+            // Set the URL in the location bar.
+            window.history.replaceState(null, '', url.toString());
+
             this.ishare.innerHTML = "copied!";
             setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
         });
