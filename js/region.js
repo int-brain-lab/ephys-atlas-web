@@ -5,6 +5,14 @@ import { clearStyle, normalizeValue, displayNumber, throttle, getRegionIdx } fro
 
 
 /*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+const SEARCH_ACRONYM_STRING = "acronym=";
+
+
+
+/*************************************************************************************************/
 /* Region utils                                                                                  */
 /*************************************************************************************************/
 
@@ -157,11 +165,19 @@ class Region {
             style += `${stl}\n`;
 
             // Implement search.
-            let filter = (
-                !search ||
-                name.toLowerCase().includes(search) ||
-                acronym.toLowerCase().includes(search));
-            let display = filter ? 'block' : 'none';
+            let do_show = true;
+            if (search) {
+                if (search.includes(SEARCH_ACRONYM_STRING)) {
+                    do_show = acronym.toLowerCase() == search.replace(SEARCH_ACRONYM_STRING, '');
+                }
+                else {
+                    do_show = (
+                        name.toLowerCase().includes(search) ||
+                        acronym.toLowerCase().includes(search));
+                }
+            }
+
+            let display = do_show ? 'block' : 'none';
 
             stl = `#bar-plot li.${mapping}_region_${regionIdx}{display: ${display};}`;
             style += `${stl}\n`;
