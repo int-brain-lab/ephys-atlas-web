@@ -11,21 +11,20 @@ import { DEFAULT_FEATURE } from "./state.js";
 
 const FEATURE_NAMES = {
     "ephys": [
-        "psd_alpha", "psd_beta", "psd_delta", "psd_gamma", "psd_theta",
-        "rms_ap", "rms_lf", "spike_rate",
+        "psd_alpha", "psd_beta", "psd_delta", "psd_gamma", "psd_theta", "rms_ap", "rms_lf", "spike_rate",
     ],
 
     "bwm_block": [
-        "decoding", "single_cell", "manifold",
+        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
     ],
     "bwm_choice": [
-        "decoding", "single_cell", "manifold",
+        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
     ],
-    "bwm_reward": [
-        "decoding", "single_cell", "manifold",
+    "bwm_feedback": [
+        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
     ],
     "bwm_stimulus": [
-        "decoding", "single_cell", "manifold",
+        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
     ],
 };
 

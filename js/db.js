@@ -15,9 +15,10 @@ const DB_NAME = "IBLEphysAtlasDatabase";
 Changelog of the DB versions
 1       initial version
 2       2023-04-23          replaced "bwm" fset by "bwm_block", "bwm_choice" etc
+3       2023-04-25          added more BWM features
 */
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const DB_TABLES = {
     "colormaps": "name,colors",
 
@@ -32,10 +33,10 @@ const DB_TABLES = {
     "features_ephys": "fname,data,statistics",
     "features_bwm_block": "fname,data,statistics",
     "features_bwm_choice": "fname,data,statistics",
-    "features_bwm_reward": "fname,data,statistics",
+    "features_bwm_feedback": "fname,data,statistics",
     "features_bwm_stimulus": "fname,data,statistics",
 }
-const FEATURE_SETS = ["ephys", "bwm_block", "bwm_choice", "bwm_reward", "bwm_stimulus"];
+const FEATURE_SETS = ["ephys", "bwm_block", "bwm_choice", "bwm_feedback", "bwm_stimulus"];
 
 
 
