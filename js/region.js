@@ -192,7 +192,13 @@ class Region {
             let name = region["name"];
             let acronym = region["acronym"];
             let value = values[regionIdx];
-            if (!value) continue;
+            if (!value) {
+                if (name.includes("(left")) {
+                    // left hemisphere region with no value: in grey
+                    style += `:root { --region-${mapping}-${regionIdx}: #d3d3d3;}\n`;
+                }
+                continue;
+            }
             value = value[stat];
 
             let normalized = normalizeValue(value, vmin, vmax);
