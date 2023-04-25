@@ -137,7 +137,6 @@ class Feature {
 
         for (let regionIdx in data) {
             let value = data[regionIdx][stat];
-            // console.log(value);
             let normalizedMod = normalizeValue(value, vminMod, vmaxMod);
             let hex = this.makeHex(normalizedMod);
             let stl = this.makeRegionColor(mapping, regionIdx, value, hex);
