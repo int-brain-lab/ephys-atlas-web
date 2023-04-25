@@ -179,10 +179,11 @@ class Feature {
         let data = (await this.getFeatures());
         if (!data) {
             // console.warn(`unable to get feature for region ${regionIdx}`);
-            return;
+            return 'not significant';
         }
         data = data['data'];
         if (data && data[regionIdx])
             return data[regionIdx][this.state.stat];
+        return 'excluded';
     }
 };

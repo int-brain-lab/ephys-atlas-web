@@ -129,7 +129,7 @@ class Tooltip {
         let name = info['name'];
         let acronym = info['acronym'];
         let value = await this.feature.get(regionIdx);
-        let meanDisplay = displayNumber(value);
+        let meanDisplay = typeof value == 'string' ? value : displayNumber(value);
         this.info.innerHTML = `<strong>${acronym}, ${name}</strong><br>${meanDisplay}`;
     }
 
