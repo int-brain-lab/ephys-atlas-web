@@ -22,7 +22,7 @@ function isRoot(e) {
 
 class Slice {
     constructor(db, state, region, tooltip, highlighter, selector) {
-        this.setSlice = throttle(this._setSlice, 15);
+        this.setSlice = throttle(this._setSlice, 30);
 
         this.db = db;
         this.state = state;
