@@ -192,10 +192,17 @@ class Region {
             let name = region["name"];
             let acronym = region["acronym"];
             let value = values[regionIdx];
-            if (!value) {
+            if (value==0) {
+              if (name.includes("(left")) {
+                  // left hemisphere region with no value: in grey
+                  style += `:root { --region-${mapping}-${regionIdx}: #d3d3d3;}\n`;
+              }
+              continue;
+            }
+            else if (!value) {
                 if (name.includes("(left")) {
                     // left hemisphere region with no value: in grey
-                    style += `:root { --region-${mapping}-${regionIdx}: #d3d3d3;}\n`;
+                    style += `:root { --region-${mapping}-${regionIdx}: #ffffff;}\n`;
                 }
                 continue;
             }
