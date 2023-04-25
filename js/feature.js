@@ -138,7 +138,13 @@ class Feature {
         for (let regionIdx in data) {
             let value = data[regionIdx][stat];
             let normalizedMod = normalizeValue(value, vminMod, vmaxMod);
-            let hex = this.makeHex(normalizedMod);
+            let hex = '';
+            if (normalizedMod == null || normalizedMod == undefined) {
+                hex = '#d3d3d3';
+            }
+            else {
+                hex = this.makeHex(normalizedMod);
+            }
             let stl = this.makeRegionColor(mapping, regionIdx, value, hex);
             this.style.insertRule(stl);
         }

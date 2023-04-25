@@ -13,8 +13,9 @@ export function clamp(x, min, max) {
 
 
 export function displayNumber(x) {
-    if (!x) return '0';
-    return (Math.abs(x) < .001 ?
+    if (x == 0) return '0';
+    else if (!x) return 'NaN';
+    else return (Math.abs(x) < .001 ?
         x.toExponential(DISPLAY_NUMBER_PRECISION) :
         x.toPrecision(DISPLAY_NUMBER_PRECISION));
 }
