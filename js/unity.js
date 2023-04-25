@@ -91,17 +91,7 @@ class Unity {
 
         let colors = []
         for (let region of regions) {
-            let regionIdx = region['idx'];
-            let color = '#FFFFFF';
-            if (region.value) {
-              if (isNaN(region.value)) {
-                color = '#D3D3D3';
-              }
-              else {
-                color = this.feature.getColor(regionIdx);
-              }
-            }
-            colors.push(`${color.toUpperCase()}`);
+            colors.push(`${this.feature.getColor(region['idx']).toUpperCase()}`);
         }
 
         this.instance.SendMessage('main', 'SetColors', colors.toString());
