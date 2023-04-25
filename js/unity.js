@@ -91,7 +91,15 @@ class Unity {
 
         let colors = []
         for (let region of regions) {
-          let color = this.feature.getColor(region['idx']) || '-';
+          let color = this.feature.getColor(region['idx'])
+          if (!color) {
+            if (region.atlas_id > 0) {
+              color = '-';
+            }
+            else {
+              color = '#FFFFFF';
+            }
+          }
           colors.push(`${color.toUpperCase()}`);
         }
 
