@@ -218,7 +218,7 @@ public class MiniBrainManager : MonoBehaviour
             {
                 if (_anySelected && visibilityb[i])
                 {
-                    CCFTreeNode cosmosArea = _modelControl.GetNode(_modelControl.GetCosmosID(_areas[i].AtlasID));
+                    CCFTreeNode cosmosArea = _modelControl.GetNode(_modelControl.GetCosmosID(_areas[i].ID));
                     if (!_cosmosAreasSelected.Contains(cosmosArea))
                         _cosmosAreasSelected.Add(cosmosArea);
                 }
