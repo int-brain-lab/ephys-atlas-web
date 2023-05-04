@@ -35,9 +35,9 @@ class Unity {
     init() {
         let that = this;
         createUnityInstance(document.getElementById("unity-canvas"), {
-            dataUrl: "Build/webgl.data",
-            frameworkUrl: "Build/webgl.framework.js",
-            codeUrl: "Build/webgl.wasm",
+            dataUrl: "Build/webgl.data.br",
+            frameworkUrl: "Build/webgl.framework.js.br",
+            codeUrl: "Build/webgl.wasm.br",
             companyName: "Daniel Birman @ UW",
             productName: "ephys_atlas",
             productVersion: "0.1.0",
