@@ -36,7 +36,7 @@ class App {
         this.feature = new Feature(this.db, this.state);
         this.region = new Region(this.db, this.state, this.feature, this.highlighter, this.selector);
         this.tooltip = new Tooltip(this.state, this.region, this.feature);
-        this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
+        // this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
         this.slice = new Slice(this.db, this.state, this.region, this.tooltip, this.highlighter, this.selector);
         this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector, this.unity);
         // TODO

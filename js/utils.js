@@ -199,7 +199,7 @@ export function getOS() {
 
 
 export async function downloadJSON(url) {
-    console.debug(`downloading ${url}...`);
+    // console.debug(`downloading ${url}...`);
     var r = await fetch(url, {
         headers: {
             'Content-Encoding': 'gzip',
@@ -207,6 +207,6 @@ export async function downloadJSON(url) {
         }
     });
     var out = await r.json();
-    console.debug("download finished");
+    // console.debug("download finished");
     return out;
 }

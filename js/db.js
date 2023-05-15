@@ -1,7 +1,6 @@
 export { DB };
 
-import { Splash } from "./splash.js";
-import { downloadJSON } from "./utils.js";
+import { Loader } from "./splash.js";
 
 
 
@@ -16,9 +15,10 @@ Changelog of the DB versions
 1       initial version
 2       2023-04-23          replaced "bwm" fset by "bwm_block", "bwm_choice" etc
 3       2023-04-25          added more BWM features
+4       2023-05-15          refactor JSON loading, 1 JSON file per slice axis
 */
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const DB_TABLES = {
     "colormaps": "name,colors",
 
@@ -35,31 +35,15 @@ const DB_TABLES = {
     "features_bwm_choice": "fname,data,statistics",
     "features_bwm_feedback": "fname,data,statistics",
     "features_bwm_stimulus": "fname,data,statistics",
-}
+};
 const FEATURE_SETS = ["ephys", "bwm_block", "bwm_choice", "bwm_feedback", "bwm_stimulus"];
-
-
-
-/*************************************************************************************************/
-/* Downloading                                                                                   */
-/*************************************************************************************************/
-
-async function downloadSlices() {
-    return downloadJSON(`/data/json/slices.json`);
+const URLS = {
+    'colormaps': '/data/json/colormaps.json',
+    'regions': '/data/json/regions.json',
+    'slices': (name) => `/data/json/slices_${name}.json`,
+    'features': (name) => `/data/json/features_${name}.json`,
 }
 
-async function downloadFeatures(name) {
-    console.assert(name);
-    return downloadJSON(`/data/json/features_${name}.json`);
-}
-
-async function downloadColormaps() {
-    return downloadJSON(`/data/json/colormaps.json`);
-}
-
-async function downloadRegions() {
-    return downloadJSON(`/data/json/regions.json`);
-}
 
 
 /*************************************************************************************************/
@@ -68,104 +52,82 @@ async function downloadRegions() {
 
 class DB {
     constructor(splash) {
-        this.splash = splash
+        this.splash = splash;
+        this.db = this.initDatabase();
 
-        // Declare the total splash progress for this component.
-        this.total = 6 + (3 * FEATURE_SETS.length) + 60;
-        this.splash.addTotal(this.total);
+        this.loaders = {
+            'colormaps': this.setupColormaps([1, 1, 1]),
+            'regions': this.setupRegions([2, 3, 1]),
 
-        this.db = new Dexie(DB_NAME);
-        this.db.version(DB_VERSION).stores(DB_TABLES).upgrade(tx => {
+            'slices_sagittal': this.setupSlices('sagittal', [10, 0, 5]),
+            'slices_coronal': this.setupSlices('coronal', [10, 0, 5]),
+            'slices_horizontal': this.setupSlices('horizontal', [10, 0, 5]),
+            'slices_top': this.setupSlices('top', [2, 0, 2]),
+            'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
+        };
+
+        // Features.
+        for (let fset of FEATURE_SETS) {
+            this.loaders[`features_${fset}`] = this.setupFeatures(fset, [2, 1, 1]);
+        }
+    }
+
+    /* Internal                                                                                  */
+    /*********************************************************************************************/
+
+    initDatabase() {
+        console.debug("initialize the database");
+        let db = new Dexie(DB_NAME);
+        db.version(DB_VERSION).stores(DB_TABLES).upgrade(tx => {
             console.warn("database version has increased, deleting the existing database");
             this.deleteDatabase();
-            // this.load();
         });
+        return db;
     }
 
     async load() {
-        await this.db.open();
-
-        console.debug("opening the database");
-
-        this.makeTables();
-
-        if (!await this.isComplete()) {
-
-            console.log("downloading and caching the data...");
-
-            let promises = [];
-
-
-            // add to splash total: 6
-
-            // Colormaps.
-            promises.push(this.addColormaps(1));
-
-            // Regions.
-            let pregions = this.downloadRegions(2);
-            pregions.then((regions) => {
-                promises.push(this.addRegions(regions, 3));
-            });
-            promises.push(pregions);
-
-
-            // add to splash total: 3 * FEATURE_SETS.length
-
-            // Features.
-            for (let fset of FEATURE_SETS) {
-                let pfeatures = this.downloadFeatures(fset, 2);
-                pfeatures.then((features) => {
-                    promises.push(this.addFeatures(fset, features, 1));
-                });
-                promises.push(pfeatures);
-            }
-
-
-            // add to splash total: 60
-
-            // SVG slices.
-            let slices = await this.downloadSlices(20);
-
-            // NOTE: wait for the big download to finish here.
-            // Once it's finished, we add the slice loading promises to the list.
-            promises.push(this.addSlices(slices, 'coronal', 10));
-            promises.push(this.addSlices(slices, 'horizontal', 10));
-            promises.push(this.addSlices(slices, 'sagittal', 10));
-            promises.push(this.addSlices(slices, 'top', 5));
-            promises.push(this.addSlices(slices, 'swanson', 5));
-
-            await Promise.all(promises);
-            console.log("all done!");
+        // Start the loading process of each loader.
+        let p = []
+        for (let loader in this.loaders) {
+            console.debug(`start loader '${loader}'`)
+            p.push(this.loaders[loader].start());
         }
-        else {
-            this.splash.add(this.total);
-        }
+        await Promise.all(p);
+    }
+
+    deleteDatabase() {
+        console.warn("deleting the database");
+        this.db.close();
+        Dexie.delete(DB_NAME);
     }
 
     /* Colormaps                                                                                 */
     /*********************************************************************************************/
 
-    async addColormaps(progress) {
-        let cmaps = await downloadColormaps();
+    setupColormaps(progress) {
+        return new Loader(
+            this.db, this.splash,
+            'colormaps', URLS['colormaps'], this.colormapsLoaded, progress);
+    }
+
+    colormapsLoaded(cmaps) {
         let items = [];
         for (let cmap in cmaps) {
             items.push({ "name": cmap, "colors": cmaps[cmap] });
         }
-        await this.colormaps.bulkPut(items);
-        this.splash.add(progress);
+        return items;
     }
 
     /* Regions                                                                                   */
     /*********************************************************************************************/
 
-    async downloadRegions(progress) {
-        let regions = await downloadRegions();
-        console.debug('done downloading regions');
-        this.splash.add(progress);
-        return regions;
+    setupRegions(progress) {
+        return new Loader(
+            this.db, this.splash, 'regions',
+            URLS['regions'], this.regionsLoaded, progress);
     }
 
-    async addRegions(regions, progress) {
+    regionsLoaded(regions) {
         let items = [];
         for (let mapping in regions) {
             items.push({
@@ -173,28 +135,33 @@ class DB {
                 'data': regions[mapping],
             });
         }
-        await this[`regions`].bulkPut(items);
-        console.debug(`done loading regions`);
-        this.splash.add(progress);
+        return items;
+    }
+
+    /* Slices                                                                                    */
+    /*********************************************************************************************/
+
+    setupSlices(name, progress) {
+        return new Loader(
+            this.db, this.splash,
+            `slices_${name}`, URLS['slices'](name), this.slicesLoaded, progress);
+    }
+
+    slicesLoaded(slices) {
+        return Object.values(slices)[0];
     }
 
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async downloadFeatures(fset, progress) {
-        let features = await downloadFeatures(fset);
-        console.debug('done downloading features');
-        this.splash.add(progress);
-        return features;
+    setupFeatures(fset, progress) {
+        return new Loader(
+            this.db, this.splash,
+            `features_${fset}`, URLS['features'](fset), this.featuresLoaded, progress);
     }
 
-    async addFeatures(fset, features, progress) {
-        // features: {mapping: {fname: {data: ..., statistics: ...}}}
-        console.assert(features);
-        // console.log(features);
-
+    featuresLoaded(features) {
         let items = [];
-
         for (let mapping in features) {
             let fet = features[mapping];
             for (let fname in fet) {
@@ -205,78 +172,32 @@ class DB {
                 });
             }
         }
-        await this[`features_${fset}`].bulkPut(items);
-        console.debug(`done loading ${fset} features`);
-        this.splash.add(progress);
-    }
-
-    /* Slices                                                                                    */
-    /*********************************************************************************************/
-
-    async downloadSlices(progress) {
-        let slices = await downloadSlices();
-        console.debug('done downloading slices');
-        this.splash.add(progress);
-        return slices;
-    }
-
-    async addSlices(slices, axis, progress) {
-        let items = slices[axis];
-        // HACK: these two particular axes do not have a list of strings as there is only 1 slice
-        if (axis == "top" || axis == "swanson") {
-            items = [{ "idx": 0, "svg": items }];
-        }
-
-        // Put the SVG data in the database.
-        await this[`slices_${axis}`].bulkPut(items);
-        console.debug(`done loading ${axis} slices`);
-        this.splash.add(progress);
-    }
-
-    /* Internal                                                                                  */
-    /*********************************************************************************************/
-
-    makeTables() {
-        for (let name in DB_TABLES) {
-            this[name] = this.db.table(name);
-        }
-    }
-
-    async isComplete() {
-        return await this.slices_swanson.count() > 0;
-    }
-
-    deleteDatabase() {
-        console.warn("deleting the database");
-        this.db.close();
-        Dexie.delete(DB_NAME);
+        return items;
     }
 
     /* Getters                                                                                   */
     /*********************************************************************************************/
 
-    async getSlice(axis, idx) {
+    getSlice(axis, idx) {
         console.assert(axis);
-        return this[`slices_${axis}`].get(idx || 0);
+        return this.loaders[`slices_${axis}`].get(idx || 0);
     }
 
-    async getFeatures(fset, mapping, fname) {
+    getFeatures(fset, mapping, fname) {
         console.assert(fset);
         console.assert(mapping);
         console.assert(fname);
-        let table = this[`features_${fset}`];
-        if (!table) {
-            console.error(`feature table for fset ${fset} does not exist`);
-            return;
-        }
-        return table.get(`${mapping}_${fname}`);
+
+        return this.loaders[`features_${fset}`].get(`${mapping}_${fname}`);
     }
 
-    async getRegions(mapping) {
-        return await this[`regions`].get(mapping);
+    getRegions(mapping) {
+        console.assert(mapping);
+        return this.loaders['regions'].get(mapping);
     }
 
-    async getColormap(cmap) {
-        return await this.colormaps.get(cmap);
+    getColormap(cmap) {
+        console.assert(cmap);
+        return this.loaders['colormaps'].get(cmap);
     }
 }
