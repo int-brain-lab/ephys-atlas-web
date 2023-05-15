@@ -21,14 +21,13 @@ Changelog of the DB versions
 const DB_VERSION = 4;
 const DB_TABLES = {
     "colormaps": "name,colors",
+    "regions": "mapping,data",
 
     "slices_coronal": "idx,svg",
     "slices_horizontal": "idx,svg",
     "slices_sagittal": "idx,svg",
     "slices_top": "idx,svg",
     "slices_swanson": "idx,svg",
-
-    "regions": "mapping,data",
 
     "features_ephys": "fname,data,statistics",
     "features_bwm_block": "fname,data,statistics",
@@ -53,7 +52,8 @@ const URLS = {
 class DB {
     constructor(splash) {
         this.splash = splash;
-        this.db = this.initDatabase();
+        // this.db = this.initDatabase();
+        this.db = null;
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -75,15 +75,15 @@ class DB {
     /* Internal                                                                                  */
     /*********************************************************************************************/
 
-    initDatabase() {
-        console.debug("initialize the database");
-        let db = new Dexie(DB_NAME);
-        db.version(DB_VERSION).stores(DB_TABLES).upgrade(tx => {
-            console.warn("database version has increased, deleting the existing database");
-            this.deleteDatabase();
-        });
-        return db;
-    }
+    // initDatabase() {
+    //     console.debug("initialize the database");
+    //     let db = new Dexie(DB_NAME);
+    //     db.version(DB_VERSION).stores(DB_TABLES).upgrade(tx => {
+    //         console.warn("database version has increased, deleting the existing database");
+    //         this.deleteDatabase();
+    //     });
+    //     return db;
+    // }
 
     async load() {
         // Start the loading process of each loader.
@@ -95,19 +95,19 @@ class DB {
         await Promise.all(p);
     }
 
-    deleteDatabase() {
-        console.warn("deleting the database");
-        this.db.close();
-        Dexie.delete(DB_NAME);
-    }
+    // deleteDatabase() {
+    //     console.warn("deleting the database");
+    //     this.db.close();
+    //     Dexie.delete(DB_NAME);
+    // }
 
     /* Colormaps                                                                                 */
     /*********************************************************************************************/
 
     setupColormaps(progress) {
         return new Loader(
-            this.db, this.splash,
-            'colormaps', URLS['colormaps'], this.colormapsLoaded, progress);
+            this.db, this.splash, 'colormaps', 'name',
+            URLS['colormaps'], this.colormapsLoaded, progress);
     }
 
     colormapsLoaded(cmaps) {
@@ -123,7 +123,7 @@ class DB {
 
     setupRegions(progress) {
         return new Loader(
-            this.db, this.splash, 'regions',
+            this.db, this.splash, 'regions', 'mapping',
             URLS['regions'], this.regionsLoaded, progress);
     }
 
@@ -143,8 +143,8 @@ class DB {
 
     setupSlices(name, progress) {
         return new Loader(
-            this.db, this.splash,
-            `slices_${name}`, URLS['slices'](name), this.slicesLoaded, progress);
+            this.db, this.splash, `slices_${name}`, 'idx',
+            URLS['slices'](name), this.slicesLoaded, progress);
     }
 
     slicesLoaded(slices) {
@@ -156,8 +156,8 @@ class DB {
 
     setupFeatures(fset, progress) {
         return new Loader(
-            this.db, this.splash,
-            `features_${fset}`, URLS['features'](fset), this.featuresLoaded, progress);
+            this.db, this.splash, `features_${fset}`, 'fname',
+            URLS['features'](fset), this.featuresLoaded, progress);
     }
 
     featuresLoaded(features) {

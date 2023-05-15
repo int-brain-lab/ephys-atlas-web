@@ -61,23 +61,24 @@ class Splash {
 
 class Loader {
     constructor(
-        db, splash,
-        table_name, url, process,
-        [download_splash, process_splash, store_splash],
+        db, splash, table_name, idx_name,
+        url, process, [download_splash, process_splash, store_splash],
     ) {
-        console.assert(db);
+        // console.assert(db);
         console.assert(splash);
         console.assert(table_name);
         console.assert(url);
 
-        this.db = db;
+        // this.db = db;
         this.splash = splash;
         this.url = url;
         this.process = process; // a function
 
         // DB table.
         this.table_name = table_name
-        this.table = this.db.table(this.table_name);
+        this.idx_name = idx_name;
+        // this.table = this.db.table(this.table_name);
+        // this.table = null;
 
         // Splash progress for the different steps.
         this.download_splash = download_splash; // a number
@@ -91,41 +92,54 @@ class Loader {
 
     async start() {
 
-        let n = await this.table.count();
+        // let n = await this.table.count();
 
-        if (n > 0) {
-            this.splash.add(this.total_splash);
-        }
+        // if (n > 0) {
+        //     this.splash.add(this.total_splash);
+        // }
 
-        else {
-            console.debug(`downloading ${this.url}...`)
+        // else {
+        console.debug(`downloading ${this.url}...`)
 
-            let dl = await downloadJSON(this.url);
-            this.splash.add(this.download_splash);
+        let dl = await downloadJSON(this.url);
+        this.splash.add(this.download_splash);
 
-            console.debug(`done downloading ${this.url}`)
+        console.debug(`done downloading ${this.url}`)
 
-            // Handle undefined process function.
-            let items = dl;
-            if (this.process)
-                items = await this.process(dl);
-            this.splash.add(this.process_splash);
+        // Handle undefined process function.
+        let items = dl;
+        if (this.process)
+            items = await this.process(dl);
+        this.splash.add(this.process_splash);
 
-            console.assert(items);
-            console.assert(items.length > 0);
-            console.debug(`adding ${items.length} items to ${this.table_name}.`)
-            this.table.bulkPut(items).then(() => {
-                this.splash.add(this.store_splash);
-                console.log(`done adding items to ${this.table_name}.`);
-            }).catch(Dexie.BulkError, function (e) {
-                console.error(`error: ${e}`);
-            });
-        }
+        console.assert(items);
+        console.assert(items.length > 0);
+        console.debug(`adding ${items.length} items to ${this.table_name}.`)
+        this.table = items;
+
+        this.splash.add(this.store_splash);
+        console.log(`done adding items to ${this.table_name}.`);
+
+        // this.table.bulkPut(items).then(() => {
+        //     this.splash.add(this.store_splash);
+        //     console.log(`done adding items to ${this.table_name}.`);
+        // }).catch(function (e) {
+        //     console.error(`error: ${e}`);
+        // });
+        // }
 
     }
 
     get(key) {
         console.assert(this.table);
-        return this.table.get(key);
+        // return this.table.get(key);
+        // this.table[key];
+
+        let res = this.table.find((item) => item[this.idx_name] === key);
+        // console.log(key, res);
+
+        return new Promise((resolve) => {
+            resolve(res);
+        });
     }
 };
