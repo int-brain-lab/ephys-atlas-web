@@ -69,11 +69,12 @@ class Unity {
     async setAreas() {
         if (!this.instance) return;
 
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        let regions = this.db.getRegions(this.state.mapping);
 
         // Construct the list of region acronyms to send to Unity.
         let acronyms = []
-        for (let region of regions) {
+        for (let regionIdx in regions) {
+            let region = regions[regionIdx];
             let acronym = region['acronym'];
             let h = region['atlas_id'] < 0 ? 'l' : 'r';
             acronym = h + acronym;
@@ -87,20 +88,21 @@ class Unity {
     async setColors() {
         if (!this.instance) return;
 
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        let regions = this.db.getRegions(this.state.mapping);
 
         let colors = []
-        for (let region of regions) {
-          let color = this.feature.getColor(region['idx'])
-          if (!color) {
-            if (region.atlas_id > 0) {
-              color = '-';
+        for (let regionIdx in regions) {
+            let color = this.feature.getColor(regionIdx)
+            let region = regions[regionIdx];
+            if (!color) {
+                if (region.atlas_id > 0) {
+                    color = '-';
+                }
+                else {
+                    color = '#FFFFFF';
+                }
             }
-            else {
-              color = '#FFFFFF';
-            }
-          }
-          colors.push(`${color.toUpperCase()}`);
+            colors.push(`${color.toUpperCase()}`);
         }
 
         this.instance.SendMessage('main', 'SetColors', colors.toString());
@@ -110,19 +112,18 @@ class Unity {
     async setVisibility() {
         if (!this.instance) return;
 
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
+        let regions = this.db.getRegions(this.state.mapping);
 
         let visibility = [];
         let anySelected = this.state.selected.size > 0;
 
         if (anySelected) {
-            for (let region of regions) {
-                let regionIdx = region['idx'];
+            for (let regionIdx in regions) {
                 visibility.push(this.state.selected.has(regionIdx));
             }
         }
         else {
-            for (let region of regions) {
+            for (let region in regions) {
                 visibility.push(true);
             }
         }

@@ -75,16 +75,6 @@ class DB {
     /* Internal                                                                                  */
     /*********************************************************************************************/
 
-    // initDatabase() {
-    //     console.debug("initialize the database");
-    //     let db = new Dexie(DB_NAME);
-    //     db.version(DB_VERSION).stores(DB_TABLES).upgrade(tx => {
-    //         console.warn("database version has increased, deleting the existing database");
-    //         this.deleteDatabase();
-    //     });
-    //     return db;
-    // }
-
     async load() {
         // Start the loading process of each loader.
         let p = []
@@ -95,47 +85,18 @@ class DB {
         await Promise.all(p);
     }
 
-    // deleteDatabase() {
-    //     console.warn("deleting the database");
-    //     this.db.close();
-    //     Dexie.delete(DB_NAME);
-    // }
-
     /* Colormaps                                                                                 */
     /*********************************************************************************************/
 
     setupColormaps(progress) {
-        return new Loader(
-            this.db, this.splash, 'colormaps', 'name',
-            URLS['colormaps'], this.colormapsLoaded, progress);
-    }
-
-    colormapsLoaded(cmaps) {
-        let items = [];
-        for (let cmap in cmaps) {
-            items.push({ "name": cmap, "colors": cmaps[cmap] });
-        }
-        return items;
+        return new Loader(this.splash, URLS['colormaps'], null, progress);
     }
 
     /* Regions                                                                                   */
     /*********************************************************************************************/
 
     setupRegions(progress) {
-        return new Loader(
-            this.db, this.splash, 'regions', 'mapping',
-            URLS['regions'], this.regionsLoaded, progress);
-    }
-
-    regionsLoaded(regions) {
-        let items = [];
-        for (let mapping in regions) {
-            items.push({
-                'mapping': mapping,
-                'data': regions[mapping],
-            });
-        }
-        return items;
+        return new Loader(this.splash, URLS['regions'], null, progress);
     }
 
     /* Slices                                                                                    */
@@ -143,12 +104,7 @@ class DB {
 
     setupSlices(name, progress) {
         return new Loader(
-            this.db, this.splash, `slices_${name}`, 'idx',
-            URLS['slices'](name), this.slicesLoaded, progress);
-    }
-
-    slicesLoaded(slices) {
-        return Object.values(slices)[0];
+            this.splash, URLS['slices'](name), null, progress);
     }
 
     /* Features                                                                                  */
@@ -156,8 +112,7 @@ class DB {
 
     setupFeatures(fset, progress) {
         return new Loader(
-            this.db, this.splash, `features_${fset}`, 'fname',
-            URLS['features'](fset), this.featuresLoaded, progress);
+            this.splash, URLS['features'](fset), this.featuresLoaded, progress);
     }
 
     featuresLoaded(features) {
@@ -165,11 +120,10 @@ class DB {
         for (let mapping in features) {
             let fet = features[mapping];
             for (let fname in fet) {
-                items.push({
-                    'fname': `${mapping}_${fname}`,
+                items[`${mapping}_${fname}`] = {
                     'data': fet[fname]['data'],
                     'statistics': fet[fname]['statistics'],
-                });
+                };
             }
         }
         return items;
@@ -180,7 +134,8 @@ class DB {
 
     getSlice(axis, idx) {
         console.assert(axis);
-        return this.loaders[`slices_${axis}`].get(idx || 0);
+        console.assert(this.loaders[`slices_${axis}`]);
+        return this.loaders[`slices_${axis}`].get((idx || 0).toString());
     }
 
     getFeatures(fset, mapping, fname) {
@@ -193,11 +148,17 @@ class DB {
 
     getRegions(mapping) {
         console.assert(mapping);
-        return this.loaders['regions'].get(mapping);
+        let regions = this.loaders['regions'].get(mapping);
+        console.assert(regions);
+        console.assert(Object.keys(regions).length > 0);
+        return regions;
     }
 
     getColormap(cmap) {
         console.assert(cmap);
-        return this.loaders['colormaps'].get(cmap);
+        let colors = this.loaders['colormaps'].get(cmap);
+        console.assert(colors);
+        console.assert(colors.length > 0);
+        return colors;
     }
 }

@@ -105,7 +105,7 @@ def float_json(x):
 
 def save_json(d, filename):
     with open(filename, "w") as f:
-        json.dump(d, f, indent=1)
+        json.dump(d, f, indent=1, sort_keys=True)
 
 
 def base64_encode(input_string):
@@ -376,6 +376,20 @@ def run_all(path):
     # Step 8.
     make_slices_json(path)
 
+# -------------------------------------------------------------------------------------------------
+# Slice processing
+# -------------------------------------------------------------------------------------------------
+
+
+def process_slices():
+    pass
+    # for axis in ('coronal', 'horizontal', 'sagittal', 'swanson', 'top'):
+    #     with open(DATA_DIR / f'json/slices_{axis}.json', 'r') as f:
+    #         slices = json.load(f)
+    #     slices = slices[axis]
+    #     with open(DATA_DIR / f'json/slices_{axis}.json', 'w') as f:
+    #         json.dump(slices, f, indent=1, sort_keys=True)
+
 
 # -------------------------------------------------------------------------------------------------
 # Region processing
@@ -386,20 +400,19 @@ def get_mappings():
     # {mapping_name: [{idx: ..., atlas_id: ..., acronym: ..., name: ..., hex: ...}]}
     out = {}
     for mapping in MAPPINGS:
-        regions = pd.read_parquet(
-            DATA_DIR / f'pqt/{mapping}_regions.pqt')
-        out[mapping] = [
-            {
-                'idx': abs(idx_),
+        regions = pd.read_parquet(DATA_DIR / f'pqt/{mapping}_regions.pqt')
+        out[mapping] = {
+            abs(idx_): {
                 'atlas_id': atlas_id_,
                 'acronym': acronym_,
                 'name': name_,
                 'hex': hex_,
             }
             for idx_, atlas_id_, acronym_, name_, hex_ in zip(
-                regions['idx'], regions['atlas_id'], regions['acronym'], regions['atlas_name'], regions['hex'])
-        ]
-        out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
+                regions['idx'], regions['atlas_id'], regions['acronym'],
+                regions['atlas_name'], regions['hex'])
+        }
+        # out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
     return out
 
 
@@ -415,7 +428,7 @@ def generate_default_regions_css(mappings, mapping):
     css = f'/* default SVG path background color for mapping {mapping} */\n'
     css = ''.join(
         dedent(f'''
-        svg path.{mapping}_region_{r['idx']} {{ fill: var(--region-{mapping}-{r['idx']}); /* {r['acronym']} */ }}''') for r in mappings[mapping])
+        svg path.{mapping}_region_{idx} {{ fill: var(--region-{mapping}-{idx}); /* {r['acronym']} */ }}''') for idx, r in mappings[mapping].items())
     css += '\n\n'
     write_text(css, DATA_DIR / f'css/default_region_colors_{mapping}.css')
 
@@ -431,16 +444,16 @@ def generate_regions_css(mappings):
     for mapping, regions in mappings.items():
 
         colors = '\n'.join(
-            f'''    --region-{mapping}-{r['idx']}: {r['hex']}; /* {r['acronym']} */ '''
-            for r in regions)
+            f'''    --region-{mapping}-{idx}: {r['hex']}; /* {r['acronym']} */ '''
+            for idx, r in regions.items())
         css += f'/* Mapping {mapping}: default region colors */\n\n:root {{\n\n{colors}\n\n}}\n'
 
         css += ''.join(
             dedent(f'''
             /* {r['acronym']} */
-            #bar-plot-container li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{mapping}-{r['idx']}); }}
-            #bar-plot-container li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{mapping}-{r['idx']}); }}
-            ''') for r in regions)
+            #bar-plot-container li.{mapping}_region_{idx} .bar {{ background-color: var(--region-{mapping}-{idx}); }}
+            #bar-plot-container li.{mapping}_region_{idx} .acronym {{ color: var(--region-{mapping}-{idx}); }}
+            ''') for idx, r in regions.items())
 
         css += '\n\n'
     write_text(css, DATA_DIR / 'css/region_colors.css')
@@ -485,9 +498,8 @@ def generate_features_groupedby(br, mapping, df, feature_names):
 
     for fet in feature_names:
         # Collect feature values.
-        for region in regions:
+        for regionIdx, region in regions.items():
             atlas_id = region['atlas_id']
-            regionIdx = region['idx']
             d = {}  # stat: value
             for stat, dfg in dfs.items():
                 if dfg is None:
@@ -511,8 +523,8 @@ class FeatureBrainRegions:
         # for each mapping a dictionary atlas_id => idx
         self.atlas_id_map = {
             mapping: {
-                r['atlas_id']: r['idx']
-                for r in regions
+                r['atlas_id']: idx
+                for idx, r in regions.items()
             } for mapping, regions in self.mappings.items()
         }
 
@@ -527,7 +539,7 @@ class FeatureBrainRegions:
 
     def get_regions(self, mapping):
         # return the kept brain regions
-        return [r for r in self.mappings[mapping] if r['idx'] in self.kept[mapping]]
+        return {idx: r for idx, r in self.mappings[mapping].items() if idx in self.kept[mapping]}
 
 
 # -------------------------------------------------------------------------------------------------
@@ -717,11 +729,12 @@ def generate_custom_features():
 if __name__ == '__main__':
 
     # generate_colormaps()
-    # mappings = get_mappings()
+    # process_slices()
+    mappings = get_mappings()
     # generate_regions_json(mappings)
     # generate_regions_css(mappings)
     # generate_ephys_features()
-    generate_bwm_features()
+    # generate_bwm_features()
     # generate_custom_features()
 
     ##############

@@ -181,20 +181,21 @@ class Slice {
     /*********************************************************************************************/
 
     _setSlice(axis, idx) {
-        this.db.getSlice(axis, idx).then((item) => {
-            if (item) {
-                let svg = item["svg"];
-                document.getElementById(`figure-${axis}`).innerHTML = svg;
+        let svg = this.db.getSlice(axis, idx);
+        if (svg) {
+            document.getElementById(`figure-${axis}`).innerHTML = svg;
 
-                // Update the global state.
-                this.state[axis] = idx;
-            }
+            // Update the global state.
+            this.state[axis] = idx;
+        }
+        else {
+            console.warn(`${idx} not in ${axis} slice`);
+        }
 
-            // call setSagittal() etc to update the hlines and vlines.
-            if (SLICE_AXES.includes(axis)) {
-                this[`set_${axis}`](idx);
-            }
-        });
+        // call setSagittal() etc to update the hlines and vlines.
+        if (SLICE_AXES.includes(axis)) {
+            this[`set_${axis}`](idx);
+        }
     }
 
     set_sagittal(idx) {

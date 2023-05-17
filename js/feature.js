@@ -63,7 +63,7 @@ class Feature {
 
     async setColormap(cmap) {
         this.state.cmap = cmap;
-        this.colors = (await this.db.getColormap(this.state.cmap))['colors'];
+        this.colors = this.db.getColormap(this.state.cmap);
         this.update();
     }
 

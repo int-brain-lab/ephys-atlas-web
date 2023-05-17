@@ -69,10 +69,8 @@ class Region {
     }
 
     setColormap() {
-        this.db.getColormap(this.state.cmap).then((c) => {
-            this.colors = c['colors'];
-            this.updateColormap(this.state.cmapmin, this.state.cmapmax);
-        });
+        this.colors = this.db.getColormap(this.state.cmap)
+        this.updateColormap(this.state.cmapmin, this.state.cmapmax);
     }
 
     setState(state) {
@@ -122,17 +120,19 @@ class Region {
         this.update();
     }
 
-    async makeRegionItems() {
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
-        regions = regions.sort((a, b) => a['idx'] - b['idx']);
+    makeRegionItems() {
+        let regions = this.db.getRegions(this.state.mapping);
+        console.assert(regions);
+        // regions = regions.sort((a, b) => a['idx'] - b['idx']);
         let s = "";
-        for (let region of regions) {
-
+        for (let idx in regions) {
+            let region = regions[idx];
+            console.assert(region);
             // NOTE: skip void region
             if (region["acronym"] == "void") continue;
 
             s += makeRegionItem(
-                this.state.mapping, region["idx"], region["acronym"], region["name"]);
+                this.state.mapping, idx, region["acronym"], region["name"]);
         }
         this.regionList.innerHTML = s;
     }
@@ -186,9 +186,10 @@ class Region {
         search = search.toLowerCase();
 
         let style = '';
-        let regions = (await this.db.getRegions(mapping))['data'];
-        for (let region of regions) {
-            let regionIdx = region["idx"];
+        let regions = this.db.getRegions(mapping);
+        for (let regionIdx in regions) {
+            let region = regions[regionIdx];
+            console.assert(region);
             let name = region["name"];
             let acronym = region["acronym"];
             let value = values[regionIdx];
@@ -238,13 +239,10 @@ class Region {
         this.updateSelection();
     }
 
-    async getInfo(regionIdx) {
-        let regions = (await this.db.getRegions(this.state.mapping))['data'];
-        for (let region of regions) {
-            if (region['idx'] == regionIdx) {
-                return region;
-            }
-        }
+    getInfo(regionIdx) {
+        let regions = this.db.getRegions(this.state.mapping);
+        let region = regions[regionIdx];
+        if (region) return region;
         console.warn(`region #${regionIdx} could not be found`);
     }
 
