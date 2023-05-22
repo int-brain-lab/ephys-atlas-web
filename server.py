@@ -40,23 +40,35 @@ def response_json_file(path):
     return Response(text, headers={'Content-Type': 'application/json'})
 
 
-def delete_old_files(path):
+def delete_old_files(dir_path=FEATURES_DIR):
+
+    # Cutoff date
     today = datetime.date.today()
     cutoff_date = today - datetime.timedelta(days=DELETE_AFTER_DAYS)
 
     i = 0
-    for file_name in os.listdir(path):
-        if FEATURES_FILE_REGEX.match(file_name):
-            # Extract the date portion from the filename
-            file_date_str = file_name[:8]
-            file_date = datetime.datetime.strptime(
-                file_date_str, '%Y%m%d').date()
+    for file_name in dir_path.iterdir():
+        # Go through all files YYYYMMDD-uuid.json
+        if FEATURES_FILE_REGEX.match(str(file_name.name)):
+            file_path = dir_path / file_name
+
+            # # Extract the date portion from the filename
+            # file_date_str = file_name[:8]
+            # file_date = datetime.datetime.strptime(file_date_str, '%Y%m%d').date()
+
+            # Find the last access date.
+            try:
+                file_date = datetime.date.fromtimestamp(
+                    file_path.stat().st_atime)
+            except OSError:
+                pass
+
+            # Delete files that have not been accessed recently.
             if file_date < cutoff_date:
-                file_path = os.path.join(path, file_name)
-                os.remove(file_path)
+                file_path.unlink()
                 print(f"Deleted file: {file_name}")
                 i += 1
-    print(f"Successfully deleted {i} files in `{path}`.")
+    print(f"Successfully deleted {i} file(s) in `{dir_path}`.")
     return i
 
 

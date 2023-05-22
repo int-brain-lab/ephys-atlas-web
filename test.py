@@ -7,10 +7,11 @@
 
 import datetime
 import uuid
-from unittest import mock, main
+from unittest import main
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from freezegun import freeze_time
 from flask_testing import TestCase
 import server
 from server import app, delete_old_files, DELETE_AFTER_DAYS
@@ -81,23 +82,15 @@ class AppTestCase(TestCase):
         self.assert200(response)
         self.assertEqual(response.json.get("example", None), "data")
 
-    def test_delete_old_files(self):
+    @freeze_time(datetime.date.today() + datetime.timedelta(days=DELETE_AFTER_DAYS - 2))
+    def test_delete_old_files_1(self):
         today = datetime.date.today()
+        self.assertEqual(delete_old_files(self.features_dir), 0)
 
-        with mock.patch('datetime.date') as mock_date:
-            mock_date.today.return_value = today + \
-                datetime.timedelta(days=DELETE_AFTER_DAYS - 2)
-            self.assertEqual(delete_old_files(self.features_dir), 0)
-
-            mock_date.today.return_value = today + \
-                datetime.timedelta(days=DELETE_AFTER_DAYS + 2)
-            self.assertEqual(delete_old_files(self.features_dir), 1)
-
-
-# # Patch the FEATURES_DIR for all methods of AppTestCase
-# patcher = patch.object(
-#     AppTestCase, 'features_dir', new_callable=lambda: FEATURES_DIR)
-# patcher.start()
+    @freeze_time(datetime.date.today() + datetime.timedelta(days=DELETE_AFTER_DAYS + 2))
+    def test_delete_old_files_2(self):
+        today = datetime.date.today()
+        self.assertEqual(delete_old_files(self.features_dir), 1)
 
 
 if __name__ == '__main__':
