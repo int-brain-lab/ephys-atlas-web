@@ -6,6 +6,14 @@ import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 
 
 /*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+const SLICE_THROTTLE = 50;
+
+
+
+/*************************************************************************************************/
 /* Util functions                                                                                */
 /*************************************************************************************************/
 
@@ -22,7 +30,7 @@ function isRoot(e) {
 
 class Slice {
     constructor(db, state, region, tooltip, highlighter, selector) {
-        this.setSlice = throttle(this._setSlice, 30);
+        this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
 
         this.db = db;
         this.state = state;

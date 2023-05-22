@@ -1,6 +1,6 @@
 export { Panel };
 
-import { clamp, setOptions } from "./utils.js";
+import { clamp, setOptions, throttle } from "./utils.js";
 import { DEFAULT_FEATURE } from "./state.js";
 
 
@@ -28,6 +28,7 @@ const FEATURE_NAMES = {
     ],
 };
 
+const CMAP_RANGE_THROTTLE = 100; // number of milliseconds between updates
 
 
 /*************************************************************************************************/
@@ -188,11 +189,13 @@ class Panel {
     }
 
     setupColormapMin() {
-        this.icmapmin.addEventListener('input', (e) => { this._updateColormapRange(); });
+        this.icmapmin.addEventListener(
+            'input', throttle((e) => { this._updateColormapRange(); }, CMAP_RANGE_THROTTLE));
     }
 
     setupColormapMax() {
-        this.icmapmax.addEventListener('input', (e) => { this._updateColormapRange(); });
+        this.icmapmax.addEventListener(
+            'input', throttle((e) => { this._updateColormapRange(); }, CMAP_RANGE_THROTTLE));
     }
 
     setupClearButton() {

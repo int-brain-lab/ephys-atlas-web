@@ -216,7 +216,8 @@ body {
     opacity: 90%;
     position: absolute;
     top: 10px;
-    left: calc(50% + 500px);
+    right: 10px;
+    /* left: calc(50% + 500px); */
     width: var(--left-panel-width);
     z-index: 100;
 }
@@ -375,7 +376,7 @@ body {
     margin: 0;
     position: fixed;
     top: 10px;
-    left: 20px;
+    left: 10px;
     z-index: 1000;
 
 }

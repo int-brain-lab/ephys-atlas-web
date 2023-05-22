@@ -94,7 +94,9 @@ class Feature {
     }
 
     setDefaultColors() {
-        this.defaultStyle.href = `data/css/default_region_colors_${this.state.mapping}.css`;
+        let href = `data/css/default_region_colors_${this.state.mapping}.css`;
+        if (!this.defaultStyle.href.includes(href))
+            this.defaultStyle.href = href;
     }
 
     async update() {
