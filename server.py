@@ -22,6 +22,8 @@ ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
 FEATURES_FILE_REGEX = re.compile(r'^\d{8}-\S+\.json$')
 DELETE_AFTER_DAYS = 180
+NATIVE_FNAMES = ('ephys', 'bwm_block', 'bwm_choice',
+                 'bwm_feedback', 'bwm_stimulus')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -105,6 +107,7 @@ def save_features():
 
 @app.route('/api/features', methods=['GET'])
 def get_features_index():
+    # NOTE: useless, can delete?
     return response_json_file(FEATURES_DIR / 'index.json')
 
 
@@ -114,6 +117,11 @@ def get_features_index():
 
 @app.route('/api/features/<uuid>', methods=['GET'])
 def get_features(uuid):
+    # Aliases for native features.
+    if uuid in NATIVE_FNAMES:
+        return response_json_file(
+            ROOT_DIR / 'data' / 'json' / f'features_{uuid}.json')
+
     # Search for files matching the provided uuid.
     files = FEATURES_DIR.glob(f'*-{uuid}.json')
 

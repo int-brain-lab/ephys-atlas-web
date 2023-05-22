@@ -82,6 +82,15 @@ class AppTestCase(TestCase):
         self.assert200(response)
         self.assertEqual(response.json.get("example", None), "data")
 
+    def test_get_native_features(self):
+        response = self.client.get(f'/api/features/ephys')
+        self.assert200(response)
+        self.assertTrue("psd_alpha" in response.text)
+
+        response = self.client.get(f'/api/features/bwm_block')
+        self.assert200(response)
+        self.assertTrue("decoding" in response.text)
+
     @freeze_time(datetime.date.today() + datetime.timedelta(days=DELETE_AFTER_DAYS - 2))
     def test_delete_old_files_1(self):
         today = datetime.date.today()
