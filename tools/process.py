@@ -17,6 +17,7 @@ from pathlib import Path
 from textwrap import dedent
 from xml.dom import minidom
 
+import requests
 import lxml.etree as le
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -87,6 +88,7 @@ BWM_EXTRA_FNAMES = (
     'decoding_frac_significant',
     'decoding_significant',
 )
+FEATURES_UPLOAD_URL = 'https://ephysatlas.internationalbrainlab.org/api/features'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -634,11 +636,14 @@ def generate_bwm_features():
 
 # -------------------------------------------------------------------------------------------------
 # Custom features
+# NOTE: OBSOLETE, this was to encode custom features directly in the query string, but browsers
+# do not support query strings that long.
 # -------------------------------------------------------------------------------------------------
 
 class FeatureGenerator:
     def __init__(self, fset='', mapping='Beryl'):
         assert fset
+        mapping = mapping.title()
         self.br = BrainRegions()
         self.fset = fset
         self.mapping = mapping
@@ -704,7 +709,7 @@ class FeatureGenerator:
 
 
 def generate_custom_features():
-    mapping = 'Allen'
+    mapping = 'allen'
 
     fg = FeatureGenerator('custom', mapping)
     br = fg.br
@@ -723,9 +728,32 @@ def generate_custom_features():
 
 
 # -------------------------------------------------------------------------------------------------
-# Entry-point
+# Generate custom features for upload
 # -------------------------------------------------------------------------------------------------
 
+def make_features(name, values, mapping='beryl'):
+    m = values.mean()
+    return {
+        name: {
+            'data': {atlas_id: {'mean': value} for atlas_id, value in values.items()},
+            'statistics': {'mean': m},
+        }
+    }
+
+
+def upload_features(uuid, features):
+    json_data = json.dumps(features, sort_keys=True)
+    payload = {
+        'uuid': uuid,
+        'json': json_data
+    }
+    response = requests.post(FEATURES_UPLOAD_URL, data=payload)
+    return response
+
+
+# -------------------------------------------------------------------------------------------------
+# Entry-point
+# -------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
 
     # generate_colormaps()
