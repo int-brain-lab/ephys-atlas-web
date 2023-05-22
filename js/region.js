@@ -37,6 +37,24 @@ function makeRegionItem(mapping, idx, acronym, name) {
 
 
 
+function searchFilter(search, acronym, name) {
+    // Implement search.
+    let do_show = true;
+    if (search) {
+        if (search.includes(SEARCH_ACRONYM_STRING)) {
+            do_show = acronym.toLowerCase() == search.replace(SEARCH_ACRONYM_STRING, '');
+        }
+        else {
+            do_show = (
+                name.toLowerCase().includes(search) ||
+                acronym.toLowerCase().includes(search));
+        }
+    }
+    return do_show;
+}
+
+
+
 /*************************************************************************************************/
 /* Region                                                                                        */
 /*************************************************************************************************/
@@ -54,7 +72,6 @@ class Region {
         this.selectedBar = document.getElementById('bar-selected-list');
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
-
         this.searchInput = document.getElementById("search-input");
 
         this.setupSearch();
@@ -66,18 +83,6 @@ class Region {
         this.setState(this.state);
         this.update();
         this.setColormap();
-    }
-
-    setColormap() {
-        this.colors = this.db.getColormap(this.state.cmap)
-        this.updateColormap(this.state.cmapmin, this.state.cmapmax);
-    }
-
-    setState(state) {
-        this.setMapping(state.mapping);
-
-        this.searchInput.value = state.search;
-        this.search(state.search);
     }
 
     /* Setup functions                                                                           */
@@ -111,8 +116,20 @@ class Region {
         }
     }
 
-    /* Region functions                                                                          */
+    /* Set functions                                                                             */
     /*********************************************************************************************/
+
+    setState(state) {
+        this.setMapping(state.mapping);
+
+        this.searchInput.value = state.search;
+        this.search(state.search);
+    }
+
+    setColormap() {
+        this.colors = this.db.getColormap(this.state.cmap)
+        this.updateColormap(this.state.cmapmin, this.state.cmapmax);
+    }
 
     setMapping(name) {
         this.state.mapping = name;
@@ -120,10 +137,12 @@ class Region {
         this.update();
     }
 
+    /* Internal functions                                                                        */
+    /*********************************************************************************************/
+
     makeRegionItems() {
         let regions = this.db.getRegions(this.state.mapping);
         console.assert(regions);
-        // regions = regions.sort((a, b) => a['idx'] - b['idx']);
         let s = "";
         for (let idx in regions) {
             let region = regions[idx];
@@ -136,6 +155,69 @@ class Region {
         }
         this.regionList.innerHTML = s;
     }
+
+    getSelectedRegionElements() {
+        /* Return the list of LI elements that are selected. */
+        let out = [];
+        for (let child of this.regionList.children) {
+            if (window.getComputedStyle(child, null).display == 'none') continue;
+            let idx = getRegionIdx(this.state.mapping, child);
+            if (this.state.selected.has(idx)) {
+                out.push(child);
+            }
+        }
+        return out;
+    }
+
+    /* Selection functions                                                                       */
+    /*********************************************************************************************/
+
+    clearSelection() {
+        this.selectedBar.innerHTML = '';
+    }
+
+    updateSelection() {
+        // Update the selected bar.
+        this.clearSelection();
+        for (let item of this.getSelectedRegionElements()) {
+            this.selectedBar.appendChild(item.cloneNode(true))
+        }
+    }
+
+    /* Get functions                                                                             */
+    /*********************************************************************************************/
+
+    getInfo(regionIdx) {
+        let regions = this.db.getRegions(this.state.mapping);
+        let region = regions[regionIdx];
+        if (region)
+            return region;
+        console.warn(`region #${regionIdx} could not be found`);
+    }
+
+    getAttribute(regionIdx, attribute) {
+        return this.getInfo(regionIdx)[attribute];
+    }
+
+    getName(regionIdx) {
+        return this.getAttribute(regionIdx, 'name');
+    }
+
+    getAcronym(regionIdx) {
+        return this.getAttribute(regionIdx, 'acronym');
+    }
+
+    /* Search functions                                                                          */
+    /*********************************************************************************************/
+
+    search(query) {
+        this.state.search = query;
+        this.update();
+        return;
+    }
+
+    /* Update function                                                                           */
+    /*********************************************************************************************/
 
     updateColormap(cmin, cmax) {
         if (!this.colors) return;
@@ -162,11 +244,11 @@ class Region {
         }
     }
 
-    async update() {
+    update() {
         let stat = this.state.stat;
         let mapping = this.state.mapping;
 
-        let features = await this.feature.getFeatures();
+        let features = this.feature.getFeatures();
         if (!features) {
             console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
             return;
@@ -190,21 +272,23 @@ class Region {
         for (let regionIdx in regions) {
             let region = regions[regionIdx];
             console.assert(region);
+
             let name = region["name"];
             let acronym = region["acronym"];
             let value = values[regionIdx];
+
+            // Left hemisphere region with no value: in white.
             if (!value) {
                 if (name.includes("(left")) {
-                    // left hemisphere region with no value: in grey
                     style += `:root { --region-${mapping}-${regionIdx}: #ffffff;}\n`;
                 }
                 continue;
             }
             value = value[stat];
 
+            // Left hemisphere region with no value: in grey.
             if (value == 0) {
                 if (name.includes("(left")) {
-                    // left hemisphere region with no value: in grey
                     style += `:root { --region-${mapping}-${regionIdx}: #d3d3d3;}\n`;
                 }
                 continue;
@@ -212,23 +296,12 @@ class Region {
 
             let normalized = normalizeValue(value, vmin, vmax);
 
+            // Region bar.
             let stl = makeRegionBar(mapping, regionIdx, value, normalized);
             style += `${stl}\n`;
 
             // Implement search.
-            let do_show = true;
-            if (search) {
-                if (search.includes(SEARCH_ACRONYM_STRING)) {
-                    do_show = acronym.toLowerCase() == search.replace(SEARCH_ACRONYM_STRING, '');
-                }
-                else {
-                    do_show = (
-                        name.toLowerCase().includes(search) ||
-                        acronym.toLowerCase().includes(search));
-                }
-            }
-
-            let display = do_show ? 'block' : 'none';
+            let display = searchFilter(search, acronym, name) ? 'block' : 'none';
 
             stl = `#bar-plot li.${mapping}_region_${regionIdx}{display: ${display};}`;
             style += `${stl}\n`;
@@ -237,82 +310,5 @@ class Region {
         document.getElementById('style-regions').textContent = style;
 
         this.updateSelection();
-    }
-
-    getInfo(regionIdx) {
-        let regions = this.db.getRegions(this.state.mapping);
-        let region = regions[regionIdx];
-        if (region) return region;
-        console.warn(`region #${regionIdx} could not be found`);
-    }
-
-    async getAttribute(regionIdx, attribute) {
-        return await this.getInfo(reginIdx)[attribute];
-    }
-
-    async getName(regionIdx) {
-        return await this.getAttribute(regionIdx, 'name');
-    }
-
-    async getAcronym(regionIdx) {
-        return await this.getAttribute(regionIdx, 'acronym');
-    }
-
-    /* Selection functions                                                                       */
-    /*********************************************************************************************/
-
-    getSelectedRegionElements() {
-        /* Return the list of LI elements that are selected. */
-        let out = [];
-        for (let child of this.regionList.children) {
-            if (window.getComputedStyle(child, null).display == 'none') continue;
-            let idx = getRegionIdx(this.state.mapping, child);
-            if (this.state.selected.has(idx)) {
-                out.push(child);
-            }
-        }
-        return out;
-    }
-
-    clearSelection() {
-        this.selectedBar.innerHTML = '';
-    }
-
-    updateSelection() {
-        // Update the selected bar.
-        this.clearSelection();
-        for (let item of this.getSelectedRegionElements()) {
-            this.selectedBar.appendChild(item.cloneNode(true))
-        }
-    }
-
-    search(query) {
-        this.state.search = query;
-        this.update();
-        return;
-
-        // let mapping = this.state.mapping;
-
-        // clearStyle(this.styleSearch);
-        // if (!query) return;
-
-        // // TODO: only keep li items with a non-null value
-
-        // // Hide all items except those that match the query, using a CSS selector.
-        // this.styleSearch.insertRule(`
-        // #bar-plot li{
-        //     /*display: none !important;*/
-        //     /* visibility: hidden; */
-        // }`
-        // );
-
-        // // Select with CSS the LI items that contain the query in their acronym or name.
-        // this.styleSearch.insertRule(`
-        // #bar-plot li[data-hemisphere$='left'][class^='${mapping}'][data-acronym*='${query}' i],
-        // #bar-plot li[data-hemisphere$='left'][class^='${mapping}'][data-name*='${query}' i]
-        // {
-        //     visibility: visible;
-        // }
-        // `);
     }
 };

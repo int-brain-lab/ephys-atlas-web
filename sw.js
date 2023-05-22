@@ -41,6 +41,8 @@ const CACHE_URLS = [
 
     '/data/json/colormaps.json',
     '/data/json/regions.json',
+
+    // TODO: replace those by /api/features/bwm_block etc
     '/data/json/features_bwm_block.json',
     '/data/json/features_bwm_choice.json',
     '/data/json/features_bwm_feedback.json',

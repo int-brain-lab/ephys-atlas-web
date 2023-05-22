@@ -1,6 +1,6 @@
 export { Feature };
 
-import { clearStyle, clamp, normalizeValue } from "./utils.js";
+import { clearStyle, clamp, normalizeValue, rgb2hex } from "./utils.js";
 import { DEFAULT_FEATURE } from "./state.js";
 
 
@@ -8,8 +8,6 @@ import { DEFAULT_FEATURE } from "./state.js";
 /*************************************************************************************************/
 /* Constants                                                                                     */
 /*************************************************************************************************/
-
-
 
 
 
@@ -28,12 +26,18 @@ class Feature {
     }
 
     init() {
-        this.setDefaultColors();
+        this.setDefaultColors(this.state.mapping);
         this.setColormap(this.state.cmap);
     }
 
     /* Set functions                                                                             */
     /*********************************************************************************************/
+
+    setDefaultColors(mapping) {
+        let href = `data/css/default_region_colors_${mapping}.css`;
+        if (!this.defaultStyle.href.includes(href))
+            this.defaultStyle.href = href;
+    }
 
     setMapping(name) {
         this.state.mapping = name;
@@ -58,10 +62,7 @@ class Feature {
         this.update();
     }
 
-    /* Colormap functions                                                                        */
-    /*********************************************************************************************/
-
-    async setColormap(cmap) {
+    setColormap(cmap) {
         this.state.cmap = cmap;
         this.colors = this.db.getColormap(this.state.cmap);
         this.update();
@@ -76,6 +77,9 @@ class Feature {
         this.update();
     }
 
+    /* Internal functions                                                                        */
+    /*********************************************************************************************/
+
     makeHex(normalized) {
         return this.colors[clamp(normalized, 0, 99)];
     }
@@ -84,26 +88,50 @@ class Feature {
         return `svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* FRP5: ${value} */`;
     }
 
-    /* Feature functions                                                                         */
+    /* Get functions                                                                             */
     /*********************************************************************************************/
 
-    async getFeatures() {
+    getFeatures() {
         // dict {mapping: {data: {idx: {mean...}, statistics: {mean: xxx, ...}, statistics: {mean: {mean: ...}, ...}}}
-        let fet = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
-        return fet;
+        return this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
     }
 
-    setDefaultColors() {
-        let href = `data/css/default_region_colors_${this.state.mapping}.css`;
-        if (!this.defaultStyle.href.includes(href))
-            this.defaultStyle.href = href;
+    getColor(regionIdx) {
+        // Parse the current color of a region and return its hex value.
+        const ruleList = this.style.cssRules;
+        const CSS_REGEX = new RegExp(`svg path\.${this.state.mapping}_region_${regionIdx} \{ fill: (.+); \}`);
+        for (let rule of ruleList) {
+            let m = rule.cssText.match(CSS_REGEX);
+            if (m) {
+                let rgb = m[1];
+                return rgb2hex(rgb);
+            }
+        }
     }
 
-    async update() {
+    get(regionIdx) {
+        // Return the feature value of a given region.
+
+        // This depends on the currently-selected feature set, feature, stat.
+        let data = this.getFeatures();
+        if (!data) {
+            // console.warn(`unable to get feature for region ${regionIdx}`);
+            return 'not significant';
+        }
+        data = data['data'];
+        if (data && data[regionIdx])
+            return data[regionIdx][this.state.stat];
+        return 'excluded';
+    }
+
+    /* Update function                                                                           */
+    /*********************************************************************************************/
+
+    update() {
         // this.featureName.innerHTML = `fet: ${this.state.fname}`;
-        this.setDefaultColors();
+        this.setDefaultColors(this.state.mapping);
 
-        let fet = (await this.getFeatures());
+        let fet = this.getFeatures();
 
         if (!fet) {
             // Default colors: the original region colors. Nothing to do apart from clearing the extra feature-dependent styling.
@@ -150,42 +178,5 @@ class Feature {
             let stl = this.makeRegionColor(mapping, regionIdx, value, hex);
             this.style.insertRule(stl);
         }
-    }
-
-    getColor(regionIdx) {
-        const ruleList = this.style.cssRules;
-        const CSS_REGEX = new RegExp(`svg path\.${this.state.mapping}_region_${regionIdx} \{ fill: (.+); \}`);
-        for (let rule of ruleList) {
-            let m = rule.cssText.match(CSS_REGEX);
-            if (m) {
-                let rgb = m[1];
-                rgb = rgb.split(',');
-
-                let r = parseInt(rgb[0].substring(4));
-                let g = parseInt(rgb[1]);
-                let b = parseInt(rgb[2]);
-
-                r = r.toString(16).padStart(2, '0');
-                g = g.toString(16).padStart(2, '0');
-                b = b.toString(16).padStart(2, '0');
-
-                let hex = `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
-                return hex;
-            }
-        }
-    }
-
-    async get(regionIdx) {
-        // Return the feature value of a given region.
-        // This depends on the currently-selected feature set, feature, stat.
-        let data = (await this.getFeatures());
-        if (!data) {
-            // console.warn(`unable to get feature for region ${regionIdx}`);
-            return 'not significant';
-        }
-        data = data['data'];
-        if (data && data[regionIdx])
-            return data[regionIdx][this.state.stat];
-        return 'excluded';
     }
 };

@@ -60,6 +60,8 @@ class Splash {
 /*************************************************************************************************/
 
 class Loader {
+    // Store a JSON file from a URL and put it in memory. Provide a get(key) function.
+    // Used for simple key-value mappings.
     constructor(
         splash, url, process, [download_splash, process_splash, store_splash],
     ) {

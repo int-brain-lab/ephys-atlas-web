@@ -23,14 +23,26 @@ export function displayNumber(x) {
 
 
 export function rgb2hex(s) {
-    var a = s.split("(")[1].split(")")[0];
-    a = a.split(",");
-    var b = a.map(function (x) {             //For each array element
-        x = parseInt(x).toString(16);      //Convert to a base16 string
-        return (x.length == 1) ? "0" + x : x;  //Add zero if we get only one character
-    });
-    b = "#" + b.join("");
-    return b;
+    // var a = s.split("(")[1].split(")")[0];
+    // a = a.split(",");
+    // var b = a.map(function (x) {             //For each array element
+    //     x = parseInt(x).toString(16);      //Convert to a base16 string
+    //     return (x.length == 1) ? "0" + x : x;  //Add zero if we get only one character
+    // });
+    // b = "#" + b.join("");
+    // return b;
+    let rgb = s.split(',');
+
+    let r = parseInt(rgb[0].substring(4));
+    let g = parseInt(rgb[1]);
+    let b = parseInt(rgb[2]);
+
+    r = r.toString(16).padStart(2, '0');
+    g = g.toString(16).padStart(2, '0');
+    b = b.toString(16).padStart(2, '0');
+
+    let hex = `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
+    return hex;
 }
 
 
