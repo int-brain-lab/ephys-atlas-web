@@ -6,8 +6,9 @@
 # -------------------------------------------------------------------------------------------------
 
 import datetime
-import glob
+import os
 from pathlib import Path
+import re
 
 from flask import Flask, Response, request, jsonify
 
@@ -19,22 +20,44 @@ from flask import Flask, Response, request, jsonify
 app = Flask(__name__)
 ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
+FEATURES_FILE_REGEX = re.compile(r'^\d{8}-\S+\.json$')
+DELETE_AFTER_DAYS = 180
 
 
 # -------------------------------------------------------------------------------------------------
 # Util functions
 # -------------------------------------------------------------------------------------------------
 
-def return_file_not_found(path):
+def response_file_not_found(path):
     return jsonify(message=f'File not found: {path}'), 404
 
 
-def return_json_file(path):
+def response_json_file(path):
     if not path.exists():
-        return return_file_not_found(path)
+        return response_file_not_found(path)
     with open(path, 'r') as f:
         text = f.read()
     return Response(text, headers={'Content-Type': 'application/json'})
+
+
+def delete_old_files(path):
+    today = datetime.date.today()
+    cutoff_date = today - datetime.timedelta(days=DELETE_AFTER_DAYS)
+
+    i = 0
+    for file_name in os.listdir(path):
+        if FEATURES_FILE_REGEX.match(file_name):
+            # Extract the date portion from the filename
+            file_date_str = file_name[:8]
+            file_date = datetime.datetime.strptime(
+                file_date_str, '%Y%m%d').date()
+            if file_date < cutoff_date:
+                file_path = os.path.join(path, file_name)
+                os.remove(file_path)
+                print(f"Deleted file: {file_name}")
+                i += 1
+    print(f"Successfully deleted {i} files in `{path}`.")
+    return i
 
 
 # -------------------------------------------------------------------------------------------------
@@ -69,8 +92,8 @@ def save_features():
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/features', methods=['GET'])
-def get_features():
-    return return_json_file(FEATURES_DIR / 'index.json')
+def get_features_index():
+    return response_json_file(FEATURES_DIR / 'index.json')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -78,17 +101,18 @@ def get_features():
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/features/<uuid>', methods=['GET'])
-def get_feature(uuid):
+def get_features(uuid):
     # Search for files matching the provided uuid.
     files = FEATURES_DIR.glob(f'*-{uuid}.json')
 
+    # 404 error message
     if not files:
-        return_file_not_found(uuid)
+        return response_file_not_found(uuid)
 
     # Sort the files by date and retrieve the last match.
     sorted_files = sorted(files)
     filename = sorted_files[-1]
-    return return_json_file(filename)
+    return response_json_file(filename)
 
 
 if __name__ == '__main__':

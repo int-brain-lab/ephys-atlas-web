@@ -5,18 +5,15 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
+import datetime
 import uuid
-import unittest
-# import requests
-import unittest
-# from unittest.mock import patch
+from unittest import mock, main
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from flask import Flask
 from flask_testing import TestCase
 import server
-from server import app  # Import your Flask app object
+from server import app, delete_old_files, DELETE_AFTER_DAYS
 
 
 # -------------------------------------------------------------------------------------------------
@@ -24,6 +21,7 @@ from server import app  # Import your Flask app object
 # -------------------------------------------------------------------------------------------------
 
 UUID = str(uuid.uuid4())
+DEFAULT_INDEX = '{"aliases": {}}'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -52,7 +50,7 @@ class AppTestCase(TestCase):
         cls.features_dir = Path(cls.temp_dir.name) / 'data' / 'features'
         cls.features_dir.mkdir(exist_ok=True, parents=True)
         with open(cls.features_dir / 'index.json', 'w') as f:
-            f.write('{"aliases": {}}')
+            f.write(DEFAULT_INDEX)
 
         # NOTE: monkey-patch
         server.FEATURES_DIR = cls.features_dir
@@ -73,7 +71,7 @@ class AppTestCase(TestCase):
     def test_post_features(self):
         pass
 
-    def test_get_features(self):
+    def test_get_features_index(self):
         response = self.client.get('/api/features')
         self.assert200(response)
         self.assertTrue('aliases' in response.text)
@@ -83,6 +81,18 @@ class AppTestCase(TestCase):
         self.assert200(response)
         self.assertEqual(response.json.get("example", None), "data")
 
+    def test_delete_old_files(self):
+        today = datetime.date.today()
+
+        with mock.patch('datetime.date') as mock_date:
+            mock_date.today.return_value = today + \
+                datetime.timedelta(days=DELETE_AFTER_DAYS - 2)
+            self.assertEqual(delete_old_files(self.features_dir), 0)
+
+            mock_date.today.return_value = today + \
+                datetime.timedelta(days=DELETE_AFTER_DAYS + 2)
+            self.assertEqual(delete_old_files(self.features_dir), 1)
+
 
 # # Patch the FEATURES_DIR for all methods of AppTestCase
 # patcher = patch.object(
@@ -91,4 +101,4 @@ class AppTestCase(TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
