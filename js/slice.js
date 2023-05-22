@@ -9,7 +9,7 @@ import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const SLICE_THROTTLE = 50;
+const SLICE_THROTTLE = 40;
 
 
 
