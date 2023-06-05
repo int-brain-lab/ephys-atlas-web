@@ -766,30 +766,42 @@ class FeatureUploader:
 
         # Create the param file if it doesn't exist.
         if not self.param_path.exists():
+            with open(self.param_path, 'w') as f:
+                json.dump({'buckets': {}}, f, indent=1)
+        assert self.param_path.exists()
+
+        # Load the param file.
+        with open(self.param_path, 'r') as f:
+            params = json.load(f)
+
+        # Try loading the token associated to the bucket.
+        self.token = params.get('buckets', {}).get(bucket_uuid, {}).get('token', None)
+
+        # If there is none, generate a new token, and create the bucket on the server.
+        if not self.token:
+            print(f"Creating new bucket {bucket_uuid}.")
 
             # Create a new authorization token.
-            token = new_token()
+            self.token = new_token()
+
+            # DEBUG
+            self.token = 'mytoken'
 
             # Save the token in the param file.
             with open(self.param_path, 'w') as file:
-                json.dump({'token': token}, file)
+                if bucket_uuid not in params['buckets']:
+                    params['buckets'][bucket_uuid] = {'token': self.token}
+                json.dump(params, file, indent=1)
 
             # Make a POST request to /api/buckets/<uuid> to create the new bucket.
-            data = {'uuid': bucket_uuid, 'token': token}
-            endpoint = f'/api/buckets/{bucket_uuid}'
+            # NOTE: no need for token authentication to create a new bucket.
+            data = {'uuid': bucket_uuid, 'token': self.token}
+            endpoint = f'/api/buckets'
             url = self._url(endpoint)
             response = requests.post(url, json=data)
 
             # DEBUG.
-            print(response.json)
-
-        # Load the token.
-        assert self.param_path.exists()
-        with open(self.param_path, 'r') as f:
-            self.token = json.load(f)['token']
-
-        # DEBUG
-        print(self.token)
+            print(response.text)
 
         assert self.token
 
@@ -810,14 +822,14 @@ class FeatureUploader:
         url = self._url(endpoint)
         response = requests.post(url, headers=self._headers(), json=data)
         if response.status_code != 200:
-            raise Exception(response.json)
+            raise Exception(response.json())
         return response
 
     def _patch(self, endpoint, data):
         url = self._url(endpoint)
         response = requests.patch(url, headers=self._headers(), json=data)
         if response.status_code != 200:
-            raise Exception(response.json)
+            raise Exception(response.json())
         return response
 
     def _get(self, endpoint):
@@ -851,14 +863,14 @@ class FeatureUploader:
     def list_features(self):
         """Return the list of fnames in the bucket."""
         response = self._get(f'buckets/{self.bucket_uuid}')
-        fnames = response.json['fnames']
+        fnames = response.json()['fnames']
         return fnames
 
     def get_features(self, fname):
         """Retrieve features in the bucket."""
         assert fname
         response = self._get(f'/buckets/{self.bucket_uuid}/{fname}')
-        features = response.json
+        features = response.json()
         return features
 
     def patch_features(self, name, acronyms, values, mapping='beryl'):
@@ -884,8 +896,13 @@ class FeatureUploader:
 # Entry-point
 # -------------------------------------------------------------------------------------------------
 
+def test_upload():
+    bucket_uuid = 'myuuid'
+    up = FeatureUploader(bucket_uuid)
+
+
 if __name__ == '__main__':
-    pass
+    test_upload()
 
     # generate_colormaps()
     # process_slices()

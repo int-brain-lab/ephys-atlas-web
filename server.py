@@ -79,10 +79,10 @@ def delete_old_files(dir_path=FEATURES_DIR):
 
 
 def save_features(path):
-    json_data = request.form.get('json')
+    json_data = request.json
     assert json_data
     with open(path, 'w') as f:
-        f.write(json_data)
+        json.dump(json_data, f, indent=1)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -136,10 +136,13 @@ def authenticate_bucket(uuid):
 def create_bucket():
 
     # Get the parameters passed in the POST request.
-    uuid = request.form.get('uuid')
+    data = request.json
+    assert data
+
+    uuid = data['uuid']
     assert uuid
 
-    token = request.form.get('token')
+    token = data['token']
     assert token
 
     # Create the bucket directory.
@@ -189,8 +192,11 @@ def post_features(uuid):
     if not bucket_path.exists():
         return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
+    # Retrieve the fname.
+    fname = request.json['fname']
+    assert fname
+
     # Retrieve the features path.
-    fname = request.form.get('fname')
     features_path = bucket_path / f'{fname}.json'
     if features_path.exists():
         return f'Feature {fname} already exists.', 409
@@ -272,12 +278,13 @@ class TestApp(unittest.TestCase):
         uuid = 'myuuid'
         token = 'mytoken'
         payload = {'token': token, 'uuid': uuid}
-        response = self.client.post('/api/buckets', data=payload)
+        response = self.client.post('/api/buckets', json=payload)
         self.ok(response)
 
         # Authorization HTTP header using a bearer token.
         headers = {
             'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
         }
 
         # List features in the bucket.
@@ -288,11 +295,11 @@ class TestApp(unittest.TestCase):
         # Create features.
         fname = 'myfeatures'
         data = {fname: {'data': {0: {'mean': 42}, 1: {'mean': 420}}, 'statistics': {'mean': 21}}}
-        payload = {'fname': fname, 'json': json.dumps(data, indent=1)}
+        payload = {'fname': fname, 'json': data}
         # NOTE: fail if no authorization header.
-        response = self.client.post(f'/api/buckets/{uuid}', data=payload)
+        response = self.client.post(f'/api/buckets/{uuid}', json=payload)
         self.assertEqual(response.status_code, 401)
-        response = self.client.post(f'/api/buckets/{uuid}', data=payload, headers=headers)
+        response = self.client.post(f'/api/buckets/{uuid}', json=payload, headers=headers)
         self.ok(response)
 
         # List features in the bucket.
@@ -303,23 +310,23 @@ class TestApp(unittest.TestCase):
         # Retrieve features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
         self.ok(response)
-        self.assertEqual(response.json[fname]['data']['0']['mean'], 42)
-        self.assertEqual(response.json[fname]['data']['1']['mean'], 420)
+        self.assertEqual(response.json['json'][fname]['data']['0']['mean'], 42)
+        self.assertEqual(response.json['json'][fname]['data']['1']['mean'], 420)
 
         # Patch features.
         data = {fname: {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}
-        payload = {'fname': fname, 'json': json.dumps(data, indent=1)}
-        response = self.client.patch(f'/api/buckets/{uuid}/{fname}', data=payload, headers=headers)
+        payload = {'fname': fname, 'json': data}
+        response = self.client.patch(f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
         self.ok(response)
 
         # Retrieve modified features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
-        self.assertEqual(response.json[fname]['data']['0']['mean'], 84)
+        self.assertEqual(response.json['json'][fname]['data']['0']['mean'], 84)
         # NOTE: the JSON data is completely replaced, keys that were present before but not now
         # are deleted.
-        self.assertTrue('1' not in response.json[fname]['data'])
+        self.assertTrue('1' not in response.json['json'][fname]['data'])
 
 
 if __name__ == '__main__':
-    # app.run()
-    unittest.main()
+    app.run()
+    # unittest.main()
