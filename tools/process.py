@@ -781,7 +781,7 @@ class FeatureUploader:
             response = requests.post(url, json=data)
 
             # DEBUG.
-            print(response.json())
+            print(response.json)
 
         # Load the token.
         assert self.param_path.exists()
@@ -810,21 +810,21 @@ class FeatureUploader:
         url = self._url(endpoint)
         response = requests.post(url, headers=self._headers(), json=data)
         if response.status_code != 200:
-            raise Exception(response.json())
+            raise Exception(response.json)
         return response
 
     def _patch(self, endpoint, data):
         url = self._url(endpoint)
         response = requests.patch(url, headers=self._headers(), json=data)
         if response.status_code != 200:
-            raise Exception(response.json())
+            raise Exception(response.json)
         return response
 
     def _get(self, endpoint):
         url = self._url(endpoint)
         response = requests.get(url)
         if response.status_code != 200:
-            raise Exception(response.json())
+            raise Exception(response.json)
         return response
 
     # Public methods
@@ -851,14 +851,14 @@ class FeatureUploader:
     def list_features(self):
         """Return the list of fnames in the bucket."""
         response = self._get(f'buckets/{self.bucket_uuid}')
-        fnames = response.json()['fnames']
+        fnames = response.json['fnames']
         return fnames
 
     def get_features(self, fname):
         """Retrieve features in the bucket."""
         assert fname
         response = self._get(f'/buckets/{self.bucket_uuid}/{fname}')
-        features = response.json()
+        features = response.json
         return features
 
     def patch_features(self, name, acronyms, values, mapping='beryl'):

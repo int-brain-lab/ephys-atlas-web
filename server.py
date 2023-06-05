@@ -6,9 +6,11 @@
 # -------------------------------------------------------------------------------------------------
 
 import datetime
+import json
 import os
 from pathlib import Path
 import re
+import shutil
 import unittest
 
 from flask import Flask, Response, request, jsonify
@@ -100,16 +102,20 @@ def extract_token():
 
 
 def get_bucket_path(uuid):
-    return FEATURES_DIR.glob(f'{uuid}*/token')[0]
+    return list(FEATURES_DIR.glob(f'{uuid}*'))[0]
+
+
+def get_bucket_token_path(uuid):
+    return get_bucket_path(uuid) / 'token'
 
 
 def save_bucket_token(uuid, token):
-    with open(get_bucket_path(uuid), 'w') as f:
+    with open(get_bucket_token_path(uuid), 'w') as f:
         f.write(token)
 
 
 def load_bucket_token(uuid):
-    with open(get_bucket_path(uuid), 'r') as f:
+    with open(get_bucket_token_path(uuid), 'r') as f:
         token = f.read().strip().lower()
     assert token
     return token
@@ -245,13 +251,33 @@ class TestApp(unittest.TestCase):
         app.config['TESTING'] = True
         self.client = app.test_client()
 
+    def ok(self, response):
+        self.assertEqual(response.status_code, 200)
+
     def test_1(self):
+        # Ensure the directory does not exist before running the tests.
+        path = FEATURES_DIR / 'myuuid'
+        if path.exists():
+            shutil.rmtree(path)
+
         # Create a bucket.
-        token = 'mytoken'
         uuid = 'myuuid'
+        token = 'mytoken'
         payload = {'token': token, 'uuid': uuid}
         response = self.client.post('/api/buckets', data=payload)
-        print(response.text)
+        self.ok(response)
+
+        # List features in the bucket.
+        response = self.client.get(f'/api/buckets/{uuid}')
+        self.ok(response)
+        self.assertEqual(response.json['fnames'], [])
+
+        # Create features.
+        fname = 'myfeatures'
+        data = {fname: {'data': {0: {'mean': 42}, 1: {'mean': 420}}, 'statistics': {'mean': 21}}}
+        payload = {'fname': fname, 'json': json.dumps(data, indent=1)}
+        response = self.client.post(f'/api/buckets/{uuid}', data=payload)
+        self.ok(response)
 
 
 if __name__ == '__main__':
