@@ -87,10 +87,10 @@ BWM_EXTRA_FNAMES = (
     'decoding_significant',
 )
 
-FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api'
+FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api/'
 
 # DEBUG
-FEATURES_API_BASE_URL = 'http://127.0.0.1:5000'
+FEATURES_API_BASE_URL = 'http://127.0.0.1:5000/api/'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -737,17 +737,18 @@ def new_token():
     return str(uuid.uuid4())
 
 
-def make_features(name, acronyms, values, mapping='beryl'):
+def make_features(fname, acronyms, values, mapping='beryl'):
     # Convert acronyms to atlas ids.
     br = BrainRegions()
-    aids = br.acronym2id(acronyms, mapping=mapping.title())
+    aids = br.acronym2index(acronyms, mapping=mapping.title())[1][0]
+    assert len(aids) == len(acronyms)
 
     # Compute the mean.
     m = np.mean(values)
 
     return {
-        name: {
-            'data': {aid: {'mean': value} for aid, value in zip(aids, values)},
+        fname: {
+            'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
             'statistics': {'mean': m},
         }
     }
@@ -799,8 +800,6 @@ class FeatureUploader:
             endpoint = f'/api/buckets'
             url = self._url(endpoint)
             response = requests.post(url, json=data)
-
-            # DEBUG.
             print(response.text)
 
         assert self.token
@@ -815,50 +814,60 @@ class FeatureUploader:
         }
 
     def _url(self, endpoint):
-        assert endpoint.startswith('/')
+        if endpoint.startswith('/'):
+            endpoint = endpoint[1:]
         return FEATURES_API_BASE_URL + endpoint
 
     def _post(self, endpoint, data):
         url = self._url(endpoint)
         response = requests.post(url, headers=self._headers(), json=data)
         if response.status_code != 200:
-            raise Exception(response.json())
+            raise RuntimeError(response.text)
         return response
 
     def _patch(self, endpoint, data):
         url = self._url(endpoint)
         response = requests.patch(url, headers=self._headers(), json=data)
         if response.status_code != 200:
-            raise Exception(response.json())
+            raise RuntimeError(response.text)
         return response
 
     def _get(self, endpoint):
         url = self._url(endpoint)
         response = requests.get(url)
         if response.status_code != 200:
-            raise Exception(response.json)
+            raise RuntimeError(response.text)
         return response
 
     # Public methods
     # ---------------------------------------------------------------------------------------------
 
-    def create_features(self, name, acronyms, values, mapping='beryl'):
-        """Create new features in the bucket."""
+    def _post_or_patch_features(self, method, fname, acronyms, values, mapping='beryl'):
 
-        assert name
-        assert acronyms
-        assert values
+        assert method in ('post', 'patch')
+        assert fname
         assert mapping
+        assert acronyms is not None
+        assert values is not None
+        assert len(acronyms) == len(values)
 
         # Prepare the JSON payload.
-        data = make_features(name, acronyms, values, mapping=mapping)
-        payload = {'json': data}
+        data = make_features(fname, acronyms, values, mapping=mapping)
+        payload = {'fname': fname, 'json': data}
 
         # Make a POST request to /api/buckets/<uuid>.
-        response = self._post(f'buckets/{self.bucket_uuid}', payload)
+        try:
+            if method == 'post':
+                response = self._post(f'buckets/{self.bucket_uuid}', payload)
+            elif method == 'patch':
+                response = self._patch(f'buckets/{self.bucket_uuid}/{fname}', payload)
+            print(response.json()['message'])
+        except RuntimeError as e:
+            print(f"Error: {e}")
 
-        # DEBUG
-        print(response)
+    def create_features(self, fname, acronyms, values, mapping='beryl'):
+        """Create new features in the bucket."""
+        self._post_or_patch_features('post', fname, acronyms, values, mapping=mapping)
 
     def list_features(self):
         """Return the list of fnames in the bucket."""
@@ -873,23 +882,9 @@ class FeatureUploader:
         features = response.json()
         return features
 
-    def patch_features(self, name, acronyms, values, mapping='beryl'):
+    def patch_features(self, fname, acronyms, values, mapping='beryl'):
         """Update existing features in the bucket."""
-
-        assert name
-        assert acronyms
-        assert values
-        assert mapping
-
-        # Prepare the JSON payload.
-        data = make_features(name, acronyms, values, mapping=mapping)
-        payload = {'json': data}
-
-        # Make a PATCH request to /api/buckets/<uuid>/.
-        response = self._patch(f'buckets/{self.bucket_uuid}/{name}', payload)
-
-        # DEBUG
-        print(response)
+        self._post_or_patch_features('patch', fname, acronyms, values, mapping=mapping)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -898,7 +893,21 @@ class FeatureUploader:
 
 def test_upload():
     bucket_uuid = 'myuuid'
+    fname = 'newfeatures'
+
+    acronyms = ['CP', 'SUB']
+    values = [42, 420]
+
     up = FeatureUploader(bucket_uuid)
+    up.create_features(fname, acronyms, values)
+
+    print(up.list_features())
+
+    features = up.get_features(fname)
+    print(features)
+
+    values[1] = 10
+    up.patch_features(fname, acronyms, values)
 
 
 if __name__ == '__main__':

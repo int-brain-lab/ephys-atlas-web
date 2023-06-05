@@ -193,18 +193,18 @@ def post_features(uuid):
         return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the fname.
-    fname = request.json['fname']
+    fname = request.json.get('fname', '')
     assert fname
 
     # Retrieve the features path.
     features_path = bucket_path / f'{fname}.json'
     if features_path.exists():
-        return f'Feature {fname} already exists.', 409
+        return f'Features {fname} already exist, use a PATCH request instead.', 409
 
     # Save the features.
     save_features(features_path)
 
-    return jsonify(message=f'Feature {fname} successfully created in bucket {uuid}.')
+    return jsonify(message=f'Features {fname} successfully created in bucket {uuid}.')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ def patch_features(uuid, fname):
     # Save the features.
     save_features(features_path)
 
-    return jsonify(message=f'Feature {fname} successfully created in bucket {uuid}.')
+    return jsonify(message=f'Feature {fname} successfully patched in bucket {uuid}.')
 
 
 # -------------------------------------------------------------------------------------------------
