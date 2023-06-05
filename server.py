@@ -74,65 +74,163 @@ def delete_old_files(dir_path=FEATURES_DIR):
     return i
 
 
-# -------------------------------------------------------------------------------------------------
-# POST /api/features
-# -------------------------------------------------------------------------------------------------
-
-@app.route('/api/features', methods=['POST'])
-def save_features():
-    # Ensure the features directory exists.
-    FEATURES_DIR.mkdir(parents=True, exist_ok=True)
-
-    uuid = request.form.get('uuid')
-    assert uuid
+def save_features(path):
     json_data = request.form.get('json')
     assert json_data
-
-    # Get the current date in YYYYMMDD format
-    current_date = datetime.datetime.now().strftime('%Y%m%d')
-
-    # Create the filename based on the date and uuid
-    filename = f'{current_date}-{uuid}.json'
-
-    # Save the JSON content to the file
-    with open(FEATURES_DIR / filename, 'w') as f:
+    with open(path, 'w') as f:
         f.write(json_data)
 
-    return jsonify(message=f'File `{filename}` saved successfully')
+
+# -------------------------------------------------------------------------------------------------
+# Authorization
+# -------------------------------------------------------------------------------------------------
+
+def extract_token():
+    # Check if the Authorization header is present
+    if 'Authorization' not in request.headers:
+        return 'Unauthorized', 401
+
+    # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+    auth_type, token = auth_header.split(' ')
+    assert token
+    return token.strip().lower()
+
+
+def get_bucket_path(uuid):
+    return FEATURES_DIR.glob(f'{uuid}*/token')[0]
+
+
+def save_bucket_token(uuid, token):
+    with open(get_bucket_path(uuid), 'w') as f:
+        f.write(token)
+
+
+def load_bucket_token(uuid):
+    with open(get_bucket_path(uuid), 'r') as f:
+        token = f.read().strip().lower()
+    assert token
+    return token
+
+
+def authenticate_bucket(uuid):
+    passed_token = extract_token()
+    expected_token = load_bucket_token(uuid)
+    return passed_token == expected_token
 
 
 # -------------------------------------------------------------------------------------------------
-# GET /api/features
+# POST /api/buckets
 # -------------------------------------------------------------------------------------------------
 
-@app.route('/api/features', methods=['GET'])
-def get_features_index():
-    # NOTE: useless, can delete?
-    return response_json_file(FEATURES_DIR / 'index.json')
+@app.route('/api/buckets', methods=['POST'])
+def create_bucket():
+    # Get the parameters passed in the POST request.
+    uuid = request.form.get('uuid')
+    assert uuid
+
+    token = request.form.get('token')
+    assert token
+
+    # Create the bucket directory.
+    bucket_dir = FEATURES_DIR / uuid
+    if bucket_dir.exists():
+        return 'Bucket already exists', 409
+    bucket_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save the token.
+    (bucket_dir / 'token').write_text(token)
+
+    return jsonify({'message', f'Bucket {uuid} successfully created.'})
 
 
 # -------------------------------------------------------------------------------------------------
-# GET /api/features/<uuid>
+# GET /api/buckets/<uuid>
 # -------------------------------------------------------------------------------------------------
 
-@app.route('/api/features/<uuid>', methods=['GET'])
-def get_features(uuid):
-    # Aliases for native features.
-    if uuid in NATIVE_FNAMES:
-        return response_json_file(
-            ROOT_DIR / 'data' / 'json' / f'features_{uuid}.json')
+@app.route('/api/buckets/<uuid>', methods=['GET'])
+def get_bucket_index(uuid):
 
-    # Search for files matching the provided uuid.
-    files = FEATURES_DIR.glob(f'*-{uuid}.json')
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first', 404
 
-    # 404 error message
-    if not files:
-        return response_file_not_found(uuid)
+    # Retrieve the list of JSON files in the bucket directory.
+    fnames = bucket_path.glob('*.json')
+    fnames = sorted(_.name for _ in fnames)
+    return jsonify({'fnames': fnames})
 
-    # Sort the files by date and retrieve the last match.
-    sorted_files = sorted(files)
-    filename = sorted_files[-1]
-    return response_json_file(filename)
+
+# -------------------------------------------------------------------------------------------------
+# POST /api/buckets/<uuid>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>', methods=['POST'])
+def post_features(uuid):
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first', 404
+
+    # Retrieve the features path.
+    fname = request.form.get('fname')
+    features_path = bucket_path / f'{fname}.json'
+    if features_path.exists():
+        return f'Feature {fname} already exists', 409
+
+    # Save the features.
+    save_features(features_path)
+
+    return jsonify({'message', f'Feature {fname} successfully created in bucket {uuid}.'})
+
+
+# -------------------------------------------------------------------------------------------------
+# GET /api/buckets/<uuid>/<fname>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>/<fname>', methods=['GET'])
+def get_features(uuid, fname):
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first', 404
+
+    # Retrieve the features path.
+    features_path = bucket_path / f'{fname}.json'
+    if not features_path.exists():
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first', 404
+
+    # Return the contents of the features file.
+    return response_json_file(features_path)
+
+
+# -------------------------------------------------------------------------------------------------
+# PATCH /api/buckets/<uuid>/<fname>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>/<fname>', methods=['PATCH'])
+def patch_features(uuid, fname):
+    # Check authorization to change features.
+    if not authenticate_bucket(uuid):
+        return 'Unauthorized', 401
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first', 404
+
+    # Retrieve the features path.
+    features_path = bucket_path / f'{fname}.json'
+    if not features_path.exists():
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first', 404
+
+    # Save the features.
+    save_features(features_path)
+
+    return jsonify({'message', f'Feature {fname} successfully created in bucket {uuid}.'})
 
 
 if __name__ == '__main__':
