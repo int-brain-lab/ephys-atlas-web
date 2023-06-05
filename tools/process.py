@@ -86,7 +86,11 @@ BWM_EXTRA_FNAMES = (
     'decoding_frac_significant',
     'decoding_significant',
 )
+
 FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api'
+
+# DEBUG
+FEATURES_API_BASE_URL = 'http://127.0.0.1:5000'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -729,6 +733,10 @@ def generate_custom_features():
 # Generate custom features for upload
 # -------------------------------------------------------------------------------------------------
 
+def new_token():
+    return str(uuid.uuid4())
+
+
 def make_features(name, acronyms, values, mapping='beryl'):
     # Convert acronyms to atlas ids.
     br = BrainRegions()
@@ -753,16 +761,24 @@ class FeatureUploader:
         assert bucket_uuid
 
         self.param_path = Path.home() / '.ibl' / 'custom_features.json'
+        self.param_path.parent.mkdir(exist_ok=True, parents=True)
         self.bucket_uuid = bucket_uuid
 
+        # Create the param file if it doesn't exist.
         if not self.param_path.exists():
-            # Create the file if it doesn't exist
-            with open(self.param_path, 'w') as file:
-                json.dump({'token': str(uuid.uuid4())}, file)
 
-            # Make a POST request to /api/buckets/<uuid>
-            url = f'/api/buckets/{bucket_uuid}'
-            response = requests.post(url)
+            # Create a new authorization token.
+            token = new_token()
+
+            # Save the token in the param file.
+            with open(self.param_path, 'w') as file:
+                json.dump({'token': token}, file)
+
+            # Make a POST request to /api/buckets/<uuid> to create the new bucket.
+            data = {'uuid': bucket_uuid, 'token': token}
+            endpoint = f'/api/buckets/{bucket_uuid}'
+            url = self._url(endpoint)
+            response = requests.post(url, json=data)
 
             # DEBUG.
             print(response.json())
@@ -869,10 +885,11 @@ class FeatureUploader:
 # -------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    pass
 
     # generate_colormaps()
     # process_slices()
-    mappings = get_mappings()
+    # mappings = get_mappings()
     # generate_regions_json(mappings)
     # generate_regions_css(mappings)
     # generate_ephys_features()

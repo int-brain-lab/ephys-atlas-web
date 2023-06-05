@@ -9,8 +9,10 @@ import datetime
 import os
 from pathlib import Path
 import re
+import unittest
 
 from flask import Flask, Response, request, jsonify
+# from flask_testing import TestCase
 
 
 # -------------------------------------------------------------------------------------------------
@@ -22,8 +24,8 @@ ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
 FEATURES_FILE_REGEX = re.compile(r'^\d{8}-\S+\.json$')
 DELETE_AFTER_DAYS = 180
-NATIVE_FNAMES = ('ephys', 'bwm_block', 'bwm_choice',
-                 'bwm_feedback', 'bwm_stimulus')
+NATIVE_FNAMES = (
+    'ephys', 'bwm_block', 'bwm_choice', 'bwm_feedback', 'bwm_stimulus')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -88,7 +90,7 @@ def save_features(path):
 def extract_token():
     # Check if the Authorization header is present
     if 'Authorization' not in request.headers:
-        return 'Unauthorized', 401
+        return 'Unauthorized access, require valid bearer authorization token.', 401
 
     # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
@@ -120,11 +122,12 @@ def authenticate_bucket(uuid):
 
 
 # -------------------------------------------------------------------------------------------------
-# POST /api/buckets
+# POST /api/buckets (uuid, token)
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets', methods=['POST'])
 def create_bucket():
+
     # Get the parameters passed in the POST request.
     uuid = request.form.get('uuid')
     assert uuid
@@ -135,13 +138,13 @@ def create_bucket():
     # Create the bucket directory.
     bucket_dir = FEATURES_DIR / uuid
     if bucket_dir.exists():
-        return 'Bucket already exists', 409
+        return 'Bucket already exists.', 409
     bucket_dir.mkdir(parents=True, exist_ok=True)
 
     # Save the token.
     (bucket_dir / 'token').write_text(token)
 
-    return jsonify({'message', f'Bucket {uuid} successfully created.'})
+    return jsonify(message=f'Bucket {uuid} successfully created.')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -154,7 +157,7 @@ def get_bucket_index(uuid):
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
     if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first', 404
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the list of JSON files in the bucket directory.
     fnames = bucket_path.glob('*.json')
@@ -163,7 +166,7 @@ def get_bucket_index(uuid):
 
 
 # -------------------------------------------------------------------------------------------------
-# POST /api/buckets/<uuid>
+# POST /api/buckets/<uuid> (fname, json)
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>', methods=['POST'])
@@ -172,18 +175,18 @@ def post_features(uuid):
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
     if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first', 404
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the features path.
     fname = request.form.get('fname')
     features_path = bucket_path / f'{fname}.json'
     if features_path.exists():
-        return f'Feature {fname} already exists', 409
+        return f'Feature {fname} already exists.', 409
 
     # Save the features.
     save_features(features_path)
 
-    return jsonify({'message', f'Feature {fname} successfully created in bucket {uuid}.'})
+    return jsonify(message=f'Feature {fname} successfully created in bucket {uuid}.')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -196,42 +199,61 @@ def get_features(uuid, fname):
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
     if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first', 404
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the features path.
     features_path = bucket_path / f'{fname}.json'
     if not features_path.exists():
-        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first', 404
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
 
     # Return the contents of the features file.
     return response_json_file(features_path)
 
 
 # -------------------------------------------------------------------------------------------------
-# PATCH /api/buckets/<uuid>/<fname>
+# PATCH /api/buckets/<uuid>/<fname> (json)
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>/<fname>', methods=['PATCH'])
 def patch_features(uuid, fname):
     # Check authorization to change features.
     if not authenticate_bucket(uuid):
-        return 'Unauthorized', 401
+        return 'Unauthorized access.', 401
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
     if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first', 404
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the features path.
     features_path = bucket_path / f'{fname}.json'
     if not features_path.exists():
-        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first', 404
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
 
     # Save the features.
     save_features(features_path)
 
-    return jsonify({'message', f'Feature {fname} successfully created in bucket {uuid}.'})
+    return jsonify(message=f'Feature {fname} successfully created in bucket {uuid}.')
+
+
+# -------------------------------------------------------------------------------------------------
+# Tests
+# -------------------------------------------------------------------------------------------------
+
+class TestApp(unittest.TestCase):
+    def setUp(self):
+        app.config['TESTING'] = True
+        self.client = app.test_client()
+
+    def test_1(self):
+        # Create a bucket.
+        token = 'mytoken'
+        uuid = 'myuuid'
+        payload = {'token': token, 'uuid': uuid}
+        response = self.client.post('/api/buckets', data=payload)
+        print(response.text)
 
 
 if __name__ == '__main__':
-    app.run()
+    # app.run()
+    unittest.main()
