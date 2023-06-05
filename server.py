@@ -128,6 +128,7 @@ def authenticate_bucket(uuid):
 
 
 # -------------------------------------------------------------------------------------------------
+# REST endpoint: create a new bucket
 # POST /api/buckets (uuid, token)
 # -------------------------------------------------------------------------------------------------
 
@@ -154,6 +155,7 @@ def create_bucket():
 
 
 # -------------------------------------------------------------------------------------------------
+# REST endpoint: list all features in a bucket
 # GET /api/buckets/<uuid>
 # -------------------------------------------------------------------------------------------------
 
@@ -167,16 +169,20 @@ def get_bucket_index(uuid):
 
     # Retrieve the list of JSON files in the bucket directory.
     fnames = bucket_path.glob('*.json')
-    fnames = sorted(_.name for _ in fnames)
+    fnames = sorted(_.stem for _ in fnames)
     return jsonify({'fnames': fnames})
 
 
 # -------------------------------------------------------------------------------------------------
+# REST endpoint: create new features in a bucket
 # POST /api/buckets/<uuid> (fname, json)
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>', methods=['POST'])
 def post_features(uuid):
+    # Check authorization to upload new features.
+    if not authenticate_bucket(uuid):
+        return 'Unauthorized access.', 401
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
@@ -196,6 +202,7 @@ def post_features(uuid):
 
 
 # -------------------------------------------------------------------------------------------------
+# REST endpoint: retrieve features
 # GET /api/buckets/<uuid>/<fname>
 # -------------------------------------------------------------------------------------------------
 
@@ -217,6 +224,7 @@ def get_features(uuid, fname):
 
 
 # -------------------------------------------------------------------------------------------------
+# REST endpoint: modify existing features
 # PATCH /api/buckets/<uuid>/<fname> (json)
 # -------------------------------------------------------------------------------------------------
 
@@ -267,6 +275,11 @@ class TestApp(unittest.TestCase):
         response = self.client.post('/api/buckets', data=payload)
         self.ok(response)
 
+        # Authorization HTTP header using a bearer token.
+        headers = {
+            'Authorization': f'Bearer {token}',
+        }
+
         # List features in the bucket.
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
@@ -276,8 +289,35 @@ class TestApp(unittest.TestCase):
         fname = 'myfeatures'
         data = {fname: {'data': {0: {'mean': 42}, 1: {'mean': 420}}, 'statistics': {'mean': 21}}}
         payload = {'fname': fname, 'json': json.dumps(data, indent=1)}
+        # NOTE: fail if no authorization header.
         response = self.client.post(f'/api/buckets/{uuid}', data=payload)
+        self.assertEqual(response.status_code, 401)
+        response = self.client.post(f'/api/buckets/{uuid}', data=payload, headers=headers)
         self.ok(response)
+
+        # List features in the bucket.
+        response = self.client.get(f'/api/buckets/{uuid}')
+        self.ok(response)
+        self.assertEqual(response.json['fnames'], ['myfeatures'])
+
+        # Retrieve features.
+        response = self.client.get(f'/api/buckets/{uuid}/{fname}')
+        self.ok(response)
+        self.assertEqual(response.json[fname]['data']['0']['mean'], 42)
+        self.assertEqual(response.json[fname]['data']['1']['mean'], 420)
+
+        # Patch features.
+        data = {fname: {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}
+        payload = {'fname': fname, 'json': json.dumps(data, indent=1)}
+        response = self.client.patch(f'/api/buckets/{uuid}/{fname}', data=payload, headers=headers)
+        self.ok(response)
+
+        # Retrieve modified features.
+        response = self.client.get(f'/api/buckets/{uuid}/{fname}')
+        self.assertEqual(response.json[fname]['data']['0']['mean'], 84)
+        # NOTE: the JSON data is completely replaced, keys that were present before but not now
+        # are deleted.
+        self.assertTrue('1' not in response.json[fname]['data'])
 
 
 if __name__ == '__main__':
