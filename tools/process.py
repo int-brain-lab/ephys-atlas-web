@@ -10,22 +10,20 @@ import gzip
 import json
 import os
 import re
+import uuid
 from datetime import datetime, timezone
 from math import isnan
-from operator import itemgetter, attrgetter
 from pathlib import Path
 from textwrap import dedent
 from xml.dom import minidom
 
-import requests
-import lxml.etree as le
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import requests
 from ibllib.atlas.regions import BrainRegions
 from joblib import Parallel, delayed
-from matplotlib import cm
+# from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap, to_hex
 from pandas.core.groupby import DataFrameGroupBy
 from tqdm import tqdm
@@ -88,7 +86,7 @@ BWM_EXTRA_FNAMES = (
     'decoding_frac_significant',
     'decoding_significant',
 )
-FEATURES_UPLOAD_URL = 'https://ephysatlas.internationalbrainlab.org/api/features'
+FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -731,29 +729,145 @@ def generate_custom_features():
 # Generate custom features for upload
 # -------------------------------------------------------------------------------------------------
 
-def make_features(name, values, mapping='beryl'):
-    m = values.mean()
+def make_features(name, acronyms, values, mapping='beryl'):
+    # Convert acronyms to atlas ids.
+    br = BrainRegions()
+    aids = br.acronym2id(acronyms, mapping=mapping.title())
+
+    # Compute the mean.
+    m = np.mean(values)
+
     return {
         name: {
-            'data': {atlas_id: {'mean': value} for atlas_id, value in values.items()},
+            'data': {aid: {'mean': value} for aid, value in zip(aids, values)},
             'statistics': {'mean': m},
         }
     }
 
 
-def upload_features(uuid, features):
-    json_data = json.dumps(features, sort_keys=True)
-    payload = {
-        'uuid': uuid,
-        'json': json_data
-    }
-    response = requests.post(FEATURES_UPLOAD_URL, data=payload)
-    return response
+class FeatureUploader:
+    def __init__(self, bucket_uuid):
+        # Go in user dir and search bucket UUID and token
+        # If nothing create new ones and save on disk, and create on the server with post request
+
+        assert bucket_uuid
+
+        self.param_path = Path.home() / '.ibl' / 'custom_features.json'
+        self.bucket_uuid = bucket_uuid
+
+        if not self.param_path.exists():
+            # Create the file if it doesn't exist
+            with open(self.param_path, 'w') as file:
+                json.dump({'token': str(uuid.uuid4())}, file)
+
+            # Make a POST request to /api/buckets/<uuid>
+            url = f'/api/buckets/{bucket_uuid}'
+            response = requests.post(url)
+
+            # DEBUG.
+            print(response.json())
+
+        # Load the token.
+        assert self.param_path.exists()
+        with open(self.param_path, 'r') as f:
+            self.token = json.load(f)['token']
+
+        # DEBUG
+        print(self.token)
+
+        assert self.token
+
+    # Internal methods
+    # ---------------------------------------------------------------------------------------------
+
+    def _headers(self):
+        return {
+            'Authorization': f'Bearer {self.token}',
+            'Content-Type': 'application/json'
+        }
+
+    def _url(self, endpoint):
+        assert endpoint.startswith('/')
+        return FEATURES_API_BASE_URL + endpoint
+
+    def _post(self, endpoint, data):
+        url = self._url(endpoint)
+        response = requests.post(url, headers=self._headers(), json=data)
+        if response.status_code != 200:
+            raise Exception(response.json())
+        return response
+
+    def _patch(self, endpoint, data):
+        url = self._url(endpoint)
+        response = requests.patch(url, headers=self._headers(), json=data)
+        if response.status_code != 200:
+            raise Exception(response.json())
+        return response
+
+    def _get(self, endpoint):
+        url = self._url(endpoint)
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise Exception(response.json())
+        return response
+
+    # Public methods
+    # ---------------------------------------------------------------------------------------------
+
+    def create_features(self, name, acronyms, values, mapping='beryl'):
+        """Create new features in the bucket."""
+
+        assert name
+        assert acronyms
+        assert values
+        assert mapping
+
+        # Prepare the JSON payload.
+        data = make_features(name, acronyms, values, mapping=mapping)
+        payload = {'json': data}
+
+        # Make a POST request to /api/buckets/<uuid>.
+        response = self._post(f'buckets/{self.bucket_uuid}', payload)
+
+        # DEBUG
+        print(response)
+
+    def list_features(self):
+        """Return the list of fnames in the bucket."""
+        response = self._get(f'buckets/{self.bucket_uuid}')
+        fnames = response.json()['fnames']
+        return fnames
+
+    def get_features(self, fname):
+        """Retrieve features in the bucket."""
+        assert fname
+        response = self._get(f'/buckets/{self.bucket_uuid}/{fname}')
+        features = response.json()
+        return features
+
+    def patch_features(self, name, acronyms, values, mapping='beryl'):
+        """Update existing features in the bucket."""
+
+        assert name
+        assert acronyms
+        assert values
+        assert mapping
+
+        # Prepare the JSON payload.
+        data = make_features(name, acronyms, values, mapping=mapping)
+        payload = {'json': data}
+
+        # Make a PATCH request to /api/buckets/<uuid>/.
+        response = self._patch(f'buckets/{self.bucket_uuid}/{name}', payload)
+
+        # DEBUG
+        print(response)
 
 
 # -------------------------------------------------------------------------------------------------
 # Entry-point
 # -------------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
 
     # generate_colormaps()
