@@ -257,6 +257,37 @@ def patch_features(uuid, fname):
 
 
 # -------------------------------------------------------------------------------------------------
+# REST endpoint: delete features
+# DELETE /api/buckets/<uuid>/<fname>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>/<fname>', methods=['DELETE'])
+def delete_features(uuid, fname):
+    # Check authorization to change features.
+    if not authenticate_bucket(uuid):
+        return 'Unauthorized access.', 401
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+    # Retrieve the features path.
+    features_path = bucket_path / f'{fname}.json'
+    if not features_path.exists():
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
+
+    # Save the features.
+    try:
+        os.remove(features_path)
+        # print(f"Successfully deleted {features_path}")
+        return jsonify(message=f"Successfully deleted {features_path}")
+    except Exception as e:
+        # print(f"Unable to delete {features_path}")
+        return jsonify(message=f"Unable to delete {features_path}")
+
+
+# -------------------------------------------------------------------------------------------------
 # Tests
 # -------------------------------------------------------------------------------------------------
 
@@ -326,7 +357,13 @@ class TestApp(unittest.TestCase):
         # are deleted.
         self.assertTrue('1' not in response.json['json'][fname]['data'])
 
+        # Delete the features and check they cannot be retrieved anymore.
+        response = self.client.delete(f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(f'/api/buckets/{uuid}/{fname}')
+        self.assertEqual(response.status_code, 404)
+
 
 if __name__ == '__main__':
-    app.run()
-    # unittest.main()
+    # app.run()
+    unittest.main()
