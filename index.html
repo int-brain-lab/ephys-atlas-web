@@ -159,7 +159,7 @@
         </div>
 
 
-        <!-- BAR PLOT -->
+        <!-- LEFT PANEL -->
         <div id="bar-plot-container">
 
 
@@ -183,29 +183,19 @@
                 </div>
 
                 <!-- FEATURE -->
-                <div class="label">fname</div>
+                <!-- <div class="label">fname</div> -->
 
-                <div class="control">
-                    <select id="feature-dropdown">
-                        <option value="psd_alpha">psd_alpha</option>
-                        <option value="psd_beta">psd_beta</option>
-                        <option value="psd_delta">psd_delta</option>
-                        <option value="psd_gamma">psd_gamma</option>
-                        <option value="psd_theta">psd_theta</option>
-                        <option value="rms_ap">rms_ap</option>
-                        <option value="rms_lf">rms_lf</option>
-                        <option value="spike_rate">spike_rate</option>
-                    </select>
-                </div>
-
-                <!-- FEATURE SCALE -->
-                <div id="bar-scale">
-                    <div class="colorbar">
-                    </div>
-                    <div class="wrapper">
-                        <div class="min"></div>
-                        <div class="max"></div>
-                    </div>
+                <div id="feature-tree">
+                    <ul>
+                        <li class="selected">psd_alpha</li>
+                        <li>psd_beta</li>
+                        <li>psd_delta</li>
+                        <li>psd_gamma</li>
+                        <li>psd_theta</li>
+                        <li>rms_ap</li>
+                        <li>rms_lf</li>
+                        <li>spike_rate</li>
+                    </ul>
                 </div>
 
                 <!-- SELECTED REGIONS -->
@@ -221,6 +211,16 @@
                 <div id="bar-plot-search">
                     <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
                     <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
+                </div>
+
+                <!-- FEATURE SCALE -->
+                <div id="bar-scale">
+                    <div class="colorbar">
+                    </div>
+                    <div class="wrapper">
+                        <div class="min"></div>
+                        <div class="max"></div>
+                    </div>
                 </div>
 
             </div>

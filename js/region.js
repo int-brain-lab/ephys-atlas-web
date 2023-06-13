@@ -192,7 +192,7 @@ class Region {
         let region = regions[regionIdx];
         if (region)
             return region;
-        console.warn(`region #${regionIdx} could not be found`);
+        // console.warn(`region #${regionIdx} could not be found`);
     }
 
     getAttribute(regionIdx, attribute) {

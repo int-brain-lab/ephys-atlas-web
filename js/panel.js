@@ -45,7 +45,7 @@ class Panel {
         this.unity = unity;
 
         this.imapping = document.getElementById('mapping-dropdown');
-        this.ifname = document.getElementById('feature-dropdown');
+        this.ifname = document.getElementById('feature-tree');
         this.ifset = document.getElementById('feature-set-dropdown');
         this.icmap = document.getElementById('colormap-dropdown');
         this.istat = document.getElementById('stat-dropdown');
@@ -88,7 +88,7 @@ class Panel {
 
         this.setFeatureOptions(state.fset, state.fname);
         this.ifset.value = state.fset; // set the fset dropdown value
-        this.ifname.value = state.fname; // set the fname dropdown value
+        // this.ifname.value = state.fname; // set the fname dropdown value
         // this.feature.setFname(state.fname);
     }
 
@@ -107,8 +107,8 @@ class Panel {
         // Update the feature options.
         fname = fname || DEFAULT_FEATURE[fset];
         console.assert(FEATURE_NAMES[fset].includes(fname));
-        let options = ['-- default --', ...FEATURE_NAMES[fset]];
-        setOptions(this.ifname, options, fname);
+        // let options = ['-- default --', ...FEATURE_NAMES[fset]];
+        // setOptions(this.ifname, options, fname);
 
         // HACK: only Beryl is available for BWM.
         if (fset.includes('bwm_')) {
@@ -142,7 +142,7 @@ class Panel {
         this.ifset.addEventListener('change', (e) => {
             let fset = e.target.value;
             this.setFeatureOptions(fset); // fname argument not specified => use fset default
-            this.feature.setFset(fset, this.ifname.value);
+            // this.feature.setFset(fset, this.ifname.value);
             this.region.update();
 
             if (this.unity)
@@ -151,8 +151,14 @@ class Panel {
     }
 
     setupFname() {
-        this.ifname.addEventListener('change', (e) => {
-            this.setFname(e.target.value);
+        this.ifname.addEventListener('click', (e) => {
+            let fname = e.target.innerHTML;
+            for (let el of this.ifname.children[0].children) {
+                console.log(el);
+                el.className = "";
+            }
+            e.target.classList.add("selected");
+            this.setFname(fname);
         });
     }
 
@@ -249,8 +255,8 @@ class Panel {
                 // Cycle through the feature names.
                 if (e.key == "f" || e.key == "d") {
                     let dir = e.key == "f" ? +1 : -1;
-                    this.ifname.selectedIndex = clamp(this.ifname.selectedIndex + dir, 0, this.ifname.length - 1);
-                    this.setFname(this.ifname.value);
+                    // this.ifname.selectedIndex = clamp(this.ifname.selectedIndex + dir, 0, this.ifname.length - 1);
+                    // this.setFname(this.ifname.value);
                 }
             }
         });
