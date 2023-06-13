@@ -125,13 +125,20 @@ class Tooltip {
 
     async setText(regionIdx) {
         let info = await this.region.getInfo(regionIdx);
-        if (!info) return;
-        let name = info['name'];
-        let acronym = info['acronym'];
-        let value = await this.feature.get(regionIdx);
-        let meanDisplay = typeof value == 'string' ? value : displayNumber(value);
-        if (!name.includes('(left')) meanDisplay = 'reference area';
-        this.info.innerHTML = `<strong>${acronym}, ${name}</strong><br>${meanDisplay}`;
+
+        // Triggered when hovering over a Swanson region that does not exist in the mapping.
+        if (!info || !info['name']) {
+            console.debug(`region ${regionIdx} could not be found`);
+            this.info.innerHTML = "(not included)";
+        }
+        else {
+            let name = info['name'];
+            let acronym = info['acronym'];
+            let value = await this.feature.get(regionIdx);
+            let meanDisplay = typeof value == 'string' ? value : displayNumber(value);
+            if (!name.includes('(left')) meanDisplay = 'reference area';
+            this.info.innerHTML = `<strong>${acronym}, ${name}</strong><br>${meanDisplay}`;
+        }
     }
 
     async setPosition(e) {
