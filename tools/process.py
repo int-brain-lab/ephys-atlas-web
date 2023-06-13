@@ -759,19 +759,6 @@ def make_features(fname, acronyms, values, mapping='beryl'):
     }
 
 
-GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
-
-def normalize_token(token):
-    return token.strip().lower()
-
-
-def read_global_key():
-    if not GLOBAL_KEY_PATH.exists():
-        raise RuntimeError(f"File {GLOBAL_KEY_PATH} does not exist.")
-    with open(GLOBAL_KEY_PATH, 'r') as f:
-        return normalize_token(f.read())
-
-
 class FeatureUploader:
     def __init__(self, bucket_uuid):
         # Go in user dir and search bucket UUID and token
@@ -785,16 +772,14 @@ class FeatureUploader:
 
         # Create the param file if it doesn't exist.
         if not self.param_path.exists():
-            with open(self.param_path, 'w') as f:
-                json.dump({'buckets': {}}, f, indent=1)
+            self._create_empty_params()
         assert self.param_path.exists()
 
         # Load the param file.
-        with open(self.param_path, 'r') as f:
-            params = json.load(f)
+        self.params = self._load_params()
 
         # Try loading the token associated to the bucket.
-        self.token = params.get('buckets', {}).get(bucket_uuid, {}).get('token', None)
+        self.token = self._load_bucket_token(bucket_uuid)
 
         # If there is none, generate a new token, and create the bucket on the server.
         if not self.token:
@@ -803,22 +788,11 @@ class FeatureUploader:
             # Create a new authorization token.
             self.token = new_token()
 
-            # Make a POST request to /api/buckets/<uuid> to create the new bucket.
-            # NOTE: need for global key authentication to create a new bucket.
-            data = {'uuid': bucket_uuid, 'metadata': {'token':self.token}}
-            endpoint = f'/buckets'
-            url = self._url(endpoint)
-            gk = read_global_key()
-            assert gk
-            response = requests.post(url, json=data, headers=self._headers(gk))
-            if response.status_code != 200:
-                raise RuntimeError(response.text)
+            # Create a new bucket on the server.
+            self._create_new_bucket(bucket_uuid)
 
             # Save the token in the param file.
-            with open(self.param_path, 'w') as file:
-                if bucket_uuid not in params['buckets']:
-                    params['buckets'][bucket_uuid] = {'token': self.token}
-                json.dump(params, file, indent=1)
+            self._save_bucket_token(bucket_uuid, self.token)
 
         assert self.token
 
@@ -856,6 +830,79 @@ class FeatureUploader:
         if response.status_code != 200:
             raise RuntimeError(response.text)
         return response
+
+    # Params
+    # ---------------------------------------------------------------------------------------------
+
+    def _create_empty_params(self):
+        with open(self.param_path, 'w') as f:
+            json.dump({'buckets': {}}, f, indent=1)
+
+    def _load_params(self):
+        with open(self.param_path, 'r') as f:
+            return json.load(f)
+
+    def _save_params(self, params):
+        with open(self.param_path, 'w') as f:
+            json.dump(params, f, indent=1)
+
+    # Bucket tocken
+    # ---------------------------------------------------------------------------------------------
+
+    def _load_bucket_token(self, bucket_uuid):
+        assert self.params
+        return self.params.get('buckets', {}).get(bucket_uuid, {}).get('token', None)
+
+    def _save_bucket_token(self, bucket_uuid, token):
+        params = self.params
+        if bucket_uuid not in params['buckets']:
+            params['buckets'][bucket_uuid] = {}
+        params['buckets'][bucket_uuid]['token'] = token
+        self._save_params(params)
+
+    # Global key
+    # ---------------------------------------------------------------------------------------------
+
+    def _load_global_key(self):
+        assert self.params
+        return self.params.get('global_key', None)
+
+    def _save_global_key(self, gk):
+        assert self.params
+        params = self.params
+        params['global_key'] = gk
+        self._save_params(params)
+
+    def _prompt_global_key(self):
+        return input("Plase copy-paste the global key from the documentation webpage:\n")
+
+    def _get_global_key(self):
+        """Global authentication to create new buckets.
+
+        1. If the global key is saved in ~/.ibl/custom_features.json, use it.
+        2. Otherwise, prompt it and save it.
+
+        """
+        gk = self._load_global_key()
+        if not gk:
+            gk = self._prompt_global_key()
+            self._save_global_key(gk)
+        assert gk
+        return gk
+
+    # Bucket creation
+    # ---------------------------------------------------------------------------------------------
+
+    def _create_new_bucket(self, bucket_uuid):
+        # Make a POST request to /api/buckets/<uuid> to create the new bucket.
+        # NOTE: need for global key authentication to create a new bucket.
+        data = {'uuid': bucket_uuid, 'metadata': {'token':self.token}}
+        endpoint = f'/buckets'
+        url = self._url(endpoint)
+        gk = self._get_global_key()
+        response = requests.post(url, json=data, headers=self._headers(gk))
+        if response.status_code != 200:
+            raise RuntimeError(response.text)
 
     # Public methods
     # ---------------------------------------------------------------------------------------------
