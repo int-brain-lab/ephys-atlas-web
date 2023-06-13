@@ -245,7 +245,7 @@ class Region {
                 return region;
             }
         }
-        console.warn(`region #${regionIdx} could not be found`);
+        // console.debug(`region #${regionIdx} could not be found`);
     }
 
     async getAttribute(regionIdx, attribute) {
