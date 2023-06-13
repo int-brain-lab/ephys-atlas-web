@@ -754,6 +754,19 @@ def make_features(fname, acronyms, values, mapping='beryl'):
     }
 
 
+GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
+
+def normalize_token(token):
+    return token.strip().lower()
+
+
+def read_global_key():
+    if not GLOBAL_KEY_PATH.exists():
+        raise RuntimeError(f"File {GLOBAL_KEY_PATH} does not exist.")
+    with open(GLOBAL_KEY_PATH, 'r') as f:
+        return normalize_token(f.read())
+
+
 class FeatureUploader:
     def __init__(self, bucket_uuid):
         # Go in user dir and search bucket UUID and token
@@ -785,8 +798,16 @@ class FeatureUploader:
             # Create a new authorization token.
             self.token = new_token()
 
-            # DEBUG
-            self.token = 'mytoken'
+            # Make a POST request to /api/buckets/<uuid> to create the new bucket.
+            # NOTE: need for global key authentication to create a new bucket.
+            data = {'uuid': bucket_uuid, 'metadata': {'token':self.token}}
+            endpoint = f'/buckets'
+            url = self._url(endpoint)
+            gk = read_global_key()
+            assert gk
+            response = requests.post(url, json=data, headers=self._headers(gk))
+            if response.status_code != 200:
+                raise RuntimeError(response.text)
 
             # Save the token in the param file.
             with open(self.param_path, 'w') as file:
@@ -794,22 +815,14 @@ class FeatureUploader:
                     params['buckets'][bucket_uuid] = {'token': self.token}
                 json.dump(params, file, indent=1)
 
-            # Make a POST request to /api/buckets/<uuid> to create the new bucket.
-            # NOTE: no need for token authentication to create a new bucket.
-            data = {'uuid': bucket_uuid, 'token': self.token}
-            endpoint = f'/api/buckets'
-            url = self._url(endpoint)
-            response = requests.post(url, json=data)
-            print(response.text)
-
         assert self.token
 
     # Internal methods
     # ---------------------------------------------------------------------------------------------
 
-    def _headers(self):
+    def _headers(self, token=None):
         return {
-            'Authorization': f'Bearer {self.token}',
+            'Authorization': f'Bearer {token or self.token}',
             'Content-Type': 'application/json'
         }
 
@@ -856,14 +869,14 @@ class FeatureUploader:
         payload = {'fname': fname, 'json': data}
 
         # Make a POST request to /api/buckets/<uuid>.
-        try:
-            if method == 'post':
-                response = self._post(f'buckets/{self.bucket_uuid}', payload)
-            elif method == 'patch':
-                response = self._patch(f'buckets/{self.bucket_uuid}/{fname}', payload)
-            print(response.json()['message'])
-        except RuntimeError as e:
-            print(f"Error: {e}")
+        # try:
+        if method == 'post':
+            response = self._post(f'buckets/{self.bucket_uuid}', payload)
+        elif method == 'patch':
+            response = self._patch(f'buckets/{self.bucket_uuid}/{fname}', payload)
+        # print(response.json()['message'])
+        # except RuntimeError as e:
+        #     print(f"Error while making {method} request: {e}")
 
     def create_features(self, fname, acronyms, values, mapping='beryl'):
         """Create new features in the bucket."""
@@ -872,7 +885,7 @@ class FeatureUploader:
     def list_features(self):
         """Return the list of fnames in the bucket."""
         response = self._get(f'buckets/{self.bucket_uuid}')
-        fnames = response.json()['fnames']
+        fnames = response.json()['features']
         return fnames
 
     def get_features(self, fname):

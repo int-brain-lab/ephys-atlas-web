@@ -15,7 +15,7 @@ import uuid
 import unittest
 
 from dateutil import parser
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, abort
 # from flask_testing import TestCase
 
 
@@ -93,23 +93,34 @@ def save_features(path):
 # -------------------------------------------------------------------------------------------------
 
 def get_bucket_path(uuid):
-    return list(FEATURES_DIR.glob(f'*{uuid}*'))[0]
+    filenames = list(FEATURES_DIR.glob(f'*{uuid}*'))
+    if not filenames:
+        return None
+    return filenames[0] if filenames else None
 
 
 def get_bucket_metadata_path(uuid):
-    return get_bucket_path(uuid) / '_bucket.json'
+    path = get_bucket_path(uuid)
+    if not path:
+        return None
+    return path / '_bucket.json'
 
 
 def save_bucket_metadata(uuid, metadata):
     assert uuid
     assert metadata
     assert 'token' in metadata
-    with open(get_bucket_metadata_path(uuid), 'w') as f:
-        json.dump(metadata, f)
+    path = get_bucket_metadata_path(uuid)
+    if not path:
+        return
+    with open(path, 'w') as f:
+        json.dump(metadata, f, indent=1)
 
 
 def load_bucket_metadata(uuid):
     path = get_bucket_metadata_path(uuid)
+    if not path:
+        return
     assert path.exists(), 'Bucket metadata file does not exist'
     with open(path, 'r') as f:
         metadata = json.load(f)
@@ -165,6 +176,8 @@ def extract_token():
 
 def load_bucket_token(uuid):
     metadata = load_bucket_metadata(uuid)
+    if not metadata:
+        return
     if 'token' not in metadata:
         # TODO: generate new token?
         pass
@@ -190,6 +203,15 @@ def read_global_key():
 
 def authorize_global_key(key):
         return normalize_token(key) == normalize_token(read_global_key())
+
+
+# -------------------------------------------------------------------------------------------------
+# Error handlers
+# -------------------------------------------------------------------------------------------------
+
+@app.errorhandler(404)
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
 
 
 # -------------------------------------------------------------------------------------------------
@@ -236,8 +258,8 @@ def get_bucket(uuid):
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
-    if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+    if not bucket_path or not bucket_path.exists():
+        abort(404, f'Bucket {uuid} does not exist, you need to create it first.')
 
     # Retrieve the list of JSON files in the bucket directory.
     fnames = bucket_path.glob('*.json')
@@ -464,5 +486,5 @@ class TestApp(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # app.run()
-    unittest.main()
+    app.run()
+    # unittest.main()
