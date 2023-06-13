@@ -5,14 +5,16 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
-import datetime
+from datetime import datetime
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import uuid
 import unittest
 
+from dateutil import parser
 from flask import Flask, Response, request, jsonify
 # from flask_testing import TestCase
 
@@ -86,8 +88,67 @@ def save_features(path):
 
 
 # -------------------------------------------------------------------------------------------------
+# Bucket metadata
+# -------------------------------------------------------------------------------------------------
+
+def get_bucket_path(uuid):
+    return list(FEATURES_DIR.glob(f'*{uuid}*'))[0]
+
+
+def get_bucket_metadata_path(uuid):
+    return get_bucket_path(uuid) / '_bucket.json'
+
+
+def save_bucket_metadata(uuid, metadata):
+    assert uuid
+    assert metadata
+    assert 'token' in metadata
+    with open(get_bucket_metadata_path(uuid), 'w') as f:
+        json.dump(metadata, f)
+
+
+def load_bucket_metadata(uuid):
+    path = get_bucket_metadata_path(uuid)
+    assert path.exists(), 'Bucket metadata file does not exist'
+    with open(path, 'r') as f:
+        metadata = json.load(f)
+    # metadata['last_access_date'] = parser.parse(metadata['last_access_date'])
+    return metadata
+
+
+def new_token():
+    return str(uuid.uuid4())
+
+
+def now():
+    return datetime.now().isoformat()
+
+
+def create_bucket_metadata(alias=None, description=None, url=None, tree=None):
+    return {
+        'url': url,
+        'alias': alias,
+        'tree': tree,
+        'description': description,
+        'token': new_token(),
+        'last_access_date': now(),
+    }
+
+
+def update_bucket_metadata(uuid, metadata):
+    metadata_orig = load_bucket_metadata(uuid)
+    metadata_orig.update(metadata)
+    metadata_orig['last_access_date'] = now()
+    save_bucket_metadata(uuid, metadata_orig)
+
+
+# -------------------------------------------------------------------------------------------------
 # Authorization
 # -------------------------------------------------------------------------------------------------
+
+def normalize_token(token):
+    return token.strip().lower()
+
 
 def extract_token():
     # Check if the Authorization header is present
@@ -98,27 +159,19 @@ def extract_token():
     auth_header = request.headers.get('Authorization')
     auth_type, token = auth_header.split(' ')
     assert token
-    return token.strip().lower()
+    return normalize_token(token)
 
 
-def get_bucket_path(uuid):
-    return list(FEATURES_DIR.glob(f'{uuid}*'))[0]
-
-
-def get_bucket_token_path(uuid):
-    return get_bucket_path(uuid) / 'token'
-
-
-def save_bucket_token(uuid, token):
-    with open(get_bucket_token_path(uuid), 'w') as f:
-        f.write(token)
+# def save_bucket_token(uuid, token):
+#     update_bucket_metadata(uuid, {'token': token})
 
 
 def load_bucket_token(uuid):
-    with open(get_bucket_token_path(uuid), 'r') as f:
-        token = f.read().strip().lower()
-    assert token
-    return token
+    metadata = load_bucket_metadata(uuid)
+    if 'token' not in metadata:
+        # TODO: generate new token?
+        pass
+    return metadata['token']
 
 
 def authenticate_bucket(uuid):
@@ -142,8 +195,9 @@ def create_bucket():
     uuid = data['uuid']
     assert uuid
 
-    token = data['token']
-    assert token
+    metadata = data['metadata']
+    assert metadata
+    assert 'token' in metadata
 
     # Create the bucket directory.
     bucket_dir = FEATURES_DIR / uuid
@@ -151,19 +205,19 @@ def create_bucket():
         return 'Bucket already exists.', 409
     bucket_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save the token.
-    (bucket_dir / 'token').write_text(token)
+    # Save the metadata (including the token).
+    save_bucket_metadata(uuid, metadata)
 
     return jsonify(message=f'Bucket {uuid} successfully created.')
 
 
 # -------------------------------------------------------------------------------------------------
-# REST endpoint: list all features in a bucket
+# REST endpoint: get bucket information
 # GET /api/buckets/<uuid>
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>', methods=['GET'])
-def get_bucket_index(uuid):
+def get_bucket(uuid):
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
@@ -172,8 +226,15 @@ def get_bucket_index(uuid):
 
     # Retrieve the list of JSON files in the bucket directory.
     fnames = bucket_path.glob('*.json')
-    fnames = sorted(_.stem for _ in fnames)
-    return jsonify({'fnames': fnames})
+    fnames = sorted(_.stem for _ in fnames if not _.stem.startswith('_'))
+
+    # Retrieve the bucket metadata.
+    metadata = load_bucket_metadata(uuid)
+
+    # NOTE: remove the token from the metadata dictionary.
+    del metadata['token']
+
+    return jsonify({'features': fnames, 'metadata': metadata})
 
 
 # -------------------------------------------------------------------------------------------------
@@ -305,26 +366,44 @@ class TestApp(unittest.TestCase):
         if path.exists():
             shutil.rmtree(path)
 
+        # Bucket metadata.
+        alias = 'myalias'
+        description = 'mydesc'
+        url = 'https://ephysatlas.internationalbrainlab.org'
+        tree = {
+            'level1': {
+                'level2': {
+                    'feature1': 'fet1',
+                    'feature2': 'fet2',
+                }
+            }
+        }
+        metadata = create_bucket_metadata(alias=alias, description=description, url=url, tree=tree)
+        token = metadata['token']
+
         # Create a bucket.
         uuid = 'myuuid'
-        token = 'mytoken'
-        payload = {'token': token, 'uuid': uuid}
+        payload = {'token': token, 'uuid': uuid, 'metadata': metadata}
         response = self.client.post('/api/buckets', json=payload)
         self.ok(response)
 
         # Authorization HTTP header using a bearer token.
         headers = {
             'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         }
 
-        # List features in the bucket.
+        # Retrieve bucket information.
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
-        self.assertEqual(response.json['fnames'], [])
+        self.assertEqual(response.json['features'], [])
+        self.assertEqual(response.json['metadata']['alias'], alias)
+        self.assertEqual(response.json['metadata']['description'], description)
+        self.assertEqual(response.json['metadata']['url'], url)
+        self.assertEqual(response.json['metadata']['tree'], tree)
 
         # Create features.
-        fname = 'myfeatures'
+        fname = 'fet1'
         data = {fname: {'data': {0: {'mean': 42}, 1: {'mean': 420}}, 'statistics': {'mean': 21}}}
         payload = {'fname': fname, 'json': data}
         # NOTE: fail if no authorization header.
@@ -336,7 +415,7 @@ class TestApp(unittest.TestCase):
         # List features in the bucket.
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
-        self.assertEqual(response.json['fnames'], ['myfeatures'])
+        self.assertEqual(response.json['features'], ['fet1'])
 
         # Retrieve features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
