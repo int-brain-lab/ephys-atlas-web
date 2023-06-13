@@ -738,8 +738,13 @@ def new_token():
 
 
 def make_features(fname, acronyms, values, mapping='beryl'):
+    acronyms = np.asarray(acronyms)
     # Convert acronyms to atlas ids.
     br = BrainRegions()
+    ina = np.in1d(acronyms, br.acronym)
+    if not np.all(ina):
+        ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
+        raise ValueError(f"The following acronyms do not belong to allen mapping: {ac}")
     aids = br.acronym2index(acronyms, mapping=mapping.title())[1][0]
     assert len(aids) == len(acronyms)
 
