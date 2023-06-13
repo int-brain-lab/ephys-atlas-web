@@ -28,6 +28,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
 FEATURES_FILE_REGEX = re.compile(r'^\d{8}-\S+\.json$')
 DELETE_AFTER_DAYS = 180
+GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
 NATIVE_FNAMES = (
     'ephys', 'bwm_block', 'bwm_choice', 'bwm_feedback', 'bwm_stimulus')
 
@@ -153,17 +154,13 @@ def normalize_token(token):
 def extract_token():
     # Check if the Authorization header is present
     if 'Authorization' not in request.headers:
-        return 'Unauthorized access, require valid bearer authorization token.', 401
+        raise RuntimeError('Unauthorized access, require valid bearer authorization token.')
 
     # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
     auth_type, token = auth_header.split(' ')
     assert token
     return normalize_token(token)
-
-
-# def save_bucket_token(uuid, token):
-#     update_bucket_metadata(uuid, {'token': token})
 
 
 def load_bucket_token(uuid):
@@ -175,9 +172,24 @@ def load_bucket_token(uuid):
 
 
 def authenticate_bucket(uuid):
-    passed_token = extract_token()
+    try:
+        passed_token = extract_token()
+    except RuntimeError as e:
+        # print("Invalid authentication token")
+        return
     expected_token = load_bucket_token(uuid)
     return passed_token == expected_token
+
+
+def read_global_key():
+    if not GLOBAL_KEY_PATH.exists():
+        raise RuntimeError(f"File {GLOBAL_KEY_PATH} does not exist.")
+    with open(GLOBAL_KEY_PATH, 'r') as f:
+        return normalize_token(f.read())
+
+
+def authorize_global_key(key):
+        return normalize_token(key) == normalize_token(read_global_key())
 
 
 # -------------------------------------------------------------------------------------------------
@@ -187,6 +199,9 @@ def authenticate_bucket(uuid):
 
 @app.route('/api/buckets', methods=['POST'])
 def create_bucket():
+    # Global key authentication is required to create a new bucket.
+    if not authorize_global_key(extract_token()):
+        return 'Unauthorized access.', 401
 
     # Get the parameters passed in the POST request.
     data = request.json
@@ -384,7 +399,12 @@ class TestApp(unittest.TestCase):
         # Create a bucket.
         uuid = 'myuuid'
         payload = {'token': token, 'uuid': uuid, 'metadata': metadata}
-        response = self.client.post('/api/buckets', json=payload)
+        globalkey = read_global_key()
+        headers = {
+            'Authorization': f'Bearer {globalkey}',
+            'Content-Type': 'application/json',
+        }
+        response = self.client.post('/api/buckets', json=payload, headers=headers)
         self.ok(response)
 
         # Authorization HTTP header using a bearer token.
