@@ -28,6 +28,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
 FEATURES_FILE_REGEX = re.compile(r'^\d{8}-\S+\.json$')
 DELETE_AFTER_DAYS = 180
+BUCKET_UUID_LENGTH = 18
 GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
 NATIVE_FNAMES = (
     'ephys', 'bwm_block', 'bwm_choice', 'bwm_feedback', 'bwm_stimulus')
@@ -131,18 +132,26 @@ def load_bucket_metadata(uuid):
     return metadata
 
 
-def new_token():
-    return str(uuid.uuid4())
+def new_token(max_length=None):
+    token = str(uuid.uuid4())
+    if max_length:
+        token = token[:max_length]
+    return token
+
+
+def new_uuid():
+    return new_token(BUCKET_UUID_LENGTH)
 
 
 def now():
     return datetime.now().isoformat()
 
 
-def create_bucket_metadata(alias=None, description=None, url=None, tree=None):
+def create_bucket_metadata(bucket_uuid, alias=None, description=None, url=None, tree=None):
     return {
-        'url': url,
+        'uuid': bucket_uuid,
         'alias': alias,
+        'url': url,
         'tree': tree,
         'description': description,
         'token': new_token(),
@@ -243,13 +252,17 @@ def get_bucket(uuid):
 def create_bucket(uuid, metadata, alias=None):
     assert uuid
     assert metadata
+    assert 'uuid' in metadata
     assert 'token' in metadata
     assert metadata['token']
 
+    # Ensure no bucket with the same uuid exists.
+    if isinstance(get_bucket(uuid), dict):
+        return f'Bucket {uuid} already exists.', 409
+
     # Create the bucket directory.
     bucket_dir = FEATURES_DIR / f'{alias}{"_" if alias else ""}{uuid}'
-    if bucket_dir.exists():
-        return 'Bucket already exists.', 409
+    assert not bucket_dir.exists()
     bucket_dir.mkdir(parents=True, exist_ok=True)
 
     # Save the metadata (including the token).
@@ -426,11 +439,11 @@ class TestApp(unittest.TestCase):
                 }
             }
         }
-        metadata = create_bucket_metadata(alias=alias, description=description, url=url, tree=tree)
+        uuid = 'myuuid'
+        metadata = create_bucket_metadata(uuid, alias=alias, description=description, url=url, tree=tree)
         token = metadata['token']
 
         # Create a bucket.
-        uuid = 'myuuid'
         payload = {'token': token, 'uuid': uuid, 'metadata': metadata}
         globalkey = read_global_key()
         headers = {
@@ -504,12 +517,23 @@ def create_ephys_features():
     alias = 'ephys'
     description = 'Ephys atlas'
     tree = None
-    bucket_uuid = new_token()
-    metadata = create_bucket_metadata(alias=alias, description=description,tree=tree)
-    assert 'token' in metadata
-    create_bucket(bucket_uuid, metadata, alias=alias)
+
+    # Skip if the bucket already exists.
+    if isinstance(get_bucket(alias), tuple):
+        bucket_uuid = new_uuid()
+        print(f"Create new bucket {alias} {bucket_uuid}")
+        metadata = create_bucket_metadata(bucket_uuid, alias=alias, description=description, tree=tree)
+        assert 'token' in metadata
+        create_bucket(bucket_uuid, metadata, alias=alias)
+
+    bucket = get_bucket(alias)
+    bucket_uuid = bucket['metadata']['uuid']
+    print(bucket_uuid)
+
+    # create_features(bucket_uuid, fname, json_data)
 
 
 if __name__ == '__main__':
     # app.run()
-    unittest.main()
+    # unittest.main()
+    create_ephys_features()

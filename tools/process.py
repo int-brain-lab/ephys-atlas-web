@@ -733,8 +733,15 @@ def generate_custom_features():
 # Generate custom features for upload
 # -------------------------------------------------------------------------------------------------
 
-def new_token():
-    return str(uuid.uuid4())
+def new_token(max_length=None):
+    token = str(uuid.uuid4())
+    if max_length:
+        token = token[:max_length]
+    return token
+
+
+def new_uuid():
+    return new_token(18)
 
 
 def make_features(fname, acronyms, values, mapping='beryl'):
