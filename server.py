@@ -81,8 +81,8 @@ def delete_old_files(dir_path=FEATURES_DIR):
     return i
 
 
-def save_features(path):
-    json_data = request.json
+def save_features(path, json_data):
+    assert path
     assert json_data
     with open(path, 'w') as f:
         json.dump(json_data, f, indent=1)
@@ -93,6 +93,9 @@ def save_features(path):
 # -------------------------------------------------------------------------------------------------
 
 def get_bucket_path(uuid):
+    """
+    NOTE: the bucket directory should contain the uuid but can also contain an alias
+    """
     filenames = list(FEATURES_DIR.glob(f'*{uuid}*'))
     if not filenames:
         return None
@@ -215,51 +218,14 @@ def resource_not_found(e):
 
 
 # -------------------------------------------------------------------------------------------------
-# REST endpoint: create a new bucket
-# POST /api/buckets (uuid, token)
+# Business logic
 # -------------------------------------------------------------------------------------------------
 
-@app.route('/api/buckets', methods=['POST'])
-def create_bucket():
-    # Global key authentication is required to create a new bucket.
-    if not authorize_global_key(extract_token()):
-        return 'Unauthorized access.', 401
-
-    # Get the parameters passed in the POST request.
-    data = request.json
-    assert data
-
-    uuid = data['uuid']
-    assert uuid
-
-    metadata = data['metadata']
-    assert metadata
-    assert 'token' in metadata
-
-    # Create the bucket directory.
-    bucket_dir = FEATURES_DIR / uuid
-    if bucket_dir.exists():
-        return 'Bucket already exists.', 409
-    bucket_dir.mkdir(parents=True, exist_ok=True)
-
-    # Save the metadata (including the token).
-    save_bucket_metadata(uuid, metadata)
-
-    return jsonify(message=f'Bucket {uuid} successfully created.')
-
-
-# -------------------------------------------------------------------------------------------------
-# REST endpoint: get bucket information
-# GET /api/buckets/<uuid>
-# -------------------------------------------------------------------------------------------------
-
-@app.route('/api/buckets/<uuid>', methods=['GET'])
 def get_bucket(uuid):
-
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
     if not bucket_path or not bucket_path.exists():
-        abort(404, f'Bucket {uuid} does not exist, you need to create it first.')
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the list of JSON files in the bucket directory.
     fnames = bucket_path.glob('*.json')
@@ -271,7 +237,101 @@ def get_bucket(uuid):
     # NOTE: remove the token from the metadata dictionary.
     del metadata['token']
 
-    return jsonify({'features': fnames, 'metadata': metadata})
+    return {'features': fnames, 'metadata': metadata}
+
+
+def create_bucket(uuid, metadata, alias=None):
+    assert uuid
+    assert metadata
+    assert 'token' in metadata
+    assert metadata['token']
+
+    # Create the bucket directory.
+    bucket_dir = FEATURES_DIR / f'{alias}{"_" if alias else ""}{uuid}'
+    if bucket_dir.exists():
+        return 'Bucket already exists.', 409
+    bucket_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save the metadata (including the token).
+    save_bucket_metadata(uuid, metadata)
+
+    return f'Bucket {uuid} successfully created.', 200
+
+
+def create_features(uuid, fname, json_data, patch=False):
+    assert uuid
+    assert fname
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+    # Retrieve the features path.
+    features_path = bucket_path / f'{fname}.json'
+    if not patch and features_path.exists():
+        return f'Features {fname} already exist, use a PATCH request instead.', 409
+    if patch and not features_path.exists():
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
+
+    # Save the features.
+    save_features(features_path, json_data)
+
+    return f'Features {fname} successfully {"created" if not patch else "patched"} in bucket {uuid}.', 200
+
+
+def delete_features(uuid, fname):
+    assert uuid
+    assert fname
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+    # Retrieve the features path.
+    features_path = bucket_path / f'{fname}.json'
+    if not features_path.exists():
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
+
+    # Save the features.
+    assert features_path.exists()
+    try:
+        os.remove(features_path)
+        return f"Successfully deleted {features_path}", 200
+    except Exception as e:
+        return f"Unable to delete {features_path}", 500
+
+
+# -------------------------------------------------------------------------------------------------
+# REST endpoint: create a new bucket
+# POST /api/buckets (uuid, token)
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets', methods=['POST'])
+def api_create_bucket():
+    # Global key authentication is required to create a new bucket.
+    if not authorize_global_key(extract_token()):
+        return 'Unauthorized access.', 401
+
+    # Get the parameters passed in the POST request.
+    data = request.json
+    assert data
+
+    uuid = data['uuid']
+    metadata = data['metadata']
+
+    return create_bucket(uuid, metadata)
+
+
+# -------------------------------------------------------------------------------------------------
+# REST endpoint: get bucket information
+# GET /api/buckets/<uuid>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>', methods=['GET'])
+def api_get_bucket(uuid):
+    return jsonify(get_bucket(uuid))
 
 
 # -------------------------------------------------------------------------------------------------
@@ -280,29 +340,12 @@ def get_bucket(uuid):
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>', methods=['POST'])
-def post_features(uuid):
+def api_post_features(uuid):
     # Check authorization to upload new features.
     if not authenticate_bucket(uuid):
         return 'Unauthorized access.', 401
-
-    # Retrieve the bucket path.
-    bucket_path = get_bucket_path(uuid)
-    if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first.', 404
-
-    # Retrieve the fname.
     fname = request.json.get('fname', '')
-    assert fname
-
-    # Retrieve the features path.
-    features_path = bucket_path / f'{fname}.json'
-    if features_path.exists():
-        return f'Features {fname} already exist, use a PATCH request instead.', 409
-
-    # Save the features.
-    save_features(features_path)
-
-    return jsonify(message=f'Features {fname} successfully created in bucket {uuid}.')
+    return create_features(uuid, fname, request.json)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -311,7 +354,7 @@ def post_features(uuid):
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>/<fname>', methods=['GET'])
-def get_features(uuid, fname):
+def api_get_features(uuid, fname):
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
@@ -333,25 +376,11 @@ def get_features(uuid, fname):
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>/<fname>', methods=['PATCH'])
-def patch_features(uuid, fname):
+def api_patch_features(uuid, fname):
     # Check authorization to change features.
     if not authenticate_bucket(uuid):
         return 'Unauthorized access.', 401
-
-    # Retrieve the bucket path.
-    bucket_path = get_bucket_path(uuid)
-    if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first.', 404
-
-    # Retrieve the features path.
-    features_path = bucket_path / f'{fname}.json'
-    if not features_path.exists():
-        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
-
-    # Save the features.
-    save_features(features_path)
-
-    return jsonify(message=f'Feature {fname} successfully patched in bucket {uuid}.')
+    return create_features(uuid, fname, request.json, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -360,29 +389,11 @@ def patch_features(uuid, fname):
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>/<fname>', methods=['DELETE'])
-def delete_features(uuid, fname):
+def api_delete_features(uuid, fname):
     # Check authorization to change features.
     if not authenticate_bucket(uuid):
         return 'Unauthorized access.', 401
-
-    # Retrieve the bucket path.
-    bucket_path = get_bucket_path(uuid)
-    if not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first.', 404
-
-    # Retrieve the features path.
-    features_path = bucket_path / f'{fname}.json'
-    if not features_path.exists():
-        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
-
-    # Save the features.
-    try:
-        os.remove(features_path)
-        # print(f"Successfully deleted {features_path}")
-        return jsonify(message=f"Successfully deleted {features_path}")
-    except Exception as e:
-        # print(f"Unable to delete {features_path}")
-        return jsonify(message=f"Unable to delete {features_path}")
+    return delete_features(uuid, fname)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -485,6 +496,20 @@ class TestApp(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+# -------------------------------------------------------------------------------------------------
+# Default features
+# -------------------------------------------------------------------------------------------------
+
+def create_ephys_features():
+    alias = 'ephys'
+    description = 'Ephys atlas'
+    tree = None
+    bucket_uuid = new_token()
+    metadata = create_bucket_metadata(alias=alias, description=description,tree=tree)
+    assert 'token' in metadata
+    create_bucket(bucket_uuid, metadata, alias=alias)
+
+
 if __name__ == '__main__':
-    app.run()
-    # unittest.main()
+    # app.run()
+    unittest.main()
