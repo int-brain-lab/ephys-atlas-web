@@ -6,7 +6,9 @@
 # -------------------------------------------------------------------------------------------------
 
 from datetime import datetime
+from itertools import groupby
 import json
+from operator import itemgetter
 import os
 from pathlib import Path
 import re
@@ -147,7 +149,8 @@ def now():
     return datetime.now().isoformat()
 
 
-def create_bucket_metadata(bucket_uuid, alias=None, description=None, url=None, tree=None):
+def create_bucket_metadata(bucket_uuid, alias=None,
+                           description=None, url=None, tree=None):
     return {
         'uuid': bucket_uuid,
         'alias': alias,
@@ -177,7 +180,8 @@ def normalize_token(token):
 def extract_token():
     # Check if the Authorization header is present
     if 'Authorization' not in request.headers:
-        raise RuntimeError('Unauthorized access, require valid bearer authorization token.')
+        raise RuntimeError(
+            'Unauthorized access, require valid bearer authorization token.')
 
     # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
@@ -214,7 +218,7 @@ def read_global_key():
 
 
 def authorize_global_key(key):
-        return normalize_token(key) == normalize_token(read_global_key())
+    return normalize_token(key) == normalize_token(read_global_key())
 
 
 # -------------------------------------------------------------------------------------------------
@@ -261,7 +265,7 @@ def create_bucket(uuid, metadata, alias=None):
         return f'Bucket {uuid} already exists.', 409
 
     # Create the bucket directory.
-    bucket_dir = FEATURES_DIR / f'{alias}{"_" if alias else ""}{uuid}'
+    bucket_dir = FEATURES_DIR / f'{alias or ""}{"_" if alias else ""}{uuid}'
     assert not bucket_dir.exists()
     bucket_dir.mkdir(parents=True, exist_ok=True)
 
@@ -440,7 +444,8 @@ class TestApp(unittest.TestCase):
             }
         }
         uuid = 'myuuid'
-        metadata = create_bucket_metadata(uuid, alias=alias, description=description, url=url, tree=tree)
+        metadata = create_bucket_metadata(
+            uuid, alias=alias, description=description, url=url, tree=tree)
         token = metadata['token']
 
         # Create a bucket.
@@ -450,7 +455,8 @@ class TestApp(unittest.TestCase):
             'Authorization': f'Bearer {globalkey}',
             'Content-Type': 'application/json',
         }
-        response = self.client.post('/api/buckets', json=payload, headers=headers)
+        response = self.client.post(
+            '/api/buckets', json=payload, headers=headers)
         self.ok(response)
 
         # Authorization HTTP header using a bearer token.
@@ -470,12 +476,14 @@ class TestApp(unittest.TestCase):
 
         # Create features.
         fname = 'fet1'
-        data = {fname: {'data': {0: {'mean': 42}, 1: {'mean': 420}}, 'statistics': {'mean': 21}}}
+        data = {fname: {'data': {0: {'mean': 42}, 1: {
+            'mean': 420}}, 'statistics': {'mean': 21}}}
         payload = {'fname': fname, 'json': data}
         # NOTE: fail if no authorization header.
         response = self.client.post(f'/api/buckets/{uuid}', json=payload)
         self.assertEqual(response.status_code, 401)
-        response = self.client.post(f'/api/buckets/{uuid}', json=payload, headers=headers)
+        response = self.client.post(
+            f'/api/buckets/{uuid}', json=payload, headers=headers)
         self.ok(response)
 
         # List features in the bucket.
@@ -487,12 +495,14 @@ class TestApp(unittest.TestCase):
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
         self.ok(response)
         self.assertEqual(response.json['json'][fname]['data']['0']['mean'], 42)
-        self.assertEqual(response.json['json'][fname]['data']['1']['mean'], 420)
+        self.assertEqual(response.json['json']
+                         [fname]['data']['1']['mean'], 420)
 
         # Patch features.
         data = {fname: {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}
         payload = {'fname': fname, 'json': data}
-        response = self.client.patch(f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
+        response = self.client.patch(
+            f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
         self.ok(response)
 
         # Retrieve modified features.
@@ -503,7 +513,8 @@ class TestApp(unittest.TestCase):
         self.assertTrue('1' not in response.json['json'][fname]['data'])
 
         # Delete the features and check they cannot be retrieved anymore.
-        response = self.client.delete(f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
+        response = self.client.delete(
+            f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
         self.assertEqual(response.status_code, 200)
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
         self.assertEqual(response.status_code, 404)
@@ -513,10 +524,70 @@ class TestApp(unittest.TestCase):
 # Default features
 # -------------------------------------------------------------------------------------------------
 
+def iter_fset_features(fset):
+    assert fset
+    json_path = ROOT_DIR / 'data/json' / f"features_{fset}.json"
+    with open(json_path, 'r') as f:
+        contents = json.load(f)
+    for mapping, fet in contents.items():
+        for fname, d in fet.items():
+            yield fname, mapping, d
+
+
 def create_ephys_features():
     alias = 'ephys'
     description = 'Ephys atlas'
     tree = None
+
+    # Skip if the bucket already exists.
+    if isinstance(get_bucket(alias), tuple):
+        bucket_uuid = new_uuid()
+        print(f"Create new bucket {alias} {bucket_uuid}")
+        metadata = create_bucket_metadata(
+            bucket_uuid, alias=alias, description=description, tree=tree)
+        assert 'token' in metadata
+        create_bucket(bucket_uuid, metadata, alias=alias)
+
+    bucket = get_bucket(alias)
+    bucket_uuid = bucket['metadata']['uuid']
+    print(bucket_uuid)
+
+    # Go through the features and mappings.
+    for fname, mappings in groupby(
+            sorted(iter_fset_features('ephys'), key=itemgetter(0)), itemgetter(0)):
+        print(fname)
+        json_data = {mapping: d for _, mapping, d in mappings}
+        print(create_features(bucket_uuid, fname, json_data))
+
+
+def create_bwm_features():
+    alias = 'bwm'
+    description = 'Brain wide map'
+    sets = ('block', 'choice', 'feedback', 'stimulus')
+    tree = {
+        f'{set}': {
+            'decoding': {
+                'main': f'{set}_decoding',
+                'effect': f'{set}_decoding_effect',
+                'frac_significant': f'{set}_decoding_frac_significant',
+                'significant': f'{set}_decoding_significant',
+            },
+            'euclidean': {
+                'effect': f'{set}_euclidean_effect',
+                'latency': f'{set}_euclidean_latency',
+                'significant': f'{set}_euclidean_significant',
+            },
+            'mannwhitney': {
+                'effect': f'{set}_mannwhitney_effect',
+                'significant': f'{set}_mannwhitney_significant'
+            },
+
+            'glm_effect': f'{set}_glm_effect',
+            'manifold': f'{set}_manifold',
+            'single_cell': f'{set}_single_cell',
+        }
+        for set in sets
+    }
 
     # Skip if the bucket already exists.
     if isinstance(get_bucket(alias), tuple):
@@ -528,12 +599,19 @@ def create_ephys_features():
 
     bucket = get_bucket(alias)
     bucket_uuid = bucket['metadata']['uuid']
-    print(bucket_uuid)
 
-    # create_features(bucket_uuid, fname, json_data)
+    # Go through the features and mappings.
+    for set in sets:
+        for fname, mappings in groupby(sorted(iter_fset_features(
+                f'bwm_{set}'), key=itemgetter(0)), itemgetter(0)):
+            fname = f'{set}_{fname}'
+            print(fname)
+            json_data = {mapping: d for _, mapping, d in mappings}
+            create_features(bucket_uuid, fname, json_data)
 
 
 if __name__ == '__main__':
     # app.run()
-    # unittest.main()
-    create_ephys_features()
+    unittest.main()
+    # create_ephys_features()
+    # create_bwm_features()
