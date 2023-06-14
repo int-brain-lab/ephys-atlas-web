@@ -13,11 +13,13 @@ import os
 from pathlib import Path
 import re
 import shutil
+import ssl
 import uuid
 import unittest
 
 from dateutil import parser
 from flask import Flask, Response, request, jsonify, abort
+from flask_cors import CORS
 # from flask_testing import TestCase
 
 
@@ -26,6 +28,8 @@ from flask import Flask, Response, request, jsonify, abort
 # -------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
+CORS(app)
+
 ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
 FEATURES_FILE_REGEX = re.compile(r'^\d{8}-\S+\.json$')
@@ -612,7 +616,10 @@ def create_bwm_features():
 
 
 if __name__ == '__main__':
-    app.run()
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain('localhost.pem', 'localhost-key.pem')
+    app.run(ssl_context=context, debug=True)
+
     # unittest.main()
     # create_ephys_features()
     # create_bwm_features()
