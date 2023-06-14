@@ -41,7 +41,7 @@ NATIVE_FNAMES = (
 # -------------------------------------------------------------------------------------------------
 
 def response_file_not_found(path):
-    return jsonify(message=f'File not found: {path}'), 404
+    return f'File not found: {path}', 404
 
 
 def response_json_file(path):
@@ -99,7 +99,8 @@ def get_bucket_path(uuid):
     """
     NOTE: the bucket directory should contain the uuid but can also contain an alias
     """
-    filenames = list(FEATURES_DIR.glob(f'*{uuid}*'))
+    filenames = list(FEATURES_DIR.glob(f'{uuid}_*'))
+    filenames += list(FEATURES_DIR.glob(f'*_{uuid}'))
     if not filenames:
         return None
     return filenames[0] if filenames else None
@@ -227,7 +228,7 @@ def authorize_global_key(key):
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return jsonify(error=str(e)), 404
+    return str(e), 404
 
 
 # -------------------------------------------------------------------------------------------------
@@ -348,7 +349,7 @@ def api_create_bucket():
 
 @app.route('/api/buckets/<uuid>', methods=['GET'])
 def api_get_bucket(uuid):
-    return jsonify(get_bucket(uuid))
+    return get_bucket(uuid)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -611,7 +612,7 @@ def create_bwm_features():
 
 
 if __name__ == '__main__':
-    # app.run()
-    unittest.main()
+    app.run()
+    # unittest.main()
     # create_ephys_features()
     # create_bwm_features()

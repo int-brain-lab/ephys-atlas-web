@@ -983,7 +983,8 @@ def test_upload():
 
 
 if __name__ == '__main__':
-    test_upload()
+    # test_upload()
+    pass
 
     # generate_colormaps()
     # process_slices()
