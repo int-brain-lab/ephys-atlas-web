@@ -46,8 +46,8 @@ class App {
     init() {
         // Load the data.
         this.splash.start();
-        this.db.load().then(() => {
-            this.feature.init();
+        this.db.load().then(async () => {
+            await this.feature.init();
             this.region.init();
             if (this.unity)
                 this.unity.init();

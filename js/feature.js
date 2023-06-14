@@ -1,7 +1,7 @@
 export { Feature };
 
 import { clearStyle, clamp, normalizeValue, rgb2hex } from "./utils.js";
-import { DEFAULT_FEATURE } from "./state.js";
+// import { DEFAULT_FEATURE } from "./state.js";
 
 
 
@@ -109,11 +109,11 @@ class Feature {
         }
     }
 
-    get(regionIdx) {
+    async get(regionIdx) {
         // Return the feature value of a given region.
 
         // This depends on the currently-selected feature set, feature, stat.
-        let data = this.getFeatures();
+        let data = await this.getFeatures();
         if (!data) {
             // console.warn(`unable to get feature for region ${regionIdx}`);
             return 'not significant';
@@ -127,11 +127,11 @@ class Feature {
     /* Update function                                                                           */
     /*********************************************************************************************/
 
-    update() {
+    async update() {
         // this.featureName.innerHTML = `fet: ${this.state.fname}`;
         this.setDefaultColors(this.state.mapping);
 
-        let fet = this.getFeatures();
+        let fet = await this.getFeatures();
 
         if (!fet) {
             // Default colors: the original region colors. Nothing to do apart from clearing the extra feature-dependent styling.

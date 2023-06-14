@@ -95,7 +95,7 @@ class Loader {
         // Handle undefined process function.
         let items = dl;
         if (this.process)
-            items = await this.process(dl);
+            items = this.process(dl);
         this.splash.add(this.process_splash);
 
         let n = Object.keys(items).length;

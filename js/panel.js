@@ -1,7 +1,7 @@
 export { Panel };
 
 import { clamp, setOptions, throttle } from "./utils.js";
-import { DEFAULT_FEATURE } from "./state.js";
+// import { DEFAULT_FEATURE } from "./state.js";
 
 
 
@@ -92,8 +92,8 @@ class Panel {
         // this.feature.setFname(state.fname);
     }
 
-    setFname(fname) {
-        this.feature.setFname(fname);
+    async setFname(fname) {
+        await this.feature.setFname(fname);
         this.region.update();
 
         if (this.unity)
@@ -105,7 +105,8 @@ class Panel {
         // this.feature.setFset(fset);
 
         // Update the feature options.
-        fname = fname || DEFAULT_FEATURE[fset];
+        // fname = fname;// || DEFAULT_FEATURE[fset];
+        if (!fname) return;
         console.assert(FEATURE_NAMES[fset].includes(fname));
         // let options = ['-- default --', ...FEATURE_NAMES[fset]];
         // setOptions(this.ifname, options, fname);
@@ -154,7 +155,7 @@ class Panel {
         this.ifname.addEventListener('click', (e) => {
             let fname = e.target.innerHTML;
             for (let el of this.ifname.children[0].children) {
-                console.log(el);
+                // console.log(el);
                 el.className = "";
             }
             e.target.classList.add("selected");

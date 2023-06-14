@@ -213,7 +213,6 @@ class Region {
     search(query) {
         this.state.search = query;
         this.update();
-        return;
     }
 
     /* Update function                                                                           */
@@ -244,13 +243,14 @@ class Region {
         }
     }
 
-    update() {
+    async update() {
         let stat = this.state.stat;
         let mapping = this.state.mapping;
 
-        let features = this.feature.getFeatures();
+        let features = await this.feature.getFeatures();
+
         if (!features) {
-            console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
+            // console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
             return;
         }
 

@@ -14,13 +14,13 @@ const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
 
 const DEFAULT_FSET = "ephys";
-export const DEFAULT_FEATURE = {
-    "ephys": "psd_alpha",
-    "bwm_block": "decoding",
-    "bwm_choice": "decoding",
-    "bwm_feedback": "decoding",
-    "bwm_stimulus": "decoding",
-};
+// export const DEFAULT_FEATURE = {
+//     "ephys": "psd_alpha",
+//     "bwm_block": "decoding",
+//     "bwm_choice": "decoding",
+//     "bwm_feedback": "decoding",
+//     "bwm_stimulus": "decoding",
+// };
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
 
@@ -41,7 +41,7 @@ const DEFAULT_HIGHLIGHTED = null;
 // https://ephysatlas.internationalbrainlab.org/?state=eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9ibG9jayIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ%3D%3D
 
 const ALIAS_STATES = {
-    "bwm_choice":       "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ",
+    "bwm_choice": "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ",
     "bwm_block":
         "eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9ibG9jayIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ",
     "bwm_feedback":
@@ -95,7 +95,7 @@ class State {
 
         // Features.
         this.fset = state.fset || DEFAULT_FSET;
-        this.fname = state.fname || DEFAULT_FEATURE[this.fset];
+        this.fname = state.fname;// || DEFAULT_FEATURE[this.fset];
         this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.
