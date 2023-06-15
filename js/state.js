@@ -128,10 +128,11 @@ class State {
     }
 
     setFset(fset, fname) {
-        console.assert(fset);
-        this.fset = fset;
-        this.fname = fname || this.fname;
-        console.assert(this.fname);
-        this.stat = DEFAULT_STAT;
+        // TODO
+        // console.assert(fset);
+        // this.fset = fset;
+        // this.fname = fname || this.fname;
+        // console.assert(this.fname);
+        // this.stat = DEFAULT_STAT;
     }
 };

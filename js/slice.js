@@ -1,6 +1,6 @@
 export { Slice };
 
-import { throttle, clamp, getOS } from "./utils.js";
+import { throttle, clamp, getOS, e2idx } from "./utils.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 
 
@@ -29,15 +29,16 @@ function isRoot(e) {
 /*************************************************************************************************/
 
 class Slice {
-    constructor(db, state, region, tooltip, highlighter, selector) {
+    constructor(state, db) {
+        //, region, tooltip, highlighter, selector) {
         this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
 
         this.db = db;
         this.state = state;
-        this.region = region;
-        this.tooltip = tooltip;
-        this.highlighter = highlighter;
-        this.selector = selector;
+        // this.region = region;
+        // this.tooltip = tooltip;
+        // this.highlighter = highlighter;
+        // this.selector = selector;
 
         this.tv = document.getElementById('top-vline');
         this.th = document.getElementById('top-hline');
@@ -152,8 +153,10 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                this.highlighter.highlight(e);
-                this.tooltip.show(e);
+                // TODO
+                let idx = e2idx(this.state.mapping, e);
+                this.highlight(idx);
+                this.tooltip(e);
             }
         });
     }
@@ -167,9 +170,9 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                this.selector.toggle(e);
-
-                this.region.updateSelection();
+                // TODO
+                // this.selector.toggle(e);
+                // this.region.updateSelection();
             }
         });
     }
@@ -179,11 +182,27 @@ class Slice {
 
         svg.addEventListener('mouseout', (e) => {
             if (e.target.tagName == 'path') {
-                this.highlighter.clear();
-                this.tooltip.hide();
+                // TODO
+                // this.highlighter.clear();
+                // this.tooltip.hide();
             }
         });
     };
+
+    /* Interactivity functions                                                                   */
+    /*********************************************************************************************/
+
+    highlight(idx) {
+        // TODO
+    }
+
+    toggle(idx) {
+        // TODO
+    }
+
+    tooltip(e) {
+        // TODO
+    }
 
     /* Slicing functions                                                                         */
     /*********************************************************************************************/
@@ -197,7 +216,8 @@ class Slice {
             this.state[axis] = idx;
         }
         else {
-            console.warn(`${idx} not in ${axis} slice`);
+            // console.debug(`${idx} not in ${axis} slice`);
+            return;
         }
 
         // call setSagittal() etc to update the hlines and vlines.

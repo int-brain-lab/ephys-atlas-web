@@ -663,7 +663,7 @@ def run():
 
 
 if __name__ == '__main__':
-    # run()
-    test()
+    run()
+    # test()
     # create_ephys_features()
     # create_bwm_features()

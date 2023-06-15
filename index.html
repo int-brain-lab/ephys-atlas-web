@@ -165,43 +165,21 @@
 
             <!-- BAR HEADER -->
             <div id="bar-plot-header">
-
-                <!-- FEATURE NAME -->
-                <!-- <div id="bar-fname"></div> -->
-
-                <!-- FEATURE SET -->
-                <div class="label">fset</div>
-
                 <div class="control">
                     <select id="feature-set-dropdown">
                         <option value="ephys">ephys</option>
-                        <option value="bwm_block">bwm_block</option>
-                        <option value="bwm_choice">bwm_choice</option>
-                        <option value="bwm_feedback">bwm_feedback</option>
-                        <option value="bwm_stimulus">bwm_stimulus</option>
+                        <option value="bwm">bwm</option>
                     </select>
                 </div>
 
-                <!-- FEATURE -->
-                <!-- <div class="label">fname</div> -->
-
                 <div id="feature-tree">
-                    <ul>
-                        <li>psd_alpha</li>
-                        <li>psd_beta</li>
-                        <li>psd_delta</li>
-                        <li>psd_gamma</li>
-                        <li>psd_theta</li>
-                        <li>rms_ap</li>
-                        <li>rms_lf</li>
-                        <li>spike_rate</li>
-                    </ul>
                 </div>
 
                 <!-- SELECTED REGIONS -->
                 <div id="bar-selected-wrapper">
                     <div id="bar-selected-title">
-                        Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>)
+                        <!-- Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>) -->
+                        Selected regions (<a href="javascript:">clear</a>)
                     </div>
                     <ul id="bar-selected-list">
                     </ul>

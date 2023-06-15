@@ -42,6 +42,7 @@ const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
     'slices': (name) => `/data/json/slices_${name}.json`,
+    'bucket': (fset) => `${BASE_URL}/api/buckets/${fset}`,
     'features': (fset, fname) => `${BASE_URL}/api/buckets/${fset}/${fname}`,
 }
 
@@ -66,6 +67,9 @@ class DB {
             'slices_horizontal': this.setupSlices('horizontal', [10, 0, 5]),
             'slices_top': this.setupSlices('top', [2, 0, 2]),
             'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
+
+            'ephys': this.setupBucket('ephys', [1, 1, 1]),
+            'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
 
         // // Features.
@@ -105,31 +109,15 @@ class DB {
     /*********************************************************************************************/
 
     setupSlices(name, progress) {
-        return new Loader(
-            this.splash, URLS['slices'](name), null, progress);
+        return new Loader(this.splash, URLS['slices'](name), null, progress);
     }
 
-    /* Features                                                                                  */
+    /* Buckets                                                                                   */
     /*********************************************************************************************/
 
-    // setupFeatures(fset, progress) {
-    //     return new Loader(
-    //         this.splash, URLS['features'](fset), this.featuresLoaded, progress);
-    // }
-
-    // featuresLoaded(features) {
-    //     let items = [];
-    //     for (let mapping in features) {
-    //         let fet = features[mapping];
-    //         for (let fname in fet) {
-    //             items[`${mapping}_${fname}`] = {
-    //                 'data': fet[fname]['data'],
-    //                 'statistics': fet[fname]['statistics'],
-    //             };
-    //         }
-    //     }
-    //     return items;
-    // }
+    setupBucket(fset, progress) {
+        return new Loader(this.splash, URLS['bucket'](fset), null, progress);
+    }
 
     /* Getters                                                                                   */
     /*********************************************************************************************/
@@ -139,6 +127,17 @@ class DB {
         console.assert(this.loaders[`slices_${axis}`]);
         return this.loaders[`slices_${axis}`].get((idx || 0).toString());
     }
+
+    // async getBucket(fset, mapping) {
+    //     console.assert(fset);
+    //     console.assert(mapping);
+
+    //     let url = URLS['bucket'](fset);
+    //     let loader = new Loader(this.splash, url, null, [0, 0, 0]);
+    //     await loader.start()
+    //     let data = loader.get("metadata");
+    //     return data;
+    // }
 
     async getFeaturesLoader(fset, fname) {
         console.assert(fset);
@@ -156,6 +155,8 @@ class DB {
     }
 
     async getFeatures(fset, mapping, fname) {
+        // NOTE: this is async because this dynamically creates a new loader and therefore
+        // make a HTTP request on demand to get the requested feature.
         console.assert(fset);
         console.assert(mapping);
         if (!fname) return;
@@ -181,5 +182,9 @@ class DB {
         console.assert(colors);
         console.assert(colors.length > 0);
         return colors;
+    }
+
+    normalize(values, vmin, vmax) {
+        return values.map(value => normalizeValue(value, vmin, vmax));
     }
 }

@@ -450,16 +450,79 @@ div#container
 
 
 /*************************************************************************************************/
+/*  Feature set tabs                                                                             */
+/*************************************************************************************************/
+
+/* https://codepen.io/CesarVMB/pen/kPOrQb */
+
+/* #fset-container {
+    margin-bottom: 0;
+}
+
+#fset-container input {
+    visibility: hidden;
+    margin-bottom: 0;
+}
+
+#fset-container label {
+    background-color: #fafafa;
+    border-radius: 1em 1em 0 0;
+    color: #aaa;
+    cursor: pointer;
+    display: block;
+    float: left;
+    font-size: 1em;
+    height: 2.5em;
+    line-height: 2.5em;
+    margin-right: .25em;
+    margin-bottom: 0;
+    padding: 0 0.25em;
+    text-align: center;
+}
+
+#fset-container input:hover+label {
+    background-color: #ddd;
+    color: #666;
+}
+
+#fset-container input:checked+label {
+    background-color: #eee;
+    color: #444;
+    position: relative;
+    z-index: 6;
+} */
+
+
+
+/*************************************************************************************************/
 /*  Feature selector                                                                             */
 /*************************************************************************************************/
 
+#feature-tree {
+    margin: 10px 0 !important;
+    cursor: pointer;
+}
+
+#feature-tree details {
+    margin-left: 10px;
+}
+
+#feature-tree summary {
+    color: #999;
+}
+
+#feature-tree>ul>details {
+    margin-left: 0;
+}
+
 #feature-tree ul {
-    margin: 10px 0;
+    list-style: none;
 }
 
 #feature-tree ul li {
-    margin: 0;
-    padding: 5px 5px 0 5px;
+    /* margin: 0; */
+    margin-left: 10px;
+    /* padding: 0 5px; */
 }
 
 #feature-tree ul li.selected {
@@ -489,7 +552,8 @@ div#container
 
 #bar-plot-header .control {
     display: inline-block;
-    width: calc(100% - 30% - 5px);
+    width: 100%;
+    /* width: calc(100% - 30% - 5px); */
 }
 
 
@@ -616,7 +680,7 @@ div#container
 
 #bar-plot li {
     margin-bottom: -5px;
-    display: none;
+    /* display: none; */
 }
 
 #bar-plot-container .acronym {
