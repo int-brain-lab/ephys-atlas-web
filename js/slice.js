@@ -29,12 +29,15 @@ function isRoot(e) {
 /*************************************************************************************************/
 
 class Slice {
-    constructor(state, db) {
-        //, region, tooltip, highlighter, selector) {
+    constructor(state, db, dispatcher) {
+
+        this.state = state;
+        this.db = db;
+        this.dispatcher = dispatcher;
+
         this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
 
-        this.db = db;
-        this.state = state;
+        //, region, tooltip, highlighter, selector) {
         // this.region = region;
         // this.tooltip = tooltip;
         // this.highlighter = highlighter;

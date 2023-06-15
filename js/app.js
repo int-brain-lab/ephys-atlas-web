@@ -1,14 +1,16 @@
 import { Bucket } from "./bucket.js";
 import { DB } from "./db.js";
+import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
+import { Slice } from "./slice.js";
+import { Splash } from "./splash.js";
+import { State } from "./state.js";
+
 // import { Highlighter } from "./highlighter.js";
 // import { Maximizer } from "./maximizer.js";
 // import { Panel } from "./panel.js";
 // import { Region } from "./region.js";
 // import { Selector } from "./selector.js";
-import { Slice } from "./slice.js";
-import { Splash } from "./splash.js";
-import { State } from "./state.js";
 // import { Tooltip } from "./tooltip.js";
 // import { Unity } from "./unity.js";
 
@@ -26,10 +28,11 @@ class App {
         this.state = new State();
 
         this.db = new DB(this.splash);
+        this.dispatcher = new Dispatcher();
 
-        this.bucket = new Bucket(this.state);
-        this.slice = new Slice(this.state, this.db);
-        this.feature = new Feature(this.state, this.db);
+        this.bucket = new Bucket(this.state, this.dispatcher);
+        this.slice = new Slice(this.state, this.db, this.dispatcher);
+        this.feature = new Feature(this.state, this.db, this.dispatcher);
 
         // Create the components.
         // this.highlighter = new Highlighter(this.state);

@@ -48,12 +48,16 @@ class FeatureTree {
 /*************************************************************************************************/
 
 class Feature {
-    constructor(state, db) {
+    constructor(state, db, dispatcher) {
         this.state = state;
         this.db = db;
+        this.dispatcher = dispatcher;
+
         this.el = document.getElementById('feature-tree');
 
         this.tree = new FeatureTree(this.el);
+
+        this.dispatcher.on('bucket', (ev) => { this.setBucket(ev.uuid_or_alias); });
 
         //         this.style = document.getElementById('style-features').sheet;
         //         this.defaultStyle = document.getElementById('style-default-regions');
@@ -67,11 +71,15 @@ class Feature {
         this.setState(this.state);
     }
 
-    async setState(state) {
-        let bucket = await this.db.getBucket(state.fset);
-        // console.log(bucket);
-        // let features = await this.db.getFeatures(state.fset, state.mapping, state.fname);
+    async setBucket(uuid_or_alias) {
+        let bucket = await this.db.getBucket(uuid_or_alias);
+        console.assert(bucket);
         this.tree.setFeatures(bucket.features, bucket.metadata.tree);
+    }
+
+    async setState(state) {
+        // let features = await this.db.getFeatures(state.fset, state.mapping, state.fname);
+        this.setBucket(state.fset);
     }
 
     //     /* Set functions                                                                             */
