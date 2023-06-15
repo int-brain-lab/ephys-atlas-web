@@ -126,6 +126,19 @@ export function setOptions(select, values, selected) {
 
 
 
+export function removeClassChildren(element, tagName, className) {
+    if (element.tagName === tagName) {
+        element.classList.remove(className);
+    }
+
+    const children = element.children;
+    for (let i = 0; i < children.length; i++) {
+        removeClassChildren(children[i], tagName, className);
+    }
+}
+
+
+
 // export function getBarPlot() {
 //     return document.getElementById('bar-plot');
 // };

@@ -14,7 +14,6 @@ class Bucket {
         this.state = state;
         this.dispatcher = dispatcher;
 
-        // options have data-alias data-uuid
         this.el = document.getElementById('feature-set-dropdown');
 
         this.setupBucket();
@@ -48,7 +47,7 @@ class Bucket {
     select(uuid_or_alias) {
         console.log(`select ${uuid_or_alias}`);
         this.el.value = uuid_or_alias;
-        this.state.bucket = uuid_or_alias;
+        this.state.fset = uuid_or_alias;
         this.dispatcher.bucket(this, uuid_or_alias);
     }
 

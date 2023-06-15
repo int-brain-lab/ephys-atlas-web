@@ -525,7 +525,8 @@ div#container
 }
 
 #feature-tree ul li.selected {
-    background-color: #ff4444;
+    color: var(--bar-highlight-color);
+    background-color: var(--main-accent-color);
 }
 
 
