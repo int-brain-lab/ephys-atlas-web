@@ -5,6 +5,7 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
+import itertools
 from datetime import datetime
 from itertools import groupby
 import json
@@ -99,12 +100,19 @@ def save_features(path, json_data):
 # Bucket metadata
 # -------------------------------------------------------------------------------------------------
 
+
+def multiple_file_types(patterns):
+    return itertools.chain.from_iterable(
+        FEATURES_DIR.glob(pattern) for pattern in patterns)
+
+
 def get_bucket_path(uuid):
     """
     NOTE: the bucket directory should contain the uuid but can also contain an alias
     """
-    filenames = list(FEATURES_DIR.glob(f'{uuid}_*'))
-    filenames += list(FEATURES_DIR.glob(f'*_{uuid}'))
+    patterns = (f'{uuid}_*', f'*_{uuid}', uuid)
+    # filenames = sum(list(FEATURES_DIR.glob(p)) for p in patterns)
+    filenames = list(multiple_file_types(patterns))
     if not filenames:
         return None
     return filenames[0] if filenames else None
@@ -154,14 +162,15 @@ def now():
     return datetime.now().isoformat()
 
 
-def create_bucket_metadata(bucket_uuid, alias=None,
-                           description=None, url=None, tree=None):
+def create_bucket_metadata(
+        bucket_uuid, alias=None, short_desc=None, long_desc=None, url=None, tree=None):
     return {
         'uuid': bucket_uuid,
         'alias': alias,
         'url': url,
         'tree': tree,
-        'description': description,
+        'short_desc': short_desc,
+        'long_desc': long_desc,
         'token': new_token(),
         'last_access_date': now(),
     }
@@ -438,7 +447,7 @@ class TestApp(unittest.TestCase):
 
         # Bucket metadata.
         alias = 'myalias'
-        description = 'mydesc'
+        short_desc = 'mydesc'
         url = 'https://ephysatlas.internationalbrainlab.org'
         tree = {
             'level1': {
@@ -450,7 +459,7 @@ class TestApp(unittest.TestCase):
         }
         uuid = 'myuuid'
         metadata = create_bucket_metadata(
-            uuid, alias=alias, description=description, url=url, tree=tree)
+            uuid, alias=alias, short_desc=short_desc, url=url, tree=tree)
         token = metadata['token']
 
         # Create a bucket.
@@ -475,7 +484,7 @@ class TestApp(unittest.TestCase):
         self.ok(response)
         self.assertEqual(response.json['features'], [])
         self.assertEqual(response.json['metadata']['alias'], alias)
-        self.assertEqual(response.json['metadata']['description'], description)
+        self.assertEqual(response.json['metadata']['short_desc'], short_desc)
         self.assertEqual(response.json['metadata']['url'], url)
         self.assertEqual(response.json['metadata']['tree'], tree)
 
@@ -541,7 +550,7 @@ def iter_fset_features(fset):
 
 def create_ephys_features():
     alias = 'ephys'
-    description = 'Ephys atlas'
+    short_desc = 'Ephys atlas'
     tree = None
 
     # Skip if the bucket already exists.
@@ -549,7 +558,7 @@ def create_ephys_features():
         bucket_uuid = new_uuid()
         print(f"Create new bucket {alias} {bucket_uuid}")
         metadata = create_bucket_metadata(
-            bucket_uuid, alias=alias, description=description, tree=tree)
+            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
         assert 'token' in metadata
         create_bucket(bucket_uuid, metadata, alias=alias)
 
@@ -567,7 +576,7 @@ def create_ephys_features():
 
 def create_bwm_features():
     alias = 'bwm'
-    description = 'Brain wide map'
+    short_desc = 'Brain wide map'
     sets = ('block', 'choice', 'feedback', 'stimulus')
     tree = {
         f'{set}': {
@@ -598,7 +607,8 @@ def create_bwm_features():
     if isinstance(get_bucket(alias), tuple):
         bucket_uuid = new_uuid()
         print(f"Create new bucket {alias} {bucket_uuid}")
-        metadata = create_bucket_metadata(bucket_uuid, alias=alias, description=description, tree=tree)
+        metadata = create_bucket_metadata(
+            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
         assert 'token' in metadata
         create_bucket(bucket_uuid, metadata, alias=alias)
 
@@ -615,11 +625,18 @@ def create_bwm_features():
             create_features(bucket_uuid, fname, json_data)
 
 
-if __name__ == '__main__':
+def test():
+    unittest.main()
+
+
+def run():
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain('localhost.pem', 'localhost-key.pem')
     app.run(ssl_context=context, debug=True)
 
-    # unittest.main()
+
+if __name__ == '__main__':
+    # run()
+    test()
     # create_ephys_features()
     # create_bwm_features()
