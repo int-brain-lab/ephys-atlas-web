@@ -90,7 +90,9 @@ BWM_EXTRA_FNAMES = (
 FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api/'
 
 # DEBUG
-FEATURES_API_BASE_URL = 'http://127.0.0.1:5000/api/'
+DEBUG = True
+if DEBUG:
+    FEATURES_API_BASE_URL = 'https://localhost:5000/api/'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -305,7 +307,8 @@ def clean_svg(file):
 
 
 def get_figure_string(file):
-    # NOTE: this function is obsolete now that the SVG files have been integrated in the slices.json file
+    # NOTE: this function is obsolete now that the SVG files have been
+    # integrated in the slices.json file
     return
     with open(file, 'r') as f:
         root = minidom.parse(f)
@@ -328,7 +331,8 @@ def make_slices_json(dir):
     for file in tqdm(svg_files):
         ax, idx = file.stem.split('_')
         idx = int(idx)
-        # NOTE: only keep even indexes as we don't need full resolution on the client
+        # NOTE: only keep even indexes as we don't need full resolution on the
+        # client
         if idx % 2 == 1:
             continue
         assert ax in AXES
@@ -351,10 +355,12 @@ def run_single(file):
     #    parameter .0007 (in inkscape settings)
     simplify(file)
 
-    # 5. Apply svgo independently on each file (and not in batch as svgo silently deletes all files!)
+    # 5. Apply svgo independently on each file (and not in batch as svgo
+    # silently deletes all files!)
     svgo(file)
 
-    # 6. Apply a simple regex in Python to remove all useless path ID (but keep the <g> region IDs)
+    # 6. Apply a simple regex in Python to remove all useless path ID (but
+    # keep the <g> region IDs)
     remove_path_id(file)
 
     # 7. Some SVG Python processing to cleanup the SVGs further.
@@ -420,7 +426,8 @@ def get_mappings():
     return out
 
 
-# mappings is a dictionary {mapping_name: [{idx, atlas_id, acronym, name, hex}]}
+# mappings is a dictionary {mapping_name: [{idx, atlas_id, acronym, name,
+# hex}]}
 def generate_regions_json(mappings):
     print("Generating regions.json...")
     filename = DATA_DIR / 'json/regions.json'
@@ -474,7 +481,8 @@ def get_aggregates(df):
     return {
         'mean': df.mean(numeric_only=True),
         'median': df.median(numeric_only=True),
-        # NOTE: if ddof is not set to 0, will return NaN if only 1 element in the groupby DF...
+        # NOTE: if ddof is not set to 0, will return NaN if only 1 element in
+        # the groupby DF...
         'std': df.std(ddof=0, numeric_only=True),
         'min': df.min(),
         'max': df.max(),
@@ -482,7 +490,7 @@ def get_aggregates(df):
 
 
 # features dictionary:
-# {mapping: {fet: {data: {atlas_id: {stat: value}}}, statistics: {stat: {mean: value, std: value...}}}}}
+# {mapping: {fet: {data: {atlas_id: {stat: value}}}, statistics: {stat: {m
 
 def generate_features_groupedby(br, mapping, df, feature_names):
     print(f"Generating features for mapping {mapping}")
@@ -513,7 +521,8 @@ def generate_features_groupedby(br, mapping, df, feature_names):
             if d:
                 features[fet]['data'][regionIdx] = d
 
-        # Collect statistics across regions, for each feature. Used for bar plot.
+        # Collect statistics across regions, for each feature. Used for bar
+        # plot.
         for stat, dfg in dfs.items():
             features[fet]['statistics'][stat] = get_stats(dfg[fet])
 
@@ -532,7 +541,8 @@ class FeatureBrainRegions:
             } for mapping, regions in self.mappings.items()
         }
 
-        # for each mapping, the list of region idx of regions to keep, or None if all are kept
+        # for each mapping, the list of region idx of regions to keep, or None
+        # if all are kept
         self.kept = {mapping: None for mapping in MAPPINGS}
 
     def keep(self, mapping, atlas_ids):
@@ -543,7 +553,8 @@ class FeatureBrainRegions:
 
     def get_regions(self, mapping):
         # return the kept brain regions
-        return {idx: r for idx, r in self.mappings[mapping].items() if idx in self.kept[mapping]}
+        return {idx: r for idx, r in self.mappings[mapping].items(
+        ) if idx in self.kept[mapping]}
 
 
 # -------------------------------------------------------------------------------------------------
@@ -594,7 +605,8 @@ def generate_bwm_features():
     df_feedback = pd.read_parquet(DATA_DIR / 'pqt/bwm_feedback.pqt')
     df_stimulus = pd.read_parquet(DATA_DIR / 'pqt/bwm_stimulus.pqt')
 
-    # Put the data for decoding, single_cell, manifold in the separate DataFrames
+    # Put the data for decoding, single_cell, manifold in the separate
+    # DataFrames
     for fn in BWM_FNAMES:
         df_block[fn] = df_sessions[f'block_{fn}']
         df_choice[fn] = df_sessions[f'choice_{fn}']
@@ -744,14 +756,15 @@ def new_uuid():
     return new_token(18)
 
 
-def make_features(fname, acronyms, values, mapping='beryl'):
+def make_features(acronyms, values, mapping='beryl'):
     acronyms = np.asarray(acronyms)
     # Convert acronyms to atlas ids.
     br = BrainRegions()
     ina = np.in1d(acronyms, br.acronym)
     if not np.all(ina):
         ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
-        raise ValueError(f"The following acronyms do not belong to allen mapping: {ac}")
+        raise ValueError(
+            f"The following acronyms do not belong to allen mapping: {ac}")
     aids = br.acronym2index(acronyms, mapping=mapping.title())[1][0]
     assert len(aids) == len(acronyms)
 
@@ -759,17 +772,16 @@ def make_features(fname, acronyms, values, mapping='beryl'):
     m = np.mean(values)
 
     return {
-        fname: {
-            'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
-            'statistics': {'mean': m},
-        }
+        'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
+        'statistics': {'mean': m},
     }
 
 
 class FeatureUploader:
     def __init__(self, bucket_uuid):
         # Go in user dir and search bucket UUID and token
-        # If nothing create new ones and save on disk, and create on the server with post request
+        # If nothing create new ones and save on disk, and create on the server
+        # with post request
 
         assert bucket_uuid
 
@@ -788,7 +800,8 @@ class FeatureUploader:
         # Try loading the token associated to the bucket.
         self.token = self._load_bucket_token(bucket_uuid)
 
-        # If there is none, generate a new token, and create the bucket on the server.
+        # If there is none, generate a new token, and create the bucket on the
+        # server.
         if not self.token:
             print(f"Creating new bucket {bucket_uuid}.")
 
@@ -819,21 +832,21 @@ class FeatureUploader:
 
     def _post(self, endpoint, data):
         url = self._url(endpoint)
-        response = requests.post(url, headers=self._headers(), json=data)
+        response = requests.post(url, headers=self._headers(), json=data, verify=not DEBUG)
         if response.status_code != 200:
             raise RuntimeError(response.text)
         return response
 
     def _patch(self, endpoint, data):
         url = self._url(endpoint)
-        response = requests.patch(url, headers=self._headers(), json=data)
+        response = requests.patch(url, headers=self._headers(), json=data, verify=not DEBUG)
         if response.status_code != 200:
             raise RuntimeError(response.text)
         return response
 
     def _get(self, endpoint):
         url = self._url(endpoint)
-        response = requests.get(url)
+        response = requests.get(url, verify=not DEBUG)
         if response.status_code != 200:
             raise RuntimeError(response.text)
         return response
@@ -858,7 +871,8 @@ class FeatureUploader:
 
     def _load_bucket_token(self, bucket_uuid):
         assert self.params
-        return self.params.get('buckets', {}).get(bucket_uuid, {}).get('token', None)
+        return self.params.get('buckets', {}).get(
+            bucket_uuid, {}).get('token', None)
 
     def _save_bucket_token(self, bucket_uuid, token):
         params = self.params
@@ -881,7 +895,8 @@ class FeatureUploader:
         self._save_params(params)
 
     def _prompt_global_key(self):
-        return input("Plase copy-paste the global key from the documentation webpage:\n")
+        return input(
+            "Plase copy-paste the global key from the documentation webpage:\n")
 
     def _get_global_key(self):
         """Global authentication to create new buckets.
@@ -903,18 +918,19 @@ class FeatureUploader:
     def _create_new_bucket(self, bucket_uuid):
         # Make a POST request to /api/buckets/<uuid> to create the new bucket.
         # NOTE: need for global key authentication to create a new bucket.
-        data = {'uuid': bucket_uuid, 'metadata': {'token':self.token}}
+        data = {'uuid': bucket_uuid, 'metadata': {'token': self.token}}
         endpoint = f'/buckets'
         url = self._url(endpoint)
         gk = self._get_global_key()
-        response = requests.post(url, json=data, headers=self._headers(gk))
+        response = requests.post(url, json=data, headers=self._headers(gk), verify=not DEBUG)
         if response.status_code != 200:
             raise RuntimeError(response.text)
 
     # Public methods
     # ---------------------------------------------------------------------------------------------
 
-    def _post_or_patch_features(self, method, fname, acronyms, values, mapping='beryl'):
+    def _post_or_patch_features(
+            self, method, fname, acronyms, values, short_desc=None, mapping='beryl'):
 
         assert method in ('post', 'patch')
         assert fname
@@ -924,22 +940,34 @@ class FeatureUploader:
         assert len(acronyms) == len(values)
 
         # Prepare the JSON payload.
-        data = make_features(fname, acronyms, values, mapping=mapping)
-        payload = {'fname': fname, 'json': data}
+        data = make_features(acronyms, values, mapping=mapping)
+        assert 'data' in data
+        assert 'statistics' in data
+        payload = {
+            'fname': fname,
+            'short_desc': short_desc,
+            'feature_data': {
+                'mappings': {
+                    'beryl': data
+                }
+            }
+        }
 
         # Make a POST request to /api/buckets/<uuid>.
         # try:
         if method == 'post':
             response = self._post(f'buckets/{self.bucket_uuid}', payload)
         elif method == 'patch':
-            response = self._patch(f'buckets/{self.bucket_uuid}/{fname}', payload)
+            response = self._patch(
+                f'buckets/{self.bucket_uuid}/{fname}', payload)
         # print(response.json()['message'])
         # except RuntimeError as e:
         #     print(f"Error while making {method} request: {e}")
 
     def create_features(self, fname, acronyms, values, mapping='beryl'):
         """Create new features in the bucket."""
-        self._post_or_patch_features('post', fname, acronyms, values, mapping=mapping)
+        self._post_or_patch_features(
+            'post', fname, acronyms, values, mapping=mapping)
 
     def list_features(self):
         """Return the list of fnames in the bucket."""
@@ -956,7 +984,8 @@ class FeatureUploader:
 
     def patch_features(self, fname, acronyms, values, mapping='beryl'):
         """Update existing features in the bucket."""
-        self._post_or_patch_features('patch', fname, acronyms, values, mapping=mapping)
+        self._post_or_patch_features(
+            'patch', fname, acronyms, values, mapping=mapping)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -983,7 +1012,7 @@ def test_upload():
 
 
 if __name__ == '__main__':
-    # test_upload()
+    test_upload()
     pass
 
     # generate_colormaps()

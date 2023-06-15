@@ -270,7 +270,6 @@ def get_bucket(uuid):
 def create_bucket(uuid, metadata, alias=None):
     assert uuid
     assert metadata
-    assert 'uuid' in metadata
     assert 'token' in metadata
     assert metadata['token']
 
@@ -289,9 +288,11 @@ def create_bucket(uuid, metadata, alias=None):
     return f'Bucket {uuid} successfully created.', 200
 
 
-def create_features(uuid, fname, json_data, patch=False):
+def create_features(uuid, fname, feature_data, short_desc=None, patch=False):
     assert uuid
     assert fname
+    assert feature_data
+    assert 'mappings' in feature_data
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
@@ -306,7 +307,11 @@ def create_features(uuid, fname, json_data, patch=False):
         return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
 
     # Save the features.
-    save_features(features_path, json_data)
+    data = {
+        'feature_data': feature_data,
+        'short_desc': short_desc,
+    }
+    save_features(features_path, data)
 
     return f'Features {fname} successfully {"created" if not patch else "patched"} in bucket {uuid}.', 200
 
@@ -367,7 +372,7 @@ def api_get_bucket(uuid):
 
 # -------------------------------------------------------------------------------------------------
 # REST endpoint: create new features in a bucket
-# POST /api/buckets/<uuid> (fname, json)
+# POST /api/buckets/<uuid> (fname, short_desc, feature_data)
 # -------------------------------------------------------------------------------------------------
 
 @app.route('/api/buckets/<uuid>', methods=['POST'])
@@ -375,8 +380,11 @@ def api_post_features(uuid):
     # Check authorization to upload new features.
     if not authenticate_bucket(uuid):
         return 'Unauthorized access.', 401
-    fname = request.json.get('fname', '')
-    return create_features(uuid, fname, request.json)
+    fname = request.json['fname']
+    short_desc = request.json.get('short_desc', None)
+    feature_data = request.json['feature_data']
+    assert 'mappings' in feature_data
+    return create_features(uuid, fname, feature_data, short_desc=short_desc)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -411,7 +419,11 @@ def api_patch_features(uuid, fname):
     # Check authorization to change features.
     if not authenticate_bucket(uuid):
         return 'Unauthorized access.', 401
-    return create_features(uuid, fname, request.json, patch=True)
+    short_desc = request.json.get('short_desc', None)
+    feature_data = request.json['feature_data']
+    assert 'mappings' in feature_data
+    return create_features(
+        uuid, fname, feature_data, short_desc=short_desc, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -425,6 +437,97 @@ def api_delete_features(uuid, fname):
     if not authenticate_bucket(uuid):
         return 'Unauthorized access.', 401
     return delete_features(uuid, fname)
+
+
+# -------------------------------------------------------------------------------------------------
+# Default features
+# -------------------------------------------------------------------------------------------------
+
+def iter_fset_features(fset):
+    assert fset
+    json_path = ROOT_DIR / 'data/json' / f"features_{fset}.json"
+    with open(json_path, 'r') as f:
+        contents = json.load(f)
+    for mapping, fet in contents.items():
+        for fname, d in fet.items():
+            yield fname, mapping, d
+
+
+def create_ephys_features():
+    alias = 'ephys'
+    short_desc = 'Ephys atlas'
+    tree = None
+
+    # Skip if the bucket already exists.
+    if isinstance(get_bucket(alias), tuple):
+        bucket_uuid = new_uuid()
+        print(f"Create new bucket {alias} {bucket_uuid}")
+        metadata = create_bucket_metadata(
+            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
+        assert 'token' in metadata
+        create_bucket(bucket_uuid, metadata, alias=alias)
+
+    bucket = get_bucket(alias)
+    bucket_uuid = bucket['metadata']['uuid']
+    print(bucket_uuid)
+
+    # Go through the features and mappings.
+    for fname, mappings in groupby(
+            sorted(iter_fset_features('ephys'), key=itemgetter(0)), itemgetter(0)):
+        print(fname)
+        json_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
+        print(create_features(bucket_uuid, fname, json_data, patch=True))
+
+
+def create_bwm_features():
+    alias = 'bwm'
+    short_desc = 'Brain wide map'
+    sets = ('block', 'choice', 'feedback', 'stimulus')
+    tree = {
+        f'{set}': {
+            'decoding': {
+                'main': f'{set}_decoding',
+                'effect': f'{set}_decoding_effect',
+                'frac_significant': f'{set}_decoding_frac_significant',
+                'significant': f'{set}_decoding_significant',
+            },
+            'euclidean': {
+                'effect': f'{set}_euclidean_effect',
+                'latency': f'{set}_euclidean_latency',
+                'significant': f'{set}_euclidean_significant',
+            },
+            'mannwhitney': {
+                'effect': f'{set}_mannwhitney_effect',
+                'significant': f'{set}_mannwhitney_significant'
+            },
+
+            'glm_effect': f'{set}_glm_effect',
+            'manifold': f'{set}_manifold',
+            'single_cell': f'{set}_single_cell',
+        }
+        for set in sets
+    }
+
+    # Skip if the bucket already exists.
+    if isinstance(get_bucket(alias), tuple):
+        bucket_uuid = new_uuid()
+        print(f"Create new bucket {alias} {bucket_uuid}")
+        metadata = create_bucket_metadata(
+            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
+        assert 'token' in metadata
+        create_bucket(bucket_uuid, metadata, alias=alias)
+
+    bucket = get_bucket(alias)
+    bucket_uuid = bucket['metadata']['uuid']
+
+    # Go through the features and mappings.
+    for set in sets:
+        for fname, mappings in groupby(sorted(iter_fset_features(
+                f'bwm_{set}'), key=itemgetter(0)), itemgetter(0)):
+            fname = f'{set}_{fname}'
+            print(fname)
+            feature_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
+            create_features(bucket_uuid, fname, feature_data, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -490,14 +593,25 @@ class TestApp(unittest.TestCase):
 
         # Create features.
         fname = 'fet1'
-        data = {fname: {'data': {0: {'mean': 42}, 1: {
-            'mean': 420}}, 'statistics': {'mean': 21}}}
-        payload = {'fname': fname, 'json': data}
+        data = {
+            'mappings': {
+                'beryl': {
+                    'data': {
+                        0: {'mean': 42},
+                        1: {'mean': 420},
+                    },
+                    'statistics': {
+                        'mean': 21
+                    }
+                }
+            },
+        }
+        short_desc = 'my short description'
+        payload = {'fname': fname, 'feature_data': data, 'short_desc': short_desc}
         # NOTE: fail if no authorization header.
         response = self.client.post(f'/api/buckets/{uuid}', json=payload)
         self.assertEqual(response.status_code, 401)
-        response = self.client.post(
-            f'/api/buckets/{uuid}', json=payload, headers=headers)
+        response = self.client.post(f'/api/buckets/{uuid}', json=payload, headers=headers)
         self.ok(response)
 
         # List features in the bucket.
@@ -508,23 +622,23 @@ class TestApp(unittest.TestCase):
         # Retrieve features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
         self.ok(response)
-        self.assertEqual(response.json['json'][fname]['data']['0']['mean'], 42)
-        self.assertEqual(response.json['json']
-                         [fname]['data']['1']['mean'], 420)
+        self.assertEqual(response.json['feature_data']['mappings']['beryl']['data']['0']['mean'], 42)
+        self.assertEqual(response.json['feature_data']['mappings']['beryl']['data']['1']['mean'], 420)
 
         # Patch features.
-        data = {fname: {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}
-        payload = {'fname': fname, 'json': data}
+        data = {'mappings': {'beryl': {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}}
+        payload = {'fname': fname, 'feature_data': data}
         response = self.client.patch(
             f'/api/buckets/{uuid}/{fname}', json=payload, headers=headers)
         self.ok(response)
 
         # Retrieve modified features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
-        self.assertEqual(response.json['json'][fname]['data']['0']['mean'], 84)
+        self.assertEqual(
+            response.json['feature_data']['mappings']['beryl']['data']['0']['mean'], 84)
         # NOTE: the JSON data is completely replaced, keys that were present before but not now
         # are deleted.
-        self.assertTrue('1' not in response.json['json'][fname]['data'])
+        self.assertTrue('1' not in response.json['feature_data']['mappings']['beryl']['data'])
 
         # Delete the features and check they cannot be retrieved anymore.
         response = self.client.delete(
@@ -535,95 +649,8 @@ class TestApp(unittest.TestCase):
 
 
 # -------------------------------------------------------------------------------------------------
-# Default features
+# Script entry-point
 # -------------------------------------------------------------------------------------------------
-
-def iter_fset_features(fset):
-    assert fset
-    json_path = ROOT_DIR / 'data/json' / f"features_{fset}.json"
-    with open(json_path, 'r') as f:
-        contents = json.load(f)
-    for mapping, fet in contents.items():
-        for fname, d in fet.items():
-            yield fname, mapping, d
-
-
-def create_ephys_features():
-    alias = 'ephys'
-    short_desc = 'Ephys atlas'
-    tree = None
-
-    # Skip if the bucket already exists.
-    if isinstance(get_bucket(alias), tuple):
-        bucket_uuid = new_uuid()
-        print(f"Create new bucket {alias} {bucket_uuid}")
-        metadata = create_bucket_metadata(
-            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
-        assert 'token' in metadata
-        create_bucket(bucket_uuid, metadata, alias=alias)
-
-    bucket = get_bucket(alias)
-    bucket_uuid = bucket['metadata']['uuid']
-    print(bucket_uuid)
-
-    # Go through the features and mappings.
-    for fname, mappings in groupby(
-            sorted(iter_fset_features('ephys'), key=itemgetter(0)), itemgetter(0)):
-        print(fname)
-        json_data = {mapping: d for _, mapping, d in mappings}
-        print(create_features(bucket_uuid, fname, json_data))
-
-
-def create_bwm_features():
-    alias = 'bwm'
-    short_desc = 'Brain wide map'
-    sets = ('block', 'choice', 'feedback', 'stimulus')
-    tree = {
-        f'{set}': {
-            'decoding': {
-                'main': f'{set}_decoding',
-                'effect': f'{set}_decoding_effect',
-                'frac_significant': f'{set}_decoding_frac_significant',
-                'significant': f'{set}_decoding_significant',
-            },
-            'euclidean': {
-                'effect': f'{set}_euclidean_effect',
-                'latency': f'{set}_euclidean_latency',
-                'significant': f'{set}_euclidean_significant',
-            },
-            'mannwhitney': {
-                'effect': f'{set}_mannwhitney_effect',
-                'significant': f'{set}_mannwhitney_significant'
-            },
-
-            'glm_effect': f'{set}_glm_effect',
-            'manifold': f'{set}_manifold',
-            'single_cell': f'{set}_single_cell',
-        }
-        for set in sets
-    }
-
-    # Skip if the bucket already exists.
-    if isinstance(get_bucket(alias), tuple):
-        bucket_uuid = new_uuid()
-        print(f"Create new bucket {alias} {bucket_uuid}")
-        metadata = create_bucket_metadata(
-            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
-        assert 'token' in metadata
-        create_bucket(bucket_uuid, metadata, alias=alias)
-
-    bucket = get_bucket(alias)
-    bucket_uuid = bucket['metadata']['uuid']
-
-    # Go through the features and mappings.
-    for set in sets:
-        for fname, mappings in groupby(sorted(iter_fset_features(
-                f'bwm_{set}'), key=itemgetter(0)), itemgetter(0)):
-            fname = f'{set}_{fname}'
-            print(fname)
-            json_data = {mapping: d for _, mapping, d in mappings}
-            create_features(bucket_uuid, fname, json_data)
-
 
 def test():
     unittest.main()
