@@ -117,9 +117,20 @@ class DB {
     getRegions(mapping) {
         console.assert(mapping);
         let regions = this.loaders['regions'].get(mapping);
-        console.assert(regions);
-        console.assert(Object.keys(regions).length > 0);
-        return regions;
+
+        // NOTE: remove left hemisphere regions.
+        let kept = {};
+        for (let idx in regions) {
+            let region = regions[idx];
+            if (region.atlas_id <= 0)
+                kept[idx] = region;
+        }
+        console.log(regions.length, kept.regions);
+        // regions = Object.values(regions).filter(region => region.atlas_id >= 0);
+
+        console.assert(kept);
+        console.assert(Object.keys(kept).length > 0);
+        return kept;
     }
 
     /* Slices                                                                                    */
