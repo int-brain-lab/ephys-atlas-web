@@ -1,5 +1,5 @@
 import { DB } from "./db.js";
-// import { Feature } from "./feature.js";
+import { Feature } from "./feature.js";
 // import { Highlighter } from "./highlighter.js";
 // import { Maximizer } from "./maximizer.js";
 // import { Panel } from "./panel.js";
@@ -27,6 +27,7 @@ class App {
         this.db = new DB(this.splash);
 
         this.slice = new Slice(this.state, this.db);
+        this.feature = new Feature(this.state, this.db);
 
         // Create the components.
         // this.highlighter = new Highlighter(this.state);
@@ -34,7 +35,6 @@ class App {
         // this.maximizer = new Maximizer(this.state);
 
 
-        // this.feature = new Feature(this.db, this.state);
         // this.region = new Region(this.db, this.state, this.feature, this.highlighter, this.selector);
         // this.tooltip = new Tooltip(this.state, this.region, this.feature);
         // this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
@@ -46,8 +46,8 @@ class App {
         this.splash.start();
         this.db.load().then(async () => {
             this.slice.init();
+            this.feature.init();
 
-            // await this.feature.init();
             // this.region.init();
             // if (this.unity)
             //     this.unity.init();

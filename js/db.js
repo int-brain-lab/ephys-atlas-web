@@ -98,11 +98,28 @@ class DB {
         return new Loader(this.splash, URLS['colormaps'], null, progress);
     }
 
+
+    getColormap(cmap) {
+        console.assert(cmap);
+        let colors = this.loaders['colormaps'].get(cmap);
+        console.assert(colors);
+        console.assert(colors.length > 0);
+        return colors;
+    }
+
     /* Regions                                                                                   */
     /*********************************************************************************************/
 
     setupRegions(progress) {
         return new Loader(this.splash, URLS['regions'], null, progress);
+    }
+
+    getRegions(mapping) {
+        console.assert(mapping);
+        let regions = this.loaders['regions'].get(mapping);
+        console.assert(regions);
+        console.assert(Object.keys(regions).length > 0);
+        return regions;
     }
 
     /* Slices                                                                                    */
@@ -112,6 +129,12 @@ class DB {
         return new Loader(this.splash, URLS['slices'](name), null, progress);
     }
 
+    getSlice(axis, idx) {
+        console.assert(axis);
+        console.assert(this.loaders[`slices_${axis}`]);
+        return this.loaders[`slices_${axis}`].get((idx || 0).toString());
+    }
+
     /* Buckets                                                                                   */
     /*********************************************************************************************/
 
@@ -119,25 +142,31 @@ class DB {
         return new Loader(this.splash, URLS['bucket'](fset), null, progress);
     }
 
-    /* Getters                                                                                   */
-    /*********************************************************************************************/
+    async getBucketLoader(fset) {
+        console.assert(fset);
 
-    getSlice(axis, idx) {
-        console.assert(axis);
-        console.assert(this.loaders[`slices_${axis}`]);
-        return this.loaders[`slices_${axis}`].get((idx || 0).toString());
+        if (!(fset in this.loaders)) {
+            let url = URLS['bucket'](fset);
+            console.log(`creating loader for ${url}`);
+            this.loaders[fset] = new Loader(this.splash, url, null, [1, 0, 1]);
+            await this.loaders[fset].start();
+        }
+        let loader = this.loaders[fset];
+        return loader;
     }
 
-    // async getBucket(fset, mapping) {
-    //     console.assert(fset);
-    //     console.assert(mapping);
+    async getBucket(fset) {
+        console.assert(fset);
 
-    //     let url = URLS['bucket'](fset);
-    //     let loader = new Loader(this.splash, url, null, [0, 0, 0]);
-    //     await loader.start()
-    //     let data = loader.get("metadata");
-    //     return data;
-    // }
+        let loader = await this.getBucketLoader(fset);
+        console.assert(loader);
+        let data = loader.items;
+        console.assert(data);
+        return data;
+    }
+
+    /* Features                                                                                  */
+    /*********************************************************************************************/
 
     async getFeaturesLoader(fset, fname) {
         console.assert(fset);
@@ -147,7 +176,7 @@ class DB {
         if (!(key in this.loaders)) {
             let url = URLS['features'](fset, fname);
             console.log(`creating loader for ${url}`);
-            this.loaders[key] = new Loader(this.splash, url, null, [1, 1, 1]);
+            this.loaders[key] = new Loader(this.splash, url, null, [1, 0, 1]);
             await this.loaders[key].start();
         }
         let loader = this.loaders[key];
@@ -164,25 +193,13 @@ class DB {
 
         let loader = await this.getFeaturesLoader(fset, fname);
         console.assert(loader);
-        let data = loader.get(mapping);
+        let data = loader.items["feature_data"]["mappings"][mapping];
+        console.assert(data);
         return data;
     }
 
-    getRegions(mapping) {
-        console.assert(mapping);
-        let regions = this.loaders['regions'].get(mapping);
-        console.assert(regions);
-        console.assert(Object.keys(regions).length > 0);
-        return regions;
-    }
-
-    getColormap(cmap) {
-        console.assert(cmap);
-        let colors = this.loaders['colormaps'].get(cmap);
-        console.assert(colors);
-        console.assert(colors.length > 0);
-        return colors;
-    }
+    /* Logic functions                                                                           */
+    /*********************************************************************************************/
 
     normalize(values, vmin, vmax) {
         return values.map(value => normalizeValue(value, vmin, vmax));
