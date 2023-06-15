@@ -52,6 +52,7 @@
     --bar-select-color: #e8e8e8;
 
     --left-panel-width: 160px;
+    --tree-margin: 12px;
 }
 
 * {
@@ -499,16 +500,16 @@ div#container
 /*************************************************************************************************/
 
 #feature-tree {
-    margin: 10px 0 !important;
+    margin: var(--tree-margin) 0 !important;
     cursor: pointer;
 }
 
 #feature-tree details {
-    margin-left: 10px;
+    margin-left: var(--tree-margin);
 }
 
 #feature-tree summary {
-    color: #999;
+    color: #888;
 }
 
 #feature-tree>ul>details {
@@ -520,9 +521,7 @@ div#container
 }
 
 #feature-tree ul li {
-    /* margin: 0; */
-    margin-left: 10px;
-    /* padding: 0 5px; */
+    margin-left: var(--tree-margin);
 }
 
 #feature-tree ul li.selected {

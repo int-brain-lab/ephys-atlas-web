@@ -109,16 +109,18 @@ export function throttle(func, wait, options) {
 /* DOM                                                                                           */
 /*************************************************************************************************/
 
+export function addOption(select, text, value, selected) {
+    let opt = document.createElement('option');
+    opt.text = text;
+    opt.value = value;
+    opt.selected = selected;
+    select.add(opt);
+}
+
 export function setOptions(select, values, selected) {
     for (let _ in select.options) { select.options.remove(0); }
     for (let val of values) {
-        let opt = document.createElement('option');
-        opt.text = val;
-        opt.value = val;
-        if (val == selected) {
-            opt.selected = true;
-        }
-        select.add(opt);
+        addOption(select, val, val, val == selected);
     }
 }
 

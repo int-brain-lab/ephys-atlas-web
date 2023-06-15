@@ -1,4 +1,4 @@
-export { State };
+export { State, DEFAULT_BUCKETS };
 
 import { SLICE_MAX, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
@@ -14,6 +14,7 @@ const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
 
 const DEFAULT_FSET = "ephys";
+const DEFAULT_BUCKETS = ["ephys", "bwm"];
 // export const DEFAULT_FEATURE = {
 //     "ephys": "psd_alpha",
 //     "bwm_block": "decoding",
@@ -95,7 +96,8 @@ class State {
 
         // Features.
         this.fset = state.fset || DEFAULT_FSET;
-        this.fname = state.fname;// || DEFAULT_FEATURE[this.fset];
+        this.buckets = state.buckets || DEFAULT_BUCKETS;
+        this.fname = state.fname;
         this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.

@@ -24,7 +24,7 @@ class FeatureTree {
             let html = '';
             for (const key in obj) {
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    html += `<details open><summary>${key}</summary><ul>`;
+                    html += `<details><summary>${key}</summary><ul>`;
                     html += generateTree(obj[key]);
                     html += `</ul></details>`;
                 } else {
@@ -69,7 +69,7 @@ class Feature {
 
     async setState(state) {
         let bucket = await this.db.getBucket(state.fset);
-        console.log(bucket);
+        // console.log(bucket);
         // let features = await this.db.getFeatures(state.fset, state.mapping, state.fname);
         this.tree.setFeatures(bucket.features, bucket.metadata.tree);
     }

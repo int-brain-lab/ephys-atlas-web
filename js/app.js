@@ -1,3 +1,4 @@
+import { Bucket } from "./bucket.js";
 import { DB } from "./db.js";
 import { Feature } from "./feature.js";
 // import { Highlighter } from "./highlighter.js";
@@ -26,6 +27,7 @@ class App {
 
         this.db = new DB(this.splash);
 
+        this.bucket = new Bucket(this.state);
         this.slice = new Slice(this.state, this.db);
         this.feature = new Feature(this.state, this.db);
 
@@ -45,6 +47,7 @@ class App {
         // Load the data.
         this.splash.start();
         this.db.load().then(async () => {
+            this.bucket.init();
             this.slice.init();
             this.feature.init();
 
