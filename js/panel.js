@@ -26,6 +26,12 @@ const FEATURE_NAMES = {
     "bwm_stimulus": [
         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
     ],
+    "bwm_wheel_speed": [
+        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
+    ],
+    "bwm_wheel_velocity": [
+        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
+    ],
 };
 
 

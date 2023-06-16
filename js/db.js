@@ -16,9 +16,10 @@ Changelog of the DB versions
 1       initial version
 2       2023-04-23          replaced "bwm" fset by "bwm_block", "bwm_choice" etc
 3       2023-04-25          added more BWM features
+4       2023-06-16          added wheel_speed and wheel_velocity
 */
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const DB_TABLES = {
     "colormaps": "name,colors",
 
@@ -35,8 +36,18 @@ const DB_TABLES = {
     "features_bwm_choice": "fname,data,statistics",
     "features_bwm_feedback": "fname,data,statistics",
     "features_bwm_stimulus": "fname,data,statistics",
+    "features_bwm_wheel_speed": "fname,data,statistics",
+    "features_bwm_wheel_velocity": "fname,data,statistics",
 }
-const FEATURE_SETS = ["ephys", "bwm_block", "bwm_choice", "bwm_feedback", "bwm_stimulus"];
+const FEATURE_SETS = [
+    "ephys",
+    "bwm_block",
+    "bwm_choice",
+    "bwm_feedback",
+    "bwm_stimulus",
+    "bwm_wheel_speed",
+    "bwm_wheel_velocity",
+];
 
 
 
