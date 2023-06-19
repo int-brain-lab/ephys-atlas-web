@@ -6,6 +6,7 @@ import { Feature } from "./feature.js";
 import { Highlighter } from "./highlighter.js";
 import { Maximizer } from "./maximizer.js";
 import { Region } from "./region.js";
+import { Search } from "./search.js";
 import { Selection } from "./selection.js";
 import { Selector } from "./selector.js";
 import { Slice } from "./slice.js";
@@ -40,6 +41,7 @@ class App {
         this.highlighter = new Highlighter(this.state, this.db, this.dispatcher);
         this.maximizer = new Maximizer(this.state, this.db, this.dispatcher);
         this.region = new Region(this.state, this.db, this.dispatcher);
+        this.search = new Search(this.state, this.db, this.dispatcher);
         this.selection = new Selection(this.state, this.db, this.dispatcher);
         this.selector = new Selector(this.state, this.db, this.dispatcher);
         this.slice = new Slice(this.state, this.db, this.dispatcher);

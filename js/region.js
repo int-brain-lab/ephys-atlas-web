@@ -17,6 +17,8 @@ const SEARCH_ACRONYM_STRING = "acronym=";
 /*************************************************************************************************/
 
 function searchFilter(search, acronym, name) {
+    search = search.toLowerCase();
+
     // Implement search.
     let do_show = true;
     if (search) {
@@ -155,6 +157,8 @@ class Region {
 
     setupDispatcher() {
         this.dispatcher.on('feature', (ev) => { this.setRegions(); });
+
+        this.dispatcher.on('search', (ev) => { this.setRegions(); });
     }
 
     /* Set functions                                                                             */
@@ -166,9 +170,8 @@ class Region {
         let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
         let stats = features ? features["statistics"] : undefined;
-        // let cmin = this.state.cmapmin;
-        // let cmax = this.state.cmapmax;
         let stat = this.state.stat;
+        let search = this.state.search;
 
         // Initial vmin-vmax cmap range.
         let vmin = 0;
@@ -197,9 +200,13 @@ class Region {
                 region['normalized'] = normalizeValue(value, vmin, vmax);
             }
 
-            // TODO
             // Implement search.
-            // let display = searchFilter(search, acronym, name) ? 'block' : 'none';
+            if (search) {
+                let acronym = region['acronym'];
+                let name = region['name'];
+                let match = searchFilter(search, acronym, name);
+                if (!match) continue;
+            }
 
             keptRegions[idx] = region;
         }
@@ -209,72 +216,8 @@ class Region {
 
 
 
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
-
-    // setupSearch() {
-    //     this.searchInput.addEventListener("input", (e) => {
-    //         this.search(e.target.value);
-    //     });
-    // }
-
-    // setupHighlight() {
-    //     this.regionList.addEventListener('mousemove', throttle((e) => {
-    //         if (e.target.tagName == 'LI') {
-    //             this.highlighter.highlight(e);
-    //         }
-    //     }, 50));
-    // }
-
-    // setupSelection() {
-    //     for (let container of [this.regionList, this.selectedBar]) {
-    //         container.addEventListener('click', (e) => {
-    //             if (e.target.tagName == 'LI') {
-    //                 // Update the Selector object.
-    //                 this.selector.toggle(e);
-
-    //                 // Update the "selected regions" area in the bar plot header.
-    //                 this.updateSelection();
-    //             }
-    //         });
-    //     }
-    // }
-
-    /* Set functions                                                                             */
-    /*********************************************************************************************/
-
-    // setRegions(mapping, regions) { // idx, name, acronym, normalized
-    // }
-
-    // setColormap() {
-    //     this.colors = this.db.getColormap(this.state.cmap)
-    //     this.updateColormap(this.state.cmapmin, this.state.cmapmax);
-    // }
-
-    // setMapping(name) {
-    //     this.state.mapping = name;
-    //     this.makeRegionItems();
-    //     this.update();
-    // }
-
     /* Internal functions                                                                        */
     /*********************************************************************************************/
-
-    // makeRegionItems() {
-    //     let regions = this.db.getRegions(this.state.mapping);
-    //     console.assert(regions);
-    //     let s = "";
-    //     for (let idx in regions) {
-    //         let region = regions[idx];
-    //         console.assert(region);
-    //         // NOTE: skip void region
-    //         if (region["acronym"] == "void") continue;
-
-    //         s += makeRegionItem(
-    //             this.state.mapping, idx, region["acronym"], region["name"]);
-    //     }
-    //     this.regionList.innerHTML = s;
-    // }
 
     // getSelectedRegionElements() {
     //     /* Return the list of LI elements that are selected. */
@@ -289,20 +232,6 @@ class Region {
     //     return out;
     // }
 
-    /* Selection functions                                                                       */
-    /*********************************************************************************************/
-
-    // clearSelection() {
-    //     this.selectedBar.innerHTML = '';
-    // }
-
-    // updateSelection() {
-    //     // Update the selected bar.
-    //     this.clearSelection();
-    //     for (let item of this.getSelectedRegionElements()) {
-    //         this.selectedBar.appendChild(item.cloneNode(true))
-    //     }
-    // }
 
     /* Get functions                                                                             */
     /*********************************************************************************************/
@@ -313,26 +242,6 @@ class Region {
     //     if (region)
     //         return region;
     //     // console.warn(`region #${regionIdx} could not be found`);
-    // }
-
-    // getAttribute(regionIdx, attribute) {
-    //     return this.getInfo(regionIdx)[attribute];
-    // }
-
-    // getName(regionIdx) {
-    //     return this.getAttribute(regionIdx, 'name');
-    // }
-
-    // getAcronym(regionIdx) {
-    //     return this.getAttribute(regionIdx, 'acronym');
-    // }
-
-    /* Search functions                                                                          */
-    /*********************************************************************************************/
-
-    // search(query) {
-    //     this.state.search = query;
-    //     this.update();
     // }
 
     /* Update function                                                                           */
@@ -361,74 +270,5 @@ class Region {
     //         x = clamp(x, 0, .9999);
     //         child.style.backgroundColor = colors[Math.floor(x * nTotal)];
     //     }
-    // }
-
-    // async update() {
-    //     let stat = this.state.stat;
-    //     let mapping = this.state.mapping;
-
-    //     let features = await this.feature.getFeatures();
-
-    //     if (!features) {
-    //         // console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
-    //         return;
-    //     }
-
-    //     // Find vmin and vmax.
-    //     let stats = features['statistics'][stat];
-    //     let vmin = stats['min'];
-    //     let vmax = stats['max'];
-
-    //     this.featureMin.innerHTML = displayNumber(vmin);
-    //     this.featureMax.innerHTML = displayNumber(vmax);
-
-    //     let values = features['data'];
-
-    //     let search = this.state.search || '';
-    //     search = search.toLowerCase();
-
-    //     let style = '';
-    //     let regions = this.db.getRegions(mapping);
-    //     for (let regionIdx in regions) {
-    //         let region = regions[regionIdx];
-    //         console.assert(region);
-
-    //         let name = region["name"];
-    //         let acronym = region["acronym"];
-    //         let value = values[regionIdx];
-
-    //         // Left hemisphere region with no value: in white.
-    //         if (!value) {
-    //             if (name.includes("(left")) {
-    //                 style += `:root { --region-${mapping}-${regionIdx}: #ffffff;}\n`;
-    //             }
-    //             continue;
-    //         }
-    //         value = value[stat];
-
-    //         // Left hemisphere region with no value: in grey.
-    //         if (value == 0) {
-    //             if (name.includes("(left")) {
-    //                 style += `:root { --region-${mapping}-${regionIdx}: #d3d3d3;}\n`;
-    //             }
-    //             continue;
-    //         }
-
-    //         let normalized = normalizeValue(value, vmin, vmax);
-
-    //         // Region bar.
-    //         let stl = makeRegionBar(mapping, regionIdx, value, normalized);
-    //         style += `${stl}\n`;
-
-    //         // Implement search.
-    //         let display = searchFilter(search, acronym, name) ? 'block' : 'none';
-
-    //         stl = `#bar-plot li.${mapping}_region_${regionIdx}{display: ${display};}`;
-    //         style += `${stl}\n`;
-    //     }
-
-    //     document.getElementById('style-regions').textContent = style;
-
-    //     this.updateSelection();
     // }
 };
