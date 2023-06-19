@@ -112,7 +112,6 @@ class RegionList {
 
             // NOTE: skip void region
             if (region['acronym'] == 'void') continue;
-
             s += makeRegionItem(
                 mapping, idx, region['acronym'], region['name'], region['normalized']);
         }
@@ -224,17 +223,17 @@ class Region {
             let vminMod = vmin + vdiff * cmin / 100.0;
             let vmaxMod = vmin + vdiff * cmax / 100.0;
 
-            keptRegions = [];
-            console.log(features);
+            keptRegions = {};
             for (let idx in regions) {
                 let region = regions[idx];
                 let value = features['data'][idx];
-                console.log(idx, value);
                 if (!value)
                     continue;
                 value = value[stat];
+                // if (!value)
+                //     continue;
                 region['normalized'] = normalizeValue(value, vminMod, vmaxMod);
-                keptRegions.push(region);
+                keptRegions[idx] = region;
             }
         }
 

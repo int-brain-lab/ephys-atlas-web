@@ -125,7 +125,6 @@ class DB {
             if (region.atlas_id <= 0)
                 kept[idx] = region;
         }
-        console.log(regions.length, kept.regions);
         // regions = Object.values(regions).filter(region => region.atlas_id >= 0);
 
         console.assert(kept);
