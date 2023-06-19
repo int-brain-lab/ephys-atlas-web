@@ -1,6 +1,6 @@
 export { Colorbar };
 
-import { clamp } from "./utils.js";
+import { clamp, displayNumber } from "./utils.js";
 
 
 
@@ -33,7 +33,7 @@ class Colorbar {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('feature', (e) => { this.setColorbar(); });
+        this.dispatcher.on('feature', (e) => { this.setColorbar(); this.setFeatureRange(); });
         this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
         this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });
     }
@@ -43,6 +43,20 @@ class Colorbar {
 
     clear() {
         this.cbar.innerHTML = '';
+        this.featureMin.innerHTML = '';
+        this.featureMax.innerHTML = '';
+    }
+
+    async setFeatureRange() {
+        // Display vmin and vmax.
+        let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        if (features) {
+            let stats = features['statistics'][this.state.stat];
+            let vmin = stats['min'];
+            let vmax = stats['max'];
+            this.featureMin.innerHTML = displayNumber(vmin);
+            this.featureMax.innerHTML = displayNumber(vmax);
+        }
     }
 
     setColorbar() {

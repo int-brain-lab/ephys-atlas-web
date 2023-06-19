@@ -618,7 +618,7 @@ div#container
 }
 
 #bar-scale .min {
-    left: 60px;
+    left: calc(5px + var(--colorbar-margin));
 }
 
 #bar-scale .max {
@@ -682,6 +682,7 @@ div#container
 
 #bar-plot li {
     margin-bottom: -5px;
+    padding-left: 5px;
     /* display: none; */
 }
 
