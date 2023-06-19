@@ -119,21 +119,22 @@ class Panel {
     /*********************************************************************************************/
 
     setupMapping() {
-        // this.imapping.addEventListener('change', (e) => {
-        //     let mapping = e.target.value;
+        this.imapping.addEventListener('change', (e) => {
+            this.state.mapping = this.imapping.value;
+            this.dispatcher.mapping(this, this.state.mapping);
 
-        //     // HACK: only Beryl is available for bwm
-        //     if (this.state.fset.includes('bwm_') && mapping != 'beryl') {
-        //         return;
-        //     }
+            //     // HACK: only Beryl is available for bwm
+            //     if (this.state.fset.includes('bwm_') && mapping != 'beryl') {
+            //         return;
+            //     }
 
-        //     this.region.setMapping(mapping);
-        //     this.feature.setMapping(mapping);
-        //     this.selector.clear();
+            //     this.region.setMapping(mapping);
+            //     this.feature.setMapping(mapping);
+            //     this.selector.clear();
 
-        //     if (this.unity)
-        //         this.unity.update();
-        // });
+            //     if (this.unity)
+            //         this.unity.update();
+        });
     }
 
     setupStat() {

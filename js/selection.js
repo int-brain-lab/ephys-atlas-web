@@ -49,9 +49,10 @@ class Selection {
             this.toggle(item);
         });
 
-        this.dispatcher.on('clear', (e) => {
-            this.clear();
-        });
+        this.dispatcher.on('clear', (e) => { this.clear(); });
+
+        // NOTE: clear the selection when the mapping changes.
+        this.dispatcher.on('mapping', (e) => { this.clear(); });
     }
 
     /* Public functions                                                                          */

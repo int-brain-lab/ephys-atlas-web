@@ -31,11 +31,11 @@ class Coloring {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('feature', (ev) => { this.buildColors(); });
-        this.dispatcher.on('stat', (ev) => { this.buildColors(); });
-
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
+        this.dispatcher.on('feature', (ev) => { this.buildColors(); });
+        this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
+        this.dispatcher.on('stat', (ev) => { this.buildColors(); });
     }
 
     /* Internal functions                                                                        */

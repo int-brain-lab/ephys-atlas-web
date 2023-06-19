@@ -35,12 +35,20 @@ class Search {
             this.state.search = e.target.value;
             this.dispatcher.search(e.target.value);
         });
+
+        // NOTE: clear the selection when the mapping changes.
+        this.dispatcher.on('mapping', (e) => { this.clear(); });
     }
 
     /* Public functions                                                                          */
     /*********************************************************************************************/
 
+    clear() {
+        this.setText('');
+    }
+
     setText(text) {
+        this.state.search = text;
         this.el.value = text;
     }
 };
