@@ -652,13 +652,14 @@ div#container
     overflow-y: scroll;
     list-style: none;
 
-    /* OLD NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
+    width: 100%;
+
+    /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
     /* when using a SVG slider (it causes a full render of the bar plot */
 
     /* = all viewport - header - bar header - footer */
-    /* height: calc(100vh - 85px - 100px - 40px - 8px); */
-    width: 100%;
-    height: 100%;
+    height: calc(100vh - 85px - 100px - 40px - 8px);
+    /* height: 100%; */
 }
 
 #bar-plot-container * {
