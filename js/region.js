@@ -83,7 +83,7 @@ class RegionList {
         this.el.addEventListener('mousemove', throttle((e) => {
             if (e.target.tagName == 'LI') {
                 let idx = e2idx(this.state.mapping, e);
-                this.dispatcher.highlight(this, idx)
+                this.dispatcher.highlight(this, idx, null);
             }
         }, 100));
     }

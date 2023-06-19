@@ -151,13 +151,13 @@ class Slice {
                 if (isRoot(e)) return;
 
                 let idx = e2idx(this.state.mapping, e);
-                this.dispatcher.highlight(this, idx);
+                this.dispatcher.highlight(this, idx, e);
             }
         });
 
         svg.addEventListener('mouseout', (e) => {
             if (e.target.tagName == 'path') {
-                this.dispatcher.highlight(this, null);
+                this.dispatcher.highlight(this, null, null);
             }
         });
     }

@@ -14,8 +14,8 @@ import { Selector } from "./selector.js";
 import { Slice } from "./slice.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
+import { Tooltip } from "./tooltip.js";
 
-// import { Tooltip } from "./tooltip.js";
 // import { Unity } from "./unity.js";
 
 export { App };
@@ -48,11 +48,8 @@ class App {
         this.selection = new Selection(this.state, this.db, this.dispatcher);
         this.selector = new Selector(this.state, this.db, this.dispatcher);
         this.slice = new Slice(this.state, this.db, this.dispatcher);
+        this.tooltip = new Tooltip(this.state, this.db, this.dispatcher);
 
-        // Create the components.
-
-
-        // this.tooltip = new Tooltip(this.state, this.region, this.feature);
         // this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
     }
 
@@ -71,7 +68,6 @@ class App {
 
             // if (this.unity)
             //     this.unity.init();
-            // this.panel.init();
         });
     }
 

@@ -32,9 +32,9 @@ class Dispatcher {
         this.emit("slice", source, { "axis": axis, "idx": idx });
     }
 
-    highlight(source, idx) {
+    highlight(source, idx, e) {
         // when a region is highlighted
-        this.emit("highlight", source, { "idx": idx });
+        this.emit("highlight", source, { "idx": idx, "e": e });
     }
 
     toggle(source, idx) {
