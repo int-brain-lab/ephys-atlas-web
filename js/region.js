@@ -1,6 +1,6 @@
 export { Region };
 
-import { clearStyle, normalizeValue, displayNumber, throttle, getRegionIdx, clamp } from "./utils.js";
+import { normalizeValue, throttle, e2idx } from "./utils.js";
 
 
 
@@ -54,33 +54,6 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
 
 
 
-function customItemEvent(name, target) {
-    const ev = new CustomEvent(name, {
-        detail: {
-            idx: target.dataset.idx,
-            acronym: target.dataset.acronym,
-            name: target.dataset.name,
-            target: target,
-        },
-    });
-    return ev;
-}
-
-
-
-function setupHighlight(el) {
-    // Emit a "highlight" event with ev.detail.idx/acronym/name
-    el.addEventListener('mousemove', throttle((e) => {
-        if (e.target.tagName == 'LI') {
-            const ev = customItemEvent("highlight", e.target);
-            // console.log(`emit highlight event on region ${ev.detail.idx}`);
-            el.dispatchEvent(ev);
-        }
-    }, 100));
-}
-
-
-
 function setupToggle(el) {
     el.addEventListener('click', (e) => {
         if (e.target.tagName == 'LI') {
@@ -98,11 +71,22 @@ function setupToggle(el) {
 /*************************************************************************************************/
 
 class RegionList {
-    constructor(el) {
+    constructor(state, db, dispatcher, el) {
+        this.state = state;
+        this.db = db;
+        this.dispatcher = dispatcher;
         this.el = el;
 
-        // setupHighlight(el);
-        // setupToggle(el);
+        this.setupHighlight();
+    }
+
+    setupHighlight() {
+        this.el.addEventListener('mousemove', throttle((e) => {
+            if (e.target.tagName == 'LI') {
+                let idx = e2idx(this.state.mapping, e);
+                this.dispatcher.highlight(this, idx)
+            }
+        }, 100));
     }
 
     clear() {
@@ -121,14 +105,6 @@ class RegionList {
         }
         this.el.innerHTML = s;
     }
-
-    // onHighlight(callback) {
-    //     this.el.addEventListener("highlight", callback);
-    // }
-
-    // onToggle(callback) {
-    //     this.el.addEventListener("toggle", callback);
-    // }
 }
 
 
@@ -154,11 +130,12 @@ class Region {
         //     });
         // });
 
+        this.el = document.getElementById('bar-plot-list');
         this.state = state;
         this.db = db;
         this.dispatcher = dispatcher;
 
-        this.regionList = new RegionList(document.getElementById('bar-plot-list'));
+        this.regionList = new RegionList(this.state, this.db, this.dispatcher, this.el);
         // this.feature = feature;
         // this.highlighter = highlighter;
         // this.selector = selector;

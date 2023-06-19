@@ -159,6 +159,9 @@ export function getRegionIdx(mapping, obj) {
 
 
 export function e2idx(mapping, e) {
+    console.assert(mapping);
+    console.assert(e);
+
     return getRegionIdx(mapping, e.target);
 }
 

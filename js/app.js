@@ -2,12 +2,12 @@ import { Bucket } from "./bucket.js";
 import { DB } from "./db.js";
 import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
+import { Highlighter } from "./highlighter.js";
 import { Region } from "./region.js";
 import { Slice } from "./slice.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
 
-// import { Highlighter } from "./highlighter.js";
 // import { Maximizer } from "./maximizer.js";
 // import { Panel } from "./panel.js";
 // import { Selector } from "./selector.js";
@@ -34,9 +34,9 @@ class App {
         this.slice = new Slice(this.state, this.db, this.dispatcher);
         this.feature = new Feature(this.state, this.db, this.dispatcher);
         this.region = new Region(this.state, this.db, this.dispatcher);
+        this.highlighter = new Highlighter(this.state, this.db, this.dispatcher);
 
         // Create the components.
-        // this.highlighter = new Highlighter(this.state);
         // this.selector = new Selector(this.state);
         // this.maximizer = new Maximizer(this.state);
 

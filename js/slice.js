@@ -37,12 +37,6 @@ class Slice {
 
         this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
 
-        //, region, tooltip, highlighter, selector) {
-        // this.region = region;
-        // this.tooltip = tooltip;
-        // this.highlighter = highlighter;
-        // this.selector = selector;
-
         this.tv = document.getElementById('top-vline');
         this.th = document.getElementById('top-hline');
         this.cv = document.getElementById('coronal-vline');
@@ -156,10 +150,10 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                // TODO
                 let idx = e2idx(this.state.mapping, e);
-                this.highlight(idx);
-                this.tooltip(e);
+                this.dispatcher.highlight(this, idx);
+                // this.highlight(idx);
+                // this.tooltip(e);
             }
         });
     }
