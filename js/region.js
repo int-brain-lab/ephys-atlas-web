@@ -52,15 +52,15 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
 
 
 
-function setupToggle(el) {
-    el.addEventListener('click', (e) => {
-        if (e.target.tagName == 'LI') {
-            const ev = customItemEvent("toggle", e.target);
-            console.log(`emit toggle event on region ${ev.detail.idx}`);
-            el.dispatchEvent(ev);
-        }
-    });
-}
+// function setupToggle(el) {
+//     el.addEventListener('click', (e) => {
+//         if (e.target.tagName == 'LI') {
+//             const ev = customItemEvent("toggle", e.target);
+//             console.log(`emit toggle event on region ${ev.detail.idx}`);
+//             el.dispatchEvent(ev);
+//         }
+//     });
+// }
 
 
 

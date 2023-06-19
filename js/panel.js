@@ -9,24 +9,24 @@ import { clamp, setOptions, throttle } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const FEATURE_NAMES = {
-    "ephys": [
-        "psd_alpha", "psd_beta", "psd_delta", "psd_gamma", "psd_theta", "rms_ap", "rms_lf", "spike_rate",
-    ],
+// const FEATURE_NAMES = {
+//     "ephys": [
+//         "psd_alpha", "psd_beta", "psd_delta", "psd_gamma", "psd_theta", "rms_ap", "rms_lf", "spike_rate",
+//     ],
 
-    "bwm_block": [
-        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-    ],
-    "bwm_choice": [
-        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-    ],
-    "bwm_feedback": [
-        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-    ],
-    "bwm_stimulus": [
-        "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-    ],
-};
+//     "bwm_block": [
+//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
+//     ],
+//     "bwm_choice": [
+//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
+//     ],
+//     "bwm_feedback": [
+//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
+//     ],
+//     "bwm_stimulus": [
+//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
+//     ],
+// };
 
 const CMAP_RANGE_THROTTLE = 100; // number of milliseconds between updates
 
@@ -36,13 +36,10 @@ const CMAP_RANGE_THROTTLE = 100; // number of milliseconds between updates
 /*************************************************************************************************/
 
 class Panel {
-    constructor(db, state, feature, region, selector, unity) {
-        this.db = db;
+    constructor(state, db, dispatcher) {
         this.state = state;
-        this.feature = feature;
-        this.region = region;
-        this.selector = selector;
-        this.unity = unity;
+        this.db = db;
+        this.dispatcher = dispatcher;
 
         this.imapping = document.getElementById('mapping-dropdown');
         this.ifname = document.getElementById('feature-tree');
@@ -57,15 +54,15 @@ class Panel {
 
         // Setup the event callbacks that change the global state and update the components.
         this.setupMapping();
-        this.setupFset();
-        this.setupFname();
         this.setupStat();
         this.setupColormap();
         this.setupColormapMin();
         this.setupColormapMax();
+
         this.setupClearButton();
         this.setupShareButton();
         this.setupResetButton();
+
         this.setupKeyboardShortcuts();
     }
 
@@ -74,125 +71,101 @@ class Panel {
         this.setState(this.state);
     }
 
+    setState(state) {
+        // Mapping.
+        this.setMapping(state.mapping);
+
+        // Stat.
+        this.setStat(state.stat);
+
+        // Colormap.
+        this.setCmap(state.cmap);
+
+        // Colormap range.
+        this.setCmapRange(state.cmapmin, state.cmapmax);
+    }
+
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    setState(state) {
-        this.imapping.value = state.mapping;
-
-        this.istat.value = state.stat;
-
-        this.icmap.value = state.cmap;
-        this.icmapmin.value = state.cmapmin;
-        this.icmapmax.value = state.cmapmax;
-
-        this.setFeatureOptions(state.fset, state.fname);
-        this.ifset.value = state.fset; // set the fset dropdown value
-        // this.ifname.value = state.fname; // set the fname dropdown value
-        // this.feature.setFname(state.fname);
+    setMapping(mapping) {
+        this.imapping.value = mapping;
     }
 
-    async setFname(fname) {
-        await this.feature.setFname(fname);
-        this.region.update();
-
-        if (this.unity)
-            this.unity.update();
+    setStat(stat) {
+        this.istat.value = stat;
     }
 
-    setFeatureOptions(fset, fname) {
-        // Update the global state and the Feature component.
-        // this.feature.setFset(fset);
-
-        // Update the feature options.
-        // fname = fname;// || DEFAULT_FEATURE[fset];
-        if (!fname) return;
-        console.assert(FEATURE_NAMES[fset].includes(fname));
-        // let options = ['-- default --', ...FEATURE_NAMES[fset]];
-        // setOptions(this.ifname, options, fname);
-
-        // HACK: only Beryl is available for BWM.
-        if (fset.includes('bwm_')) {
-            this.imapping.value = 'beryl';
-            this.region.setMapping(this.imapping.value);
-        }
+    setCmap(cmap) {
+        this.icmap.value = cmap;
     }
+
+    setCmapRange(cmapmin, cmapmax) {
+        this.icmapmin.value = cmapmin;
+        this.icmapmax.value = cmapmax;
+    }
+
+    // if (this.unity)
+    //     this.unity.update();
+    // }
+
+    //     // HACK: only Beryl is available for BWM.
+    //     if (fset.includes('bwm_')) {
+    //         this.imapping.value = 'beryl';
+    //         this.region.setMapping(this.imapping.value);
+    //     }
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupMapping() {
-        this.imapping.addEventListener('change', (e) => {
-            let mapping = e.target.value;
+        // this.imapping.addEventListener('change', (e) => {
+        //     let mapping = e.target.value;
 
-            // HACK: only Beryl is available for bwm
-            if (this.state.fset.includes('bwm_') && mapping != 'beryl') {
-                return;
-            }
+        //     // HACK: only Beryl is available for bwm
+        //     if (this.state.fset.includes('bwm_') && mapping != 'beryl') {
+        //         return;
+        //     }
 
-            this.region.setMapping(mapping);
-            this.feature.setMapping(mapping);
-            this.selector.clear();
+        //     this.region.setMapping(mapping);
+        //     this.feature.setMapping(mapping);
+        //     this.selector.clear();
 
-            if (this.unity)
-                this.unity.update();
-        });
-    }
-
-    setupFset() {
-        this.ifset.addEventListener('change', (e) => {
-            let fset = e.target.value;
-            this.setFeatureOptions(fset); // fname argument not specified => use fset default
-            // this.feature.setFset(fset, this.ifname.value);
-            this.region.update();
-
-            if (this.unity)
-                this.unity.update();
-        });
-    }
-
-    setupFname() {
-        this.ifname.addEventListener('click', (e) => {
-            let fname = e.target.innerHTML;
-            for (let el of this.ifname.children[0].children) {
-                // console.log(el);
-                el.className = "";
-            }
-            e.target.classList.add("selected");
-            this.setFname(fname);
-        });
+        //     if (this.unity)
+        //         this.unity.update();
+        // });
     }
 
     setupStat() {
-        this.istat.addEventListener('change', (e) => {
-            let stat = e.target.value;
-            this.feature.setStat(stat);
-            this.region.update();
+        // this.istat.addEventListener('change', (e) => {
+        //     let stat = e.target.value;
+        //     this.feature.setStat(stat);
+        //     this.region.update();
 
-            if (this.unity)
-                this.unity.update();
-        });
+        //     if (this.unity)
+        //         this.unity.update();
+        // });
     }
 
     setupColormap() {
-        this.icmap.addEventListener('change', async (e) => {
-            await this.feature.setColormap(e.target.value);
-            this.region.colors = null; // HACK: force taking the colors from this.db
-            this.region.setColormap();
+        // this.icmap.addEventListener('change', async (e) => {
+        //     await this.feature.setColormap(e.target.value);
+        //     this.region.colors = null; // HACK: force taking the colors from this.db
+        //     this.region.setColormap();
 
-            if (this.unity)
-                this.unity.update();
-        });
+        //     if (this.unity)
+        //         this.unity.update();
+        // });
     }
 
     _updateColormapRange() {
         let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
         let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
-        this.feature.setColormapRange(cmin, cmax);
-        this.region.updateColormap(cmin, cmax);
 
-        if (this.unity)
-            this.unity.update();
+        this.state.cmapmin = cmin;
+        this.state.cmapmax = cmax;
+
+        this.dispatcher.cmapRange(this, cmin, cmax);
     }
 
     setupColormapMin() {
@@ -205,61 +178,67 @@ class Panel {
             'input', throttle((e) => { this._updateColormapRange(); }, CMAP_RANGE_THROTTLE));
     }
 
+    /* Buttons                                                                                   */
+    /*********************************************************************************************/
+
     setupClearButton() {
-        this.ibclear.addEventListener('click', (e) => {
-            if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
-                this.db.deleteDatabase();
-                location.reload();
-            }
-        });
+        // this.ibclear.addEventListener('click', (e) => {
+        //     if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
+        //         this.db.deleteDatabase();
+        //         location.reload();
+        //     }
+        // });
     }
 
     setupResetButton() {
-        this.ibreset.addEventListener('click', (e) => {
-            if (window.confirm("Are you sure you want to reset the view?")) {
-                this.state.init({});
-                this.init();
-                this.selector.clear();
-                // TODO: fix this with the new event system
+        //     this.ibreset.addEventListener('click', (e) => {
+        //         if (window.confirm("Are you sure you want to reset the view?")) {
+        //             this.state.init({});
+        //             this.init();
+        //             this.selector.clear();
+        //             // TODO: fix this with the new event system
 
-                // Reset the browser URL.
-                const url = new URL(window.location);
-                url.searchParams.set('state', '');
-                window.history.pushState(null, '', url.toString());
-            }
-        });
+        //             // Reset the browser URL.
+        //             const url = new URL(window.location);
+        //             url.searchParams.set('state', '');
+        //             window.history.pushState(null, '', url.toString());
+        //         }
+        //     });
     }
 
     setupShareButton() {
-        this.ishare.addEventListener('click', (e) => {
-            let url = this.state.toURL();
+        // this.ishare.addEventListener('click', (e) => {
+        //     let url = this.state.toURL();
 
-            // DEBUG
-            // window.location = url;
+        //     // DEBUG
+        //     // window.location = url;
 
-            // Copy the URL to the clipboard.
-            navigator.clipboard.writeText(url);
+        //     // Copy the URL to the clipboard.
+        //     navigator.clipboard.writeText(url);
 
-            // Set the URL in the location bar.
-            window.history.replaceState(null, '', url.toString());
+        //     // Set the URL in the location bar.
+        //     window.history.replaceState(null, '', url.toString());
 
-            this.ishare.innerHTML = "copied!";
-            setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
-        });
+        //     this.ishare.innerHTML = "copied!";
+        //     setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+        // });
     }
 
-    setupKeyboardShortcuts() {
-        window.addEventListener('keypress', (e) => {
-            // NOTE: do not trigger the event when filling in the search bar
-            if (e.target.id != "search-input") {
+    /* Keyboard functions                                                                        */
+    /*********************************************************************************************/
 
-                // Cycle through the feature names.
-                if (e.key == "f" || e.key == "d") {
-                    let dir = e.key == "f" ? +1 : -1;
-                    // this.ifname.selectedIndex = clamp(this.ifname.selectedIndex + dir, 0, this.ifname.length - 1);
-                    // this.setFname(this.ifname.value);
-                }
-            }
-        });
+    setupKeyboardShortcuts() {
+        // window.addEventListener('keypress', (e) => {
+        //     // NOTE: do not trigger the event when filling in the search bar
+        //     if (e.target.id != "search-input") {
+
+        //         // Cycle through the feature names.
+        //         if (e.key == "f" || e.key == "d") {
+        //             let dir = e.key == "f" ? +1 : -1;
+        //             // this.ifname.selectedIndex = clamp(this.ifname.selectedIndex + dir, 0, this.ifname.length - 1);
+        //             // this.setFname(this.ifname.value);
+        //         }
+        //     }
+        // });
     }
 };

@@ -78,9 +78,9 @@ class Dispatcher {
         this.emit("mapping", source, { "name": name });
     }
 
-    cmap_range(source, vmin, vmax) {
+    cmapRange(source, cmin, cmax) {
         // when the colormap range changes
-        this.emit("cmap_range", source, { "vmin": vmin, "vmax": vmax });
+        this.emit("cmapRange", source, { "cmin": cmin, "cmax": cmax });
     }
 
 

@@ -5,6 +5,7 @@ import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
 import { Highlighter } from "./highlighter.js";
 import { Maximizer } from "./maximizer.js";
+import { Panel } from "./panel.js";
 import { Region } from "./region.js";
 import { Search } from "./search.js";
 import { Selection } from "./selection.js";
@@ -13,7 +14,6 @@ import { Slice } from "./slice.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
 
-// import { Panel } from "./panel.js";
 // import { Tooltip } from "./tooltip.js";
 // import { Unity } from "./unity.js";
 
@@ -40,6 +40,7 @@ class App {
         this.feature = new Feature(this.state, this.db, this.dispatcher);
         this.highlighter = new Highlighter(this.state, this.db, this.dispatcher);
         this.maximizer = new Maximizer(this.state, this.db, this.dispatcher);
+        this.panel = new Panel(this.state, this.db, this.dispatcher);
         this.region = new Region(this.state, this.db, this.dispatcher);
         this.search = new Search(this.state, this.db, this.dispatcher);
         this.selection = new Selection(this.state, this.db, this.dispatcher);
@@ -51,7 +52,6 @@ class App {
 
         // this.tooltip = new Tooltip(this.state, this.region, this.feature);
         // this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
-        // this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector, this.unity);
     }
 
     init() {
@@ -62,8 +62,10 @@ class App {
             this.slice.init();
             this.feature.init();
             this.region.init();
+
             this.coloring.init();
             this.selector.init();
+            this.panel.init();
 
             // if (this.unity)
             //     this.unity.init();
