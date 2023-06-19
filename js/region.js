@@ -131,11 +131,6 @@ class Region {
 
         this.regionList = new RegionList(this.state, this.db, this.dispatcher, this.el);
 
-        // UL element with the list of brain regions.
-        this.featureMin = document.querySelector('#bar-scale .min');
-        this.featureMax = document.querySelector('#bar-scale .max');
-        this.searchInput = document.getElementById("search-input");
-
         this.setupDispatcher();
     }
 
@@ -145,11 +140,6 @@ class Region {
 
     setState(state) {
         this.setRegions();
-
-        //     this.setMapping(state.mapping);
-
-        //     this.searchInput.value = state.search;
-        //     this.search(state.search);
     }
 
     /* Setup functions                                                                           */

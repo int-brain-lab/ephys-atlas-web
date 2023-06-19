@@ -1,4 +1,5 @@
 import { Bucket } from "./bucket.js";
+import { Colorbar } from "./colorbar.js";
 import { Coloring } from "./coloring.js";
 import { DB } from "./db.js";
 import { Dispatcher } from "./dispatcher.js";
@@ -36,6 +37,7 @@ class App {
 
         // Components.
         this.bucket = new Bucket(this.state, this.db, this.dispatcher);
+        this.colorbar = new Colorbar(this.state, this.db, this.dispatcher);
         this.coloring = new Coloring(this.state, this.db, this.dispatcher);
         this.feature = new Feature(this.state, this.db, this.dispatcher);
         this.highlighter = new Highlighter(this.state, this.db, this.dispatcher);
