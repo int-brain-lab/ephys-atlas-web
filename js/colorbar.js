@@ -41,7 +41,16 @@ class Colorbar {
     /* Internal functions                                                                        */
     /*********************************************************************************************/
 
+    clear() {
+        this.cbar.innerHTML = '';
+    }
+
     setColorbar() {
+        if (!this.state.fname) {
+            this.clear();
+            return;
+        }
+
         let colors = this.db.getColormap(this.state.cmap);
         let cmin = this.state.cmapmin;
         let cmax = this.state.cmapmax;
