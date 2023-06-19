@@ -63,24 +63,25 @@ class Loader {
     // Store a JSON file from a URL and put it in memory. Provide a get(key) function.
     // Used for simple key-value mappings.
     constructor(
-        splash, url, process, [download_splash, process_splash, store_splash],
+        splash, url, process, [downloadSplash, processSplash, storeSplash],
     ) {
         console.assert(splash);
         console.assert(url);
 
+        this.starting = false;
         this.items = {};
         this.splash = splash;
         this.url = url;
         this.process = process; // a function
 
         // Splash progress for the different steps.
-        this.download_splash = download_splash; // a number
-        this.process_splash = process_splash; // a number
-        this.store_splash = store_splash; // a number
+        this.downloadSplash = downloadSplash; // a number
+        this.processSplash = processSplash; // a number
+        this.storeSplash = storeSplash; // a number
 
         // Total splash.
-        this.total_splash = download_splash + process_splash + store_splash;
-        this.splash.addTotal(this.total_splash);
+        this.totalSplash = downloadSplash + processSplash + storeSplash;
+        this.splash.addTotal(this.totalSplash);
     }
 
     async start() {
@@ -90,7 +91,7 @@ class Loader {
         console.debug(`downloading ${this.url}...`)
 
         let dl = await downloadJSON(this.url);
-        this.splash.add(this.download_splash);
+        this.splash.add(this.downloadSplash);
 
         console.debug(`done downloading ${this.url}`)
 
@@ -98,7 +99,7 @@ class Loader {
         let items = dl;
         if (this.process)
             items = this.process(dl);
-        this.splash.add(this.process_splash);
+        this.splash.add(this.processSplash);
 
         n = Object.keys(items).length;
         console.assert(items);
@@ -106,7 +107,7 @@ class Loader {
         console.debug(`adding ${n} items.`)
         this.items = items;
 
-        this.splash.add(this.store_splash);
+        this.splash.add(this.storeSplash);
         console.debug(`done adding items.`);
     }
 
