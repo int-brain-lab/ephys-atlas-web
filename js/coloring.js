@@ -16,7 +16,7 @@ class Coloring {
 
         this.style = document.getElementById('style-regions').sheet;
 
-        this.setupColoring();
+        this.setupDispatcher();
     }
 
     init() {
@@ -30,7 +30,7 @@ class Coloring {
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
-    setupColoring() {
+    setupDispatcher() {
         this.dispatcher.on('feature', (ev) => { this.buildColors(); });
     }
 
