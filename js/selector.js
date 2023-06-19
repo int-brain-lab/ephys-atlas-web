@@ -14,9 +14,11 @@ class Selector {
         this.db = db;
         this.dispatcher = dispatcher;
 
+        this.clearEl = document.getElementById('clear-selection');
         this.style = document.getElementById('style-selector').sheet;
 
-        this.setupSelector();
+        this.setupClear();
+        this.setupDispatcher();
     }
 
     init() {
@@ -30,10 +32,21 @@ class Selector {
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
-    setupSelector() {
+    setupClear() {
+        this.clearEl.addEventListener("click", (e) => {
+            this.dispatcher.clear(this);
+            // this.clear();
+        });
+    }
+
+    setupDispatcher() {
         this.dispatcher.on('toggle', (e) => {
             this.toggle(e.idx);
             this.makeCSS();
+        });
+
+        this.dispatcher.on('clear', (e) => {
+            this.clear();
         });
     }
 

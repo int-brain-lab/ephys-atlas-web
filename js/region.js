@@ -74,6 +74,7 @@ class RegionList {
         this.el = el;
 
         this.setupHighlight();
+        this.setupToggle();
     }
 
     setupHighlight() {
@@ -83,6 +84,15 @@ class RegionList {
                 this.dispatcher.highlight(this, idx)
             }
         }, 100));
+    }
+
+    setupToggle() {
+        this.el.addEventListener('click', (e) => {
+            if (e.target.tagName == 'LI') {
+                let idx = e2idx(this.state.mapping, e);
+                this.dispatcher.toggle(this, idx);
+            }
+        });
     }
 
     clear() {
@@ -120,7 +130,6 @@ class Region {
         this.regionList = new RegionList(this.state, this.db, this.dispatcher, this.el);
 
         // UL element with the list of brain regions.
-        this.selectedBar = document.getElementById('bar-selected-list');
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
         this.searchInput = document.getElementById("search-input");
@@ -130,8 +139,6 @@ class Region {
 
     init() {
         this.setState(this.state);
-        // this.update();
-        // this.setColormap();
     }
 
     setState(state) {
@@ -169,11 +176,6 @@ class Region {
         if (stats) {
             vmin = stats[stat]["min"];
             vmax = stats[stat]["max"];
-
-            // Colormap range modifier using the min/max sliders.
-            // let vdiff = vmax - vmin;
-            // vminMod = vmin + vdiff * cmin / 100.0;
-            // vmaxMod = vmin + vdiff * cmax / 100.0;
         }
 
         let keptRegions = {};
