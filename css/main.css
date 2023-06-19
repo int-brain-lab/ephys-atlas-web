@@ -428,6 +428,7 @@ div#container
 
 #bar-plot {
     flex-grow: 1;
+    flex-shrink: 3;
 }
 
 
@@ -588,9 +589,6 @@ div#container
     width: calc(100% - var(--colorbar-margin));
 }
 
-#bar-scale .wrapper {
-    height: 12px;
-}
 
 #bar-scale .colorbar {
     height: 10px;
@@ -610,19 +608,29 @@ div#container
     /* background-color: red; */
 }
 
+#bar-scale .wrapper {
+    height: 12px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 #bar-scale .min,
 #bar-scale .max {
-    display: inline;
-    position: absolute;
+    /* display: inline; */
+    /* position: absolute; */
     font-size: 8pt;
 }
 
 #bar-scale .min {
-    left: calc(5px + var(--colorbar-margin));
+    margin-right: auto;
+    /* left: calc(5px + var(--colorbar-margin)); */
 }
 
 #bar-scale .max {
-    right: 16px;
+    margin-left: auto;
+    /* right: 16px; */
 }
 
 
@@ -659,7 +667,7 @@ div#container
     /* when using a SVG slider (it causes a full render of the bar plot */
 
     /* = all viewport - header - bar header - footer */
-    height: calc(100vh - 85px - 100px - 40px - 8px);
+    /* height: calc(100vh - 85px - 100px - 40px - 8px); */
     /* height: 100%; */
 }
 
