@@ -148,14 +148,10 @@ class Panel {
     }
 
     setupColormap() {
-        // this.icmap.addEventListener('change', async (e) => {
-        //     await this.feature.setColormap(e.target.value);
-        //     this.region.colors = null; // HACK: force taking the colors from this.db
-        //     this.region.setColormap();
-
-        //     if (this.unity)
-        //         this.unity.update();
-        // });
+        this.icmap.addEventListener('change', async (e) => {
+            this.state.cmap = this.icmap.value;
+            this.dispatcher.cmap(this, this.icmap.value);
+        });
     }
 
     _updateColormapRange() {
