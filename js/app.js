@@ -5,13 +5,13 @@ import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
 import { Highlighter } from "./highlighter.js";
 import { Region } from "./region.js";
+import { Selector } from "./selector.js";
 import { Slice } from "./slice.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
 
 // import { Maximizer } from "./maximizer.js";
 // import { Panel } from "./panel.js";
-// import { Selector } from "./selector.js";
 // import { Tooltip } from "./tooltip.js";
 // import { Unity } from "./unity.js";
 
@@ -26,20 +26,22 @@ export { App };
 class App {
     constructor() {
         this.splash = new Splash();
-        this.state = new State();
 
+        // Common objects.
+        this.state = new State();
         this.db = new DB(this.splash);
         this.dispatcher = new Dispatcher();
 
+        // Components.
         this.bucket = new Bucket(this.state, this.db, this.dispatcher);
         this.slice = new Slice(this.state, this.db, this.dispatcher);
         this.feature = new Feature(this.state, this.db, this.dispatcher);
         this.region = new Region(this.state, this.db, this.dispatcher);
         this.highlighter = new Highlighter(this.state, this.db, this.dispatcher);
         this.coloring = new Coloring(this.state, this.db, this.dispatcher);
+        this.selector = new Selector(this.state, this.db, this.dispatcher);
 
         // Create the components.
-        // this.selector = new Selector(this.state);
         // this.maximizer = new Maximizer(this.state);
 
 
@@ -57,6 +59,7 @@ class App {
             this.feature.init();
             this.region.init();
             this.coloring.init();
+            this.selector.init();
 
             // if (this.unity)
             //     this.unity.init();

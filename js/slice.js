@@ -152,8 +152,12 @@ class Slice {
 
                 let idx = e2idx(this.state.mapping, e);
                 this.dispatcher.highlight(this, idx);
-                // this.highlight(idx);
-                // this.tooltip(e);
+            }
+        });
+
+        svg.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'path') {
+                this.dispatcher.highlight(this, null);
             }
         });
     }
@@ -167,9 +171,8 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                // TODO
-                // this.selector.toggle(e);
-                // this.region.updateSelection();
+                let idx = e2idx(this.state.mapping, e);
+                this.dispatcher.toggle(this, idx);
             }
         });
     }
