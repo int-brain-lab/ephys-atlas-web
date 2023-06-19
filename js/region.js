@@ -105,6 +105,10 @@ class RegionList {
         // setupToggle(el);
     }
 
+    clear() {
+        this.el.innerHTML = '';
+    }
+
     setRegions(mapping, regions) { // idx, name, acronym, normalized
         let s = '';
         for (let idx in regions) {
@@ -201,31 +205,36 @@ class Region {
     async setRegions() {
         console.assert(this.state.mapping);
         let regions = this.db.getRegions(this.state.mapping);
-        let keptRegions = regions;
-
         let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
-        // Compute the region bar length as a function of the features.
-        if (features) {
-            console.assert("data" in features);
+        let stats = features ? features["statistics"] : undefined;
+        let cmin = this.state.cmapmin;
+        let cmax = this.state.cmapmax;
+        let stat = this.state.stat;
 
-            let stats = features["statistics"];
-            let cmin = this.state.cmapmin;
-            let cmax = this.state.cmapmax;
-            let stat = this.state.stat;
-
-            // Initial vmin-vmax cmap range.
+        // Initial vmin-vmax cmap range.
+        let vminMod = 0;
+        let vmaxMod = 0;
+        if (stats) {
             let vmin = stats[stat]["min"];
             let vmax = stats[stat]["max"];
 
             // Colormap range modifier using the min/max sliders.
             let vdiff = vmax - vmin;
-            let vminMod = vmin + vdiff * cmin / 100.0;
-            let vmaxMod = vmin + vdiff * cmax / 100.0;
+            vminMod = vmin + vdiff * cmin / 100.0;
+            vmaxMod = vmin + vdiff * cmax / 100.0;
+        }
 
-            keptRegions = {};
-            for (let idx in regions) {
-                let region = regions[idx];
+        let keptRegions = {};
+        for (let idx in regions) {
+
+            // NOTE: important, need to make a copy, otherwise the values will be propagated into
+            // the object stored in the db.
+            let region = { ...regions[idx] };
+
+            // Compute the bar width as a function of the feature value.
+            // If there is no feature, show the region but without a bar.
+            if (stats) {
                 let value = features['data'][idx];
                 if (!value)
                     continue;
@@ -233,8 +242,9 @@ class Region {
                 // if (!value)
                 //     continue;
                 region['normalized'] = normalizeValue(value, vminMod, vmaxMod);
-                keptRegions[idx] = region;
             }
+
+            keptRegions[idx] = region;
         }
 
         this.regionList.setRegions(this.state.mapping, keptRegions);
