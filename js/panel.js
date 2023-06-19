@@ -137,20 +137,16 @@ class Panel {
     }
 
     setupStat() {
-        // this.istat.addEventListener('change', (e) => {
-        //     let stat = e.target.value;
-        //     this.feature.setStat(stat);
-        //     this.region.update();
-
-        //     if (this.unity)
-        //         this.unity.update();
-        // });
+        this.istat.addEventListener('change', (e) => {
+            this.state.stat = this.istat.value;
+            this.dispatcher.stat(this, this.state.stat);
+        });
     }
 
     setupColormap() {
         this.icmap.addEventListener('change', async (e) => {
             this.state.cmap = this.icmap.value;
-            this.dispatcher.cmap(this, this.icmap.value);
+            this.dispatcher.cmap(this, this.state.cmap);
         });
     }
 
