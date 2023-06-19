@@ -52,8 +52,12 @@ class Highlighter {
     }
 
     highlight(idx) {
-        this.state.highlighted = idx;
-        this.makeCSS();
+        if (!idx) {
+            this.clear();
+        } else {
+            this.state.highlighted = idx;
+            this.makeCSS();
+        }
     }
 };
 
