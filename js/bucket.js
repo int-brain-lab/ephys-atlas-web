@@ -49,6 +49,7 @@ class Bucket {
         console.log(`select ${uuid_or_alias}`);
         this.el.value = uuid_or_alias;
         this.state.fset = uuid_or_alias;
+        this.state.fname = '';
         this.dispatcher.bucket(this, uuid_or_alias);
     }
 

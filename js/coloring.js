@@ -31,6 +31,7 @@ class Coloring {
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('bucket', (ev) => { this.clear(); });
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
         this.dispatcher.on('feature', (ev) => { this.buildColors(); });
@@ -41,6 +42,10 @@ class Coloring {
     /* Internal functions                                                                        */
     /*********************************************************************************************/
 
+    clear() {
+        clearStyle(this.style);
+    }
+
     async buildColors() {
 
         // Load the region and features data.
@@ -48,7 +53,7 @@ class Coloring {
         let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
         // Clear the styles.
-        clearStyle(this.style);
+        this.clear();
 
         // Remove the feature colors when deselecting a feature.
         if (!this.state.fname) return;

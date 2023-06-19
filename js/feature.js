@@ -79,9 +79,6 @@ class Feature {
     }
 
     init() {
-        // this.setDefaultColors(this.state.mapping);
-        // this.setColormap(this.state.cmap);
-
         this.setState(this.state);
     }
 
@@ -126,21 +123,6 @@ class Feature {
 
     //     /* Set functions                                                                             */
     //     /*********************************************************************************************/
-
-    //     setDefaultColors(mapping) {
-    //         let href = `data/css/default_region_colors_${mapping}.css`;
-    //         if (!this.defaultStyle.href.includes(href))
-    //             this.defaultStyle.href = href;
-    //     }
-
-    //     setColormapRange(cmin, cmax) {
-    //         if (cmin >= cmax) {
-    //             return;
-    //         }
-    //         this.state.cmapmin = cmin;
-    //         this.state.cmapmax = cmax;
-    //         this.update();
-    //     }
 
     //     getColor(regionIdx) {
     //         // Parse the current color of a region and return its hex value.
