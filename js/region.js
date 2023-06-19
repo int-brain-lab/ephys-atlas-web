@@ -16,10 +16,6 @@ const SEARCH_ACRONYM_STRING = "acronym=";
 /* Region utils                                                                                  */
 /*************************************************************************************************/
 
-// function makeRegionBar(mapping, regionIdx, value, normalized) {
-//     return `#bar-plot-container li.${mapping}_region_${regionIdx} .bar { width: ${normalized}%; } /* TTv: ${value} */`;
-// }
-
 function searchFilter(search, acronym, name) {
     // Implement search.
     let do_show = true;
@@ -115,43 +111,21 @@ class RegionList {
 
 class Region {
     constructor(state, db, dispatcher) {
-        // this.rl = new RegionList(document.getElementById('bar-plot-list'));
-        // db.getBucket("bwm", "allen").then((metadata) => {
-        //     let tree = metadata["tree"];
-        //     this.rl.setRegions("allen", [
-        //         { "idx": 3, "acronym": "A", "name": "Abc", "normalized": 34 },
-        //         { "idx": 10, "acronym": "B", "name": "Def", "normalized": 64 },
-        //     ]);
-
-        //     this.sr = new SelectedRegions(document.getElementById('bar-selected-list'));
-        //     this.rl.onToggle((e) => {
-        //         // console.log(e);
-        //         this.sr.toggle(e.detail.target);
-        //     });
-        // });
-
-        this.el = document.getElementById('bar-plot-list');
         this.state = state;
         this.db = db;
         this.dispatcher = dispatcher;
 
+        this.el = document.getElementById('bar-plot-list');
+
         this.regionList = new RegionList(this.state, this.db, this.dispatcher, this.el);
-        // this.feature = feature;
-        // this.highlighter = highlighter;
-        // this.selector = selector;
 
         // UL element with the list of brain regions.
-        // this.regionList = document.getElementById('bar-plot-list');
         this.selectedBar = document.getElementById('bar-selected-list');
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
         this.searchInput = document.getElementById("search-input");
 
         this.setupDispatcher();
-
-        // this.setupSearch();
-        // this.setupHighlight();
-        // this.setupSelection();
     }
 
     init() {
@@ -185,21 +159,21 @@ class Region {
         let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
         let stats = features ? features["statistics"] : undefined;
-        let cmin = this.state.cmapmin;
-        let cmax = this.state.cmapmax;
+        // let cmin = this.state.cmapmin;
+        // let cmax = this.state.cmapmax;
         let stat = this.state.stat;
 
         // Initial vmin-vmax cmap range.
-        let vminMod = 0;
-        let vmaxMod = 0;
+        let vmin = 0;
+        let vmax = 0;
         if (stats) {
-            let vmin = stats[stat]["min"];
-            let vmax = stats[stat]["max"];
+            vmin = stats[stat]["min"];
+            vmax = stats[stat]["max"];
 
             // Colormap range modifier using the min/max sliders.
-            let vdiff = vmax - vmin;
-            vminMod = vmin + vdiff * cmin / 100.0;
-            vmaxMod = vmin + vdiff * cmax / 100.0;
+            // let vdiff = vmax - vmin;
+            // vminMod = vmin + vdiff * cmin / 100.0;
+            // vmaxMod = vmin + vdiff * cmax / 100.0;
         }
 
         let keptRegions = {};
@@ -218,8 +192,12 @@ class Region {
                 value = value[stat];
                 // if (!value)
                 //     continue;
-                region['normalized'] = normalizeValue(value, vminMod, vmaxMod);
+                region['normalized'] = normalizeValue(value, vmin, vmax);
             }
+
+            // TODO
+            // Implement search.
+            // let display = searchFilter(search, acronym, name) ? 'block' : 'none';
 
             keptRegions[idx] = region;
         }

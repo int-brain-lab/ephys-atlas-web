@@ -84,6 +84,8 @@ class Loader {
     }
 
     async start() {
+        let n = Object.keys(this.items).length;
+        if (n > 0) return;
 
         console.debug(`downloading ${this.url}...`)
 
@@ -98,7 +100,7 @@ class Loader {
             items = this.process(dl);
         this.splash.add(this.process_splash);
 
-        let n = Object.keys(items).length;
+        n = Object.keys(items).length;
         console.assert(items);
         console.assert(n > 0);
         console.debug(`adding ${n} items.`)
@@ -106,7 +108,6 @@ class Loader {
 
         this.splash.add(this.store_splash);
         console.debug(`done adding items.`);
-
     }
 
     get(key) {

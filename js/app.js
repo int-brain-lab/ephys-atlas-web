@@ -1,4 +1,5 @@
 import { Bucket } from "./bucket.js";
+import { Coloring } from "./coloring.js";
 import { DB } from "./db.js";
 import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
@@ -30,11 +31,12 @@ class App {
         this.db = new DB(this.splash);
         this.dispatcher = new Dispatcher();
 
-        this.bucket = new Bucket(this.state, this.dispatcher);
+        this.bucket = new Bucket(this.state, this.db, this.dispatcher);
         this.slice = new Slice(this.state, this.db, this.dispatcher);
         this.feature = new Feature(this.state, this.db, this.dispatcher);
         this.region = new Region(this.state, this.db, this.dispatcher);
         this.highlighter = new Highlighter(this.state, this.db, this.dispatcher);
+        this.coloring = new Coloring(this.state, this.db, this.dispatcher);
 
         // Create the components.
         // this.selector = new Selector(this.state);
@@ -54,6 +56,7 @@ class App {
             this.slice.init();
             this.feature.init();
             this.region.init();
+            this.coloring.init();
 
             // if (this.unity)
             //     this.unity.init();

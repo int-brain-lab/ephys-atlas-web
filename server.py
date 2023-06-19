@@ -397,7 +397,7 @@ def api_get_features(uuid, fname):
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
-    if not bucket_path.exists():
+    if not bucket_path or not bucket_path.exists():
         return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the features path.

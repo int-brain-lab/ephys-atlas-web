@@ -178,21 +178,6 @@ class DB {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async getFeaturesLoader(fset, fname) {
-        console.assert(fset);
-        console.assert(fname);
-
-        let key = [fset, fname];
-        if (!(key in this.loaders)) {
-            let url = URLS['features'](fset, fname);
-            console.log(`creating loader for ${url}`);
-            this.loaders[key] = new Loader(this.splash, url, null, [1, 0, 1]);
-            await this.loaders[key].start();
-        }
-        let loader = this.loaders[key];
-        return loader;
-    }
-
     async getFeatures(fset, mapping, fname) {
         // NOTE: this is async because this dynamically creates a new loader and therefore
         // make a HTTP request on demand to get the requested feature.
@@ -201,9 +186,18 @@ class DB {
         if (!fname) return;
         console.assert(fname);
 
-        let loader = await this.getFeaturesLoader(fset, fname);
+        let key = [fset, fname];
+        if (!(key in this.loaders)) {
+            let url = URLS['features'](fset, fname);
+            console.log(`creating loader for ${url}`);
+
+            this.loaders[key] = new Loader(this.splash, url, null, [1, 0, 1]);
+        }
+        await this.loaders[key].start();
+        let loader = this.loaders[key];
         console.assert(loader);
-        let data = loader.items["feature_data"]["mappings"][mapping];
+
+        let data = loader.get("feature_data")["mappings"][mapping];
         console.assert(data);
         return data;
     }
@@ -211,7 +205,7 @@ class DB {
     /* Logic functions                                                                           */
     /*********************************************************************************************/
 
-    normalize(values, vmin, vmax) {
-        return values.map(value => normalizeValue(value, vmin, vmax));
-    }
+    // normalize(values, vmin, vmax) {
+    //     return values.map(value => normalizeValue(value, vmin, vmax));
+    // }
 }
