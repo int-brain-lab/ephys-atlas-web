@@ -56,7 +56,7 @@ Steps to cleanup the SVGs:
 
 ROOT_DIR = Path(__file__).parent.parent
 COLORMAPS = ('viridis', 'cividis', 'magma',
-             'YlGn', 'YlOrRd', 'Reds', 'Purples')
+             'YlGn', 'YlOrRd', 'Reds', 'Purples','Blues')
 COLORMAP_VALUE_COUNT = 100  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
