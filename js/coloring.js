@@ -31,6 +31,7 @@ class Coloring {
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('bucket', (ev) => { this.clear(); });
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });

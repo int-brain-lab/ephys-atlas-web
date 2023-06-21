@@ -175,46 +175,49 @@ class Panel {
     /*********************************************************************************************/
 
     setupClearButton() {
-        // this.ibclear.addEventListener('click', (e) => {
-        //     if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
-        //         this.model.deleteDatabase();
-        //         location.reload();
-        //     }
-        // });
+        this.ibclear.addEventListener('click', (e) => {
+            if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
+                // this.model.deleteDatabase();
+
+                if ('caches' in window) {
+                    caches.keys().then(cacheNames => {
+                        cacheNames.forEach(cacheName => {
+                            caches.delete(cacheName);
+                        });
+                    });
+                }
+
+                location.reload();
+            }
+        });
     }
 
     setupResetButton() {
-        //     this.ibreset.addEventListener('click', (e) => {
-        //         if (window.confirm("Are you sure you want to reset the view?")) {
-        //             this.state.init({});
-        //             this.init();
-        //             this.selector.clear();
-        //             // TODO: fix this with the new event system
+        this.ibreset.addEventListener('click', (e) => {
+            if (window.confirm("Are you sure you want to reset the view?")) {
+                this.state.init({});
+                this.dispatcher.reset(this);
 
-        //             // Reset the browser URL.
-        //             const url = new URL(window.location);
-        //             url.searchParams.set('state', '');
-        //             window.history.pushState(null, '', url.toString());
-        //         }
-        //     });
+                // Reset the browser URL.
+                const url = new URL(window.location);
+                url.searchParams.set('state', '');
+                window.history.pushState(null, '', url.toString());
+            }
+        });
     }
 
     setupShareButton() {
-        // this.ishare.addEventListener('click', (e) => {
-        //     let url = this.state.toURL();
+        this.ishare.addEventListener('click', (e) => {
+            // let url = this.state.toURL();
+            let url = window.location.href;
 
-        //     // DEBUG
-        //     // window.location = url;
+            // Copy the URL to the clipboard.
+            navigator.clipboard.writeText(url);
 
-        //     // Copy the URL to the clipboard.
-        //     navigator.clipboard.writeText(url);
-
-        //     // Set the URL in the location bar.
-        //     window.history.replaceState(null, '', url.toString());
-
-        //     this.ishare.innerHTML = "copied!";
-        //     setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
-        // });
+            // Feedback.
+            this.ishare.innerHTML = "copied!";
+            setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+        });
     }
 
     /* Keyboard functions                                                                        */

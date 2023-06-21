@@ -24,6 +24,8 @@ class Tooltip {
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.hide(); });
+
         this.dispatcher.on('highlight', async (ev) => {
             if (!ev.idx) {
                 this.hide();

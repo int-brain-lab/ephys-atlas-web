@@ -15,13 +15,6 @@ const DEFAULT_COLORMAP_MAX = 100;
 
 const DEFAULT_BUCKET = "ephys";
 const DEFAULT_BUCKETS = ["ephys", "bwm"];
-// export const DEFAULT_FEATURE = {
-//     "ephys": "psd_alpha",
-//     "bwm_block": "decoding",
-//     "bwm_choice": "decoding",
-//     "bwm_feedback": "decoding",
-//     "bwm_stimulus": "decoding",
-// };
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
 
@@ -57,23 +50,64 @@ function url2state() {
     });
     let state = {};
 
+    // Determine the list of buckets to show in the buckets dropdown.
+    // NOTE: make a copy to avoid modifying the default buckets.
+    let buckets = new Array(...DEFAULT_BUCKETS);
+
     // Alias states.
     if (query.alias) {
         state = decode(ALIAS_STATES[query.alias]);
+        // NOTE: we could later decide to add some buckets as a function of the alias.
     }
     else if (query.state) {
         state = decode(query.state);
     }
 
+    // Add buckets passed in the query string.
+    if (query.buckets) {
+        let newBuckets = query.buckets.split(",");
+        buckets.push(...newBuckets);
+    }
+
+    // Remove duplicate buckets.
+    state.buckets = buckets.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+    });
+
+    console.log(`buckets are: `, state.buckets.join(','));
+
     return state;
 }
 
 
-function state2url(state) {
+function state2url(state_) {
+    // Perform a copy of the state.
+    let state = { ...state_ };
+
+    // Extract the list of buckets from the state and put them separately in the URL.
+    let buckets = state.buckets || DEFAULT_BUCKETS;
+
+    // Remove default buckets.
+    buckets = buckets.filter(item => !DEFAULT_BUCKETS.includes(item));
+
+    // Remove the buckets from the state before computing its hash.
+    delete state.buckets;
+    // console.log(`buckets are: `, buckets);
+
+    // Generate the URL.
     let url = new URL(window.location);
     let params = url.searchParams;
+
+    // Remove the alias from the URL.
     params.delete('alias');
+
+    // Add the buckets separately in the URL query string.
+    if (buckets.length > 0)
+        params.set('buckets', buckets.join(','));
+
+    // Add the state to the query string
     params.set('state', encode(state));
+
     return url.toString();
 }
 
@@ -115,6 +149,18 @@ class State {
         this.selected = new Set(state.selected || []);
     }
 
+    updateURL() {
+        console.log("update URL with current state");
+
+        // Update the address bar URL.
+
+        // Generate the URL from the state.
+        let url = this.toURL();
+
+        // Set the URL in the location bar.
+        window.history.replaceState(null, '', url.toString());
+    }
+
     fromURL() {
         let state = url2state();
         this.init(state);
@@ -127,14 +173,5 @@ class State {
         cpy.selected = Array.from(cpy.selected);
         let url = state2url(cpy);
         return url;
-    }
-
-    setFset(bucket, fname) {
-        // TODO
-        // console.assert(bucket);
-        // this.bucket = bucket;
-        // this.fname = fname || this.fname;
-        // console.assert(this.fname);
-        // this.stat = DEFAULT_STAT;
     }
 };

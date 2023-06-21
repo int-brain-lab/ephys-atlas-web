@@ -35,6 +35,8 @@ class Selection {
     }
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
+
         this.el.addEventListener('click', (e) => {
             if (e.target.tagName == 'LI') {
                 this.dispatcher.toggle(this, e2idx(this.state.mapping, e));

@@ -50,6 +50,7 @@ class Slice {
         this.ap = document.getElementById('coord-ap');
         this.dv = document.getElementById('coord-dv');
 
+        this.setupDispatcher();
         this.setupSlices();
     }
 
@@ -87,6 +88,10 @@ class Slice {
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
+
+    setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
+    }
 
     setupSlices() {
         // coronal, sagittal, horizontal
@@ -207,6 +212,9 @@ class Slice {
         if (SLICE_AXES.includes(axis)) {
             this[`set_${axis}`](idx);
         }
+
+        // Emit the slice event.
+        this.dispatcher.slice(this, axis, idx);
     }
 
     set_sagittal(idx) {

@@ -47,15 +47,20 @@ class Dispatcher {
         this.emit("clear", source, {});
     }
 
+    reset(source,) {
+        // when all regions are deselected
+        this.emit("reset", source, {});
+    }
+
     bucket(source, uuid_or_alias) {
         // when a bucket is selected
         this.emit("bucket", source, { "uuid_or_alias": uuid_or_alias });
 
     }
 
-    featureHover(source, fname, desc, e) {
-        // when the mouse hovers over a feature
-        this.emit("featureHover", source, { "fname": fname, "desc": desc, "e": e });
+    search(source, text) {
+        // when search text is changed
+        this.emit("search", source, { "text": text });
     }
 
     feature(source, fname) {
@@ -63,9 +68,9 @@ class Dispatcher {
         this.emit("feature", source, { "fname": fname });
     }
 
-    cmap(source, name) {
-        // when the colormap is changed
-        this.emit("cmap", source, { "name": name });
+    featureHover(source, fname, desc, e) {
+        // when the mouse hovers over a feature
+        this.emit("featureHover", source, { "fname": fname, "desc": desc, "e": e });
     }
 
     stat(source, name) {
@@ -73,9 +78,9 @@ class Dispatcher {
         this.emit("stat", source, { "name": name });
     }
 
-    search(source, text) {
-        // when search text is changed
-        this.emit("search", source, { "text": text });
+    cmap(source, name) {
+        // when the colormap is changed
+        this.emit("cmap", source, { "name": name });
     }
 
     mapping(source, name) {

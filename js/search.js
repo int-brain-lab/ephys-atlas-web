@@ -29,6 +29,8 @@ class Search {
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.clear(); });
+
         this.el.addEventListener("input", (e) => {
             this.state.search = e.target.value;
             this.dispatcher.search(e.target.value);

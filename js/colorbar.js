@@ -33,6 +33,7 @@ class Colorbar {
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('feature', (e) => { this.setColorbar(); this.setFeatureRange(); });
         this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
         this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });

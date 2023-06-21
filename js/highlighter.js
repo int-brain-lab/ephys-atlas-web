@@ -38,6 +38,7 @@ class Highlighter {
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.clear(); });
         this.dispatcher.on('highlight', (ev) => { this.highlight(ev.idx); });
 
         // NOTE: clear the selection when the mapping changes.

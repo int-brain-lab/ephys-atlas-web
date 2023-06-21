@@ -40,6 +40,8 @@ class Selector {
     }
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
+
         this.dispatcher.on('toggle', (e) => {
             this.toggle(e.idx);
             this.makeCSS();

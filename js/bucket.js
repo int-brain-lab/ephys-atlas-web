@@ -18,6 +18,7 @@ class Bucket {
         this.el = document.getElementById('feature-set-dropdown');
 
         this.setupBucket();
+        this.setupDispatcher();
     }
 
     init() {
@@ -38,6 +39,10 @@ class Bucket {
         });
     }
 
+    setupDispatcher() {
+        this.dispatcher.on('clear', (ev) => { this.init(); });
+    }
+
     /* Bucket functions                                                                          */
     /*********************************************************************************************/
 
@@ -54,5 +59,3 @@ class Bucket {
     }
 
 };
-
-

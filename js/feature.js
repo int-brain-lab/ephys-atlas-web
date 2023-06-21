@@ -49,8 +49,12 @@ class FeatureTree {
 
     select(fname) {
         this.clear();
-        if (fname)
-            this.get(fname).classList.add('selected');
+        if (fname) {
+            let el = this.get(fname);
+            if (el)
+                el.classList.add('selected');
+        }
+
     }
 
     selected(fname) {
@@ -82,10 +86,16 @@ class Feature {
         this.setState(this.state);
     }
 
+    async setState(state) {
+        this.setBucket(state.bucket);
+        this.selectFeature(state.fname)
+    }
+
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('bucket', (ev) => { this.setBucket(ev.uuid_or_alias); });
     }
 
@@ -124,31 +134,11 @@ class Feature {
         this.tree.setFeatures(bucket.features, bucket.metadata.tree);
     }
 
-    async setState(state) {
-        this.setBucket(state.bucket);
-    }
-
     selectFeature(fname) {
+        if (!fname) return;
         console.log(`select feature ${fname}`);
         this.state.fname = fname;
         this.tree.select(fname);
         this.dispatcher.feature(this, fname);
     }
-
-    //     /* Set functions                                                                             */
-    //     /*********************************************************************************************/
-
-    //     getColor(regionIdx) {
-    //         // Parse the current color of a region and return its hex value.
-    //         const ruleList = this.style.cssRules;
-    //         const CSS_REGEX = new RegExp(`svg path\.${this.state.mapping}_region_${regionIdx} \{ fill: (.+); \}`);
-    //         for (let rule of ruleList) {
-    //             let m = rule.cssText.match(CSS_REGEX);
-    //             if (m) {
-    //                 let rgb = m[1];
-    //                 return rgb2hex(rgb);
-    //             }
-    //         }
-    //     }
-
 };

@@ -11,6 +11,7 @@ import { Region } from "./region.js";
 import { Search } from "./search.js";
 import { Selection } from "./selection.js";
 import { Selector } from "./selector.js";
+import { Share } from "./share.js";
 import { Slice } from "./slice.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
@@ -47,6 +48,7 @@ class App {
         this.search = new Search(this.state, this.model, this.dispatcher);
         this.selection = new Selection(this.state, this.model, this.dispatcher);
         this.selector = new Selector(this.state, this.model, this.dispatcher);
+        this.share = new Share(this.state, this.model, this.dispatcher);
         this.slice = new Slice(this.state, this.model, this.dispatcher);
         this.tooltip = new Tooltip(this.state, this.model, this.dispatcher);
 
