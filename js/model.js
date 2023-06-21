@@ -198,9 +198,13 @@ class Model {
         let loader = this.loaders[key];
         console.assert(loader);
 
-        let data = loader.get("feature_data")["mappings"][mapping];
-        console.assert(data);
-        return data;
+        let g = loader.get("feature_data");
+        if (g) {
+            let data = g["mappings"][mapping];
+            console.assert(data);
+            return data;
+        }
+        return null;
     }
 
     /* Logic functions                                                                           */

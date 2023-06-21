@@ -101,14 +101,16 @@ class Loader {
             items = this.process(dl);
         this.splash.add(this.processSplash);
 
-        n = Object.keys(items).length;
-        console.assert(items);
-        console.assert(n > 0);
-        console.debug(`adding ${n} items.`)
-        this.items = items;
+        if (items) {
+            n = Object.keys(items).length;
+            console.assert(items);
+            console.assert(n > 0);
+            console.debug(`adding ${n} items.`)
+            this.items = items;
 
-        this.splash.add(this.storeSplash);
-        console.debug(`done adding items.`);
+            this.splash.add(this.storeSplash);
+            console.debug(`done adding items.`);
+        }
     }
 
     get(key) {

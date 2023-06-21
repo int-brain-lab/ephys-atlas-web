@@ -88,7 +88,8 @@ class Feature {
 
     async setState(state) {
         await this.setBucket(state.bucket);
-        this.selectFeature(state.fname)
+        if (state.fname)
+            this.selectFeature(state.fname)
     }
 
     /* Setup functions                                                                           */
