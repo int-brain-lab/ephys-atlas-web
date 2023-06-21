@@ -80,6 +80,8 @@ html,
 body {
     margin: 0;
     padding: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 
@@ -104,9 +106,9 @@ body {
 }
 
 
-#header {
+/* #header {
     margin-bottom: 5px;
-}
+} */
 
 
 
@@ -266,13 +268,6 @@ body {
     filter: brightness(110%);
 }
 
-/* #control-panel .advanced summary {
-    cursor: pointer;
-    font-size: 16px;
-    text-transform: uppercase;
-    font-family: roboto-condensed;
-} */
-
 #control-panel button {
     margin: 10px 0;
     padding: 6px 10px;
@@ -315,9 +310,8 @@ body {
 #container {
     display: grid;
     grid-template-columns: var(--left-panel-width) 1fr 1fr 1fr 1fr;
-    height: 700px;
-    max-width: 1350px;
-    margin: 0 auto;
+    grid-template-rows: 80px calc(50vh - 60px) calc(50vh - 60px) 40px;
+    height: 100%;
 }
 
 #container>div {
@@ -325,49 +319,57 @@ body {
     overflow-y: auto;
 }
 
-#container #bar-plot-container {
-    grid-column: 1 / 2;
-    grid-row: 1 / 3;
+#container #header {
+    grid-column: 1 / 6;
+    grid-row: 1 / 2;
+}
 
-    /* HACK: necessary for absolute positioning of scale min/max values */
-    position: relative;
-    top: 0;
-    left: 0;
+/* LEFT PANEL */
+
+#container #bar-plot-header {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+}
+
+#container #bar-plot {
+    grid-column: 1 / 2;
+    grid-row: 3 / 4;
 }
 
 /* TOP ROW */
 
 #container #svg-coronal-container {
     grid-column: 2 / 3;
-    grid-row: 1 / 2;
+    grid-row: 2 / 3;
 }
 
 #container #svg-sagittal-container {
     grid-column: 3 / 5;
-    grid-row: 1 / 2;
+    grid-row: 2 / 3;
 }
 
 #container #svg-horizontal-container {
     grid-column: 5 / 6;
-    grid-row: 1 / 2;
+    grid-row: 2 / 3;
 }
 
 /* BOTTOM ROW */
 
 #container #svg-swanson-container {
     grid-column: 2 / 4;
-    grid-row: 2 / 3;
+    grid-row: 3 / 4;
 }
 
 #container #unity-container {
     grid-column: 4 / 5;
-    grid-row: 2 / 3;
+    grid-row: 3 / 4;
 }
 
 #container #svg-top-container {
     grid-column: 5 / 6;
-    grid-row: 2 / 3;
+    grid-row: 3 / 4;
 }
+
 
 
 /*************************************************************************************************/
@@ -397,113 +399,55 @@ body {
 }
 
 
-
-/*************************************************************************************************/
-/*  Bar plot container                                                                           */
-/*************************************************************************************************/
-
-/*
-div#container
-
-    div#bar-plot-container
-        div#bar-plot-header
-
-        div#bar-plot
-            ul#bar-plot
-*/
-
-#bar-plot-container {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: flex-start;
-    justify-content: flex-start;
-}
-
-#bar-plot-header {
-    flex-grow: 0;
-    /* flex-shrink: 0; */
-    flex-basis: 400px;
-}
-
-#bar-plot {
-    flex-grow: 1;
-    flex-shrink: 5;
-}
-
-
-
 /*************************************************************************************************/
 /*  Bar header                                                                                   */
 /*************************************************************************************************/
 
-#bar-plot-container #bar-plot-header {
+#container>#bar-plot-header {
     border: 1px solid #aaa;
     background-color: #eee;
     width: var(--left-panel-width);
-    overflow-y: scroll;
     margin: 0;
     padding: 5px;
+
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 #bar-plot-header * {
     font-size: 10pt;
 }
 
+#bar-plot-header select {
+    width: 100%;
+    margin-top: 2px;
+    background-color: #ffff;
+}
 
 
 /*************************************************************************************************/
-/*  Feature set tabs                                                                             */
+/*  Bucket selector                                                                              */
 /*************************************************************************************************/
 
-/* https://codepen.io/CesarVMB/pen/kPOrQb */
-
-/* #bucket-container {
-    margin-bottom: 0;
+#bucket-dropdown {
+    flex: 0 0 auto;
 }
-
-#bucket-container input {
-    visibility: hidden;
-    margin-bottom: 0;
-}
-
-#bucket-container label {
-    background-color: #fafafa;
-    border-radius: 1em 1em 0 0;
-    color: #aaa;
-    cursor: pointer;
-    display: block;
-    float: left;
-    font-size: 1em;
-    height: 2.5em;
-    line-height: 2.5em;
-    margin-right: .25em;
-    margin-bottom: 0;
-    padding: 0 0.25em;
-    text-align: center;
-}
-
-#bucket-container input:hover+label {
-    background-color: #ddd;
-    color: #666;
-}
-
-#bucket-container input:checked+label {
-    background-color: #eee;
-    color: #444;
-    position: relative;
-    z-index: 6;
-} */
-
 
 
 /*************************************************************************************************/
-/*  Feature selector                                                                             */
+/*  Feature tree                                                                                 */
 /*************************************************************************************************/
 
 #feature-tree {
     margin: var(--tree-margin) 0 !important;
     cursor: pointer;
+    overflow-y: scroll;
+
+    /* =      all viewport - header - bar header - footer */
+    /* max-height: calc(100vh - 85px - 100px - 40px - 8px); */
+
+    flex: 1 1 auto;
 }
 
 #feature-tree details {
@@ -534,59 +478,15 @@ div#container
 
 
 /*************************************************************************************************/
-/*  Feature selector                                                                             */
-/*************************************************************************************************/
-
-#control-panel .label {
-    margin: 8px 0 4px 0;
-}
-
-#bar-plot-header .control select {
-    width: 100%;
-    margin-top: 2px;
-    background-color: #ffff;
-}
-
-#bar-plot-header .label {
-    display: inline-block;
-    width: 30%;
-}
-
-#bar-plot-header .control {
-    display: inline-block;
-    width: 100%;
-    /* width: calc(100% - 30% - 5px); */
-}
-
-
-
-/*************************************************************************************************/
-/*  Region search                                                                                */
-/*************************************************************************************************/
-
-#bar-plot-search input#search-input {
-    width: 100%;
-    height: 100%;
-    padding: 4px 0;
-    background-color: #ddd;
-    border: 0;
-}
-
-#bar-plot-search input#search-input:focus-visible {
-    outline: none;
-    background-color: #f0f0f0;
-}
-
-
-
-/*************************************************************************************************/
 /*  Bar scale                                                                                    */
 /*************************************************************************************************/
 
-#bar-plot-container #bar-scale {
+#bar-scale {
     display: inline-block;
     margin: 0 0 0 var(--colorbar-margin);
     width: calc(100% - var(--colorbar-margin));
+
+    flex: 0 0 auto;
 }
 
 
@@ -639,16 +539,41 @@ div#container
 /*  Selected regions                                                                             */
 /*************************************************************************************************/
 
-#bar-plot-container #bar-selected-wrapper {
+#bar-selected-wrapper {
     border: 0 solid #aaa;
     border-width: 2px 0;
     background-color: #eee;
     margin: 2px 0;
     padding: 2px 0;
+
+    flex: 0 0 auto;
 }
 
-#bar-plot-container #bar-selected-title {
+#bar-selected-title {
     margin: 2px 0 5px 0;
+}
+
+
+
+/*************************************************************************************************/
+/*  Region search                                                                                */
+/*************************************************************************************************/
+
+#bar-plot-search {
+    flex: 0 0 auto;
+}
+
+#bar-plot-search input#search-input {
+    width: 100%;
+    height: 100%;
+    padding: 4px 0;
+    background-color: #ddd;
+    border: 0;
+}
+
+#bar-plot-search input#search-input:focus-visible {
+    outline: none;
+    background-color: #f0f0f0;
 }
 
 
@@ -658,33 +583,27 @@ div#container
 /*************************************************************************************************/
 
 #bar-plot {
-    overflow-y: scroll;
     list-style: none;
 
     width: 100%;
 
-    /* NOTE:  for some reason, not putting this causes bad performance issue on Chrome */
-    /* when using a SVG slider (it causes a full render of the bar plot */
-
-    /* = all viewport - header - bar header - footer */
-    /* height: calc(100vh - 85px - 100px - 40px - 8px); */
-    /* height: 100%; */
+    flex: 1;
 }
 
-#bar-plot-container * {
+.bar-plot * {
     margin: 0;
     padding: 0;
 }
 
-#bar-plot-container li * {
+.bar-plot li * {
     pointer-events: none;
 }
 
-#bar-plot-container li {
+.bar-plot li {
     cursor: pointer;
 }
 
-#bar-plot-container li:hover {
+.bar-plot li:hover {
     background-color: var(--bar-highlight-color);
 }
 
@@ -694,19 +613,19 @@ div#container
     /* display: none; */
 }
 
-#bar-plot-container .acronym {
+.bar-plot .acronym {
     display: inline-block;
     width: 60px;
     font-size: 10pt;
     white-space: nowrap;
 }
 
-#bar-plot-container .bar_wrapper {
+.bar-plot .bar_wrapper {
     display: inline-block;
     width: calc(95% - 60px);
 }
 
-#bar-plot-container .bar {
+.bar-plot .bar {
     display: inline-block;
     height: 10px;
 }
@@ -913,7 +832,7 @@ h2 {
 
 #footer {
     grid-column: 1 / 6;
-    grid-row: 3 / 4;
+    grid-row: 4 / 5;
 
     text-align: center;
     padding: 10px 0;

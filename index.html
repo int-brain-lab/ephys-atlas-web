@@ -44,32 +44,7 @@
 
 <body>
 
-    <!-------------------------------------------------------------------------------------------->
-    <!-- HEADER -->
-    <!-------------------------------------------------------------------------------------------->
-
-    <header id="header">
-        <nav>
-            <!-- IBL LOGO -->
-            <a href="/"><img src="/images/ibl.png"></a>
-
-            <!-- MENU -->
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="#" class="menu-explore">Explore</a></li>
-                <li><a href="#">Paper</a></li>
-                <li><a href="#">Download</a>
-                </li>
-                <li><a href="https://www.internationalbrainlab.com/">Lab</a></li>
-            </ul>
-        </nav>
-    </header>
-
-
-
-    <!-------------------------------------------------------------------------------------------->
     <!-- CONTROL PANEL -->
-    <!-------------------------------------------------------------------------------------------->
 
     <div id="control-panel">
         <details>
@@ -131,8 +106,30 @@
         </details>
     </div>
 
+
+    <!-- DISPATCHER -->
+
     <div id="dispatcher"></div>
+
+
+    <!-- TOOLTIP -->
+
     <div id="region-info"></div>
+
+
+    <!-- SHARE BUTTON -->
+    <div id="share-wrapper">
+        <button id="share-button">share</button>
+    </div>
+
+
+    <!-- SPLASH -->
+    <div id="splash">
+        <div id="splash-loading">
+            <span class="loader"></span>
+            Loading... <span class="progress">0</span>%
+        </div>
+    </div>
 
 
     <!-------------------------------------------------------------------------------------------->
@@ -141,71 +138,72 @@
 
     <div id="container">
 
-        <!-- SHARE BUTTON -->
-        <div id="share-wrapper">
-            <button id="share-button">share</button>
+
+        <!-- HEADER -->
+
+        <header id="header">
+            <nav>
+                <!-- IBL LOGO -->
+                <a href="/"><img src="/images/ibl.png"></a>
+
+                <!-- MENU -->
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#" class="menu-explore">Explore</a></li>
+                    <li><a href="#">Paper</a></li>
+                    <li><a href="#">Download</a>
+                    </li>
+                    <li><a href="https://www.internationalbrainlab.com/">Lab</a></li>
+                </ul>
+            </nav>
+        </header>
+
+
+        <!-- BAR HEADER -->
+        <div id="bar-plot-header" class="bar-plot">
+
+            <!-- BUCKET SELECTION -->
+            <div class="control">
+                <select id="bucket-dropdown">
+                </select>
+            </div>
+
+            <!-- FEATURE TREE -->
+            <div id="feature-tree">
+            </div>
+
+            <!-- COLOR BAR -->
+            <div id="bar-scale">
+                <div class="colorbar">
+                </div>
+                <div class="wrapper">
+                    <div class="min"></div>
+                    <div class="max"></div>
+                </div>
+            </div>
+
+            <!-- SELECTED REGIONS -->
+            <div id="bar-selected-wrapper">
+                <div id="bar-selected-title">
+                    <!-- Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>) -->
+                    Selected regions (<a id="clear-selection" href="javascript:;">clear</a>)
+                </div>
+                <ul id="bar-selected-list">
+                </ul>
+            </div>
+
+            <!-- FEATURE SEARCH BAR -->
+            <div id="bar-plot-search">
+                <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
+                <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
+            </div>
+
         </div>
 
-        <!-- SPLASH -->
-        <div id="splash">
-            <div id="splash-loading">
-                <span class="loader"></span>
-                Loading... <span class="progress">0</span>%
-            </div>
-        </div>
 
-
-        <!-- LEFT PANEL -->
-        <div id="bar-plot-container">
-
-
-            <!-- BAR HEADER -->
-            <div id="bar-plot-header">
-
-                <!-- FEATURE SET SELECTION -->
-                <div class="control">
-                    <select id="feature-set-dropdown">
-                    </select>
-                </div>
-
-                <!-- FEATURE TREE -->
-                <div id="feature-tree">
-                </div>
-
-                <!-- COLOR BAR -->
-                <div id="bar-scale">
-                    <div class="colorbar">
-                    </div>
-                    <div class="wrapper">
-                        <div class="min"></div>
-                        <div class="max"></div>
-                    </div>
-                </div>
-
-                <!-- SELECTED REGIONS -->
-                <div id="bar-selected-wrapper">
-                    <div id="bar-selected-title">
-                        <!-- Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>) -->
-                        Selected regions (<a id="clear-selection" href="javascript:;">clear</a>)
-                    </div>
-                    <ul id="bar-selected-list">
-                    </ul>
-                </div>
-
-                <!-- FEATURE SEARCH BAR -->
-                <div id="bar-plot-search">
-                    <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
-                    <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
-                </div>
-
-            </div>
-
-
-            <!-- REGION LIST -->
-            <div id="bar-plot">
-                <ul id="bar-plot-list"></ul>
-            </div>
-
+        <!-- BAR PLOT -->
+        <div id="bar-plot" class="bar-plot">
+            <ul id="bar-plot-list"></ul>
         </div>
 
 
