@@ -7,7 +7,7 @@ export { Search };
 /*************************************************************************************************/
 
 class Search {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
         this.dispatcher = dispatcher;
 

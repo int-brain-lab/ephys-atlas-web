@@ -9,9 +9,9 @@ import { normalizeValue, clamp, clearStyle } from "./utils.js";
 /*************************************************************************************************/
 
 class Coloring {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.style = document.getElementById('style-regions').sheet;
@@ -49,8 +49,8 @@ class Coloring {
     async buildColors() {
 
         // Load the region and features data.
-        let regions = this.db.getRegions(this.state.mapping);
-        let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let regions = this.model.getRegions(this.state.mapping);
+        let features = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
         // Clear the styles.
         this.clear();
@@ -66,7 +66,7 @@ class Coloring {
         let cmax = this.state.cmapmax;
 
         // Load the colormap.
-        let colors = this.db.getColormap(this.state.cmap);
+        let colors = this.model.getColormap(this.state.cmap);
 
         // Go through all regions.
         for (let regionIdx in regions) {

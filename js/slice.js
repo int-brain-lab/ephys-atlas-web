@@ -29,10 +29,10 @@ function isRoot(e) {
 /*************************************************************************************************/
 
 class Slice {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
 
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
@@ -191,7 +191,7 @@ class Slice {
     /*********************************************************************************************/
 
     _setSlice(axis, idx) {
-        let svg = this.db.getSlice(axis, idx);
+        let svg = this.model.getSlice(axis, idx);
         if (svg) {
             document.getElementById(`figure-${axis}`).innerHTML = svg;
 

@@ -10,9 +10,9 @@ import { DEFAULT_BUCKETS } from "./state.js";
 /*************************************************************************************************/
 
 class Bucket {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('feature-set-dropdown');

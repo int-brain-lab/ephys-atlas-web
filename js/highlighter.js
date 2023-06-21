@@ -9,7 +9,7 @@ import { e2idx, clearStyle } from "./utils.js";
 /*************************************************************************************************/
 
 class Highlighter {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         console.assert(state);
         console.assert(dispatcher);
 

@@ -9,9 +9,9 @@ import { e2idx } from "./utils.js";
 /*************************************************************************************************/
 
 class Selection {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bar-selected-list');

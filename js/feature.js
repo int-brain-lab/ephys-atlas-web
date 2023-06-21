@@ -65,9 +65,9 @@ class FeatureTree {
 /*************************************************************************************************/
 
 class Feature {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('feature-tree');
@@ -119,7 +119,7 @@ class Feature {
     /*********************************************************************************************/
 
     async setBucket(uuid_or_alias) {
-        let bucket = await this.db.getBucket(uuid_or_alias);
+        let bucket = await this.model.getBucket(uuid_or_alias);
         console.assert(bucket);
         this.tree.setFeatures(bucket.features, bucket.metadata.tree);
     }

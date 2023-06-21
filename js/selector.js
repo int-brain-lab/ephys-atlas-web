@@ -9,9 +9,9 @@ import { e2idx, clearStyle } from "./utils.js";
 /*************************************************************************************************/
 
 class Selector {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.clearEl = document.getElementById('clear-selection');

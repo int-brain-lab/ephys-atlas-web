@@ -13,7 +13,7 @@ export { Maximizer };
 /*************************************************************************************************/
 
 class Maximizer {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
 
         this.maxCoronal = document.getElementById('maximizer-coronal');

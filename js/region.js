@@ -69,9 +69,9 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
 /*************************************************************************************************/
 
 class RegionList {
-    constructor(state, db, dispatcher, el) {
+    constructor(state, model, dispatcher, el) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
         this.el = el;
 
@@ -128,14 +128,14 @@ class RegionList {
 /*************************************************************************************************/
 
 class Region {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bar-plot-list');
 
-        this.regionList = new RegionList(this.state, this.db, this.dispatcher, this.el);
+        this.regionList = new RegionList(this.state, this.model, this.dispatcher, this.el);
 
         this.setupDispatcher();
     }
@@ -163,8 +163,8 @@ class Region {
 
     async setRegions() {
         console.assert(this.state.mapping);
-        let regions = this.db.getRegions(this.state.mapping);
-        let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let regions = this.model.getRegions(this.state.mapping);
+        let features = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;
@@ -183,7 +183,7 @@ class Region {
             // WARNING: relidx is NOT the region index
 
             // NOTE: important, need to make a copy, otherwise the values will be propagated into
-            // the object stored in the db.
+            // the object stored in the model.
             let region = { ...regions[relidx] };
             let regionIdx = region["idx"];
 
@@ -236,7 +236,7 @@ class Region {
     /*********************************************************************************************/
 
     // getInfo(regionIdx) {
-    //     let regions = this.db.getRegions(this.state.mapping);
+    //     let regions = this.model.getRegions(this.state.mapping);
     //     let region = regions[regionIdx];
     //     if (region)
     //         return region;

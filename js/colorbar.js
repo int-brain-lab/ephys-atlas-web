@@ -9,9 +9,9 @@ import { clamp, displayNumber } from "./utils.js";
 /*************************************************************************************************/
 
 class Colorbar {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.cbar = document.querySelector('#bar-scale .colorbar');
@@ -49,7 +49,7 @@ class Colorbar {
 
     async setFeatureRange() {
         // Display vmin and vmax.
-        let features = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let features = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
         if (features) {
             let stats = features['statistics'][this.state.stat];
             let vmin = stats['min'];
@@ -65,7 +65,7 @@ class Colorbar {
             return;
         }
 
-        let colors = this.db.getColormap(this.state.cmap);
+        let colors = this.model.getColormap(this.state.cmap);
         let cmin = this.state.cmapmin;
         let cmax = this.state.cmapmax;
 

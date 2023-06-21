@@ -9,10 +9,10 @@ import { e2idx, displayNumber, } from "./utils.js";
 /*************************************************************************************************/
 
 class Tooltip {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
 
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.info = document.getElementById('region-info');
@@ -27,23 +27,22 @@ class Tooltip {
         this.dispatcher.on('highlight', async (ev) => {
             if (!ev.idx) {
                 this.hide();
-                return;
             }
-            let text = await this.getRegionText(ev.idx);
-            this.setPosition(ev.e);
-            this.setText(text);
-            this.show();
+            else {
+                let text = await this.getRegionText(ev.idx);
+                this.setPosition(ev.e);
+                this.setText(text);
+            }
         });
 
         this.dispatcher.on('featureHover', async (ev) => {
             if (!ev.desc) {
                 this.hide();
-                return;
             }
-
-            this.setPosition(ev.e);
-            this.setText(ev.desc);
-            this.show();
+            else {
+                this.setPosition(ev.e);
+                this.setText(ev.desc);
+            }
         });
     }
 
@@ -54,23 +53,37 @@ class Tooltip {
         if (!regionIdx) {
             return '';
         }
-        let info = this.db.getRegions(this.state.mapping)[regionIdx];
+        let info = this.model.getRegions(this.state.mapping)[regionIdx];
 
-        let fet = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let fet = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
 
-        // Triggered when hovering over a Swanson region that does not exist in the mapping.
+        // Triggered when hovering over a Swanson region that does not exist in the mapping, or
+        // a region in the right hemisphere.
         if (!info) {
-            // console.debug(`region ${regionIdx} could not be found`);
-            return "(not included)";
+            return "";
         }
         else {
             let name = info['name'];
             let acronym = info['acronym'];
-            // console.log(fet['data']);
-            let value = (fet && fet['data'] && fet['data'][regionIdx]) ? fet['data'][regionIdx][this.state.stat] : '';
-            let meanDisplay = typeof value == 'string' ? value : displayNumber(value);
-            if (!name.includes('(left')) meanDisplay = 'reference area';
-            return `<strong>${acronym}, ${name}</strong><br>${meanDisplay}`;
+            let value = null;
+            let valueDisplay = '';
+
+            if (!fet) {
+                valueDisplay = '';
+            }
+
+            else if (fet && fet['data'] && fet['data'][regionIdx]) {
+                value = fet['data'][regionIdx][this.state.stat];
+                if (value)
+                    valueDisplay = displayNumber(value);
+                else
+                    valueDisplay = "(not significant";
+            }
+            else {
+                valueDisplay = "(not included)";
+            }
+
+            return `<strong>${acronym}, ${name}</strong><br>${valueDisplay}`;
         }
     }
 
@@ -81,6 +94,7 @@ class Tooltip {
             return;
         }
         this.info.innerHTML = text;
+        this.show();
     }
 
     async setPosition(e) {
@@ -90,7 +104,7 @@ class Tooltip {
         }
         this.info.style.left = `${e.clientX + 10}px`;
         this.info.style.top = `${e.clientY + 10}px`;
-        this.info.style.visibility = 'visible';
+        this.show();
     }
 
     /* Public functions                                                                          */

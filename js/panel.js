@@ -36,9 +36,9 @@ const CMAP_RANGE_THROTTLE = 100; // number of milliseconds between updates
 /*************************************************************************************************/
 
 class Panel {
-    constructor(state, db, dispatcher) {
+    constructor(state, model, dispatcher) {
         this.state = state;
-        this.db = db;
+        this.model = model;
         this.dispatcher = dispatcher;
 
         this.imapping = document.getElementById('mapping-dropdown');
@@ -177,7 +177,7 @@ class Panel {
     setupClearButton() {
         // this.ibclear.addEventListener('click', (e) => {
         //     if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
-        //         this.db.deleteDatabase();
+        //         this.model.deleteDatabase();
         //         location.reload();
         //     }
         // });

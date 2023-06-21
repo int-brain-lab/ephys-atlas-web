@@ -15,11 +15,11 @@ const UNITY_SPLASH_TOTAL = 50;
 /*************************************************************************************************/
 
 class Unity {
-    constructor(splash, db, state, region, feature) {
+    constructor(splash, model, state, region, feature) {
         console.log("setting up Unity");
 
         this.splash = splash;
-        this.db = db;
+        this.model = model;
         this.state = state;
         this.region = region;
         this.feature = feature;
@@ -69,7 +69,7 @@ class Unity {
     async setAreas() {
         if (!this.instance) return;
 
-        let regions = this.db.getRegions(this.state.mapping);
+        let regions = this.model.getRegions(this.state.mapping);
 
         // Construct the list of region acronyms to send to Unity.
         let acronyms = []
@@ -88,7 +88,7 @@ class Unity {
     async setColors() {
         if (!this.instance) return;
 
-        let regions = this.db.getRegions(this.state.mapping);
+        let regions = this.model.getRegions(this.state.mapping);
 
         let colors = []
         for (let regionIdx in regions) {
@@ -112,7 +112,7 @@ class Unity {
     async setVisibility() {
         if (!this.instance) return;
 
-        let regions = this.db.getRegions(this.state.mapping);
+        let regions = this.model.getRegions(this.state.mapping);
 
         let visibility = [];
         let anySelected = this.state.selected.size > 0;

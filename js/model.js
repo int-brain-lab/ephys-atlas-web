@@ -1,4 +1,4 @@
-export { DB };
+export { Model };
 
 import { Loader } from "./splash.js";
 
@@ -11,7 +11,7 @@ import { Loader } from "./splash.js";
 // const DB_NAME = "IBLEphysAtlasDatabase";
 
 /*
-Changelog of the DB versions
+Changelog of the Model versions
 1       initial version
 2       2023-04-23          replaced "bwm" fset by "bwm_block", "bwm_choice" etc
 3       2023-04-25          added more BWM features
@@ -49,14 +49,14 @@ const URLS = {
 
 
 /*************************************************************************************************/
-/* DB class                                                                                      */
+/* Model class                                                                                      */
 /*************************************************************************************************/
 
-class DB {
+class Model {
     constructor(splash) {
         this.splash = splash;
-        // this.db = this.initDatabase();
-        this.db = null;
+        // this.model = this.initDatabase();
+        this.model = null;
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
