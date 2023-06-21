@@ -76,6 +76,12 @@ function url2state() {
 
     console.log(`buckets are: `, state.buckets.join(','));
 
+    // If the state's bucket does not belong to the buckets, clear the bucket and fname.
+    if (!state.buckets.includes(state.bucket)) {
+        state.bucket = null;
+        state.fname = null;
+    }
+
     return state;
 }
 
