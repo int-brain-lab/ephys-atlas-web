@@ -233,13 +233,22 @@ export function getOS() {
 
 export async function downloadJSON(url) {
     // console.debug(`downloading ${url}...`);
-    var r = await fetch(url, {
-        headers: {
-            'Content-Encoding': 'gzip',
-            'Content-Type': 'application/json'
-        }
-    });
-    var out = await r.json();
-    // console.debug("download finished");
-    return out;
+
+    try {
+        var r = await fetch(url, {
+            headers: {
+                'Content-Encoding': 'gzip',
+                'Content-Type': 'application/json'
+            }
+        });
+    }
+    catch (error) {
+        console.error(`could not load ${url}:`, error);
+        return null;
+    }
+    if (r.status == 200) {
+        var out = await r.json();
+        return out;
+    }
+    return null;
 }
