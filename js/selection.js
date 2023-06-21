@@ -68,7 +68,7 @@ class Selection {
     }
 
     add(item) {
-        console.assert(item);
+        if (!item) return;
         this.el.appendChild(item.cloneNode(true));
         this.sort();
     }

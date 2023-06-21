@@ -16,6 +16,7 @@ class Bucket {
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bucket-dropdown');
+        this.button = document.getElementById('button-new-bucket');
 
         this.setupBucket();
         this.setupDispatcher();
@@ -37,6 +38,16 @@ class Bucket {
             let bucket = e.target.value;
             this.select(bucket);
         });
+
+        this.button.addEventListener('click', (e) => {
+            let bucket = window.prompt("write a new bucket UUID or alias", "");
+            if (bucket) {
+                if (!this.state.buckets.includes(bucket))
+                    this.state.buckets.push(bucket);
+                this.add(bucket, true);
+                this.select(bucket);
+            }
+        });
     }
 
     setupDispatcher() {
@@ -46,13 +57,17 @@ class Bucket {
     /* Bucket functions                                                                          */
     /*********************************************************************************************/
 
-    add(uuid_or_alias) {
-        addOption(this.el, uuid_or_alias, false);
+    add(uuid_or_alias, selected) {
+        addOption(this.el, uuid_or_alias, uuid_or_alias, selected);
     }
 
     select(uuid_or_alias) {
         console.log(`select ${uuid_or_alias}`);
+        if (!uuid_or_alias)
+            return;
+
         this.el.value = uuid_or_alias;
+
         this.state.bucket = uuid_or_alias;
         this.state.fname = '';
         this.dispatcher.bucket(this, uuid_or_alias);

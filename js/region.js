@@ -157,6 +157,7 @@ class Region {
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
         this.dispatcher.on('search', (ev) => { this.setRegions(); });
+        this.dispatcher.on('bucket', (ev) => { this.setRegions(); });
     }
 
     /* Set functions                                                                             */

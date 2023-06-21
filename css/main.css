@@ -48,7 +48,7 @@
     --main-accent-color: #0898d4;
     --svg-highlight-color: #ff1e00;
 
-    --bar-highlight-color: #f2f2f2;
+    --bar-highlight-color: #fafafa;
     --bar-select-color: #e8e8e8;
 
     --left-panel-width: 160px;
@@ -410,6 +410,7 @@ body {
     margin: 0;
     padding: 5px;
 
+    overflow-x: hidden;
     overflow-y: hidden;
     display: flex;
     flex-direction: column;
@@ -421,18 +422,42 @@ body {
 
 #bar-plot-header select {
     width: 100%;
-    margin-top: 2px;
-    background-color: #ffff;
+    /* margin-top: 2px; */
+    border: 0;
+    background-color: #fafafa;
 }
+
 
 
 /*************************************************************************************************/
 /*  Bucket selector                                                                              */
 /*************************************************************************************************/
 
+#bar-plot-header .control {
+    display: flex;
+    align-items: center;
+    margin-right: 24px;
+}
+
 #bucket-dropdown {
     flex: 0 0 auto;
+    height: 100%;
+    font-size: 12pt;
 }
+
+#button-new-bucket {
+    padding: 4px 8px 4px 8px;
+    font-size: 14pt;
+    font-weight: bold;
+    cursor: pointer;
+    vertical-align: middle;
+    height: 100%;
+}
+
+#button-new-bucket:hover {
+    background-color: #ccc;
+}
+
 
 
 /*************************************************************************************************/
@@ -444,9 +469,6 @@ body {
     cursor: pointer;
     overflow-y: scroll;
 
-    /* =      all viewport - header - bar header - footer */
-    /* max-height: calc(100vh - 85px - 100px - 40px - 8px); */
-
     flex: 1 1 auto;
 }
 
@@ -456,6 +478,10 @@ body {
 
 #feature-tree summary {
     color: #888;
+}
+
+#feature-tree summary:hover {
+    background-color: var(--bar-highlight-color);
 }
 
 #feature-tree>ul>details {
