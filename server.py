@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import shutil
 import ssl
+import sys
 import uuid
 import unittest
 
@@ -128,7 +129,7 @@ def get_bucket_metadata_path(uuid):
 def save_bucket_metadata(uuid, metadata):
     assert uuid
     assert metadata
-    assert 'token' in metadata
+    # assert 'token' in metadata
     path = get_bucket_metadata_path(uuid)
     if not path:
         return
@@ -280,34 +281,34 @@ def get_bucket(uuid):
     # Retrieve the bucket metadata.
     metadata = load_bucket_metadata(uuid)
 
-    # NOTE: remove the token from the metadata dictionary.
-    del metadata['token']
-
     # Retrieve the feature metadata for all features.
     features = {fname: get_feature_metadata(uuid, fname) for fname in fnames}
 
     return {'features': features, 'metadata': metadata}
 
 
-def create_bucket(uuid, metadata, alias=None):
+def create_bucket(uuid, metadata, alias=None, patch=False):
     assert uuid
     assert metadata
-    assert 'token' in metadata
-    assert metadata['token']
+
+    if not patch:
+        assert 'token' in metadata
+        assert metadata['token']
 
     # Ensure no bucket with the same uuid exists.
-    if isinstance(get_bucket(uuid), dict):
+    if not patch and isinstance(get_bucket(uuid), dict):
         return f'Bucket {uuid} already exists.', 409
 
     # Create the bucket directory.
     bucket_dir = FEATURES_DIR / f'{alias or ""}{"_" if alias else ""}{uuid}'
-    assert not bucket_dir.exists()
-    bucket_dir.mkdir(parents=True, exist_ok=True)
+    if not patch:
+        assert not bucket_dir.exists()
+        bucket_dir.mkdir(parents=True, exist_ok=True)
 
     # Save the metadata (including the token).
     save_bucket_metadata(uuid, metadata)
 
-    return f'Bucket {uuid} successfully created.', 200
+    return f'Bucket {uuid} successfully {"created" if not patch else "patched"}.', 200
 
 
 def create_features(uuid, fname, feature_data, short_desc=None, patch=False):
@@ -389,7 +390,37 @@ def api_create_bucket():
 
 @app.route('/api/buckets/<uuid>', methods=['GET'])
 def api_get_bucket(uuid):
-    return get_bucket(uuid)
+    out = get_bucket(uuid)
+
+    # NOTE: remove the token from the metadata dictionary.
+    if 'metadata' in out:
+        if 'token' in out['metadata']:
+            del out['metadata']['token']
+
+    return out
+
+
+# -------------------------------------------------------------------------------------------------
+# REST endpoint: patch bucket information
+# PATCH /api/buckets/<uuid>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>', methods=['PATCH'])
+def api_patch_bucket(uuid):
+    # Check authorization to upload new features.
+    if not authenticate_bucket(uuid):
+        return 'Unauthorized access.', 401
+
+    # Get the parameters passed in the POST request.
+    data = request.json
+    assert data
+
+    metadata = data['metadata']
+
+    metadata_old = get_bucket(uuid).get('metadata', {})
+    metadata_old.update(metadata)
+
+    return create_bucket(uuid, metadata_old, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -475,7 +506,21 @@ def iter_fset_features(fset):
             yield fname, mapping, d
 
 
-def create_ephys_features(dry_run=False):
+def remove_leaves(tree, check):
+    if isinstance(tree, dict):
+        for key, value in list(tree.items()):
+            if isinstance(value, dict):
+                remove_leaves(value, check)
+            else:
+                if not check(key, value):
+                    print(f"remove tree leaf {value}")
+                    del tree[key]
+    elif isinstance(tree, list):
+        for item in tree:
+            remove_leaves(item, check)
+
+
+def create_ephys_features(patch=False, dry_run=False):
     alias = 'ephys'
     short_desc = 'Ephys atlas'
     tree = None
@@ -488,7 +533,7 @@ def create_ephys_features(dry_run=False):
             metadata = create_bucket_metadata(
                 bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
             assert 'token' in metadata
-            create_bucket(bucket_uuid, metadata, alias=alias)
+            print(create_bucket(bucket_uuid, metadata, alias=alias))
 
     bucket = get_bucket(alias)
     bucket_uuid = bucket['metadata']['uuid']
@@ -500,13 +545,41 @@ def create_ephys_features(dry_run=False):
         print(f'/api/buckets/{alias}/{fname}')
         json_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
         if not dry_run:
-            print(create_features(bucket_uuid, fname, json_data, patch=True))
+            print(create_features(bucket_uuid, fname, json_data, patch=patch))
 
 
-def create_bwm_features(dry_run=False):
+def create_bwm_features(patch=False, dry_run=False):
     alias = 'bwm'
     short_desc = 'Brain wide map'
     sets = ('block', 'choice', 'feedback', 'stimulus')
+
+    # Skip if the bucket already exists.
+    if isinstance(get_bucket(alias), tuple):
+        bucket_uuid = new_uuid()
+        print(f"Create new bucket /api/buckets/{alias} ({bucket_uuid})")
+        if not dry_run:
+            metadata = create_bucket_metadata(
+                bucket_uuid, alias=alias, short_desc=short_desc)
+            assert 'token' in metadata
+            print(create_bucket(bucket_uuid, metadata, alias=alias))
+
+    # Retrieve the bucket uuid.
+    bucket = get_bucket(alias)
+    bucket_uuid = bucket['metadata']['uuid']
+
+    # Go through the features and mappings and create the features.
+    fnames = []
+    for set in sets:
+        for fname, mappings in groupby(sorted(iter_fset_features(
+                f'bwm_{set}'), key=itemgetter(0)), itemgetter(0)):
+            fname = f'{set}_{fname}'
+            fnames.append(fname)
+            print(f'/api/buckets/{alias}/{fname}')
+            if not dry_run:
+                feature_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
+                print(create_features(bucket_uuid, fname, feature_data, patch=patch))
+
+    # Generate the BWM tree.
     tree = {
         f'{set}': {
             'decoding': {
@@ -532,28 +605,17 @@ def create_bwm_features(dry_run=False):
         for set in sets
     }
 
-    # Skip if the bucket already exists.
-    if isinstance(get_bucket(alias), tuple):
-        bucket_uuid = new_uuid()
-        print(f"Create new bucket /api/buckets/{alias} ({bucket_uuid})")
-        if not dry_run:
-            metadata = create_bucket_metadata(
-                bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
-            assert 'token' in metadata
-            create_bucket(bucket_uuid, metadata, alias=alias)
+    # Remove tree features that do not exist.
+    remove_leaves(tree, lambda _, fname: fname in fnames)
 
-    bucket = get_bucket(alias)
-    bucket_uuid = bucket['metadata']['uuid']
-
-    # Go through the features and mappings.
-    for set in sets:
-        for fname, mappings in groupby(sorted(iter_fset_features(
-                f'bwm_{set}'), key=itemgetter(0)), itemgetter(0)):
-            fname = f'{set}_{fname}'
-            print(f'/api/buckets/{alias}/{fname}')
-            if not dry_run:
-                feature_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
-                create_features(bucket_uuid, fname, feature_data, patch=True)
+    # Patch the tree.
+    if not dry_run:
+        # Retrieve the existing bucket metadata.
+        metadata = bucket['metadata']
+        # Update the tree in the bucket metadata.
+        metadata['tree'] = tree
+        # Patch the file.
+        print(create_bucket(bucket_uuid, metadata, alias=alias, patch=True))
 
 
 # -------------------------------------------------------------------------------------------------
@@ -616,6 +678,17 @@ class TestApp(unittest.TestCase):
         self.assertEqual(response.json['metadata']['short_desc'], short_desc)
         self.assertEqual(response.json['metadata']['url'], url)
         self.assertEqual(response.json['metadata']['tree'], tree)
+        self.assertFalse('token' in response.json['metadata'])
+
+        # Patch bucket metadata.
+        payload = {'metadata': {'tree': {'a': 1}}}
+        response = self.client.patch(f'/api/buckets/{uuid}', json=payload, headers=headers)
+        self.ok(response)
+        response = self.client.get(f'/api/buckets/{uuid}')
+        self.ok(response)
+        self.assertEqual(response.json['metadata']['url'], url)
+        self.assertEqual(response.json['metadata']['short_desc'], short_desc)
+        self.assertEqual(response.json['metadata']['tree'], {'a': 1})
 
         # Create features.
         fname = 'fet1'
@@ -678,8 +751,8 @@ class TestApp(unittest.TestCase):
 # Script entry-point
 # -------------------------------------------------------------------------------------------------
 
-def test():
-    unittest.main()
+# def test():
+#     unittest.main()
 
 
 def run():
@@ -689,9 +762,12 @@ def run():
 
 
 if __name__ == '__main__':
-    # create_ephys_features(dry_run=True)
-    # create_bwm_features(dry_run=True)
-
-    run()
-
-    # test()
+    if sys.argv[-1] == 'make':
+        create_ephys_features()
+        create_bwm_features()
+    elif sys.argv[-1] == 'test':
+        test_suite = unittest.TestLoader().loadTestsFromTestCase(TestApp)
+        test_runner = unittest.TextTestRunner()
+        test_runner.run(test_suite)
+    else:
+        run()
