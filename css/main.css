@@ -458,16 +458,16 @@ div#container
 
 /* https://codepen.io/CesarVMB/pen/kPOrQb */
 
-/* #fset-container {
+/* #bucket-container {
     margin-bottom: 0;
 }
 
-#fset-container input {
+#bucket-container input {
     visibility: hidden;
     margin-bottom: 0;
 }
 
-#fset-container label {
+#bucket-container label {
     background-color: #fafafa;
     border-radius: 1em 1em 0 0;
     color: #aaa;
@@ -483,12 +483,12 @@ div#container
     text-align: center;
 }
 
-#fset-container input:hover+label {
+#bucket-container input:hover+label {
     background-color: #ddd;
     color: #666;
 }
 
-#fset-container input:checked+label {
+#bucket-container input:checked+label {
     background-color: #eee;
     color: #444;
     position: relative;

@@ -631,8 +631,8 @@ def generate_bwm_features():
     df_feedback = _debooleanize(df_feedback)
     df_stimulus = _debooleanize(df_stimulus)
 
-    for fset in BWM_FSETS:
-        df = locals()[f'df_{fset}']
+    for bucket in BWM_FSETS:
+        df = locals()[f'df_{bucket}']
 
         # Lateralize the sessions DataFrame.
         df = lateralize_features(df)
@@ -645,7 +645,7 @@ def generate_bwm_features():
         dfg = df.groupby(f'atlas_id_{mapping[0]}')
         features = generate_features_groupedby(br, mapping, dfg, feature_names)
         out = {mapping: features}
-        save_json(out, DATA_DIR / f"json/features_bwm_{fset}.json")
+        save_json(out, DATA_DIR / f"json/features_bwm_{bucket}.json")
 
 
 # -------------------------------------------------------------------------------------------------
@@ -655,11 +655,11 @@ def generate_bwm_features():
 # -------------------------------------------------------------------------------------------------
 
 class FeatureGenerator:
-    def __init__(self, fset='', mapping='Beryl'):
-        assert fset
+    def __init__(self, bucket='', mapping='Beryl'):
+        assert bucket
         mapping = mapping.title()
         self.br = BrainRegions()
-        self.fset = fset
+        self.bucket = bucket
         self.mapping = mapping
         self.values = {}  # mapping (name, stat) => values
         self.idx = None
@@ -689,7 +689,7 @@ class FeatureGenerator:
         assert self.idx is not None
         assert len(self.values) > 0
         obj = {
-            'fset': self.fset,
+            'bucket': self.bucket,
             'mapping': self.mapping,
             'region_idx': encode_numpy_array(self.idx),
             'features': [],
@@ -709,7 +709,7 @@ class FeatureGenerator:
     def decode(self, s):
         obj = json.loads(self.decompress(base64_decode(s)))
         assert obj['mapping'] == self.mapping
-        assert obj['fset'] == self.fset
+        assert obj['bucket'] == self.bucket
 
         # Set the list of regions.
         self.idx = decode_numpy_array(obj['region_idx'], np.int32)

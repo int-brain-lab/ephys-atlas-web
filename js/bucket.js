@@ -25,7 +25,7 @@ class Bucket {
     }
 
     setState(state) {
-        setOptions(this.el, state.buckets, state.fset);
+        setOptions(this.el, state.buckets, state.bucket);
     }
 
     /* Setup functions                                                                           */
@@ -33,8 +33,8 @@ class Bucket {
 
     setupBucket() {
         this.el.addEventListener('change', (e) => {
-            let fset = e.target.value;
-            this.select(fset);
+            let bucket = e.target.value;
+            this.select(bucket);
         });
     }
 
@@ -48,7 +48,7 @@ class Bucket {
     select(uuid_or_alias) {
         console.log(`select ${uuid_or_alias}`);
         this.el.value = uuid_or_alias;
-        this.state.fset = uuid_or_alias;
+        this.state.bucket = uuid_or_alias;
         this.state.fname = '';
         this.dispatcher.bucket(this, uuid_or_alias);
     }

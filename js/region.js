@@ -164,7 +164,7 @@ class Region {
     async setRegions() {
         console.assert(this.state.mapping);
         let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
 
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;

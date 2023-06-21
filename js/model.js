@@ -13,7 +13,7 @@ import { Loader } from "./splash.js";
 /*
 Changelog of the Model versions
 1       initial version
-2       2023-04-23          replaced "bwm" fset by "bwm_block", "bwm_choice" etc
+2       2023-04-23          replaced "bwm" bucket by "bwm_block", "bwm_choice" etc
 3       2023-04-25          added more BWM features
 4       2023-05-15          refactor JSON loading, 1 JSON file per slice axis
 4       2023-06-14          new flask-based server architecture supporting custom feature
@@ -42,8 +42,8 @@ const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
     'slices': (name) => `/data/json/slices_${name}.json`,
-    'bucket': (fset) => `${BASE_URL}/api/buckets/${fset}`,
-    'features': (fset, fname) => `${BASE_URL}/api/buckets/${fset}/${fname}`,
+    'bucket': (bucket) => `${BASE_URL}/api/buckets/${bucket}`,
+    'features': (bucket, fname) => `${BASE_URL}/api/buckets/${bucket}/${fname}`,
 }
 
 
@@ -73,8 +73,8 @@ class Model {
         };
 
         // // Features.
-        // for (let fset of FEATURE_SETS) {
-        //     this.loaders[`features_${fset}`] = this.setupFeatures(fset, [2, 1, 1]);
+        // for (let bucket of FEATURE_SETS) {
+        //     this.loaders[`features_${bucket}`] = this.setupFeatures(bucket, [2, 1, 1]);
         // }
     }
 
@@ -149,27 +149,27 @@ class Model {
     /* Buckets                                                                                   */
     /*********************************************************************************************/
 
-    setupBucket(fset, progress) {
-        return new Loader(this.splash, URLS['bucket'](fset), null, progress);
+    setupBucket(bucket, progress) {
+        return new Loader(this.splash, URLS['bucket'](bucket), null, progress);
     }
 
-    async getBucketLoader(fset) {
-        console.assert(fset);
+    async getBucketLoader(bucket) {
+        console.assert(bucket);
 
-        if (!(fset in this.loaders)) {
-            let url = URLS['bucket'](fset);
+        if (!(bucket in this.loaders)) {
+            let url = URLS['bucket'](bucket);
             console.log(`creating loader for ${url}`);
-            this.loaders[fset] = new Loader(this.splash, url, null, [1, 0, 1]);
-            await this.loaders[fset].start();
+            this.loaders[bucket] = new Loader(this.splash, url, null, [1, 0, 1]);
+            await this.loaders[bucket].start();
         }
-        let loader = this.loaders[fset];
+        let loader = this.loaders[bucket];
         return loader;
     }
 
-    async getBucket(fset) {
-        console.assert(fset);
+    async getBucket(bucket) {
+        console.assert(bucket);
 
-        let loader = await this.getBucketLoader(fset);
+        let loader = await this.getBucketLoader(bucket);
         console.assert(loader);
         let data = loader.items;
         console.assert(data);
@@ -179,17 +179,17 @@ class Model {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async getFeatures(fset, mapping, fname) {
+    async getFeatures(bucket, mapping, fname) {
         // NOTE: this is async because this dynamically creates a new loader and therefore
         // make a HTTP request on demand to get the requested feature.
-        console.assert(fset);
+        console.assert(bucket);
         console.assert(mapping);
         if (!fname) return;
         console.assert(fname);
 
-        let key = [fset, fname];
+        let key = [bucket, fname];
         if (!(key in this.loaders)) {
-            let url = URLS['features'](fset, fname);
+            let url = URLS['features'](bucket, fname);
             console.log(`creating loader for ${url}`);
 
             this.loaders[key] = new Loader(this.splash, url, null, [1, 0, 1]);

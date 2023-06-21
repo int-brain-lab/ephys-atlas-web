@@ -125,7 +125,7 @@ class Feature {
     }
 
     async setState(state) {
-        this.setBucket(state.fset);
+        this.setBucket(state.bucket);
     }
 
     selectFeature(fname) {

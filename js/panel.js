@@ -43,7 +43,7 @@ class Panel {
 
         this.imapping = document.getElementById('mapping-dropdown');
         this.ifname = document.getElementById('feature-tree');
-        this.ifset = document.getElementById('feature-set-dropdown');
+        this.ibucket = document.getElementById('feature-set-dropdown');
         this.icmap = document.getElementById('colormap-dropdown');
         this.istat = document.getElementById('stat-dropdown');
         this.icmapmin = document.getElementById('colormap-min');
@@ -110,7 +110,7 @@ class Panel {
     // }
 
     //     // HACK: only Beryl is available for BWM.
-    //     if (fset.includes('bwm_')) {
+    //     if (bucket.includes('bwm_')) {
     //         this.imapping.value = 'beryl';
     //         this.region.setMapping(this.imapping.value);
     //     }
@@ -124,7 +124,7 @@ class Panel {
             this.dispatcher.mapping(this, this.state.mapping);
 
             //     // HACK: only Beryl is available for bwm
-            //     if (this.state.fset.includes('bwm_') && mapping != 'beryl') {
+            //     if (this.state.bucket.includes('bwm_') && mapping != 'beryl') {
             //         return;
             //     }
 

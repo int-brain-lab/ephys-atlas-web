@@ -49,7 +49,7 @@ class Colorbar {
 
     async setFeatureRange() {
         // Display vmin and vmax.
-        let features = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
         if (features) {
             let stats = features['statistics'][this.state.stat];
             let vmin = stats['min'];

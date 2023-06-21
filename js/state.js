@@ -13,7 +13,7 @@ const DEFAULT_COLORMAP = "magma";
 const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
 
-const DEFAULT_FSET = "ephys";
+const DEFAULT_BUCKET = "ephys";
 const DEFAULT_BUCKETS = ["ephys", "bwm"];
 // export const DEFAULT_FEATURE = {
 //     "ephys": "psd_alpha",
@@ -95,7 +95,7 @@ class State {
         this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
 
         // Features.
-        this.fset = state.fset || DEFAULT_FSET;
+        this.bucket = state.bucket || DEFAULT_BUCKET;
         this.buckets = state.buckets || DEFAULT_BUCKETS;
         this.fname = state.fname;
         this.stat = state.stat || DEFAULT_STAT;
@@ -129,10 +129,10 @@ class State {
         return url;
     }
 
-    setFset(fset, fname) {
+    setFset(bucket, fname) {
         // TODO
-        // console.assert(fset);
-        // this.fset = fset;
+        // console.assert(bucket);
+        // this.bucket = bucket;
         // this.fname = fname || this.fname;
         // console.assert(this.fname);
         // this.stat = DEFAULT_STAT;

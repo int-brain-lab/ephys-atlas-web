@@ -50,7 +50,7 @@ class Coloring {
 
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
+        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
 
         // Clear the styles.
         this.clear();
