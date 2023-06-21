@@ -87,11 +87,13 @@ BWM_EXTRA_FNAMES = (
     'decoding_significant',
 )
 
+FEATURES_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/
 FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api/'
 
 # DEBUG
 DEBUG = True
 if DEBUG:
+    FEATURES_BASE_URL = 'https://localhost:8456/
     FEATURES_API_BASE_URL = 'https://localhost:5000/api/'
 
 
@@ -963,6 +965,10 @@ class FeatureUploader:
         # print(response.json()['message'])
         # except RuntimeError as e:
         #     print(f"Error while making {method} request: {e}")
+
+    def get_buckets_url(self, uuids):
+        # NOTE: %2C is a comma encoded
+        return f'{FEATURES_BASE_URL}?buckets={uuids.join("%2C")}'
 
     def create_features(self, fname, acronyms, values, mapping='beryl'):
         """Create new features in the bucket."""
