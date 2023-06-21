@@ -248,6 +248,25 @@ def resource_not_found(e):
 # Business logic
 # -------------------------------------------------------------------------------------------------
 
+def get_feature_metadata(uuid, fname):
+
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path or not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+    # Retrieve the features path.
+    features_path = bucket_path / f'{fname}.json'
+    if not features_path.exists():
+        return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
+
+    # Open the JSON file.
+    with open(features_path, 'r') as f:
+        metadata = json.load(f)
+
+    return {'short_desc': metadata.get('short_desc', '') or ''}
+
+
 def get_bucket(uuid):
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
@@ -264,7 +283,10 @@ def get_bucket(uuid):
     # NOTE: remove the token from the metadata dictionary.
     del metadata['token']
 
-    return {'features': fnames, 'metadata': metadata}
+    # Retrieve the feature metadata for all features.
+    features = {fname: get_feature_metadata(uuid, fname) for fname in fnames}
+
+    return {'features': features, 'metadata': metadata}
 
 
 def create_bucket(uuid, metadata, alias=None):
@@ -589,7 +611,7 @@ class TestApp(unittest.TestCase):
         # Retrieve bucket information.
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
-        self.assertEqual(response.json['features'], [])
+        self.assertEqual(response.json['features'], {})
         self.assertEqual(response.json['metadata']['alias'], alias)
         self.assertEqual(response.json['metadata']['short_desc'], short_desc)
         self.assertEqual(response.json['metadata']['url'], url)
@@ -621,7 +643,7 @@ class TestApp(unittest.TestCase):
         # List features in the bucket.
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
-        self.assertEqual(response.json['features'], ['fet1'])
+        self.assertEqual(response.json['features'], {'fet1': {'short_desc': 'my short description'}})
 
         # Retrieve features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
@@ -667,8 +689,9 @@ def run():
 
 
 if __name__ == '__main__':
-    create_ephys_features(dry_run=True)
-    create_bwm_features(dry_run=True)
+    # create_ephys_features(dry_run=True)
+    # create_bwm_features(dry_run=True)
+
     run()
 
     # test()
