@@ -462,8 +462,8 @@ def generate_regions_css(mappings):
         css += ''.join(
             dedent(f'''
             /* {r['acronym']} */
-            #bar-plot-container li.{mapping}_region_{idx} .bar {{ background-color: var(--region-{mapping}-{idx}); }}
-            #bar-plot-container li.{mapping}_region_{idx} .acronym {{ color: var(--region-{mapping}-{idx}); }}
+            .bar-plot li.{mapping}_region_{idx} .bar {{ background-color: var(--region-{mapping}-{idx}); }}
+            .bar-plot li.{mapping}_region_{idx} .acronym {{ color: var(--region-{mapping}-{idx}); }}
             ''') for idx, r in regions.items())
 
         css += '\n\n'
@@ -1013,7 +1013,6 @@ def test_upload():
 
 if __name__ == '__main__':
     test_upload()
-    pass
 
     # generate_colormaps()
     # process_slices()
