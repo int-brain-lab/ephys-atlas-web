@@ -52,7 +52,6 @@ class Coloring {
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
         let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
-        if (!features) return;
 
         // Clear the styles.
         this.clear();
@@ -81,7 +80,7 @@ class Coloring {
             if (!name.includes('(left')) continue;
 
             let acronym = region['acronym'];
-            let value = features['data'][regionIdx];
+            let value = features ? features['data'][regionIdx] : null;
 
             // Left hemisphere region that does not appear in the features: white.
             if (!value) {
