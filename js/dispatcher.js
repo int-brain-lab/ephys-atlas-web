@@ -53,6 +53,11 @@ class Dispatcher {
 
     }
 
+    featureHover(source, fname, desc, e) {
+        // when the mouse hovers over a feature
+        this.emit("featureHover", source, { "fname": fname, "desc": desc, "e": e });
+    }
+
     feature(source, fname) {
         // when a feature is selected
         this.emit("feature", source, { "fname": fname });

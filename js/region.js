@@ -80,12 +80,18 @@ class RegionList {
     }
 
     setupHighlight() {
-        this.el.addEventListener('mousemove', throttle((e) => {
+        this.el.addEventListener('mouseover', (e) => {
             if (e.target.tagName == 'LI') {
                 let idx = e2idx(this.state.mapping, e);
-                this.dispatcher.highlight(this, idx, null);
+                this.dispatcher.highlight(this, idx, e);
             }
-        }, 100));
+        });
+
+        this.el.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'LI') {
+                this.dispatcher.highlight(this, null, null);
+            }
+        });
     }
 
     setupToggle() {

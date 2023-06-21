@@ -120,10 +120,11 @@ class DB {
 
         // NOTE: remove left hemisphere regions.
         let kept = {};
-        for (let idx in regions) {
-            let region = regions[idx];
+        for (let relidx in regions) {
+            let region = regions[relidx];
+            let regionIdx = region['idx'];
             if (region.atlas_id <= 0)
-                kept[idx] = region;
+                kept[regionIdx] = region;
         }
         // regions = Object.values(regions).filter(region => region.atlas_id >= 0);
 

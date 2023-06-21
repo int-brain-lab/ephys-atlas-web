@@ -22,12 +22,16 @@ class FeatureTree {
         const generateTree = (obj) => {
             let html = '';
             for (const key in obj) {
+                let fname = obj[key];
+                let displayName = key;
+                let desc = features[fname] ? features[fname]['short_desc'] : '';
+
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
                     html += `<details><summary>${key}</summary><ul>`;
                     html += generateTree(obj[key]);
                     html += `</ul></details>`;
                 } else {
-                    html += `<li data-fname="${obj[key]}">${key}</li>`;
+                    html += `<li data-fname="${fname}" data-desc="${desc}">${displayName}</li>`;
                 }
             }
             return html;
@@ -72,10 +76,6 @@ class Feature {
 
         this.setupDispatcher();
         this.setupFeature();
-
-        // this.style = document.getElementById('style-features').sheet;
-        // this.defaultStyle = document.getElementById('style-default-regions');
-        // this.featureName = document.getElementById('bar-fname');
     }
 
     init() {
@@ -97,6 +97,20 @@ class Feature {
                     this.selectFeature('');
                 else
                     this.selectFeature(fname);
+            }
+        });
+
+        this.el.addEventListener('mouseover', (e) => {
+            if (e.target.tagName == 'LI') {
+                let fname = e.target.dataset.fname;
+                let desc = e.target.dataset.desc;
+                this.dispatcher.featureHover(this, fname, desc, e);
+            }
+        });
+
+        this.el.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'LI') {
+                this.dispatcher.featureHover(this, null, null, null);
             }
         });
     }

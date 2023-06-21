@@ -297,7 +297,7 @@ body {
 #region-info {
     visibility: hidden;
     position: absolute;
-    background-color: #eef1f2;
+    background-color: #d5dbdd;
     max-width: 250px;
     opacity: 90%;
     top: 0;

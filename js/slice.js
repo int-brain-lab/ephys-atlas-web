@@ -182,27 +182,10 @@ class Slice {
 
         svg.addEventListener('mouseout', (e) => {
             if (e.target.tagName == 'path') {
-                // TODO
-                // this.highlighter.clear();
-                // this.tooltip.hide();
+                this.dispatcher.highlight(this, null, null);
             }
         });
     };
-
-    /* Interactivity functions                                                                   */
-    /*********************************************************************************************/
-
-    highlight(idx) {
-        // TODO
-    }
-
-    toggle(idx) {
-        // TODO
-    }
-
-    tooltip(e) {
-        // TODO
-    }
 
     /* Slicing functions                                                                         */
     /*********************************************************************************************/
