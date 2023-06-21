@@ -119,6 +119,7 @@ function state2url(state_) {
 
 class State {
     constructor() {
+        this._toggle = true;
         this.fromURL();
     }
 
@@ -149,7 +150,13 @@ class State {
         this.selected = new Set(state.selected || []);
     }
 
+    toggleUpdate(toggle) {
+        this._toggle = toggle;
+    }
+
     updateURL() {
+        if (!this._toggle) return;
+
         console.log("update URL with current state");
 
         // Update the address bar URL.
@@ -170,6 +177,7 @@ class State {
         // HACK: temporarily replace selected, a Set(), by an array, otherwise the JSON
         // serialization won't work.
         let cpy = { ...this };
+        delete cpy._toggle;
         cpy.selected = Array.from(cpy.selected);
         let url = state2url(cpy);
         return url;

@@ -43,7 +43,7 @@ class Panel {
 
         this.imapping = document.getElementById('mapping-dropdown');
         this.ifname = document.getElementById('feature-tree');
-        this.ibucket = document.getElementById('feature-set-dropdown');
+        this.ibucket = document.getElementById('bucket-dropdown');
         this.icmap = document.getElementById('colormap-dropdown');
         this.istat = document.getElementById('stat-dropdown');
         this.icmapmin = document.getElementById('colormap-min');

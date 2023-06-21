@@ -15,7 +15,7 @@ class Bucket {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById('feature-set-dropdown');
+        this.el = document.getElementById('bucket-dropdown');
 
         this.setupBucket();
         this.setupDispatcher();

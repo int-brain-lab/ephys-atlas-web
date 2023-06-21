@@ -59,14 +59,18 @@ class App {
         // Load the data.
         this.splash.start();
         this.model.load().then(async () => {
+            // Prevent URL update when loading the app.
+            this.state.toggleUpdate(false);
+
             this.bucket.init();
             this.slice.init();
             this.feature.init();
-            this.region.init();
-
             this.coloring.init();
             this.selector.init();
             this.panel.init();
+            this.region.init().then(() => { this.selection.init(); });
+
+            this.state.toggleUpdate(true);
 
             // if (this.unity)
             //     this.unity.init();

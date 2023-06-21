@@ -25,6 +25,9 @@ class Selection {
     }
 
     setState(state) {
+        for (let idx of state.selected) {
+            this.add(this.getFromIdx(idx));
+        }
     }
 
     /* Setup functions                                                                           */

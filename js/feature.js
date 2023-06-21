@@ -87,7 +87,7 @@ class Feature {
     }
 
     async setState(state) {
-        this.setBucket(state.bucket);
+        await this.setBucket(state.bucket);
         this.selectFeature(state.fname)
     }
 
@@ -135,7 +135,6 @@ class Feature {
     }
 
     selectFeature(fname) {
-        if (!fname) return;
         console.log(`select feature ${fname}`);
         this.state.fname = fname;
         this.tree.select(fname);

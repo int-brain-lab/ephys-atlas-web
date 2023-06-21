@@ -140,12 +140,12 @@ class Region {
         this.setupDispatcher();
     }
 
-    init() {
-        this.setState(this.state);
+    async init() {
+        await this.setState(this.state);
     }
 
-    setState(state) {
-        this.setRegions();
+    async setState(state) {
+        await this.setRegions();
     }
 
     /* Setup functions                                                                           */
@@ -180,12 +180,12 @@ class Region {
         }
 
         let keptRegions = {};
-        for (let relidx in regions) {
-            // WARNING: relidx is NOT the region index
+        for (let relIdx in regions) {
+            // WARNING: relIdx is NOT the region index
 
             // NOTE: important, need to make a copy, otherwise the values will be propagated into
             // the object stored in the model.
-            let region = { ...regions[relidx] };
+            let region = { ...regions[relIdx] };
             let regionIdx = region["idx"];
 
             // Compute the bar width as a function of the feature value.
