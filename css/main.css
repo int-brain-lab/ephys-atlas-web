@@ -266,14 +266,14 @@ body {
     filter: brightness(110%);
 }
 
-#control-panel .advanced summary {
+/* #control-panel .advanced summary {
     cursor: pointer;
     font-size: 16px;
     text-transform: uppercase;
     font-family: roboto-condensed;
-}
+} */
 
-#control-panel .advanced button {
+#control-panel button {
     margin: 10px 0;
     padding: 6px 10px;
     font-size: 1.2em;
