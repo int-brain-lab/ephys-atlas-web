@@ -177,11 +177,12 @@ def create_bucket_metadata(
     }
 
 
-def update_bucket_metadata(uuid, metadata):
+def update_bucket_metadata(uuid, metadata=None):
     metadata_orig = load_bucket_metadata(uuid)
-    metadata_orig.update(metadata)
+    metadata_orig.update(metadata or {})
     metadata_orig['last_access_date'] = now()
     save_bucket_metadata(uuid, metadata_orig)
+    return metadata_orig
 
 
 # -------------------------------------------------------------------------------------------------
@@ -416,11 +417,12 @@ def api_patch_bucket(uuid):
     assert data
 
     metadata = data['metadata']
+    metadata = update_bucket_metadata(uuid, metadata)
 
-    metadata_old = get_bucket(uuid).get('metadata', {})
-    metadata_old.update(metadata)
+    # metadata_old = get_bucket(uuid).get('metadata', {})
+    # metadata_old.update(metadata)
 
-    return create_bucket(uuid, metadata_old, patch=True)
+    return create_bucket(uuid, metadata, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -457,6 +459,9 @@ def api_get_features(uuid, fname):
     features_path = bucket_path / f'{fname}.json'
     if not features_path.exists():
         return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
+
+    # Update the last_access_date field.
+    update_bucket_metadata(uuid)
 
     # Return the contents of the features file.
     return response_json_file(features_path)
