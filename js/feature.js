@@ -13,10 +13,10 @@ class FeatureTree {
         this.el = el;
     }
 
-    setFeatures(fnames, tree) {
+    setFeatures(features, tree) {
         if (!tree) {
             // Convert a flat array into a flat tree.
-            tree = fnames.reduce((obj, key) => { obj[key] = key; return obj; }, {});
+            tree = Object.keys(features).reduce((obj, key) => { obj[key] = key; return obj; }, {});
         }
         console.assert(tree);
         const generateTree = (obj) => {

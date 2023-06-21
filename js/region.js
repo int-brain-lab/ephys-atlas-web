@@ -173,16 +173,18 @@ class Region {
         }
 
         let keptRegions = {};
-        for (let idx in regions) {
+        for (let relidx in regions) {
+            // WARNING: relidx is NOT the region index
 
             // NOTE: important, need to make a copy, otherwise the values will be propagated into
             // the object stored in the db.
-            let region = { ...regions[idx] };
+            let region = { ...regions[relidx] };
+            let regionIdx = region["idx"];
 
             // Compute the bar width as a function of the feature value.
             // If there is no feature, show the region but without a bar.
             if (stats) {
-                let value = features['data'][idx];
+                let value = features['data'][regionIdx];
                 if (!value)
                     continue;
                 value = value[stat];
@@ -199,7 +201,7 @@ class Region {
                 if (!match) continue;
             }
 
-            keptRegions[idx] = region;
+            keptRegions[regionIdx] = region;
         }
 
         this.regionList.setRegions(this.state.mapping, keptRegions);
