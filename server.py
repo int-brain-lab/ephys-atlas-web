@@ -453,7 +453,7 @@ def iter_fset_features(fset):
             yield fname, mapping, d
 
 
-def create_ephys_features():
+def create_ephys_features(dry_run=False):
     alias = 'ephys'
     short_desc = 'Ephys atlas'
     tree = None
@@ -461,11 +461,12 @@ def create_ephys_features():
     # Skip if the bucket already exists.
     if isinstance(get_bucket(alias), tuple):
         bucket_uuid = new_uuid()
-        print(f"Create new bucket {alias} {bucket_uuid}")
-        metadata = create_bucket_metadata(
-            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
-        assert 'token' in metadata
-        create_bucket(bucket_uuid, metadata, alias=alias)
+        print(f"Create new bucket /api/buckets/{alias} ({bucket_uuid})")
+        if not dry_run:
+            metadata = create_bucket_metadata(
+                bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
+            assert 'token' in metadata
+            create_bucket(bucket_uuid, metadata, alias=alias)
 
     bucket = get_bucket(alias)
     bucket_uuid = bucket['metadata']['uuid']
@@ -474,12 +475,13 @@ def create_ephys_features():
     # Go through the features and mappings.
     for fname, mappings in groupby(
             sorted(iter_fset_features('ephys'), key=itemgetter(0)), itemgetter(0)):
-        print(fname)
+        print(f'/api/buckets/{alias}/{fname}')
         json_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
-        print(create_features(bucket_uuid, fname, json_data, patch=True))
+        if not dry_run:
+            print(create_features(bucket_uuid, fname, json_data, patch=True))
 
 
-def create_bwm_features():
+def create_bwm_features(dry_run=False):
     alias = 'bwm'
     short_desc = 'Brain wide map'
     sets = ('block', 'choice', 'feedback', 'stimulus')
@@ -511,11 +513,12 @@ def create_bwm_features():
     # Skip if the bucket already exists.
     if isinstance(get_bucket(alias), tuple):
         bucket_uuid = new_uuid()
-        print(f"Create new bucket {alias} {bucket_uuid}")
-        metadata = create_bucket_metadata(
-            bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
-        assert 'token' in metadata
-        create_bucket(bucket_uuid, metadata, alias=alias)
+        print(f"Create new bucket /api/buckets/{alias} ({bucket_uuid})")
+        if not dry_run:
+            metadata = create_bucket_metadata(
+                bucket_uuid, alias=alias, short_desc=short_desc, tree=tree)
+            assert 'token' in metadata
+            create_bucket(bucket_uuid, metadata, alias=alias)
 
     bucket = get_bucket(alias)
     bucket_uuid = bucket['metadata']['uuid']
@@ -525,9 +528,10 @@ def create_bwm_features():
         for fname, mappings in groupby(sorted(iter_fset_features(
                 f'bwm_{set}'), key=itemgetter(0)), itemgetter(0)):
             fname = f'{set}_{fname}'
-            print(fname)
-            feature_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
-            create_features(bucket_uuid, fname, feature_data, patch=True)
+            print(f'/api/buckets/{alias}/{fname}')
+            if not dry_run:
+                feature_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
+                create_features(bucket_uuid, fname, feature_data, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -663,7 +667,8 @@ def run():
 
 
 if __name__ == '__main__':
+    create_ephys_features(dry_run=True)
+    create_bwm_features(dry_run=True)
     run()
+
     # test()
-    # create_ephys_features()
-    # create_bwm_features()
