@@ -48,17 +48,20 @@ export function rgb2hex(s) {
 
 
 export function normalizeValue(value, vmin, vmax) {
-    if (value == NaN || value == undefined) return value;
+    if (value == undefined || isNaN(value)) return value;
+    if (vmin == undefined || isNaN(vmin)) vmin = value;
+    if (vmax == undefined || isNaN(vmax)) vmax = value;
 
-    console.assert(value !== NaN);
+    console.assert(!isNaN(value));
     console.assert(value !== undefined);
 
     if (vmin >= vmax) return vmin;
-    console.assert(vmin < vmax);
+    console.assert(vmin <= vmax);
 
     value = clamp(value, vmin, vmax);
 
-    let normalized = Math.floor(100 * (value - vmin) / (vmax - vmin));
+    let d = vmin < vmax ? vmax - vmin : 1;
+    let normalized = Math.floor(100 * (value - vmin) / d);
     console.assert(normalized >= 0);
     console.assert(normalized <= 100);
 
