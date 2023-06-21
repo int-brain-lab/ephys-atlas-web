@@ -5,19 +5,19 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
-import itertools
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import groupby
-import json
 from operator import itemgetter
-import os
 from pathlib import Path
+import itertools
+import json
+import os
 import re
 import shutil
 import ssl
 import sys
-import uuid
 import unittest
+import uuid
 
 from dateutil import parser
 from flask import Flask, Response, request, jsonify, abort
@@ -58,6 +58,7 @@ def response_json_file(path):
     return Response(text, headers={'Content-Type': 'application/json'})
 
 
+# NOTE: obsolete
 def delete_old_files(dir_path=FEATURES_DIR):
 
     # Cutoff date
@@ -90,6 +91,27 @@ def delete_old_files(dir_path=FEATURES_DIR):
     return i
 
 
+def delete_old_subfolders(FEATURES_DIR, dry_run=True):
+    one_year_ago = datetime.now() - timedelta(days=365)
+
+    for subdir in FEATURES_DIR.iterdir():
+        if 'bwm_' in str(subdir) or 'ephys_' in str(subdir):
+            continue
+        if subdir.is_dir():
+            json_file = subdir / '_bucket.json'
+
+            if json_file.exists():
+                with open(json_file, 'r') as file:
+                    data = json.load(file)
+                last_access_date = datetime.fromisoformat(data.get('last_access_date', ''))
+
+                if last_access_date < one_year_ago:
+                    print(f"Deleting {subdir} last accessed on {last_access_date}")
+                    # Delete the subfolder
+                    if not dry_run:
+                        subdir.rmdir()
+
+
 def save_features(path, json_data):
     assert path
     assert json_data
@@ -100,7 +122,6 @@ def save_features(path, json_data):
 # -------------------------------------------------------------------------------------------------
 # Bucket metadata
 # -------------------------------------------------------------------------------------------------
-
 
 def multiple_file_types(patterns):
     return itertools.chain.from_iterable(
