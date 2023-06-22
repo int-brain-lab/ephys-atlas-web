@@ -16,12 +16,12 @@ const DEFAULT_COLORMAP_MAX = 100;
 const DEFAULT_FSET = "ephys";
 export const DEFAULT_FEATURE = {
     "ephys": "psd_alpha",
-    "bwm_block": "decoding",
-    "bwm_choice": "decoding",
-    "bwm_feedback": "decoding",
-    "bwm_stimulus": "decoding",
-    "bwm_wheel_speed": "decoding",
-    "bwm_wheel_velocity": "decoding",
+    "bwm_block": "euclidean_effect",
+    "bwm_choice": "euclidean_effect",
+    "bwm_feedback": "euclidean_effect",
+    "bwm_stimulus": "euclidean_effect",
+    "bwm_wheel_speed": "euclidean_effect",
+    "bwm_wheel_velocity": "euclidean_effect",
 };
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
