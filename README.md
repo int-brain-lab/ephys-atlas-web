@@ -71,3 +71,10 @@ Apache configuration file, for example `/etc/apache2/sites-available/atlas.conf`
     CustomLog ${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 ```
+
+**Note**: you should set up CORS policy for example by adding this in `/etc/apache2/apache2.conf`
+
+```
+# NOTE: set up CORS policy for all Apache websites on this server
+Header set Access-Control-Allow-Origin *;
+```
