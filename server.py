@@ -42,8 +42,8 @@ GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
 NATIVE_FNAMES = (
     'ephys', 'bwm_block', 'bwm_choice', 'bwm_feedback', 'bwm_stimulus')
 
-FEATURES_BASE_URL = "https://ephysatlas.internationalbrainlab.org/"
-FEATURES_API_BASE_URL = "https://ephysatlas.internationalbrainlab.org/api/"
+FEATURES_BASE_URL = "https://atlas.internationalbrainlab.org/"
+FEATURES_API_BASE_URL = "https://atlas.internationalbrainlab.org/api/"
 
 # DEBUG
 DEBUG = True
@@ -1001,7 +1001,7 @@ class TestApp(unittest.TestCase):
         # Bucket metadata.
         alias = 'myalias'
         short_desc = 'mydesc'
-        url = 'https://ephysatlas.internationalbrainlab.org'
+        url = 'https://atlas.internationalbrainlab.org'
         tree = {
             'level1': {
                 'level2': {

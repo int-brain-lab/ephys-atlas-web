@@ -20,7 +20,7 @@
 console.info("loading SW");
 const CACHE_VERSION = 1;
 const CURRENT_CACHES = {
-    website: `IBLEphysAtlasCache-v${CACHE_VERSION}`,
+    website: `IBLAtlasCache-v${CACHE_VERSION}`,
 };
 const CACHE_NAME = CURRENT_CACHES['website'];
 
