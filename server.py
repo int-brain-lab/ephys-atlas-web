@@ -22,7 +22,7 @@ import uuid
 
 import numpy as np
 from flask import Flask, Response, request
-from flask_cors import CORS
+# from flask_cors import CORS
 import requests
 
 
@@ -31,7 +31,7 @@ import requests
 # -------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
@@ -127,6 +127,14 @@ def save_features(path, json_data):
     assert json_data
     with open(path, 'w') as f:
         json.dump(json_data, f, indent=1)
+
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = 'https://atlas2.internationalbrainlab.org'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 
 # -------------------------------------------------------------------------------------------------
