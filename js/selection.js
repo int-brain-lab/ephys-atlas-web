@@ -38,7 +38,7 @@ class Selection {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on('reset', (ev) => { this.clear(); this.init(); });
 
         this.el.addEventListener('click', (e) => {
             if (e.target.tagName == 'LI') {
