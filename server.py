@@ -691,7 +691,7 @@ def make_features(acronyms, values, mapping='beryl'):
         ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
         raise ValueError(
             f"The following acronyms do not belong to allen mapping: {ac}")
-    aids = br.acronym2index(acronyms, mapping=mapping.title())[1][0]
+    aids = np.vstack(br.acronym2index(acronyms, mapping=mapping.title())[1])[:, 1]
     assert len(aids) == len(acronyms)
 
     # Compute the mean.
@@ -1061,7 +1061,6 @@ class TestApp(unittest.TestCase):
         payload = {'fname': fname, 'feature_data': data, 'short_desc': short_desc}
         # NOTE: fail if no authorization header.
         response = self.client.post(f'/api/buckets/{uuid}', json=payload)
-        print(response.text)
         self.assertEqual(response.status_code, 401)
         response = self.client.post(f'/api/buckets/{uuid}', json=payload, headers=headers)
         self.ok(response)
@@ -1151,6 +1150,38 @@ if __name__ == '__main__':
         test_suite = unittest.TestLoader().loadTestsFromTestCase(TestApp)
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
+
+    # Example.
+    elif sys.argv[-1] == 'example':
+        # Create a bucket called "mybucket"
+        from ibllib.atlas.regions import BrainRegions
+        br = BrainRegions()
+        n = 50
+
+        acronyms = br.acronym[10:10 + n]
+
+        mapping = 'allen'
+        fname1 = 'fet1'
+        fname2 = 'fet2'
+        values1 = np.random.randn(n)
+        values2 = np.random.randn(n)
+        assert len(acronyms) == len(values1)
+        assert len(acronyms) == len(values2)
+
+        bucket_uuid = 'mybucket'
+        tree = {'dir': {'custom features 1': fname1}, 'custom features 2': fname2}
+
+        # Beryl regions.
+        # np.unique(brain_regions.acronym[brain_regions.mappings['Beryl']])
+
+        # Create or load the bucket.
+        up = FeatureUploader(bucket_uuid, tree=tree)
+
+        # Create the features.
+        if not up.features_exist(fname1):
+            up.create_features(fname1, acronyms, values1, mapping=mapping)
+        if not up.features_exist(fname2):
+            up.create_features(fname2, acronyms, values2, mapping=mapping)
 
     # Run server
     else:
