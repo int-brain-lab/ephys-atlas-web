@@ -76,8 +76,11 @@ function url2state() {
 
     console.log(`buckets are: `, state.buckets.join(','));
 
+    // Take the bucket from the URL query string.
+    state.bucket = state.bucket || query.bucket;
+
     // If the state's bucket does not belong to the buckets, clear the bucket and fname.
-    if (!state.buckets.includes(state.bucket)) {
+    if (!DEFAULT_BUCKETS.includes(state.bucket) && !state.buckets.includes(state.bucket)) {
         state.bucket = null;
         state.fname = null;
     }
@@ -112,6 +115,10 @@ function state2url(state_) {
         params.set('buckets', buckets.join(','));
     else
         params.delete('buckets');
+
+    // Remove state.bucket from the encoded state, put it separately.
+    params.set('bucket', state.bucket);
+    delete state.bucket;
 
     // Add the state to the query string
     params.set('state', encode(state));
@@ -165,7 +172,7 @@ class State {
     updateURL() {
         if (!this._toggle) return;
 
-        console.log("update URL with current state", this);
+        console.log("update URL with current state");
 
         // Update the address bar URL.
 

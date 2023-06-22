@@ -69,6 +69,7 @@ class Bucket {
     /*********************************************************************************************/
 
     add(bucket, selected) {
+        if (DEFAULT_BUCKETS.includes(bucket)) return;
         if (!this.state.buckets.includes(bucket))
             this.state.buckets.push(bucket);
         addOption(this.el, bucket, bucket, selected);

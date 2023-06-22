@@ -682,6 +682,7 @@ def new_uuid():
 
 
 def make_features(acronyms, values, mapping='beryl'):
+    assert mapping == 'beryl', "TODO: Other mappings not yet implemented"
     acronyms = np.asarray(acronyms)
     # Convert acronyms to atlas ids.
     from ibllib.atlas.regions import BrainRegions
@@ -690,8 +691,8 @@ def make_features(acronyms, values, mapping='beryl'):
     if not np.all(ina):
         ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
         raise ValueError(
-            f"The following acronyms do not belong to allen mapping: {ac}")
-    aids = np.vstack(br.acronym2index(acronyms, mapping=mapping.title())[1])[:, 1]
+            f"The following acronyms do not belong to the mapping: {ac}")
+    aids = np.vstack(br.acronym2index(acronyms)[1])[:, 1]
     assert len(aids) == len(acronyms)
 
     # Compute the mean.
@@ -699,7 +700,14 @@ def make_features(acronyms, values, mapping='beryl'):
 
     return {
         'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
-        'statistics': {'mean': m},
+        'statistics': {
+            'mean': {
+                'min': values.min(),
+                'max': values.max(),
+                'mean': values.mean(),
+                'median': np.median(values)
+            }
+        },
     }
 
 
@@ -924,8 +932,10 @@ class FeatureUploader:
                 f'buckets/{self.bucket_uuid}/{fname}', payload)
 
     def get_buckets_url(self, uuids):
+        assert uuids
+        assert isinstance(uuids, list)
         # NOTE: %2C is a comma encoded
-        return f'{FEATURES_BASE_URL}?buckets={uuids.join("%2C")}'
+        return f'{FEATURES_BASE_URL}?buckets={"%2C".join(uuids)}&bucket={uuids[0]}'
 
     def patch_bucket(self, **metadata):
         self._patch_bucket(metadata)
@@ -1153,35 +1163,36 @@ if __name__ == '__main__':
 
     # Example.
     elif sys.argv[-1] == 'example':
-        # Create a bucket called "mybucket"
+
         from ibllib.atlas.regions import BrainRegions
         br = BrainRegions()
-        n = 50
 
-        acronyms = br.acronym[10:10 + n]
-
-        mapping = 'allen'
+        n = 300
+        mapping = 'beryl'
         fname1 = 'fet1'
         fname2 = 'fet2'
+        bucket = 'mybucket'
+        tree = {'dir': {'custom features 1': fname1}, 'custom features 2': fname2}
+
+        # Beryl regions.
+        acronyms = np.unique(br.acronym[br.mappings[mapping.title()]])[:n]
+        n = len(acronyms)
         values1 = np.random.randn(n)
         values2 = np.random.randn(n)
         assert len(acronyms) == len(values1)
         assert len(acronyms) == len(values2)
 
-        bucket_uuid = 'mybucket'
-        tree = {'dir': {'custom features 1': fname1}, 'custom features 2': fname2}
-
-        # Beryl regions.
-        # np.unique(brain_regions.acronym[brain_regions.mappings['Beryl']])
-
         # Create or load the bucket.
-        up = FeatureUploader(bucket_uuid, tree=tree)
+        up = FeatureUploader(bucket, tree=tree)
 
         # Create the features.
         if not up.features_exist(fname1):
             up.create_features(fname1, acronyms, values1, mapping=mapping)
         if not up.features_exist(fname2):
             up.create_features(fname2, acronyms, values2, mapping=mapping)
+
+        url = up.get_buckets_url([bucket])
+        print(url)
 
     # Run server
     else:
