@@ -18,17 +18,17 @@ window.addEventListener('load', () => {
         // });
 
         // Register the service worker.
-        navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
+        // navigator.serviceWorker.register('/sw.js')
+        //     .then((registration) => {
 
-                // DEBUG: force refresh
-                registration.update();
+        //         // DEBUG: force refresh
+        //         registration.update();
 
-                console.debug('service worker registered');
-            })
-            .catch((error) => {
-                console.error('service worker registration failed:', error);
-            });
+        //         console.debug('service worker registered');
+        //     })
+        //     .catch((error) => {
+        //         console.error('service worker registration failed:', error);
+        //     });
     }
 
     // Create the app.

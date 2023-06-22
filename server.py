@@ -31,7 +31,7 @@ import requests
 # -------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://atlas2.internationalbrainlab.org"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
