@@ -59,12 +59,12 @@ Run `./run.sh` (which just calls `python -m http.server` as this is a severless 
 - Clone the repository.
 - You also need to upload the files listed in section 3.2 above.
 
-Apache configuration file, for example `/etc/apache2/sites-available/ephysatlas.conf`:
+Apache configuration file, for example `/etc/apache2/sites-available/atlas.conf`:
 
 ```
 <VirtualHost *:80>
     ServerAdmin admin@internationalbrainlab.org
-    ServerName ephysatlas.internationalbrainlab.org
+    ServerName atlas.internationalbrainlab.org
     DocumentRoot /path/to/ephys-atlas-web
     AddOutputFilterByType DEFLATE application/javascript application/json
     ErrorLog ${APACHE_LOG_DIR}/error.log
