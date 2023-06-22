@@ -10,7 +10,6 @@ import gzip
 import json
 import os
 import re
-import uuid
 from datetime import datetime, timezone
 from math import isnan
 from pathlib import Path
@@ -20,7 +19,6 @@ from xml.dom import minidom
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
-import requests
 from ibllib.atlas.regions import BrainRegions
 from joblib import Parallel, delayed
 # from matplotlib import cm
@@ -86,15 +84,6 @@ BWM_EXTRA_FNAMES = (
     'decoding_frac_significant',
     'decoding_significant',
 )
-
-FEATURES_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/
-FEATURES_API_BASE_URL = 'https://ephysatlas.internationalbrainlab.org/api/'
-
-# DEBUG
-DEBUG = True
-if DEBUG:
-    FEATURES_BASE_URL = 'https://localhost:8456/
-    FEATURES_API_BASE_URL = 'https://localhost:5000/api/'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -744,281 +733,11 @@ def generate_custom_features():
 
 
 # -------------------------------------------------------------------------------------------------
-# Generate custom features for upload
-# -------------------------------------------------------------------------------------------------
-
-def new_token(max_length=None):
-    token = str(uuid.uuid4())
-    if max_length:
-        token = token[:max_length]
-    return token
-
-
-def new_uuid():
-    return new_token(18)
-
-
-def make_features(acronyms, values, mapping='beryl'):
-    acronyms = np.asarray(acronyms)
-    # Convert acronyms to atlas ids.
-    br = BrainRegions()
-    ina = np.in1d(acronyms, br.acronym)
-    if not np.all(ina):
-        ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
-        raise ValueError(
-            f"The following acronyms do not belong to allen mapping: {ac}")
-    aids = br.acronym2index(acronyms, mapping=mapping.title())[1][0]
-    assert len(aids) == len(acronyms)
-
-    # Compute the mean.
-    m = np.mean(values)
-
-    return {
-        'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
-        'statistics': {'mean': m},
-    }
-
-
-class FeatureUploader:
-    def __init__(self, bucket_uuid):
-        # Go in user dir and search bucket UUID and token
-        # If nothing create new ones and save on disk, and create on the server
-        # with post request
-
-        assert bucket_uuid
-
-        self.param_path = Path.home() / '.ibl' / 'custom_features.json'
-        self.param_path.parent.mkdir(exist_ok=True, parents=True)
-        self.bucket_uuid = bucket_uuid
-
-        # Create the param file if it doesn't exist.
-        if not self.param_path.exists():
-            self._create_empty_params()
-        assert self.param_path.exists()
-
-        # Load the param file.
-        self.params = self._load_params()
-
-        # Try loading the token associated to the bucket.
-        self.token = self._load_bucket_token(bucket_uuid)
-
-        # If there is none, generate a new token, and create the bucket on the
-        # server.
-        if not self.token:
-            print(f"Creating new bucket {bucket_uuid}.")
-
-            # Create a new authorization token.
-            self.token = new_token()
-
-            # Create a new bucket on the server.
-            self._create_new_bucket(bucket_uuid)
-
-            # Save the token in the param file.
-            self._save_bucket_token(bucket_uuid, self.token)
-
-        assert self.token
-
-    # Internal methods
-    # ---------------------------------------------------------------------------------------------
-
-    def _headers(self, token=None):
-        return {
-            'Authorization': f'Bearer {token or self.token}',
-            'Content-Type': 'application/json'
-        }
-
-    def _url(self, endpoint):
-        if endpoint.startswith('/'):
-            endpoint = endpoint[1:]
-        return FEATURES_API_BASE_URL + endpoint
-
-    def _post(self, endpoint, data):
-        url = self._url(endpoint)
-        response = requests.post(url, headers=self._headers(), json=data, verify=not DEBUG)
-        if response.status_code != 200:
-            raise RuntimeError(response.text)
-        return response
-
-    def _patch(self, endpoint, data):
-        url = self._url(endpoint)
-        response = requests.patch(url, headers=self._headers(), json=data, verify=not DEBUG)
-        if response.status_code != 200:
-            raise RuntimeError(response.text)
-        return response
-
-    def _get(self, endpoint):
-        url = self._url(endpoint)
-        response = requests.get(url, verify=not DEBUG)
-        if response.status_code != 200:
-            raise RuntimeError(response.text)
-        return response
-
-    # Params
-    # ---------------------------------------------------------------------------------------------
-
-    def _create_empty_params(self):
-        with open(self.param_path, 'w') as f:
-            json.dump({'buckets': {}}, f, indent=1)
-
-    def _load_params(self):
-        with open(self.param_path, 'r') as f:
-            return json.load(f)
-
-    def _save_params(self, params):
-        with open(self.param_path, 'w') as f:
-            json.dump(params, f, indent=1)
-
-    # Bucket tocken
-    # ---------------------------------------------------------------------------------------------
-
-    def _load_bucket_token(self, bucket_uuid):
-        assert self.params
-        return self.params.get('buckets', {}).get(
-            bucket_uuid, {}).get('token', None)
-
-    def _save_bucket_token(self, bucket_uuid, token):
-        params = self.params
-        if bucket_uuid not in params['buckets']:
-            params['buckets'][bucket_uuid] = {}
-        params['buckets'][bucket_uuid]['token'] = token
-        self._save_params(params)
-
-    # Global key
-    # ---------------------------------------------------------------------------------------------
-
-    def _load_global_key(self):
-        assert self.params
-        return self.params.get('global_key', None)
-
-    def _save_global_key(self, gk):
-        assert self.params
-        params = self.params
-        params['global_key'] = gk
-        self._save_params(params)
-
-    def _prompt_global_key(self):
-        return input(
-            "Plase copy-paste the global key from the documentation webpage:\n")
-
-    def _get_global_key(self):
-        """Global authentication to create new buckets.
-
-        1. If the global key is saved in ~/.ibl/custom_features.json, use it.
-        2. Otherwise, prompt it and save it.
-
-        """
-        gk = self._load_global_key()
-        if not gk:
-            gk = self._prompt_global_key()
-            self._save_global_key(gk)
-        assert gk
-        return gk
-
-    # Bucket creation
-    # ---------------------------------------------------------------------------------------------
-
-    def _create_new_bucket(self, bucket_uuid):
-        # Make a POST request to /api/buckets/<uuid> to create the new bucket.
-        # NOTE: need for global key authentication to create a new bucket.
-        data = {'uuid': bucket_uuid, 'metadata': {'token': self.token}}
-        endpoint = f'/buckets'
-        url = self._url(endpoint)
-        gk = self._get_global_key()
-        response = requests.post(url, json=data, headers=self._headers(gk), verify=not DEBUG)
-        if response.status_code != 200:
-            raise RuntimeError(response.text)
-
-    # Public methods
-    # ---------------------------------------------------------------------------------------------
-
-    def _post_or_patch_features(
-            self, method, fname, acronyms, values, short_desc=None, mapping='beryl'):
-
-        assert method in ('post', 'patch')
-        assert fname
-        assert mapping
-        assert acronyms is not None
-        assert values is not None
-        assert len(acronyms) == len(values)
-
-        # Prepare the JSON payload.
-        data = make_features(acronyms, values, mapping=mapping)
-        assert 'data' in data
-        assert 'statistics' in data
-        payload = {
-            'fname': fname,
-            'short_desc': short_desc,
-            'feature_data': {
-                'mappings': {
-                    'beryl': data
-                }
-            }
-        }
-
-        # Make a POST request to /api/buckets/<uuid>.
-        # try:
-        if method == 'post':
-            response = self._post(f'buckets/{self.bucket_uuid}', payload)
-        elif method == 'patch':
-            response = self._patch(
-                f'buckets/{self.bucket_uuid}/{fname}', payload)
-        # print(response.json()['message'])
-        # except RuntimeError as e:
-        #     print(f"Error while making {method} request: {e}")
-
-    def get_buckets_url(self, uuids):
-        # NOTE: %2C is a comma encoded
-        return f'{FEATURES_BASE_URL}?buckets={uuids.join("%2C")}'
-
-    def create_features(self, fname, acronyms, values, mapping='beryl'):
-        """Create new features in the bucket."""
-        self._post_or_patch_features(
-            'post', fname, acronyms, values, mapping=mapping)
-
-    def list_features(self):
-        """Return the list of fnames in the bucket."""
-        response = self._get(f'buckets/{self.bucket_uuid}')
-        fnames = response.json()['features']
-        return fnames
-
-    def get_features(self, fname):
-        """Retrieve features in the bucket."""
-        assert fname
-        response = self._get(f'/buckets/{self.bucket_uuid}/{fname}')
-        features = response.json()
-        return features
-
-    def patch_features(self, fname, acronyms, values, mapping='beryl'):
-        """Update existing features in the bucket."""
-        self._post_or_patch_features(
-            'patch', fname, acronyms, values, mapping=mapping)
-
-
-# -------------------------------------------------------------------------------------------------
 # Entry-point
 # -------------------------------------------------------------------------------------------------
 
-def test_upload():
-    bucket_uuid = 'myuuid'
-    fname = 'newfeatures'
-
-    acronyms = ['CP', 'SUB']
-    values = [42, 420]
-
-    up = FeatureUploader(bucket_uuid)
-    up.create_features(fname, acronyms, values)
-
-    print(up.list_features())
-
-    features = up.get_features(fname)
-    print(features)
-
-    values[1] = 10
-    up.patch_features(fname, acronyms, values)
-
-
 if __name__ == '__main__':
-    test_upload()
+    pass
 
     # generate_colormaps()
     # process_slices()
