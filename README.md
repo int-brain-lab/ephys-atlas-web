@@ -72,9 +72,13 @@ Apache configuration file, for example `/etc/apache2/sites-available/atlas.conf`
 </VirtualHost>
 ```
 
-**Note**: you should set up CORS policy for example by adding this in `/etc/apache2/apache2.conf`
+## Fix CORS issues
+
+You can add this in `/etc/apache2/apache2.conf`:
 
 ```
-# NOTE: set up CORS policy for all Apache websites on this server
-Header set Access-Control-Allow-Origin *;
+# NOTE: setup CORS policy for all websites
+Header set Access-Control-Allow-Origin *
+Header set Access-Control-Allow-Methods: "GET, POST, OPTIONS, PUT, DELETE"
+Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Content-Encoding"
 ```
