@@ -141,14 +141,16 @@ class Feature {
             this.state.bucket = DEFAULT_BUCKET;
             this.state.buckets = removeFromArray(this.state.buckets, uuid_or_alias);
             this.state.fname = '';
-            this.dispatcher.bucketRemove(this, uuid_or_alias);
 
-            this.dispatcher.bucket(this, this.state.bucket);
+            if (uuid_or_alias != DEFAULT_BUCKET) {
+                this.dispatcher.bucketRemove(this, uuid_or_alias);
+                this.dispatcher.bucket(this, this.state.bucket);
+            }
 
             // Finally display an error message.
             let msg = `error retrieving bucket ${uuid_or_alias}`;
             console.error(msg);
-            window.alert(msg);
+            // window.alert(msg);
         }
         else {
             this.tree.setFeatures(bucket.features, bucket.metadata.tree);
