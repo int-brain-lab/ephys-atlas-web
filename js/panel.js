@@ -9,25 +9,6 @@ import { clamp, setOptions, throttle } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-// const FEATURE_NAMES = {
-//     "ephys": [
-//         "psd_alpha", "psd_beta", "psd_delta", "psd_gamma", "psd_theta", "rms_ap", "rms_lf", "spike_rate",
-//     ],
-
-//     "bwm_block": [
-//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-//     ],
-//     "bwm_choice": [
-//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-//     ],
-//     "bwm_feedback": [
-//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-//     ],
-//     "bwm_stimulus": [
-//         "decoding", "single_cell", "manifold", 'euclidean_effect', 'euclidean_latency', 'euclidean_significant', 'glm_effect', 'mannwhitney_effect', 'mannwhitney_significant', 'decoding_effect', 'decoding_frac_significant', 'decoding_significant',
-//     ],
-// };
-
 const CMAP_RANGE_THROTTLE = 100; // number of milliseconds between updates
 
 
@@ -109,12 +90,6 @@ class Panel {
     //     this.unity.update();
     // }
 
-    //     // HACK: only Beryl is available for BWM.
-    //     if (bucket.includes('bwm_')) {
-    //         this.imapping.value = 'beryl';
-    //         this.region.setMapping(this.imapping.value);
-    //     }
-
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
@@ -122,18 +97,6 @@ class Panel {
         this.imapping.addEventListener('change', (e) => {
             this.state.mapping = this.imapping.value;
             this.dispatcher.mapping(this, this.state.mapping);
-
-            //     // HACK: only Beryl is available for bwm
-            //     if (this.state.bucket.includes('bwm_') && mapping != 'beryl') {
-            //         return;
-            //     }
-
-            //     this.region.setMapping(mapping);
-            //     this.feature.setMapping(mapping);
-            //     this.selector.clear();
-
-            //     if (this.unity)
-            //         this.unity.update();
         });
     }
 

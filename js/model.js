@@ -8,35 +8,6 @@ import { Loader } from "./splash.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-// const DB_NAME = "IBLEphysAtlasDatabase";
-
-/*
-Changelog of the Model versions
-1       initial version
-2       2023-04-23          replaced "bwm" bucket by "bwm_block", "bwm_choice" etc
-3       2023-04-25          added more BWM features
-4       2023-05-15          refactor JSON loading, 1 JSON file per slice axis
-4       2023-06-14          new flask-based server architecture supporting custom feature
-*/
-
-// const DB_VERSION = 4;
-// const DB_TABLES = {
-//     "colormaps": "name,colors",
-//     "regions": "mapping,data",
-
-//     "slices_coronal": "idx,svg",
-//     "slices_horizontal": "idx,svg",
-//     "slices_sagittal": "idx,svg",
-//     "slices_top": "idx,svg",
-//     "slices_swanson": "idx,svg",
-
-//     "features_ephys": "fname,data,statistics",
-//     "features_bwm_block": "fname,data,statistics",
-//     "features_bwm_choice": "fname,data,statistics",
-//     "features_bwm_feedback": "fname,data,statistics",
-//     "features_bwm_stimulus": "fname,data,statistics",
-// };
-// const FEATURE_SETS = ["ephys", "bwm_block", "bwm_choice", "bwm_feedback", "bwm_stimulus"];
 const BASE_URL = 'https://localhost:5000';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
@@ -71,11 +42,6 @@ class Model {
             'ephys': this.setupBucket('ephys', [1, 1, 1]),
             'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
-
-        // // Features.
-        // for (let bucket of FEATURE_SETS) {
-        //     this.loaders[`features_${bucket}`] = this.setupFeatures(bucket, [2, 1, 1]);
-        // }
     }
 
     /* Internal                                                                                  */

@@ -99,6 +99,7 @@ class Feature {
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('bucket', (ev) => { this.setBucket(ev.uuid_or_alias); });
+        this.dispatcher.on('bucketRemove', (ev) => { this.setBucket(DEFAULT_BUCKET); });
     }
 
     setupFeature() {

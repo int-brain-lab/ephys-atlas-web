@@ -1,7 +1,7 @@
 export { Bucket };
 
 import { setOptions, addOption, removeOption, removeFromArray } from "./utils.js";
-
+import { DEFAULT_BUCKET, DEFAULT_BUCKETS } from "./state.js";
 
 
 /*************************************************************************************************/
@@ -15,7 +15,8 @@ class Bucket {
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bucket-dropdown');
-        this.button = document.getElementById('button-new-bucket');
+        this.buttonAdd = document.getElementById('button-new-bucket');
+        this.buttonRemove = document.getElementById('button-remove-bucket');
 
         this.setupBucket();
         this.setupDispatcher();
@@ -45,13 +46,22 @@ class Bucket {
             this.dispatcher.bucket(this, bucket);
         });
 
-        this.button.addEventListener('click', (e) => {
+        // Add bucket.
+        this.buttonAdd.addEventListener('click', (e) => {
             let bucket = window.prompt("write a new bucket UUID or alias", "");
             if (bucket) {
                 this.add(bucket, true);
                 this.select(bucket);
                 this.dispatcher.bucket(this, bucket);
             }
+        });
+
+        // Remove bucket.
+        this.buttonRemove.addEventListener('click', (e) => {
+            let bucket = this.state.bucket;
+            if (DEFAULT_BUCKETS.includes(bucket)) return;
+            this.remove(bucket);
+            this.dispatcher.bucketRemove(bucket);
         });
     }
 
@@ -65,6 +75,7 @@ class Bucket {
     }
 
     remove(bucket) {
+        this.state.bucket = DEFAULT_BUCKET;
         if (this.state.buckets.includes(bucket))
             this.state.buckets = removeFromArray(this.state.buckets, bucket);
         removeOption(this.el, bucket);

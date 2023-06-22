@@ -420,13 +420,6 @@ body {
     font-size: 10pt;
 }
 
-#bar-plot-header select {
-    width: 100%;
-    /* margin-top: 2px; */
-    border: 0;
-    background-color: #fafafa;
-}
-
 
 
 /*************************************************************************************************/
@@ -435,25 +428,34 @@ body {
 
 #bar-plot-header .control {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    margin-right: 24px;
+    justify-content: space-between;
 }
 
 #bucket-dropdown {
-    flex: 0 0 auto;
+    flex-grow: 1;
     height: 100%;
     font-size: 12pt;
+    border: 0;
+    background-color: #fafafa;
 }
 
-#button-new-bucket {
+
+
+#button-new-bucket,
+#button-remove-bucket {
+    flex: 0 0 auto;
     padding: 4px 8px 4px 8px;
     font-size: 14pt;
-    font-weight: bold;
+    /* font-weight: bold; */
+    font-family: monospace;
     cursor: pointer;
     vertical-align: middle;
     height: 100%;
 }
 
+#button-new-bucket:hover,
 #button-new-bucket:hover {
     background-color: #ccc;
 }

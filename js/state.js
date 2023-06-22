@@ -1,4 +1,4 @@
-export { State, DEFAULT_BUCKET };
+export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
 import { SLICE_MAX, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
