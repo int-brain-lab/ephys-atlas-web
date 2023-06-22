@@ -55,7 +55,11 @@ class Dispatcher {
     bucket(source, uuid_or_alias) {
         // when a bucket is selected
         this.emit("bucket", source, { "uuid_or_alias": uuid_or_alias });
+    }
 
+    bucketRemove(source, uuid_or_alias) {
+        // when a bucket is removed
+        this.emit("bucketRemove", source, { "uuid_or_alias": uuid_or_alias });
     }
 
     search(source, text) {

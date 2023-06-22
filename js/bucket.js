@@ -1,7 +1,6 @@
 export { Bucket };
 
-import { setOptions, addOption } from "./utils.js";
-import { DEFAULT_BUCKETS } from "./state.js";
+import { setOptions, addOption, removeOption, removeFromArray } from "./utils.js";
 
 
 
@@ -33,44 +32,53 @@ class Bucket {
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
+    setupDispatcher() {
+        this.dispatcher.on('clear', (ev) => { this.init(); });
+        this.dispatcher.on('bucket', (ev) => { this.select(ev.uuid_or_alias); });
+        this.dispatcher.on('bucketRemove', (ev) => { this.remove(ev.uuid_or_alias); });
+    }
+
     setupBucket() {
         this.el.addEventListener('change', (e) => {
             let bucket = e.target.value;
             this.select(bucket);
+            this.dispatcher.bucket(this, bucket);
         });
 
         this.button.addEventListener('click', (e) => {
             let bucket = window.prompt("write a new bucket UUID or alias", "");
             if (bucket) {
-                if (!this.state.buckets.includes(bucket))
-                    this.state.buckets.push(bucket);
                 this.add(bucket, true);
                 this.select(bucket);
+                this.dispatcher.bucket(this, bucket);
             }
         });
-    }
-
-    setupDispatcher() {
-        this.dispatcher.on('clear', (ev) => { this.init(); });
     }
 
     /* Bucket functions                                                                          */
     /*********************************************************************************************/
 
-    add(uuid_or_alias, selected) {
-        addOption(this.el, uuid_or_alias, uuid_or_alias, selected);
+    add(bucket, selected) {
+        if (!this.state.buckets.includes(bucket))
+            this.state.buckets.push(bucket);
+        addOption(this.el, bucket, bucket, selected);
     }
 
-    select(uuid_or_alias) {
-        console.log(`select ${uuid_or_alias}`);
-        if (!uuid_or_alias)
+    remove(bucket) {
+        if (this.state.buckets.includes(bucket))
+            this.state.buckets = removeFromArray(this.state.buckets, bucket);
+        removeOption(this.el, bucket);
+    }
+
+    select(bucket) {
+        console.log(`select ${bucket}`);
+        if (!bucket)
             return;
 
-        this.el.value = uuid_or_alias;
+        this.el.value = bucket;
 
-        this.state.bucket = uuid_or_alias;
+        this.state.bucket = bucket;
         this.state.fname = '';
-        this.dispatcher.bucket(this, uuid_or_alias);
     }
 
 };

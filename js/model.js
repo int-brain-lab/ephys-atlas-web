@@ -159,7 +159,7 @@ class Model {
         if (!(bucket in this.loaders)) {
             let url = URLS['bucket'](bucket);
             console.log(`creating loader for ${url}`);
-            this.loaders[bucket] = new Loader(this.splash, url, null, [1, 0, 1]);
+            this.loaders[bucket] = new Loader(this.splash, url, null, [0, 0, 0]);
             await this.loaders[bucket].start();
         }
         let loader = this.loaders[bucket];
@@ -192,7 +192,7 @@ class Model {
             let url = URLS['features'](bucket, fname);
             console.log(`creating loader for ${url}`);
 
-            this.loaders[key] = new Loader(this.splash, url, null, [1, 0, 1]);
+            this.loaders[key] = new Loader(this.splash, url, null, [0, 0, 0]);
         }
         await this.loaders[key].start();
         let loader = this.loaders[key];

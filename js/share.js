@@ -18,6 +18,7 @@ class Share {
     setupDispatcher() {
         let events = [
             'bucket',
+            'bucketRemove',
             'clear',
             'cmap',
             'cmapRange',

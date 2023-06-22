@@ -1,4 +1,4 @@
-export { State, DEFAULT_BUCKETS };
+export { State, DEFAULT_BUCKET };
 
 import { SLICE_MAX, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
@@ -110,6 +110,8 @@ function state2url(state_) {
     // Add the buckets separately in the URL query string.
     if (buckets.length > 0)
         params.set('buckets', buckets.join(','));
+    else
+        params.delete('buckets');
 
     // Add the state to the query string
     params.set('state', encode(state));
@@ -163,7 +165,7 @@ class State {
     updateURL() {
         if (!this._toggle) return;
 
-        console.log("update URL with current state");
+        console.log("update URL with current state", this);
 
         // Update the address bar URL.
 

@@ -120,6 +120,15 @@ export function addOption(select, text, value, selected) {
     select.add(opt);
 }
 
+export function removeOption(select, value) {
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === value) {
+            select.remove(i);
+            break;
+        }
+    }
+}
+
 export function setOptions(select, values, selected) {
     for (let _ in select.options) { select.options.remove(0); }
     for (let val of values) {
@@ -138,6 +147,12 @@ export function removeClassChildren(element, tagName, className) {
     for (let i = 0; i < children.length; i++) {
         removeClassChildren(children[i], tagName, className);
     }
+}
+
+
+
+export function removeFromArray(array, toRemove) {
+    return array.filter(item => item !== toRemove);
 }
 
 

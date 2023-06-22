@@ -1,6 +1,7 @@
 export { Feature };
 
-import { clearStyle, clamp, normalizeValue, rgb2hex, removeClassChildren } from "./utils.js";
+import { DEFAULT_BUCKET } from "./state.js";
+import { removeFromArray, removeClassChildren } from "./utils.js";
 
 
 
@@ -132,7 +133,25 @@ class Feature {
     async setBucket(uuid_or_alias) {
         let bucket = await this.model.getBucket(uuid_or_alias);
         console.assert(bucket);
-        this.tree.setFeatures(bucket.features, bucket.metadata.tree);
+
+        if (!bucket.metadata) {
+            // Error message if the bucket does not exist.
+
+            this.state.bucket = DEFAULT_BUCKET;
+            this.state.buckets = removeFromArray(this.state.buckets, uuid_or_alias);
+            this.state.fname = '';
+            this.dispatcher.bucketRemove(this, uuid_or_alias);
+
+            this.dispatcher.bucket(this, this.state.bucket);
+
+            // Finally display an error message.
+            let msg = `error retrieving bucket ${uuid_or_alias}`;
+            console.error(msg);
+            window.alert(msg);
+        }
+        else {
+            this.tree.setFeatures(bucket.features, bucket.metadata.tree);
+        }
     }
 
     selectFeature(fname) {
