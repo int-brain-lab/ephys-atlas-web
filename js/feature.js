@@ -150,7 +150,7 @@ class Feature {
             // Finally display an error message.
             let msg = `error retrieving bucket ${uuid_or_alias}`;
             console.error(msg);
-            // window.alert(msg);
+            window.alert(msg);
         }
         else {
             this.tree.setFeatures(bucket.features, bucket.metadata.tree);
