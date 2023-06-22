@@ -1,0 +1,4 @@
+flask
+numpy
+requests
+flask_cors

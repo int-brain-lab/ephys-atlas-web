@@ -8,7 +8,8 @@ import { Loader } from "./splash.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const BASE_URL = 'https://localhost:5000';
+// const BASE_URL = 'https://localhost:5000';
+const BASE_URL = 'https://features.internationalbrainlab.org';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',

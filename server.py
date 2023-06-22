@@ -42,8 +42,8 @@ GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
 NATIVE_FNAMES = (
     'ephys', 'bwm_block', 'bwm_choice', 'bwm_feedback', 'bwm_stimulus')
 
-FEATURES_BASE_URL = "https://atlas.internationalbrainlab.org/"
-FEATURES_API_BASE_URL = "https://atlas.internationalbrainlab.org/api/"
+FEATURES_BASE_URL = "https://atlas2.internationalbrainlab.org/"
+FEATURES_API_BASE_URL = "https://features.internationalbrainlab.org/api/"
 
 # DEBUG
 DEBUG = True
@@ -1078,13 +1078,16 @@ class TestApp(unittest.TestCase):
         # List features in the bucket.
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
-        self.assertEqual(response.json['features'], {'fet1': {'short_desc': 'my short description'}})
+        self.assertEqual(response.json['features'],
+                         {'fet1': {'short_desc': 'my short description'}})
 
         # Retrieve features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
         self.ok(response)
-        self.assertEqual(response.json['feature_data']['mappings']['beryl']['data']['0']['mean'], 42)
-        self.assertEqual(response.json['feature_data']['mappings']['beryl']['data']['1']['mean'], 420)
+        self.assertEqual(response.json['feature_data']['mappings']
+                         ['beryl']['data']['0']['mean'], 42)
+        self.assertEqual(response.json['feature_data']['mappings']
+                         ['beryl']['data']['1']['mean'], 420)
 
         # Patch features.
         data = {'mappings': {'beryl': {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}}
