@@ -12,6 +12,7 @@ from pathlib import Path
 import itertools
 import json
 import os
+import random
 import re
 import shutil
 import ssl
@@ -179,7 +180,7 @@ def load_bucket_metadata(uuid):
 
 
 def new_token(max_length=None):
-    token = str(uuid.uuid4())
+    token = str(uuid.UUID(int=random.getrandbits(128)))
     if max_length:
         token = token[:max_length]
     return token
@@ -247,13 +248,20 @@ def load_bucket_token(uuid):
 
 
 def authenticate_bucket(uuid):
+    # HACK: False means bad authentication, None means the bucket does not exist.
+
     try:
         passed_token = extract_token()
     except RuntimeError as e:
-        # print("Invalid authentication token")
-        return
+        # No passed token? Authorization error.
+        return False
+
     expected_token = load_bucket_token(uuid)
-    return passed_token == expected_token
+    if expected_token:
+        return passed_token == expected_token
+
+    # No expected token? Bucket does not exist.
+    return None
 
 
 def read_global_key():
@@ -439,8 +447,11 @@ def api_get_bucket(uuid):
 @app.route('/api/buckets/<uuid>', methods=['PATCH'])
 def api_patch_bucket(uuid):
     # Check authorization to upload new features.
-    if not authenticate_bucket(uuid):
+    auth = authenticate_bucket(uuid)
+    if auth is False:
         return 'Unauthorized access.', 401
+    elif auth is None:
+        return 'Bucket does not exist.', 404
 
     # Get the parameters passed in the POST request.
     data = request.json
@@ -463,8 +474,11 @@ def api_patch_bucket(uuid):
 @app.route('/api/buckets/<uuid>', methods=['POST'])
 def api_post_features(uuid):
     # Check authorization to upload new features.
-    if not authenticate_bucket(uuid):
+    auth = authenticate_bucket(uuid)
+    if auth is False:
         return 'Unauthorized access.', 401
+    elif auth is None:
+        return 'Bucket does not exist.', 404
     fname = request.json['fname']
     short_desc = request.json.get('short_desc', None)
     feature_data = request.json['feature_data']
@@ -505,8 +519,11 @@ def api_get_features(uuid, fname):
 @app.route('/api/buckets/<uuid>/<fname>', methods=['PATCH'])
 def api_patch_features(uuid, fname):
     # Check authorization to change features.
-    if not authenticate_bucket(uuid):
+    auth = authenticate_bucket(uuid)
+    if auth is False:
         return 'Unauthorized access.', 401
+    elif auth is None:
+        return 'Bucket does not exist.', 404
     short_desc = request.json.get('short_desc', None)
     feature_data = request.json['feature_data']
     assert 'mappings' in feature_data
@@ -522,8 +539,11 @@ def api_patch_features(uuid, fname):
 @app.route('/api/buckets/<uuid>/<fname>', methods=['DELETE'])
 def api_delete_features(uuid, fname):
     # Check authorization to change features.
-    if not authenticate_bucket(uuid):
+    auth = authenticate_bucket(uuid)
+    if auth is False:
         return 'Unauthorized access.', 401
+    elif auth is None:
+        return 'Bucket does not exist.', 404
     return delete_features(uuid, fname)
 
 
@@ -657,13 +677,6 @@ def create_bwm_features(patch=False, dry_run=False):
 # Generate custom features for upload
 # -------------------------------------------------------------------------------------------------
 
-def new_token(max_length=None):
-    token = str(uuid.uuid4())
-    if max_length:
-        token = token[:max_length]
-    return token
-
-
 def new_uuid():
     return new_token(18)
 
@@ -691,7 +704,7 @@ def make_features(acronyms, values, mapping='beryl'):
 
 
 class FeatureUploader:
-    def __init__(self, bucket_uuid, short_desc=None, long_desc=None, tree=None):
+    def __init__(self, bucket_uuid, short_desc=None, long_desc=None, tree=None, token=None):
         # Go in user dir and search bucket UUID and token
         # If nothing create new ones and save on disk, and create on the server
         # with post request
@@ -711,15 +724,14 @@ class FeatureUploader:
         self.params = self._load_params()
 
         # Try loading the token associated to the bucket.
-        self.token = self._load_bucket_token(bucket_uuid)
+        saved_token = self._load_bucket_token(bucket_uuid)
 
-        # If there is none, generate a new token, and create the bucket on the
-        # server.
-        if not self.token:
+        # The token can also be passed in the constructor.
+        self.token = token or saved_token or new_token()
+
+        # If there is no saved token, we assume the bucket does not exist and we create it.
+        if not saved_token:
             print(f"Creating new bucket {bucket_uuid}.")
-
-            # Create a new authorization token.
-            self.token = new_token()
 
             # Create the bucket metadata.
             metadata = create_bucket_metadata(
@@ -740,7 +752,19 @@ class FeatureUploader:
                 metadata['long_desc'] = long_desc
             if tree:
                 metadata['tree'] = tree
-            self._patch_bucket(metadata)
+            try:
+                self._patch_bucket(metadata)
+            except RuntimeError as e:
+                # HACK: if the patching failed whereas there is a saved token, it means the
+                # bucket has been destroyed on the server. We receate it here.
+                print(f"Recreating new bucket {bucket_uuid}.")
+
+                # Create the bucket metadata.
+                metadata = create_bucket_metadata(
+                    bucket_uuid, short_desc=short_desc, long_desc=long_desc, tree=tree)
+
+                # Create a new bucket on the server.
+                self._create_new_bucket(bucket_uuid, metadata=metadata)
 
         assert self.token
 
@@ -893,30 +917,31 @@ class FeatureUploader:
         }
 
         # Make a POST request to /api/buckets/<uuid>.
-        # try:
         if method == 'post':
             response = self._post(f'buckets/{self.bucket_uuid}', payload)
         elif method == 'patch':
             response = self._patch(
                 f'buckets/{self.bucket_uuid}/{fname}', payload)
-        # print(response.json()['message'])
-        # except RuntimeError as e:
-        #     print(f"Error while making {method} request: {e}")
 
     def get_buckets_url(self, uuids):
         # NOTE: %2C is a comma encoded
         return f'{FEATURES_BASE_URL}?buckets={uuids.join("%2C")}'
+
+    def patch_bucket(self, **metadata):
+        self._patch_bucket(metadata)
 
     def create_features(self, fname, acronyms, values, mapping='beryl'):
         """Create new features in the bucket."""
         self._post_or_patch_features(
             'post', fname, acronyms, values, mapping=mapping)
 
+    def get_bucket_metadata(self):
+        response = self._get(f'buckets/{self.bucket_uuid}')
+        return response.json()
+
     def list_features(self):
         """Return the list of fnames in the bucket."""
-        response = self._get(f'buckets/{self.bucket_uuid}')
-        fnames = response.json()['features']
-        return fnames
+        return self.get_bucket_metadata()['features']
 
     def get_features(self, fname):
         """Retrieve features in the bucket."""
@@ -943,6 +968,13 @@ class FeatureUploader:
 # -------------------------------------------------------------------------------------------------
 
 class TestApp(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+
+        # Bucket authentication token for tests.
+        random.seed(785119511684651894)
+        cls.token = new_token()
+
     def setUp(self):
         app.config['TESTING'] = True
         self.client = app.test_client()
@@ -1029,6 +1061,7 @@ class TestApp(unittest.TestCase):
         payload = {'fname': fname, 'feature_data': data, 'short_desc': short_desc}
         # NOTE: fail if no authorization header.
         response = self.client.post(f'/api/buckets/{uuid}', json=payload)
+        print(response.text)
         self.assertEqual(response.status_code, 401)
         response = self.client.post(f'/api/buckets/{uuid}', json=payload, headers=headers)
         self.ok(response)
@@ -1077,17 +1110,27 @@ class TestApp(unittest.TestCase):
 
         acronyms = ['CP', 'SUB']
         values = [42, 420]
-        tree = {'dir': {'fname': 'my custom features'}}
+        tree = {'dir': {'my custom features': fname}}
 
-        up = FeatureUploader(bucket_uuid, tree=tree)
+        # Create or load the bucket.
+        up = FeatureUploader(bucket_uuid, tree=tree, token=self.token)
+
+        # Create the features.
         if not up.features_exist(fname):
             up.create_features(fname, acronyms, values)
 
+        # Patch the bucket metadata.
+        tree['duplicate features'] = fname
+        up.patch_bucket(tree=tree)
+
+        # List all features in the bucket.
         print(up.list_features())
 
+        # Retrieve one feature.
         features = up.get_features(fname)
         print(features)
 
+        # Patch the features.
         values[1] = 10
         up.patch_features(fname, acronyms, values)
 
