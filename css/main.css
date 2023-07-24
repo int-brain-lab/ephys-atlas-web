@@ -316,7 +316,7 @@ body.waiting * {
     display: grid;
     grid-template-columns: var(--left-panel-width) 1fr 1fr 1fr 1fr;
     /*  calc(50vh - 60px) calc(50vh - 60px) */
-    grid-template-rows: 80px max-content min-content 40px;
+    grid-template-rows: 80px max-content auto 40px;
     height: 100%;
 }
 
