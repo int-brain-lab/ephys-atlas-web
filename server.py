@@ -511,7 +511,6 @@ def api_get_features(uuid, fname):
     download = request.args.get('download', '') or ''
     if download.isdigit():
         download = int(download)
-    print(download)
     if download:
         headers['Content-Disposition'] = f'attachment; filename={fname}.json'
     return Response(text, headers=headers)

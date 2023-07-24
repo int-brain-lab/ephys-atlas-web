@@ -1,4 +1,4 @@
-export { Model };
+export { Model, URLS };
 
 import { Loader } from "./splash.js";
 

@@ -1,7 +1,8 @@
 export { Feature };
 
 import { DEFAULT_BUCKET } from "./state.js";
-import { removeFromArray, removeClassChildren } from "./utils.js";
+import { URLS } from "./model.js";
+import { downloadBinaryFile, removeFromArray, removeClassChildren } from "./utils.js";
 
 
 
@@ -162,5 +163,15 @@ class Feature {
         this.state.fname = fname;
         this.tree.select(fname);
         this.dispatcher.feature(this, fname);
+    }
+
+    async download() {
+        if (!this.state.bucket || !this.state.fname) {
+            // TODO: what should the DOWNLOAD button do when no feature is selected?
+            return;
+        }
+        let url = URLS['features'](this.state.bucket, this.state.fname) + "?download=1";
+        let filename = `${this.state.fname}.json`;
+        downloadBinaryFile(url, filename);
     }
 };

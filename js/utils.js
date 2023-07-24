@@ -267,3 +267,26 @@ export async function downloadJSON(url) {
     }
     return null;
 }
+
+
+
+export function downloadBinaryFile(url, filename) {
+    // Create a hidden anchor element
+    const anchor = document.createElement('a');
+    anchor.style.display = 'none';
+
+    // Set the URL of the file to download
+    anchor.href = url;
+
+    // Set the 'download' attribute with the desired file name
+    anchor.download = filename;
+
+    // Append the anchor element to the document
+    document.body.appendChild(anchor);
+
+    // Simulate a click on the anchor element to start the download
+    anchor.click();
+
+    // Clean up: remove the anchor element
+    document.body.removeChild(anchor);
+}

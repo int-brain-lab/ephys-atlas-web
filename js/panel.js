@@ -86,6 +86,17 @@ class Panel {
         this.icmapmax.value = cmapmax;
     }
 
+    share() {
+        let url = window.location.href;
+
+        // Copy the URL to the clipboard.
+        navigator.clipboard.writeText(url);
+
+        // Feedback.
+        this.ishare.innerHTML = "copied!";
+        setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+    }
+
     // if (this.unity)
     //     this.unity.update();
     // }
@@ -171,15 +182,7 @@ class Panel {
 
     setupShareButton() {
         this.ishare.addEventListener('click', (e) => {
-            // let url = this.state.toURL();
-            let url = window.location.href;
-
-            // Copy the URL to the clipboard.
-            navigator.clipboard.writeText(url);
-
-            // Feedback.
-            this.ishare.innerHTML = "copied!";
-            setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+            this.share();
         });
     }
 
