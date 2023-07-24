@@ -362,17 +362,17 @@ body.waiting * {
 /* BOTTOM ROW */
 
 #container #svg-swanson-container {
-    grid-column: 2 / 4;
+    grid-column: 5 / 6;
     grid-row: 3 / 4;
 }
 
 #container #unity-container {
-    grid-column: 4 / 5;
+    grid-column: 3 / 5;
     grid-row: 3 / 4;
 }
 
 #container #svg-top-container {
-    grid-column: 5 / 6;
+    grid-column: 2 / 3;
     grid-row: 3 / 4;
 }
 
