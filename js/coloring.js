@@ -48,6 +48,7 @@ class Coloring {
     }
 
     async buildColors() {
+        this.dispatcher.spinning(this, true);
 
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
@@ -57,7 +58,10 @@ class Coloring {
         this.clear();
 
         // Remove the feature colors when deselecting a feature.
-        if (!this.state.fname) return;
+        if (!this.state.fname) {
+            this.dispatcher.spinning(this, false);
+            return;
+        }
 
         // Get the state information.
         let mapping = this.state.mapping;
@@ -115,6 +119,8 @@ class Coloring {
             // Insert the SVG CSS style with the color.
             this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* ${acronym}: ${value} */\n`);
         }
+
+        this.dispatcher.spinning(this, false);
     }
 };
 

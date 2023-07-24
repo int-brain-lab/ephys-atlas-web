@@ -13,6 +13,7 @@ import { Selection } from "./selection.js";
 import { Selector } from "./selector.js";
 import { Share } from "./share.js";
 import { Slice } from "./slice.js";
+import { Spinner } from "./spinner.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
 import { Tooltip } from "./tooltip.js";
@@ -50,6 +51,7 @@ class App {
         this.selector = new Selector(this.state, this.model, this.dispatcher);
         this.share = new Share(this.state, this.model, this.dispatcher);
         this.slice = new Slice(this.state, this.model, this.dispatcher);
+        this.spinner = new Spinner(this.state, this.model, this.dispatcher);
         this.tooltip = new Tooltip(this.state, this.model, this.dispatcher);
 
         // this.unity = new Unity(this.splash, this.model, this.state, this.region, this.feature);

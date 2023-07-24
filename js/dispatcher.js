@@ -67,6 +67,10 @@ class Dispatcher {
         this.emit("search", source, { "text": text });
     }
 
+    spinning(source, isSpinning) {
+        this.emit("spinning", source, { "isSpinning": isSpinning });
+    }
+
     feature(source, fname) {
         // when a feature is selected
         this.emit("feature", source, { "fname": fname });
