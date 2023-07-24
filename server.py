@@ -58,14 +58,6 @@ def response_file_not_found(path):
     return f'File not found: {path}', 404
 
 
-def response_json_file(path):
-    if not path.exists():
-        return response_file_not_found(path)
-    with open(path, 'r') as f:
-        text = f.read()
-    return Response(text, headers={'Content-Type': 'application/json'})
-
-
 # NOTE: obsolete
 def delete_old_files(dir_path=FEATURES_DIR):
 
@@ -506,7 +498,23 @@ def api_get_features(uuid, fname):
     update_bucket_metadata(uuid)
 
     # Return the contents of the features file.
-    return response_json_file(features_path)
+
+    if not features_path.exists():
+        return response_file_not_found(features_path)
+    with open(features_path, 'r') as f:
+        text = f.read()
+
+    # HTTP headers
+    headers = {'Content-Type': 'application/json'}
+
+    # Special HTTP header if we want to download the JSON file instead of displaying it.
+    download = request.args.get('download', '') or ''
+    if download.isdigit():
+        download = int(download)
+    print(download)
+    if download:
+        headers['Content-Disposition'] = f'attachment; filename={fname}.json'
+    return Response(text, headers=headers)
 
 
 # -------------------------------------------------------------------------------------------------
