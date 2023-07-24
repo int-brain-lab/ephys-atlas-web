@@ -207,6 +207,11 @@ body {
     font-weight: bold;
 }
 
+#splash .description {
+    font-size: 18pt;
+    font-weight: normal;
+}
+
 
 
 /*************************************************************************************************/
