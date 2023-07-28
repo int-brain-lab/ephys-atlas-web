@@ -686,21 +686,38 @@ def new_uuid():
     return new_token(18)
 
 
-def make_features(acronyms, values, mapping='beryl'):
-    assert mapping == 'beryl', "TODO: Other mappings not yet implemented"
-    acronyms = np.asarray(acronyms)
-    # Convert acronyms to atlas ids.
-    from ibllib.atlas.regions import BrainRegions
-    br = BrainRegions()
-    ina = np.in1d(acronyms, br.acronym)
-    if not np.all(ina):
-        ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
-        raise ValueError(
-            f"The following acronyms do not belong to the mapping: {ac}")
-    aids = np.vstack(br.acronym2index(acronyms)[1])[:, 1]
-    assert len(aids) == len(acronyms)
+def make_features(acronyms, values, hemisphere=None):
+    from tools.mappings import process_data
+    return process_data(acronyms, values, hemisphere=hemisphere)
+    # assert mapping == 'beryl', "TODO: Other mappings not yet implemented"
+    # acronyms = np.asarray(acronyms)
+    # # Convert acronyms to atlas ids.
+    # from ibllib.atlas.regions import BrainRegions
+    # br = BrainRegions()
+    # ina = np.in1d(acronyms, br.acronym)
+    # if not np.all(ina):
+    #     ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
+    #     raise ValueError(
+    #         f"The following acronyms do not belong to the mapping: {ac}")
+    # aids = np.vstack(br.acronym2index(acronyms)[1])[:, 1]
+    # assert len(aids) == len(acronyms)
 
     # Compute the mean.
+    # m = np.mean(values)
+    #
+    # return {
+    #     'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
+    #     'statistics': {
+    #         'mean': {
+    #             'min': values.min(),
+    #             'max': values.max(),
+    #             'mean': values.mean(),
+    #             'median': np.median(values)
+    #         }
+    #     },
+    # }
+
+def feature_dict(aids, values):
     m = np.mean(values)
 
     return {
@@ -888,6 +905,7 @@ class FeatureUploader:
         data = {'uuid': bucket_uuid, 'metadata': metadata}
         endpoint = f'/buckets'
         url = self._url(endpoint)
+        print(url)
         gk = self._get_global_key()
         response = requests.post(url, json=data, headers=self._headers(gk), verify=not DEBUG)
         if response.status_code != 200:
@@ -906,25 +924,27 @@ class FeatureUploader:
     # ---------------------------------------------------------------------------------------------
 
     def _post_or_patch_features(
-            self, method, fname, acronyms, values, short_desc=None, mapping='beryl'):
+            self, method, fname, acronyms, values, short_desc=None, hemisphere=None):
 
         assert method in ('post', 'patch')
         assert fname
-        assert mapping
+        # assert mapping
         assert acronyms is not None
         assert values is not None
         assert len(acronyms) == len(values)
 
         # Prepare the JSON payload.
-        data = make_features(acronyms, values, mapping=mapping)
-        assert 'data' in data
-        assert 'statistics' in data
+        data = make_features(acronyms, values, hemisphere=hemisphere)
+        # assert 'data' in data
+        # assert 'statistics' in data
         payload = {
             'fname': fname,
             'short_desc': short_desc,
             'feature_data': {
                 'mappings': {
-                    'beryl': data
+                    'allen': feature_dict(data['allen']['index'], data['allen']['values']),
+                    'beryl': feature_dict(data['beryl']['index'], data['beryl']['values']),
+                    'cosmos': feature_dict(data['cosmos']['index'], data['cosmos']['values']),
                 }
             }
         }
@@ -945,10 +965,10 @@ class FeatureUploader:
     def patch_bucket(self, **metadata):
         self._patch_bucket(metadata)
 
-    def create_features(self, fname, acronyms, values, mapping='beryl'):
+    def create_features(self, fname, acronyms, values, hemisphere=None):
         """Create new features in the bucket."""
         self._post_or_patch_features(
-            'post', fname, acronyms, values, mapping=mapping)
+            'post', fname, acronyms, values, hemisphere=hemisphere)
 
     def get_bucket_metadata(self):
         response = self._get(f'buckets/{self.bucket_uuid}')
