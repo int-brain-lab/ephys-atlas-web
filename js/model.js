@@ -90,11 +90,9 @@ class Model {
         for (let relidx in regions) {
             let region = regions[relidx];
             let regionIdx = region['idx'];
-            if (region.atlas_id <= 0)
-                kept[regionIdx] = region;
+            kept[regionIdx] = region;
         }
         // regions = Object.values(regions).filter(region => region.atlas_id >= 0);
-
         console.assert(kept);
         console.assert(Object.keys(kept).length > 0);
         return kept;

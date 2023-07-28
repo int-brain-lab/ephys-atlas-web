@@ -73,6 +73,11 @@ class Coloring {
         // Load the colormap.
         let colors = this.model.getColormap(this.state.cmap);
 
+        // Figure out what hemisphere values we have
+        let feature_max = Math.max.apply(null,Object.keys(features['data']));
+        let feature_min = Math.min.apply(null,Object.keys(features['data']));
+        let idx_lr = 1327
+
         // Go through all regions.
         for (let regionIdx in regions) {
             let region = regions[regionIdx];
@@ -81,7 +86,9 @@ class Coloring {
             let name = region['name'];
 
             // Skip the right hemisphere.
-            if (!name.includes('(left')) continue;
+            if (feature_max <= idx_lr & name.includes('left')) continue;
+
+            if (feature_min > idx_lr & !name.includes('left')) continue;
 
             let acronym = region['acronym'];
             let value = features ? features['data'][regionIdx] : null;
