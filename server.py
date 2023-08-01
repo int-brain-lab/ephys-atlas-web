@@ -687,38 +687,12 @@ def new_uuid():
 
 
 def make_features(acronyms, values, hemisphere=None):
-    from tools.mappings import process_data
-    return process_data(acronyms, values, hemisphere=hemisphere)
-    # assert mapping == 'beryl', "TODO: Other mappings not yet implemented"
-    # acronyms = np.asarray(acronyms)
-    # # Convert acronyms to atlas ids.
-    # from ibllib.atlas.regions import BrainRegions
-    # br = BrainRegions()
-    # ina = np.in1d(acronyms, br.acronym)
-    # if not np.all(ina):
-    #     ac = ', '.join(acronyms[np.nonzero(~ina)[0]])
-    #     raise ValueError(
-    #         f"The following acronyms do not belong to the mapping: {ac}")
-    # aids = np.vstack(br.acronym2index(acronyms)[1])[:, 1]
-    # assert len(aids) == len(acronyms)
+    from tools.mappings import RegionMapper
+    mapper = RegionMapper(acronyms, values, hemisphere=hemisphere)
+    return mapper.map_regions()
 
-    # Compute the mean.
-    # m = np.mean(values)
-    #
-    # return {
-    #     'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
-    #     'statistics': {
-    #         'mean': {
-    #             'min': values.min(),
-    #             'max': values.max(),
-    #             'mean': values.mean(),
-    #             'median': np.median(values)
-    #         }
-    #     },
-    # }
 
 def feature_dict(aids, values):
-    m = np.mean(values)
 
     return {
         'data': {int(aid): {'mean': float(value)} for aid, value in zip(aids, values)},
