@@ -77,6 +77,10 @@ def get_info_dataframe(save=True):
     return df
 
 
+def read_region_info():
+    return pd.read_parquet(Path(__file__).parent.joinpath('region_info.pqt'))
+
+
 class RegionMapper:
     def __init__(self, regions, values, hemisphere=None, map_nodes=False):
         """
@@ -112,7 +116,7 @@ class RegionMapper:
             assert self.hemisphere, 'When providing acronyms must pass in a hemisphere to display on'
 
         if map_nodes:
-            self.regions = self.map_nodes_to_leaves(self.regions)
+            self.regions = self.map_nodes_to_leaves()
 
     def _validate_regions(self):
         """
@@ -249,12 +253,14 @@ class RegionMapper:
 
         index = np.array([], dtype=int)
         vals = np.array([])
-        index = np.r_[index, np.vstack(self.br.acronym2index(np.array(list(allen.keys())),
-                                                             hemisphere=hemisphere)[1])[:, 0]]
-        vals = np.r_[vals, np.array(list(allen.values()))]
-        index = np.r_[index, np.vstack(self.br.acronym2index(np.array(list(swanson.keys())),
-                                                             hemisphere=hemisphere)[1])[:, 0]]
-        vals = np.r_[vals, np.array(list(swanson.values()))]
+        if len(allen) > 0:
+            index = np.r_[index, np.vstack(self.br.acronym2index(np.array(list(allen.keys())),
+                                                                 hemisphere=hemisphere)[1])[:, 0]]
+            vals = np.r_[vals, np.array(list(allen.values()))]
+        if len(swanson) > 0:
+            index = np.r_[index, np.vstack(self.br.acronym2index(np.array(list(swanson.keys())),
+                                                                 hemisphere=hemisphere)[1])[:, 0]]
+            vals = np.r_[vals, np.array(list(swanson.values()))]
 
         # Here we check if we have the duplicate regions in Allen and Swanson. If we do and the values
         # are not the same Allen takes priority

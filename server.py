@@ -206,6 +206,13 @@ def update_bucket_metadata(uuid, metadata=None):
     return metadata_orig
 
 
+def list_buckets():
+    param_path = Path.home() / '.ibl' / 'custom_features.json'
+    with open(param_path, 'r') as f:
+        info = json.load(f)
+    return list(info['buckets'].keys())
+
+
 # -------------------------------------------------------------------------------------------------
 # Authorization
 # -------------------------------------------------------------------------------------------------
@@ -686,9 +693,9 @@ def new_uuid():
     return new_token(18)
 
 
-def make_features(acronyms, values, hemisphere=None):
+def make_features(acronyms, values, hemisphere=None, map_nodes=False):
     from tools.mappings import RegionMapper
-    mapper = RegionMapper(acronyms, values, hemisphere=hemisphere)
+    mapper = RegionMapper(acronyms, values, hemisphere=hemisphere, map_nodes=map_nodes)
     return mapper.map_regions()
 
 
@@ -807,6 +814,13 @@ class FeatureUploader:
             raise RuntimeError(response.text)
         return response
 
+    def _delete(self, endpoint):
+        url = self._url(endpoint)
+        response = requests.delete(url, headers=self._headers(), verify=not DEBUG)
+        if response.status_code != 200:
+            raise RuntimeError(response.text)
+        return response
+
     # Params
     # ---------------------------------------------------------------------------------------------
 
@@ -898,7 +912,7 @@ class FeatureUploader:
     # ---------------------------------------------------------------------------------------------
 
     def _post_or_patch_features(
-            self, method, fname, acronyms, values, short_desc=None, hemisphere=None):
+            self, method, fname, acronyms, values, short_desc=None, hemisphere=None, map_nodes=False):
 
         assert method in ('post', 'patch')
         assert fname
@@ -908,7 +922,7 @@ class FeatureUploader:
         assert len(acronyms) == len(values)
 
         # Prepare the JSON payload.
-        data = make_features(acronyms, values, hemisphere=hemisphere)
+        data = make_features(acronyms, values, hemisphere=hemisphere, map_nodes=map_nodes)
         # assert 'data' in data
         # assert 'statistics' in data
         payload = {
@@ -939,10 +953,10 @@ class FeatureUploader:
     def patch_bucket(self, **metadata):
         self._patch_bucket(metadata)
 
-    def create_features(self, fname, acronyms, values, hemisphere=None):
+    def create_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
         """Create new features in the bucket."""
         self._post_or_patch_features(
-            'post', fname, acronyms, values, hemisphere=hemisphere)
+            'post', fname, acronyms, values, short_desc=desc, hemisphere=hemisphere, map_nodes=map_nodes)
 
     def get_bucket_metadata(self):
         response = self._get(f'buckets/{self.bucket_uuid}')
@@ -966,11 +980,13 @@ class FeatureUploader:
             return False
         return True
 
-    def patch_features(self, fname, acronyms, values, mapping='beryl'):
+    def patch_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
         """Update existing features in the bucket."""
         self._post_or_patch_features(
-            'patch', fname, acronyms, values, mapping=mapping)
+            'patch', fname, acronyms, values, short_desc=desc, hemisphere=hemisphere, map_nodes=map_nodes)
 
+    def delete_features(self, fname):
+        self._delete(f'/buckets/{self.bucket_uuid}/{fname}')
 
 # -------------------------------------------------------------------------------------------------
 # Tests
