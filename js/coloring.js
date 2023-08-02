@@ -87,8 +87,8 @@ class Coloring {
         let colors = this.model.getColormap(this.state.cmap);
 
         // Figure out what hemisphere values we have
-        let feature_max = Math.max.apply(null, Object.keys(features['data']));
-        let feature_min = Math.min.apply(null, Object.keys(features['data']));
+        let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
+        let feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
         let idx_lr = 1327; // Below idx_lr: right hemisphere. Above: left hemisphere.
         let hasLeft = true; // whether there is at least a left hemisphere region with a value
         let hasRight = true; // whether there is at least a left hemisphere region with a value

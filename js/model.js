@@ -166,7 +166,9 @@ class Model {
         let g = loader.get("feature_data");
         if (g) {
             let data = g["mappings"][mapping];
-            console.assert(data);
+            if (!data) {
+                console.error(`missing data for mapping ${mapping}`);
+            }
             return data;
         }
         return null;
