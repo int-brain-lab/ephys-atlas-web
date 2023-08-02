@@ -16,7 +16,7 @@ class FeatureTree {
     }
 
     setFeatures(features, tree) {
-        if (!tree) {
+        if (!tree || tree.length == 0) {
             // Convert a flat array into a flat tree.
             tree = Object.keys(features).reduce((obj, key) => { obj[key] = key; return obj; }, {});
         }

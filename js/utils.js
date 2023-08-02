@@ -55,7 +55,7 @@ export function normalizeValue(value, vmin, vmax) {
     console.assert(!isNaN(value));
     console.assert(value !== undefined);
 
-    if (vmin >= vmax) return vmin;
+    if (vmin >= vmax) return 100;
     console.assert(vmin <= vmax);
 
     value = clamp(value, vmin, vmax);

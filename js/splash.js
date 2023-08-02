@@ -74,6 +74,9 @@ class Loader {
         this.url = url;
         this.process = process; // a function
 
+        this._queue = [];
+        this._status = "pending"; // then "downloading" then "done"
+
         // Splash progress for the different steps.
         this.downloadSplash = downloadSplash; // a number
         this.processSplash = processSplash; // a number
@@ -85,11 +88,18 @@ class Loader {
     }
 
     async start() {
+        // NOTE: this avoids multiple downloads when there are concurrent calls to this function
+        // for example when multiple components call "model.getFeatures()".
+        if (this._status == "downloading") {
+            return new Promise((resolve) => {
+                this._queue.push(resolve);
+            });
+        }
         let n = Object.keys(this.items).length;
-        if (n > 0) return;
 
-        console.debug(`downloading ${this.url}...`)
+        console.debug(`loader downloading ${this.url}...`)
 
+        this._status = "downloading";
         let dl = await downloadJSON(this.url);
         this.splash.add(this.downloadSplash);
 
@@ -110,6 +120,12 @@ class Loader {
 
             this.splash.add(this.storeSplash);
             console.debug(`done adding items.`);
+        }
+
+        this._status = "done";
+        while (this._queue.length > 0) {
+            const resolveFn = this._queue.shift();
+            resolveFn();
         }
     }
 
