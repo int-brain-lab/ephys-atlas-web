@@ -51,7 +51,7 @@ def get_info_dataframe(save=True):
             if np.sum(a) > 0:
                 data['node_and_leaf'].append(desc['acronym'][0])
 
-    data['node_and_leaf_acronyms'] = {d: d+'-un' for d in data['node_and_leaf']}
+    data['node_and_leaf_acronyms'] = {d: d+'-lf' for d in data['node_and_leaf']}
     data['node_and_leaf_levels'] = {d: br.get(br.acronym2id(d))['level'][0] + 1 for d in data['node_and_leaf']}
     # 5000 -> 5028 are not allen ids so we can assign these to the extra regions
     data['node_and_leaf_ids'] = {d: 5000 + i for i, d in enumerate(data['node_and_leaf'])}
@@ -79,10 +79,20 @@ def get_info_dataframe(save=True):
 
 class RegionMapper:
     def __init__(self, regions, values, hemisphere=None, map_nodes=False):
+        """
+        Class to map array of regions and values to Allen, Swanson, Beryl (IBL) and Cosmos (IBL) mappings
+        :param regions: np.array of Allen acronyms or atlas ids
+        :param values: np.array of values corresponding to each Allen region
+        :param hemisphere: When providing acronyms, the hemisphere of the values must be give, either 'left' or 'right'
+        :param map_nodes: Some Allen regions act as both a node and a leaf in the Allen structure tree (e.g HY, TH), i.e
+        they act as parents to other regions but also contain voxels in the annotation volume. If map_nodes=False, these
+        regions are considered as nodes in the tree and their value will be propagated down the hierachy. If map_nodes=True,
+        they will be considered as a leaf node underneath their region.
+        """
         self.br = BrainRegions()
         self.df = pd.read_parquet(Path(__file__).parent.joinpath('region_info.pqt'))
-        self.regions = np.asarray(regions)
-        self.values = np.asarray(values)
+        self.regions = np.array(regions)
+        self.values = np.array(values)
         self.hemisphere = hemisphere
 
         assert self.regions.size == self.values.size, "Regions and values must have the same size"
@@ -105,18 +115,30 @@ class RegionMapper:
             self.regions = self.map_nodes_to_leaves(self.regions)
 
     def _validate_regions(self):
+        """
+        Checks whether the regions provided are Allen acronyms or atlas ids. Ensures all regions given are
+        contained in the Allen structure tree
+        :return: bool, whether regions are acronyms or not
+        """
         if np.issubdtype(self.regions.dtype, np.str_) or np.issubdtype(self.regions.dtype, object):
             isin, _ = ismember(self.regions, np.r_[self.br.acronym[:self.br.n_lr], self.nl_map_acronyms])
             assert all(isin), f'The acronyms: {", ".join(self.regions[~isin])}, are not in the Allen annotation tree'
             is_acronym = True
         else:
             isin, _ = ismember(self.regions, np.r_[self.br.id, self.nl_map_ids])
-            assert all(isin), f'The atlas ids: {", ".join([str(s) for s in self.regions[~isin]])}, are not in the Allen annotation tree'
+            assert all(isin), f'The atlas ids: {", ".join([str(s) for s in self.regions[~isin]])}, ' \
+                              f'are not in the Allen annotation tree'
             is_acronym = False
 
         return is_acronym
 
     def _get_node_and_leaf_maps(self):
+        """
+        Computes set of mappings for the regions that act both as a node and a leaf. Contains forward mapping
+        between the regions (e.g) and their newly assigned leaf acronyms (e.g HY-lf), the inverse of this mapping
+        and also the mapping between the atlas ids, which are lateralised.
+        :return:
+        """
         forward_map = {}
         inverse_map = {}
         inverse_map_ids = {}
@@ -131,6 +153,13 @@ class RegionMapper:
         return forward_map, inverse_map, inverse_map_ids
 
     def _navigate_tree(self, acronym, tree, all_acronyms):
+        """
+        For a given acronym constructs the hierachy tree of all it's children
+        :param acronym: acronym to construct tree from
+        :param tree: tree dict to add information to
+        :param all_acronyms: list of acronyms to consider when constructing tree
+        :return:
+        """
 
         exists = tree.get(acronym, None)
         if exists is not None:
@@ -157,29 +186,36 @@ class RegionMapper:
 
         return tree
 
-    def map_nodes_to_leaves(self, regions):
+    def map_nodes_to_leaves(self):
+        """
+        For the regions that act both as a node and a leaf, this function converts the regions from nodes to leaves.
+        If a conversion is already detected, the regions will be returned unchanged
+        :return:
+        """
         if self.is_acronym:
-            regions = np.array(self.regions, dtype=object)
-            isin, _ = ismember(regions, self.nl_map_acronyms)
+            isin, _ = ismember(self.regions, self.nl_map_acronyms)
             if np.sum(isin) > 0:
                 print('Looks like we have already remapped')
             else:
-                isin, iloc = ismember(regions, self.nl_acronyms)
+                isin, iloc = ismember(self.regions, self.nl_acronyms)
                 if np.sum(isin) > 0:
-                    regions[isin] = self.nl_map_acronyms[iloc]
+                    self.regions[isin] = self.nl_map_acronyms[iloc]
         else:
-            regions = np.array(regions)
-            isin, _ = ismember(regions, self.nl_map_ids)
+            isin, _ = ismember(self.regions, self.nl_map_ids)
             if np.sum(isin) > 0:
                 print('Looks like we have already remapped')
             else:
-                isin, iloc = ismember(regions, self.nl_ids)
+                isin, iloc = ismember(self.regions, self.nl_ids)
                 if np.sum(isin) > 0:
-                    regions[isin] = self.nl_map_ids[iloc]
+                    self.regions[isin] = self.nl_map_ids[iloc]
 
-        return regions
+        return self.regions
 
     def map_regions(self):
+        """
+        Main function to call to map the regions and values to the Allen, Swanson Beryl and Cosmos mappings
+        :return: dict containing data for Allen, Beryl and Cosmos mappings (swanson info is incorporates in each mapping)
+        """
         if self.is_acronym:
             index_a, values_a = self.map_acronyms_to_allen()
             index_b, values_b = self.map_to_beryl()
@@ -189,7 +225,7 @@ class RegionMapper:
             index_b, values_b = self.map_to_beryl()
             index_c, values_c = self.map_to_cosmos()
 
-        data = {}
+        data = dict()
         data['allen'] = {'index': index_a, 'values': values_a}
         data['beryl'] = {'index': index_b, 'values': values_b}
         data['cosmos'] = {'index': index_c, 'values': values_c}
@@ -197,6 +233,14 @@ class RegionMapper:
         return data
 
     def map_acronyms_to_allen(self, regions=None, values=None, hemisphere=None):
+        """
+        Maps a list of acronyms to Allen regions. If regions and values not provided,
+        uses region and value data stored in the class.
+        :param regions: np.array of allen acronyms
+        :param values: np.array of values associated to each acronym
+        :param hemisphere: hemisphere of the acronyms
+        :return: np.array of Allen index, np.array of values for each index
+        """
         hemisphere = self.hemisphere if hemisphere is None else hemisphere
         regions = self.regions if regions is None else regions
         values = self.values if values is None else values
@@ -218,8 +262,8 @@ class RegionMapper:
         duplicates = counts > 1
         for u in un[duplicates]:
             if swanson[self.br.acronym[int(u)]] != allen[self.br.acronym[int(u)]]:
-                print('Values are not the same')
-                # Not sure this is doing what it should be doing
+                print(f'Values for {self.br.acronym[int(u)]} are not the same in Allen and Swanson, will'
+                      f'take Allen value')
                 swanson[self.br.acronym[int(u)]] = allen[self.br.acronym[int(u)]]
 
         index = index[ind]
@@ -228,6 +272,11 @@ class RegionMapper:
         return index, vals
 
     def map_ids_to_allen(self):
+        """
+        Maps array of atlas_ids to Allen regions. Uses region and value data stored in the class.
+        Atlas ids are split by hemisphere, left < 0, right >=0
+        :return: np.array of Allen index, np.array of values for each index
+        """
         index_lr = np.array([], dtype=int)
         values_lr = np.array([])
         for idx, hem in zip([self.regions < 0, self.regions >= 0], ['left', 'right']):
@@ -248,20 +297,45 @@ class RegionMapper:
         return index_lr, values_lr
 
     def _map_to_allen(self, regions, values):
-        _, allen = self.navigate_regions(regions, values, mapping='allen')
+        """
+        Maps an array of acronyms and values to the Allen mapping
+        :param regions: array of Allen acronyms
+        :param values: array of values corresponding to each acronym
+        :return:
+        """
+        _, allen = self.navigate_regions(regions, values, mapping='Allen')
         return allen
 
     def _map_to_swanson(self, regions, values):
-        _, swanson = self.navigate_regions(regions, values, mapping='swanson')
+        """
+        Maps an array of acronyms and values to the Swanson mapping
+        :param regions: array of Allen acronyms
+        :param values: array of values corresponding to each acronym
+        :return:
+        """
+        _, swanson = self.navigate_regions(regions, values, mapping='Swanson')
         return swanson
 
     def map_to_beryl(self):
+        """
+        Maps the region and value data in the class to the Cosmos mapping
+        :return:
+        """
         return self._map_to_mapping('Beryl-lr')
 
     def map_to_cosmos(self):
+        """
+        Maps the region and value data in the class to the Cosmos mapping
+        :return:
+        """
         return self._map_to_mapping('Cosmos-lr')
 
     def _map_to_mapping(self, mapping):
+        """
+        Applies a given mapping to the region and value data in the class
+        :param mapping: mapping to apply, 'Beryl-lr', 'Cosmos-lr'
+        :return:
+        """
 
         if self.is_acronym:
             isin, iloc = ismember(self.regions, self.nl_map_acronyms)
@@ -295,8 +369,15 @@ class RegionMapper:
 
         return mapped_vals.index.values, mapped_vals.vals.values
 
-    def navigate_regions(self, acronyms, values, mapping='allen'):
-
+    def navigate_regions(self, acronyms, values, mapping='Allen'):
+        """
+        Function to map acronyms and values to the Allen or Swanson mappings
+        :param acronyms: array of allen acronyms
+        :param values: array of values corresponding to each acronym
+        :param mapping: mapping to use 'Allen' or 'Swanson'
+        :return:
+        """
+        mapping = str.lower(mapping)
         volume_acronyms = self.df[self.df[f'in_{mapping}'] == 1]['acronyms'].values
         df_end = self.df[~self.df[f'end_nodes_{mapping}'].isna()]
         end_nodes = {}
@@ -386,7 +467,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['MOp1', 'MOs5'])
         values = np.array([1, 2])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
         # 1. json_all to be the same as json_final as both regions are in volume
         assert json_all == json_final
         # 2. json_final and json_all to contain two regions
@@ -399,7 +480,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['MO', 'MOp5', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
         # 1. json_all to contain additional keys MO, MO1, MO2/3, MO5, MO6a and MO6b compared to json_final as these
         #    regions aren't in the volume
         compare = np.array(['MO', 'MO1', 'MO2/3', 'MO5', 'MO6a', 'MO6b'])
@@ -447,7 +528,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['FF', 'A13', 'PSTN', 'HY'])
         values = np.array([1, 2, 3, 4])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
         # 1. Check that ZI has been given the average value of FF and A13
         assert json_all['ZI'] == np.mean(values[:2])
         # 2. Check that LZ has been given the mean value of ZI and PSTN, note not of PSTN, FF and A13
@@ -461,45 +542,45 @@ class TestNavigateRegions(unittest.TestCase):
         assert all([json_all[a] == 4 for a in acr])
 
         # Test 5
-        # Now we need to look at the case where we have HY-un and this behaviour
-        acronyms = np.array(['HY', 'HY-un', 'ME'])
+        # Now we need to look at the case where we have HY-lf and this behaviour
+        acronyms = np.array(['HY', 'HY-lf', 'ME'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
         # 1. In json_all, we expect each to have its own value with same name
         assert json_all['HY'] == 1
-        assert json_all['HY-un'] == 2
+        assert json_all['HY-lf'] == 2
         assert json_all['ME'] == 3
-        # 2. In json_final we expect HY to be replaced by the value for HY-un
-        assert json_final['HY'] == json_all['HY-un'] == 2
+        # 2. In json_final we expect HY to be replaced by the value for HY-lf
+        assert json_final['HY'] == json_all['HY-lf'] == 2
         # 3. We expect all the other children in the tree to take the value for HY
         acr = self.br.descendants(self.br.acronym2id('PVR'))['acronym']
         assert all([json_all[a] == 1 for a in acr])
 
         # Test 6
-        acronyms = np.array(['HY-un', 'ZI-un'])
+        acronyms = np.array(['HY-lf', 'ZI-lf'])
         values = np.array([1, 2])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
         # 1. In json_all they are just given the values
-        assert json_all['HY-un'] == 1
-        assert json_all['ZI-un'] == 2
+        assert json_all['HY-lf'] == 1
+        assert json_all['ZI-lf'] == 2
         # 2. In json_final they are moved to HY and ZI respectively
-        assert json_final.get('HY-un', None) is None
-        assert json_final.get('ZI-un', None) is None
-        assert json_final['HY'] == json_all['HY-un'] == 1
-        assert json_final['ZI'] == json_all['ZI-un'] == 2
+        assert json_final.get('HY-lf', None) is None
+        assert json_final.get('ZI-lf', None) is None
+        assert json_final['HY'] == json_all['HY-lf'] == 1
+        assert json_final['ZI'] == json_all['ZI-lf'] == 2
 
         # Test 7
-        acronyms = np.array(['FF', 'A13', 'ZI-un', 'HY', 'PSTN'])
+        acronyms = np.array(['FF', 'A13', 'ZI-lf', 'HY', 'PSTN'])
         values = np.array([1, 2, 3, 4, 5])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
-        # 1. In json_all ZI should have mean value of FF, A13 and ZI-un
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
+        # 1. In json_all ZI should have mean value of FF, A13 and ZI-lf
         assert json_all['ZI'] == np.mean(values[:3])
         # 2. In json_all LZ should have mean value of ZI and PSTN
         assert json_all['LZ'] == np.mean(np.r_[np.mean(values[:3]), 5])
-        # 3. In json_final ZI should have value of ZI-un, FF should have value of FF
+        # 3. In json_final ZI should have value of ZI-lf, FF should have value of FF
         assert json_final['ZI'] == 3
         assert json_final['FF'] == 1
         # 4. In json_final LHA should have value of LZ in json_all
@@ -512,7 +593,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['PVHap', 'PVHpv', 'PVHm', 'SO', 'HY'])
         values = np.array([1, 2, 3, 4, 5])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='allen')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Allen')
         # 1. The parent PVHp of PVHap and PVHpv should take the average value
         assert json_all['PVHp'] == np.mean(values[:2])
         # 2. The parent PVH of PVHm and PVHp should take their average value
@@ -529,7 +610,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['MOp1', 'MOs5'])
         values = np.array([1, 2])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='swanson')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Swanson')
         # 1. Value of MOp1 has been assigned to MOp and value of MOs5 to MOs
         assert json_final['MOp'] == 1
         assert json_final['MOs'] == 2
@@ -538,7 +619,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['MO', 'MOp5', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='swanson')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Swanson')
         # 1. json_all to contain additional keys MO, MO1, MO2/3, MO5, MO6a and MO6b compared to json_final as these
         #    regions aren't in the volume
         compare = np.array(['MO', 'MO1', 'MO2/3', 'MO5', 'MO6a', 'MO6b', 'MOp5', 'MOp1'])
@@ -555,7 +636,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['HY', 'PVZ', 'ADP', 'AHA'])
         values = np.array([1, 2, 3, 4])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='swanson')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Swanson')
         # 1. All PVZ and all it's children are given value of PVZ
         acr = self.br.descendants(self.br.acronym2id('PVZ'))['acronym']
         assert all(json_all[a] == 2 for a in acr)
@@ -579,7 +660,7 @@ class TestNavigateRegions(unittest.TestCase):
         acronyms = np.array(['FF', 'A13', 'PSTN', 'HY'])
         values = np.array([1, 2, 3, 4])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='swanson')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Swanson')
         # 1. Check that ZI has been given the average value of FF and A13
         assert json_all['ZI'] == np.mean(values[:2])
         # 2. Check that LZ has been given the mean value of ZI and PSTN, note not of PSTN, FF and A13
@@ -595,14 +676,14 @@ class TestNavigateRegions(unittest.TestCase):
         assert json_final['A13'] == 2
 
         # Test 5
-        # Now we need to look at the case where we have HY-un and this behaviour
-        acronyms = np.array(['HY', 'HY-un', 'ME'])
+        # Now we need to look at the case where we have HY-lf and this behaviour
+        acronyms = np.array(['HY', 'HY-lf', 'ME'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='swanson')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Swanson')
         # 1. In json_all, we expect each to have its own value with same name
         assert json_all['HY'] == 1
-        assert json_all['HY-un'] == 2
+        assert json_all['HY-lf'] == 2
         assert json_all['ME'] == 3
         # 2. In json_final we expect there to be no HY
         assert json_final.get('HY', None) is None
@@ -611,18 +692,18 @@ class TestNavigateRegions(unittest.TestCase):
         assert all([json_all[a] == 1 for a in acr])
 
         # Test 6
-        acronyms = np.array(['HY-un', 'ZI-un'])
+        acronyms = np.array(['HY-lf', 'ZI-lf'])
         values = np.array([1, 2])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='swanson')
+        json_all, json_final = mapper.navigate_regions(acronyms, values, mapping='Swanson')
         # 1. In json_all they are just given the values
-        assert json_all['HY-un'] == 1
-        assert json_all['ZI-un'] == 2
+        assert json_all['HY-lf'] == 1
+        assert json_all['ZI-lf'] == 2
         # 2. In json_final they are moved to HY and ZI respectively
-        assert json_final.get('HY-un', None) is None
-        assert json_final.get('ZI-un', None) is None
+        assert json_final.get('HY-lf', None) is None
+        assert json_final.get('ZI-lf', None) is None
         assert json_final.get('HY', None) is None
-        assert json_final['ZI'] == json_all['ZI-un'] == 2
+        assert json_final['ZI'] == json_all['ZI-lf'] == 2
 
 
 class TestMapValues(unittest.TestCase):
@@ -631,21 +712,21 @@ class TestMapValues(unittest.TestCase):
         acronyms = np.array(['HY', 'ZI', 'CB', 'MOs', 'VPM', 'AVPV'])
         values = np.arange(acronyms.size)
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        new_acronyms = mapper.map_nodes_to_leaves(acronyms)
-        assert all(new_acronyms == np.array(['HY-un', 'ZI-un', 'CB-un', 'MOs', 'VPM', 'AVPV']))
+        new_acronyms = mapper.map_nodes_to_leaves()
+        assert all(new_acronyms == np.array(['HY-lf', 'ZI-lf', 'CB-lf', 'MOs', 'VPM', 'AVPV']))
         mapper = RegionMapper(acronyms, values, hemisphere='right')
-        new_acronyms = mapper.map_nodes_to_leaves(acronyms)
-        assert all(new_acronyms == np.array(['HY-un', 'ZI-un', 'CB-un', 'MOs', 'VPM', 'AVPV']))
+        new_acronyms = mapper.map_nodes_to_leaves()
+        assert all(new_acronyms == np.array(['HY-lf', 'ZI-lf', 'CB-lf', 'MOs', 'VPM', 'AVPV']))
 
         # Case where mapping already exists
-        acronyms = np.array(['HY', 'ZI-un', 'CB-un', 'MOs', 'VPM', 'AVPV'])
+        acronyms = np.array(['HY', 'ZI-lf', 'CB-lf', 'MOs', 'VPM', 'AVPV'])
         values = np.arange(acronyms.size)
         mapper = RegionMapper(acronyms, values, hemisphere='left')
-        new_acronyms = mapper.map_nodes_to_leaves(acronyms)
+        new_acronyms = mapper.map_nodes_to_leaves()
         # new acronyms is unchanged
         assert all(new_acronyms == acronyms)
         mapper = RegionMapper(acronyms, values, hemisphere='right')
-        new_acronyms = mapper.map_nodes_to_leaves(acronyms)
+        new_acronyms = mapper.map_nodes_to_leaves()
         assert all(new_acronyms == acronyms)
 
     def test_map_to_nodes_ids(self):
@@ -653,26 +734,26 @@ class TestMapValues(unittest.TestCase):
         acronyms = np.array([1097,  797,  512,  993,  733,  272])
         values = np.arange(acronyms.size)
         mapper = RegionMapper(acronyms, values)
-        new_acronyms = mapper.map_nodes_to_leaves(acronyms)
+        new_acronyms = mapper.map_nodes_to_leaves()
         assert all(new_acronyms == np.array([5003,  5019,  5000,  993,  733,  272]))
         mapper = RegionMapper(-1 * acronyms, values)
-        new_acronyms = mapper.map_nodes_to_leaves(-1 * acronyms)
+        new_acronyms = mapper.map_nodes_to_leaves()
         assert all(new_acronyms == -1 * np.array([5003,  5019,  5000,  993,  733,  272]))
 
         # Case where mapping already exists
         acronyms = np.array([1097,  5019,  5000,  993,  733,  272])
         values = np.arange(acronyms.size)
         mapper = RegionMapper(acronyms, values)
-        new_acronyms = mapper.map_nodes_to_leaves(acronyms)
+        new_acronyms = mapper.map_nodes_to_leaves()
         # new acronyms is unchanged
         assert all(new_acronyms == acronyms)
         mapper = RegionMapper(-1 * acronyms, values)
-        new_acronyms = mapper.map_nodes_to_leaves(-1 * acronyms)
+        new_acronyms = mapper.map_nodes_to_leaves()
         assert all(new_acronyms == -1 * acronyms)
 
     def test_hemisphere_requirement(self):
         # When passing acronyms, must pass in a hemisphere argument
-        acronyms = np.array(['HY', 'ZI-un', 'CB-un', 'MOs', 'VPM', 'AVPV'])
+        acronyms = np.array(['HY', 'ZI-lf', 'CB-lf', 'MOs', 'VPM', 'AVPV'])
         values = np.arange(acronyms.size)
         with self.assertRaises(AssertionError) as context:
             RegionMapper(acronyms, values)
@@ -685,13 +766,13 @@ class TestMapValues(unittest.TestCase):
 
     def test_validate_regions(self):
         # If we pass in acronyms
-        acronyms = np.array(['HY', 'ZI-un', 'CB-un', 'MOs', 'VPM', 'AVPV'])
+        acronyms = np.array(['HY', 'ZI-lf', 'CB-lf', 'MOs', 'VPM', 'AVPV'])
         values = np.arange(acronyms.size)
         mapper = RegionMapper(acronyms, values, hemisphere='left')
         assert mapper.is_acronym
 
         # If we pass in a dud acronyms
-        acronyms = np.array(['lala', 'ZI-un', 'CB-un', 'MOs', 'VPM', 'AVPV'])
+        acronyms = np.array(['lala', 'ZI-lf', 'CB-lf', 'MOs', 'VPM', 'AVPV'])
         values = np.arange(acronyms.size)
         with self.assertRaises(AssertionError) as context:
             RegionMapper(acronyms, values, hemisphere='left')
@@ -731,7 +812,7 @@ class TestAllenMappings(unittest.TestCase):
         assert all(['MO' in b for b in self.br.acronym[index]])
 
         # Left hemisphere
-        acronyms = np.array(['TH-un', 'HY-un', 'MOp1'])
+        acronyms = np.array(['TH-lf', 'HY-lf', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
         index, vals = mapper.map_acronyms_to_allen()
@@ -739,7 +820,7 @@ class TestAllenMappings(unittest.TestCase):
         assert all([b in ['TH', 'HY', 'MOp1', 'MOp'] for b in self.br.acronym[index]])
 
         # Right hemisphere
-        acronyms = np.array(['TH-un', 'HY-un', 'MOp1'])
+        acronyms = np.array(['TH-lf', 'HY-lf', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='right')
         index, vals = mapper.map_acronyms_to_allen()
@@ -816,7 +897,7 @@ class TestBerylMappings(unittest.TestCase):
         assert vals[self.br.acronym[index] == 'MOs'] == 1
 
         # Left hemisphere
-        acronyms = np.array(['TH-un', 'HY-un', 'MOp1'])
+        acronyms = np.array(['TH-lf', 'HY-lf', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
         index, vals = mapper.map_to_beryl()
@@ -825,7 +906,7 @@ class TestBerylMappings(unittest.TestCase):
         assert all([b in ['root', 'MOp'] for b in self.br.acronym[index]])
 
         # Right hemisphere
-        acronyms = np.array(['TH-un', 'HY-un', 'MOp1'])
+        acronyms = np.array(['TH-lf', 'HY-lf', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='right')
         index, vals = mapper.map_to_beryl()
@@ -907,7 +988,7 @@ class TestCosmosMappings(unittest.TestCase):
         assert vals[0] == np.mean(values)
 
         # Left hemisphere
-        acronyms = np.array(['TH-un', 'HY-un', 'MOp1'])
+        acronyms = np.array(['TH-lf', 'HY-lf', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='left')
         index, vals = mapper.map_to_cosmos()
@@ -915,7 +996,7 @@ class TestCosmosMappings(unittest.TestCase):
         assert all([b in ['Isocortex', 'TH', 'HY'] for b in self.br.acronym[index]])
 
         # Right hemisphere
-        acronyms = np.array(['TH-un', 'HY-un', 'MOp1'])
+        acronyms = np.array(['TH-lf', 'HY-lf', 'MOp1'])
         values = np.array([1, 2, 3])
         mapper = RegionMapper(acronyms, values, hemisphere='right')
         index, vals = mapper.map_to_cosmos()
