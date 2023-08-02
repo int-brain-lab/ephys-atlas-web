@@ -95,6 +95,7 @@ class Coloring {
 
         if (!feature_max || !feature_min) {
             console.error("there is no data! skipping region coloring");
+            this.dispatcher.spinning(this, false);
             return;
         }
         console.assert(feature_min > 0);
