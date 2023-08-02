@@ -123,7 +123,7 @@ class Model {
 
         if (!(bucket in this.loaders)) {
             let url = URLS['bucket'](bucket);
-            console.log(`creating loader for ${url}`);
+            console.log(`creating bucket loader for ${url}`);
             this.loaders[bucket] = new Loader(this.splash, url, null, [0, 0, 0]);
             await this.loaders[bucket].start();
         }
@@ -155,7 +155,7 @@ class Model {
         let key = [bucket, fname];
         if (!(key in this.loaders)) {
             let url = URLS['features'](bucket, fname);
-            console.log(`creating loader for ${url}`);
+            console.log(`creating features loader for ${url}`);
 
             this.loaders[key] = new Loader(this.splash, url, null, [0, 0, 0]);
         }
