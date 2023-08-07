@@ -100,6 +100,7 @@ class Feature {
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('bucket', (ev) => { this.setBucket(ev.uuid_or_alias); });
+        this.dispatcher.on('refresh', (ev) => { this.refreshBucket(); });
         this.dispatcher.on('bucketRemove', (ev) => { this.setBucket(DEFAULT_BUCKET); });
     }
 
@@ -156,6 +157,18 @@ class Feature {
         else {
             this.tree.setFeatures(bucket.features, bucket.metadata.tree);
         }
+    }
+
+    async refreshBucket() {
+        this.dispatcher.spinning(this, true);
+
+        console.debug(`refreshing bucket ${this.state.bucket}`)
+        let bucket = await this.model.getBucket(this.state.bucket, { cache: "reload" });
+        console.assert(bucket);
+        this.tree.setFeatures(bucket.features, bucket.metadata.tree);
+        this.tree.select(this.state.fname);
+
+        this.dispatcher.spinning(this, false);
     }
 
     selectFeature(fname) {

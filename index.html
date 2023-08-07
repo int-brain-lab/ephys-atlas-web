@@ -13,7 +13,9 @@
     <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
 
     <!-- Normalize -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+        integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Custom styles -->
     <link rel="stylesheet" href="css/main.css" />
@@ -164,9 +166,14 @@
 
             <!-- BUCKET SELECTION -->
             <div class="control">
-                <div id="button-remove-bucket">-</div>
                 <select id="bucket-dropdown">
                 </select>
+            </div>
+
+            <!-- BUCKET BUTTONS -->
+            <div class="control">
+                <div id="button-remove-bucket">-</div>
+                <div id="button-refresh-bucket">&#8635;</div>
                 <div id="button-new-bucket">+</div>
             </div>
 
@@ -197,7 +204,8 @@
             <!-- FEATURE SEARCH BAR -->
             <div id="bar-plot-search">
                 <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
-                <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
+                <input type="text" id="search-input" placeholder="search... hover for help"
+                    title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
             </div>
 
         </div>
@@ -262,7 +270,8 @@
                 </g>
                 <g id="lines-horizontal">
                     <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333" stroke-width="1.5px" />
-                    <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333" stroke-width="1.5px" />
+                    <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333"
+                        stroke-width="1.5px" />
                 </g>
             </svg>
 

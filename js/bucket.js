@@ -16,6 +16,7 @@ class Bucket {
 
         this.el = document.getElementById('bucket-dropdown');
         this.buttonAdd = document.getElementById('button-new-bucket');
+        this.buttonRefresh = document.getElementById('button-refresh-bucket');
         this.buttonRemove = document.getElementById('button-remove-bucket');
 
         this.setupBucket();
@@ -56,6 +57,13 @@ class Bucket {
             }
         });
 
+        // Refresh bucket.
+        this.buttonRefresh.addEventListener('click', (e) => {
+            let bucket = this.state.bucket;
+            this.refresh(); // no-op
+            this.dispatcher.refresh(this, bucket);
+        });
+
         // Remove bucket.
         this.buttonRemove.addEventListener('click', (e) => {
             let bucket = this.state.bucket;
@@ -73,6 +81,9 @@ class Bucket {
         if (!this.state.buckets.includes(bucket))
             this.state.buckets.push(bucket);
         addOption(this.el, bucket, bucket, selected);
+    }
+
+    refresh() { // no op
     }
 
     remove(bucket) {

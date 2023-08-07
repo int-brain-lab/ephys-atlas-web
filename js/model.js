@@ -118,23 +118,21 @@ class Model {
         return new Loader(this.splash, URLS['bucket'](bucket), null, progress);
     }
 
-    async getBucketLoader(bucket) {
+    async getBucket(bucket, refresh = false) {
         console.assert(bucket);
 
         if (!(bucket in this.loaders)) {
             let url = URLS['bucket'](bucket);
             console.log(`creating bucket loader for ${url}`);
             this.loaders[bucket] = new Loader(this.splash, url, null, [0, 0, 0]);
-            await this.loaders[bucket].start();
         }
+        await this.loaders[bucket].start(refresh);
+        // if (refresh) {
+        //     console.log("refreshing bucket");
+        //     await this.loaders[bucket].start(refresh);
+        // }
         let loader = this.loaders[bucket];
-        return loader;
-    }
 
-    async getBucket(bucket) {
-        console.assert(bucket);
-
-        let loader = await this.getBucketLoader(bucket);
         console.assert(loader);
         let data = loader.items;
         console.assert(data);
@@ -144,22 +142,27 @@ class Model {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async getFeatures(bucket, mapping, fname) {
+    async getFeatures(bucket, mapping, fname, refresh = false) {
         // NOTE: this is async because this dynamically creates a new loader and therefore
         // make a HTTP request on demand to get the requested feature.
         console.assert(bucket);
         console.assert(mapping);
         if (!fname) return;
         console.assert(fname);
+        console.debug(`getting features ${fname}`);
 
         let key = [bucket, fname];
         if (!(key in this.loaders)) {
             let url = URLS['features'](bucket, fname);
-            console.log(`creating features loader for ${url}`);
+            console.log(`downloading features for ${bucket}, ${fname}`);
 
             this.loaders[key] = new Loader(this.splash, url, null, [0, 0, 0]);
         }
-        await this.loaders[key].start();
+        await this.loaders[key].start(refresh);
+        // if (refresh) {
+        //     console.log("refreshing features");
+        //     await this.loaders[key].start(refresh);
+        // }
         let loader = this.loaders[key];
         console.assert(loader);
 

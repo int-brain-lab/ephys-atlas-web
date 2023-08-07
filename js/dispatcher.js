@@ -20,6 +20,7 @@ class Dispatcher {
                 data: data,
             },
         });
+        // console.debug(`emit ${name} event`);
         this.el.dispatchEvent(ev);
     }
 
@@ -55,6 +56,11 @@ class Dispatcher {
     bucket(source, uuid_or_alias) {
         // when a bucket is selected
         this.emit("bucket", source, { "uuid_or_alias": uuid_or_alias });
+    }
+
+    refresh(source, uuid_or_alias) {
+        // when a bucket is refreshed
+        this.emit("refresh", source, { "uuid_or_alias": uuid_or_alias });
     }
 
     bucketRemove(source, uuid_or_alias) {
@@ -103,5 +109,3 @@ class Dispatcher {
 
 
 };
-
-

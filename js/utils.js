@@ -246,16 +246,18 @@ export function getOS() {
 
 
 
-export async function downloadJSON(url) {
+export async function downloadJSON(url, refresh = false) {
     // console.debug(`downloading ${url}...`);
-
     try {
-        var r = await fetch(url, {
+        let params = {
             headers: {
                 'Content-Encoding': 'gzip',
                 'Content-Type': 'application/json'
-            }
-        });
+            },
+        };
+        if (refresh)
+            params['cache'] = 'reload';
+        var r = await fetch(url, params);
     }
     catch (error) {
         console.error(`could not load ${url}:`, error);

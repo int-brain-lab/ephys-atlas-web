@@ -36,6 +36,7 @@ class Coloring {
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
         this.dispatcher.on('feature', (ev) => { this.buildColors(); });
+        this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
         this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });
     }
@@ -60,12 +61,12 @@ class Coloring {
         this._setRegionColor(regionIdx, '#d3d3d3');
     }
 
-    async buildColors() {
+    async buildColors(refresh = false) {
         this.dispatcher.spinning(this, true);
 
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
+        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
 
         // Clear the styles.
         this.clear();
@@ -89,16 +90,17 @@ class Coloring {
         // Figure out what hemisphere values we have
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
         let feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
+
         let idx_lr = 1327; // Below idx_lr: right hemisphere. Above: left hemisphere.
         let hasLeft = true; // whether there is at least a left hemisphere region with a value
         let hasRight = true; // whether there is at least a left hemisphere region with a value
 
-        if (!feature_max || !feature_min) {
+        if (feature_max == null || feature_min == null) {
             console.error("there is no data! skipping region coloring");
             this.dispatcher.spinning(this, false);
             return;
         }
-        console.assert(feature_min > 0);
+        console.assert(feature_min >= 0);
         console.assert(feature_max > 0);
 
         if (feature_max <= idx_lr) {

@@ -436,33 +436,31 @@ body.waiting * {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    width: 100%;
 }
 
 #bucket-dropdown {
-    flex-grow: 1;
-    height: 100%;
-    font-size: 12pt;
     border: 0;
     background-color: #fafafa;
+    width: 100%;
 }
 
 
 
 #button-new-bucket,
+#button-refresh-bucket,
 #button-remove-bucket {
-    flex: 0 0 auto;
-    padding: 4px 8px 4px 8px;
-    font-size: 14pt;
-    /* font-weight: bold; */
+    padding: 4px 8px;
+    font-size: 12pt;
     font-family: monospace;
     cursor: pointer;
     vertical-align: middle;
-    height: 100%;
 }
 
 #button-new-bucket:hover,
-#button-new-bucket:hover {
+#button-refresh-bucket:hover,
+#button-remove-bucket:hover {
     background-color: #ccc;
 }
 
@@ -474,10 +472,13 @@ body.waiting * {
 
 #feature-tree {
     margin: var(--tree-margin) 0 !important;
-    cursor: pointer;
     overflow-y: scroll;
 
     flex: 1 1 auto;
+}
+
+#feature-tree * {
+    cursor: pointer;
 }
 
 #feature-tree details {
