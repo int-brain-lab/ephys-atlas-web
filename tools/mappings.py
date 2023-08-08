@@ -233,7 +233,7 @@ class RegionMapper:
             index_a = self.br.acronym[index_a]
             index_b = self.br.acronym[index_b]
             index_c = self.br.acronym[index_c]
-            
+
         data = dict()
         data['allen'] = {'index': index_a, 'values': values_a}
         data['beryl'] = {'index': index_b, 'values': values_b}
@@ -1092,15 +1092,3 @@ for key, vals in allen_sw_map.items():
                 allen_inv_map[v] = key
         else:
             allen_inv_map[vals['allen']] = key
-
-
-
-br = BrainRegions()
-df_map = pd.DataFrame()
-df_map['allen'] = br.acronym[:br.n_lr]
-df_map['beryl'] = br.acronym[br.mappings['Beryl']][:br.n_lr]
-df_map['cosmos'] = br.acronym[br.mappings['Cosmos']][:br.n_lr]
-
-
-
-df_map['swanson_cosmos'] = br.acronym[br.mappings['Cosmos']][:br.n_lr]
