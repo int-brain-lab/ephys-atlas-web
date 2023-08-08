@@ -215,7 +215,7 @@ class RegionMapper:
 
         return self.regions
 
-    def map_regions(self):
+    def map_regions(self, as_acronyms=False):
         """
         Main function to call to map the regions and values to the Allen, Swanson Beryl and Cosmos mappings
         :return: dict containing data for Allen, Beryl and Cosmos mappings (swanson info is incorporates in each mapping)
@@ -229,6 +229,11 @@ class RegionMapper:
             index_b, values_b = self.map_to_beryl()
             index_c, values_c = self.map_to_cosmos()
 
+        if as_acronyms:
+            index_a = self.br.acronym[index_a]
+            index_b = self.br.acronym[index_b]
+            index_c = self.br.acronym[index_c]
+            
         data = dict()
         data['allen'] = {'index': index_a, 'values': values_a}
         data['beryl'] = {'index': index_b, 'values': values_b}
@@ -1067,3 +1072,35 @@ class TestFullProcess(unittest.TestCase):
         data = mapper.map_regions()
 
         assert ['allen', 'beryl', 'cosmos'] == list(data.keys())
+
+
+import pandas as pd
+from ibllib.atlas.regions import BrainRegions
+from pathlib import Path
+import numpy as np
+save_path = Path('/Users/admin/Downloads/ONE/scratch')
+allen_sw_map = np.load(save_path.joinpath('sw_allen_map.npy'), allow_pickle=True).item()
+beryl_sw_map = np.load(save_path.joinpath('sw_beryl_map.npy'), allow_pickle=True).item()
+
+allen_inv_map = {}
+for key, vals in allen_sw_map.items():
+    if 'up' in vals['direction']:
+        allen_inv_map[key] = key
+    else:
+        if type(vals['allen']) == list:
+            for v in vals['allen']:
+                allen_inv_map[v] = key
+        else:
+            allen_inv_map[vals['allen']] = key
+
+
+
+br = BrainRegions()
+df_map = pd.DataFrame()
+df_map['allen'] = br.acronym[:br.n_lr]
+df_map['beryl'] = br.acronym[br.mappings['Beryl']][:br.n_lr]
+df_map['cosmos'] = br.acronym[br.mappings['Cosmos']][:br.n_lr]
+
+
+
+df_map['swanson_cosmos'] = br.acronym[br.mappings['Cosmos']][:br.n_lr]
