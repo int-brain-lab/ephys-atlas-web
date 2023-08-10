@@ -4,6 +4,7 @@ from pathlib import Path
 from ibllib.atlas.regions import BrainRegions
 from iblutil.numerical import ismember
 import unittest
+import time
 
 
 def get_info_dataframe(save=True):
@@ -74,11 +75,11 @@ def get_info_dataframe(save=True):
     if save:
         df.to_parquet(Path(__file__).parent.joinpath('region_info.pqt'))
 
-    return df
-
-
 def read_region_info():
     return pd.read_parquet(Path(__file__).parent.joinpath('region_info.pqt'))
+
+def read_region_tree():
+    return pd.read_parquet(Path(__file__).parent.joinpath('region_tree.pqt'))
 
 
 class RegionMapper:
@@ -108,6 +109,12 @@ class RegionMapper:
         self.nl_ids = np.r_[self.br.acronym2id(self.nl_acronyms), -1 * self.br.acronym2id(self.nl_acronyms)]
         self.nl_map_acronyms = self.df_nl.node_and_leaf_acronyms.values
         self.nl_map_ids = np.r_[self.df_nl.node_and_leaf_ids.values, -1 * self.df_nl.node_and_leaf_ids.values]
+
+        # Get the structure tree with descendents
+        tree = read_region_tree()
+        # if tree is None:
+        #     tree = self.get_tree_dataframe()
+        self.tree_level_1, self.tree_level_n = self._get_tree(tree)
 
         # Validate the regions and check it they are acronyms or atlas ids
         self.is_acronym = self._validate_regions()
@@ -156,6 +163,43 @@ class RegionMapper:
 
         return forward_map, inverse_map, inverse_map_ids
 
+    def _get_tree(self, tree):
+        tree_level_1 = {}
+        tree_level_n = {}
+        for index, vals in tree.iterrows():
+            tree_level_1[index] = vals.level_1
+            tree_level_n[index] = vals.level_n
+
+        # Add in the leaf node regions
+        for lf in list(self.nl_inverse_map.keys()):
+            tree_level_1[lf] = [lf]
+            tree_level_n[lf] = np.array([], dtype=object)
+
+        return tree_level_1, tree_level_n
+
+    def get_tree_dataframe(self, save=True):
+        """
+        Compute dataframe required for navigating down the tree
+        :param save:
+        :return:
+        """
+
+        tree_level_1 = self._navigate_tree('root', {}, ['root'])
+        tree_level_n = {}
+        for a in list(tree_level_1.keys()):
+            desc = self.br.descendants(self.br.acronym2id(a))['acronym'][1:]
+            tree_level_n[a] = desc
+
+        df = pd.DataFrame()
+        df.index = list(tree_level_1.keys())
+        df['level_1'] = list(tree_level_1.values())
+        df['level_n'] = list(tree_level_n.values())
+
+        if save:
+            df.to_parquet(Path(__file__).parent.joinpath('region_tree.pqt'))
+
+        return df
+
     def _navigate_tree(self, acronym, tree, all_acronyms):
         """
         For a given acronym constructs the hierachy tree of all it's children
@@ -170,7 +214,6 @@ class RegionMapper:
             return tree
 
         if acronym in self.nl_map_acronyms:
-            tree[acronym] = np.array([acronym], dtype=object)
             return tree
 
         desc = self.br.descendants(self.br.acronym2id(acronym))
@@ -181,8 +224,7 @@ class RegionMapper:
             acr = desc['acronym'][np.where(level == 1)[0]]
             extra = self.nl_map.get(acronym, None)
             if extra is not None:
-                if extra['acronym'] in all_acronyms:
-                    acr = np.r_[acr, np.array(extra['acronym'])]
+                acr = np.r_[acr, np.array(extra['acronym'])]
 
             tree[acronym] = acr
             for a in acr:
@@ -253,6 +295,10 @@ class RegionMapper:
         hemisphere = self.hemisphere if hemisphere is None else hemisphere
         regions = self.regions if regions is None else regions
         values = self.values if values is None else values
+        if 'void' in regions:
+            void_idx = np.where(regions == 'void')[0]
+            regions = np.delete(regions, void_idx)
+            values = np.delete(values, void_idx)
         allen = self._map_to_allen(regions, values)
         swanson = self._map_to_swanson(regions, values)
 
@@ -423,11 +469,17 @@ class RegionMapper:
 
         end_roads = list(end_nodes.keys())
 
-        tree = {}
+        desc = np.array(acronyms)
         for a in acronyms:
             if a in end_roads:
                 a = end_nodes[a]
-            tree = self._navigate_tree(a, tree, acronyms)
+            desc = np.r_[desc, self.tree_level_n[a], np.array(a, dtype=object)]
+        desc = np.unique(desc)
+
+        tree = {}
+        for k, v in self.tree_level_1.items():
+            if k in desc:
+                tree[k] = v
 
         lookup = {}
         # Go from bottom up so if the parents will take into account new averages of children
@@ -506,7 +558,6 @@ class TestNavigateRegions(unittest.TestCase):
         assert json_all['MOp'] == np.mean(values[1:])
         compare = np.array(['MOp2/3', 'MOp6a', 'MOp6b'])
         assert all([json_final[c] == np.mean(values[1:]) for c in compare])
-
         # 4. MOp5 and MOp1 will be given their assigned values
         assert json_final['MOp5'] == 2
         assert json_final['MOp1'] == 3
