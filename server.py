@@ -347,6 +347,22 @@ def create_bucket(uuid, metadata, alias=None, patch=False):
     return f'Bucket {uuid} successfully {"created" if not patch else "patched"}.', 200
 
 
+def delete_bucket(uuid):
+
+    assert uuid
+
+    # Assert that the bucket with this name exists on the server
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path.exists():
+        return f'Bucket {uuid} does not exist on the server.', 404
+
+    try:
+        shutil.rmtree(bucket_path)
+        return f'Bucket {uuid} successfully deleted.', 200
+    except Exception as e:
+        return f"Unable to delete bucket {uuid}", 500
+
+
 def create_features(uuid, fname, feature_data, short_desc=None, patch=False):
     assert uuid
     assert fname
@@ -417,6 +433,23 @@ def api_create_bucket():
     metadata = data['metadata']
 
     return create_bucket(uuid, metadata)
+
+
+# -------------------------------------------------------------------------------------------------
+# REST endpoint: delete a bucket
+# DELETE /api/buckets/<uuid>
+# -------------------------------------------------------------------------------------------------
+
+@app.route('/api/buckets/<uuid>', methods=['DELETE'])
+def api_delete_bucket(uuid):
+    # Check authorization to delete bucket
+    auth = authenticate_bucket(uuid)
+    if auth is False:
+        return 'Unauthorized access.', 401
+    elif auth is None:
+        return 'Bucket does not exist.', 404
+
+    return delete_bucket(uuid)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -836,7 +869,7 @@ class FeatureUploader:
         with open(self.param_path, 'w') as f:
             json.dump(params, f, indent=1)
 
-    # Bucket tocken
+    # Bucket token
     # ---------------------------------------------------------------------------------------------
 
     def _load_bucket_token(self, bucket_uuid):
@@ -850,6 +883,12 @@ class FeatureUploader:
             params['buckets'][bucket_uuid] = {}
         params['buckets'][bucket_uuid]['token'] = token
         self._save_params(params)
+
+    def _delete_bucket_token(self, bucket_uuid):
+        params = self.params
+        _ = params['buckets'].pop(bucket_uuid)
+        self._save_params(params)
+
 
     # Global key
     # ---------------------------------------------------------------------------------------------
@@ -908,6 +947,10 @@ class FeatureUploader:
         if response.status_code != 200:
             raise RuntimeError(response.text)
 
+    def _delete_bucket(self):
+        # Make a DELETE request to /api/buckets/<uuid> to delete the bucket
+        return self._delete(f'/buckets/{self.bucket_uuid}')
+
     # Public methods
     # ---------------------------------------------------------------------------------------------
 
@@ -953,6 +996,10 @@ class FeatureUploader:
     def patch_bucket(self, **metadata):
         self._patch_bucket(metadata)
 
+    def delete_bucket(self):
+        self._delete_bucket()
+        self._delete_bucket_token(self.bucket_uuid)
+
     def create_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
         """Create new features in the bucket."""
         self._post_or_patch_features(
@@ -991,6 +1038,7 @@ class FeatureUploader:
 # -------------------------------------------------------------------------------------------------
 # Tests
 # -------------------------------------------------------------------------------------------------
+
 
 class TestApp(unittest.TestCase):
     @classmethod
@@ -1126,10 +1174,15 @@ class TestApp(unittest.TestCase):
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
         self.assertEqual(response.status_code, 404)
 
-        # Delete the bucket path.
+        # Get the path to the bucket
         path = get_bucket_path(uuid)
-        if path:
-            shutil.rmtree(path)
+        # Delete the bucket
+        response = self.client.delete(f'/api/buckets/{uuid}')
+        self.assertEqual(response.status_code, 200)
+        # Make sure the bucket no longer exists
+        self.assertFalse(path.exists())
+        response = self.client.delete(f'/api/buckets/{uuid}')
+        self.assertEqual(response.status_code, 404)
 
     def test_client(self):
         bucket_uuid = 'myuuid'
