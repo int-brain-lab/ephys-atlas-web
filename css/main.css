@@ -379,6 +379,29 @@ body.waiting * {
 
 
 /*************************************************************************************************/
+/*  Bitmaps                                                                                      */
+/*************************************************************************************************/
+
+#svg-coronal-container-inner {
+    background-image: url("/data/volumes/coronal-0264.jpg");
+    background-position-x: center;
+    background-position-y: 23px;
+    background-size: 93% 84%;
+    background-repeat: no-repeat;
+}
+
+#svg-coronal-container svg {
+    /* opacity: .75; */
+}
+
+#svg-coronal-container svg path {
+    fill: none;
+    stroke: #aaa;
+}
+
+
+
+/*************************************************************************************************/
 /*  Share button                                                                                 */
 /*************************************************************************************************/
 

@@ -1,5 +1,5 @@
 # to generate local https certificate:
-# - sudo apt install mkcert
+# - sudo apt install libnss3-tools
 # - mkcert -install
 # - mkcert localhost
 

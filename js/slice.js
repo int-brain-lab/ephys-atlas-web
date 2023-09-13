@@ -215,6 +215,21 @@ class Slice {
 
         // Emit the slice event.
         this.dispatcher.slice(this, axis, idx);
+
+        // HACK
+        let bitmap = document.getElementById(`svg-${axis}-container-inner`);
+        if (bitmap) {
+            // console.log(bitmap.style);
+            let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
+            let url = `data/volumes/${axis}-${sidx}.jpg`
+            console.log(url);
+
+            var tempImage = new Image();
+            tempImage.src = url;
+            tempImage.onload = function () {
+                bitmap.style.backgroundImage = `url("${url}")`;
+            };
+        }
     }
 
     set_sagittal(idx) {
