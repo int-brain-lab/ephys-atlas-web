@@ -51,25 +51,26 @@ function fromArrayBuffer(buf) {
     // Hacky conversion of dict literal string to JS Object
     // eval("var info = " + headerStr.toLowerCase().replace('(', '[').replace('),', ']'));
     let info = JSON.parse(headerStr.toLowerCase().replace('(', '[').replace(/\,*\)\,*/g, ']').replace(/'/g, "\""));
+    console.log("npy", headerLength, headerStr, info);
 
     // Intepret the bytes according to the specified dtype
     let data;
     if (info.descr === "|u1") {
-        data = new Uint8Array(buf, offsetBytes);
+        data = new Uint8Array(buf.buffer, offsetBytes);
     } else if (info.descr === "|i1") {
-        data = new Int8Array(buf, offsetBytes);
+        data = new Int8Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<u2") {
-        data = new Uint16Array(buf, offsetBytes);
+        data = new Uint16Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<i2") {
-        data = new Int16Array(buf, offsetBytes);
+        data = new Int16Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<u4") {
-        data = new Uint32Array(buf, offsetBytes);
+        data = new Uint32Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<i4") {
-        data = new Int32Array(buf, offsetBytes);
+        data = new Int32Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<f4") {
-        data = new Float32Array(buf, offsetBytes);
+        data = new Float32Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<f8") {
-        data = new Float64Array(buf, offsetBytes);
+        data = new Float64Array(buf.buffer, offsetBytes);
     } else {
         throw new Error('unknown numeric dtype')
     }
@@ -77,7 +78,7 @@ function fromArrayBuffer(buf) {
     return {
         shape: info.shape,
         fortran_order: info.fortran_order,
-        data: data
+        data: data,
     };
 }
 

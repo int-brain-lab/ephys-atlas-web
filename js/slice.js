@@ -230,10 +230,12 @@ class Slice {
     }
 
     setBitmap(axis, idx) {
-        let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
-        let url = `data/volumes/allen/${axis}/${axis}-${sidx}.jpg`;
-        let el = this.bitmaps[axis];
-        setBackgroundImage(el, url);
+        // let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
+        // let url = `data/volumes/allen/${axis}/${axis}-${sidx}.jpg`;
+        // let el = this.bitmaps[axis];
+        // setBackgroundImage(el, url);
+
+        app.volume.drawSlice(axis, idx);
     }
 
     set_sagittal(idx) {

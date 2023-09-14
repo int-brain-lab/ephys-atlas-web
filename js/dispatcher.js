@@ -82,6 +82,11 @@ class Dispatcher {
         this.emit("feature", source, { "fname": fname });
     }
 
+    volume(source, fname) {
+        // when a volume is selected
+        this.emit("volume", source, { "fname": fname });
+    }
+
     featureHover(source, fname, desc, e) {
         // when the mouse hovers over a feature
         this.emit("featureHover", source, { "fname": fname, "desc": desc, "e": e });

@@ -15,25 +15,27 @@ class FeatureTree {
         this.el = el;
     }
 
-    setFeatures(features, tree) {
+    setFeatures(features, tree, volumes) {
         if (!tree || tree.length == 0) {
             // Convert a flat array into a flat tree.
             tree = Object.keys(features).reduce((obj, key) => { obj[key] = key; return obj; }, {});
         }
         console.assert(tree);
+        volumes = volumes || [];
         const generateTree = (obj) => {
             let html = '';
             for (const key in obj) {
                 let fname = obj[key];
                 let displayName = key;
                 let desc = features[fname] ? features[fname]['short_desc'] : '';
+                let isVol = volumes.includes(fname);
 
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
                     html += `<details><summary>${key}</summary><ul>`;
                     html += generateTree(obj[key]);
                     html += `</ul></details>`;
                 } else {
-                    html += `<li data-fname="${fname}" data-desc="${desc}">${displayName}</li>`;
+                    html += `<li data-fname="${fname}" data-desc="${desc}" data-volume="${isVol}">${displayName}</li>`;
                 }
             }
             return html;
@@ -108,10 +110,13 @@ class Feature {
         this.el.addEventListener('click', (e) => {
             if (e.target.tagName == 'LI') {
                 let fname = e.target.dataset.fname;
+                let isVol = e.target.dataset.volume == "true";
                 if (this.tree.selected(fname))
                     this.selectFeature('');
-                else
+                else if (!isVol)
                     this.selectFeature(fname);
+                else if (isVol)
+                    this.selectVolume(fname);
             }
         });
 
@@ -155,7 +160,7 @@ class Feature {
             window.alert(msg);
         }
         else {
-            this.tree.setFeatures(bucket.features, bucket.metadata.tree);
+            this.tree.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
         }
     }
 
@@ -176,6 +181,16 @@ class Feature {
         this.state.fname = fname;
         this.tree.select(fname);
         this.dispatcher.feature(this, fname);
+        this.dispatcher.volume(this, "");
+    }
+
+    selectVolume(fname) {
+        console.log(`select volume ${fname}`);
+        this.state.fname = null;
+        this.state.volume = fname;
+        this.tree.select(fname);
+        this.dispatcher.feature(this, "");
+        this.dispatcher.volume(this, fname);
     }
 
     async download() {

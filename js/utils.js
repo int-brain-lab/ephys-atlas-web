@@ -33,7 +33,7 @@ export function rgb2hex(s) {
     // return b;
     let rgb = s.split(',');
 
-    let r = parseInt(rgb[0].substring(4));
+    let r = parseInt(rgb[0]);
     let g = parseInt(rgb[1]);
     let b = parseInt(rgb[2]);
 

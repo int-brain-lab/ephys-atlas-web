@@ -316,7 +316,8 @@ body.waiting * {
     display: grid;
     grid-template-columns: var(--left-panel-width) 1fr 1fr 1fr 1fr;
     /*  calc(50vh - 60px) calc(50vh - 60px) */
-    grid-template-rows: 80px max-content auto 40px;
+    /* grid-template-rows: 80px max-content auto 40px; */
+    grid-template-rows: 80px 1fr 1fr 40px;
     height: 100%;
 }
 
@@ -382,44 +383,87 @@ body.waiting * {
 /*  Bitmaps                                                                                      */
 /*************************************************************************************************/
 
-#svg-coronal-container-inner {
-    background-image: url("/data/volumes/coronal-0264.jpg");
-    background-position-x: 41%;
-    background-position-y: 80%;
-    background-size: 103% 90%;
-    background-repeat: no-repeat;
+.svg-canvas-container {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 96px)
+}
+
+.svg-canvas-container>canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#canvas-coronal {
+    top: 15%;
+    left: -1%;
+    width: 103%;
+    height: 75%;
+}
+
+#canvas-horizontal {
+    top: 10%;
+    left: 18%;
+    width: 68%;
+    height: 82%;
+}
+
+#canvas-sagittal {
+    top: 9%;
+    left: 12%;
+    width: 66%;
+    height: 82%;
+}
+
+.svg-canvas-container>svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
 }
 
 #svg-coronal-container svg path {
     fill-opacity: 0%;
-    stroke: #fff;
+    stroke: #aaa;
 }
 
-#svg-sagittal-container-inner {
+
+#svg-sagittal-container svg path {
+    fill-opacity: 0%;
+    stroke: #aaa;
+}
+
+#svg-horizontal-container svg path {
+    fill-opacity: 0%;
+    stroke: #aaa;
+}
+
+/* #svg-coronal-container-inner {
+    background-image: url("/data/volumes/coronal-0264.jpg");
+    background-position-x: 41%;
+    background-position-y: 80%;
+    background-size: 103% 90%;
+    background-repeat: no-repeat; */
+/* #svg-sagittal-container-inner {
     background-image: url("/data/volumes/sagittal-0228.jpg");
     background-position-x: 35.5%;
     background-position-y: 90%;
     background-size: 66.5% 100%;
     background-repeat: no-repeat;
-}
-
-#svg-sagittal-container svg path {
-    fill-opacity: 0%;
-    stroke: #fff;
-}
-
-#svg-horizontal-container-inner {
+} */
+/* #svg-horizontal-container-inner {
     background-image: url("/data/volumes/horizontal-0160.jpg");
     background-position-x: 56%;
     background-position-y: 65%;
     background-size: 69% 90%;
     background-repeat: no-repeat;
-}
-
-#svg-horizontal-container svg path {
-    fill-opacity: 0%;
-    stroke: #fff;
-}
+} */
 
 
 
@@ -729,7 +773,7 @@ div#container>.svg-wrapper {
 
 .svg-wrapper svg {
     width: 100%;
-    max-height: calc(100% - 96px);
+    height: 100%;
     display: block;
 
     /* DEBUG */
@@ -863,9 +907,11 @@ line {
 #unity-canvas {
     width: 100%;
     height: calc(100% - 116.5px);
-    background-image: url('/images/fallback.png');
+
+    /* FALLBACK */
+    /* background-image: url('/images/fallback.png');
     background-size: contain;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat; */
 
     /* DEBUG */
     /* background-color: red; */
