@@ -221,7 +221,7 @@ class Slice {
         if (bitmap) {
             // console.log(bitmap.style);
             let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
-            let url = `data/volumes/${axis}-${sidx}.jpg`
+            let url = `data/volumes/allen/${axis}/${axis}-${sidx}.jpg`
             console.log(url);
 
             var tempImage = new Image();
