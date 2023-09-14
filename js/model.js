@@ -65,7 +65,6 @@ class Model {
         return new Loader(this.splash, URLS['colormaps'], null, progress);
     }
 
-
     getColormap(cmap) {
         console.assert(cmap);
         let colors = this.loaders['colormaps'].get(cmap);
