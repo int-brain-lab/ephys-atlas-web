@@ -8,14 +8,77 @@ import { Loader } from "./splash.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-// const BASE_URL = 'https://localhost:5000';
-const BASE_URL = 'https://features.internationalbrainlab.org';
+// const BASE_URL = 'https://features.internationalbrainlab.org';
+const BASE_URL = 'https://localhost:5000';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
     'slices': (name) => `/data/json/slices_${name}.json`,
     'bucket': (bucket) => `${BASE_URL}/api/buckets/${bucket}`,
     'features': (bucket, fname) => `${BASE_URL}/api/buckets/${bucket}/${fname}`,
+}
+
+
+
+/*************************************************************************************************/
+/* NPY loading                                                                                   */
+/*************************************************************************************************/
+
+function asciiDecode(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+function readUint16LE(buffer) {
+    var view = new DataView(buffer.buffer);
+    var val = view.getUint8(0);
+    val |= view.getUint8(1) << 8;
+    return val;
+}
+
+function fromArrayBuffer(buf) {
+    // Check the magic number
+    let magic = asciiDecode(buf.slice(0, 6));
+    if (magic.slice(1, 6) != 'NUMPY') {
+        throw new Error('unknown file type');
+    }
+
+    let version = new Uint8Array(buf.slice(6, 8)),
+        headerLength = readUint16LE(buf.slice(8, 10)),
+        headerStr = asciiDecode(buf.slice(10, 10 + headerLength));
+    let offsetBytes = 10 + headerLength;
+    //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
+
+    // Hacky conversion of dict literal string to JS Object
+    // eval("var info = " + headerStr.toLowerCase().replace('(', '[').replace('),', ']'));
+    let info = JSON.parse(headerStr.toLowerCase().replace('(', '[').replace(/\,*\)\,*/g, ']').replace(/'/g, "\""));
+
+    // Intepret the bytes according to the specified dtype
+    let data;
+    if (info.descr === "|u1") {
+        data = new Uint8Array(buf, offsetBytes);
+    } else if (info.descr === "|i1") {
+        data = new Int8Array(buf, offsetBytes);
+    } else if (info.descr === "<u2") {
+        data = new Uint16Array(buf, offsetBytes);
+    } else if (info.descr === "<i2") {
+        data = new Int16Array(buf, offsetBytes);
+    } else if (info.descr === "<u4") {
+        data = new Uint32Array(buf, offsetBytes);
+    } else if (info.descr === "<i4") {
+        data = new Int32Array(buf, offsetBytes);
+    } else if (info.descr === "<f4") {
+        data = new Float32Array(buf, offsetBytes);
+    } else if (info.descr === "<f8") {
+        data = new Float64Array(buf, offsetBytes);
+    } else {
+        throw new Error('unknown numeric dtype')
+    }
+
+    return {
+        shape: info.shape,
+        fortran_order: info.fortran_order,
+        data: data
+    };
 }
 
 
@@ -174,6 +237,34 @@ class Model {
             return data;
         }
         return null;
+    }
+
+    /* Volumes                                                                                   */
+    /*********************************************************************************************/
+
+    async getVolume(bucket, fname) {
+        let url = URLS['features'](bucket, fname);
+
+        try {
+            // Fetch the binary file
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            // Get the response body as a Uint8Array
+            const data = new Uint8Array(await response.arrayBuffer());
+
+            // Gunzip the data using pako
+            const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
+
+            let arr = fromArrayBuffer(gunzippedData);
+            return arr;
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
 
     /* Logic functions                                                                           */
