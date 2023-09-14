@@ -157,6 +157,15 @@ export function removeFromArray(array, toRemove) {
 
 
 
+export function setBackgroundImage(el, url) {
+    var tempImage = new Image();
+    tempImage.src = url;
+    tempImage.onload = function () {
+        el.style.backgroundImage = `url("${url}")`;
+    };
+}
+
+
 // export function getBarPlot() {
 //     return document.getElementById('bar-plot');
 // };

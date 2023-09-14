@@ -390,15 +390,35 @@ body.waiting * {
     background-repeat: no-repeat;
 }
 
-#svg-coronal-container svg {}
-
 #svg-coronal-container svg path {
     fill-opacity: 0%;
     stroke: #fff;
 }
 
-#svg-coronal-container svg path:hover {
-    /* stroke-width: 1px; */
+#svg-sagittal-container-inner {
+    background-image: url("/data/volumes/sagittal-0228.jpg");
+    background-position-x: 35.5%;
+    background-position-y: 90%;
+    background-size: 66.5% 100%;
+    background-repeat: no-repeat;
+}
+
+#svg-sagittal-container svg path {
+    fill-opacity: 0%;
+    stroke: #fff;
+}
+
+#svg-horizontal-container-inner {
+    background-image: url("/data/volumes/horizontal-0160.jpg");
+    background-position-x: 56%;
+    background-position-y: 65%;
+    background-size: 69% 90%;
+    background-repeat: no-repeat;
+}
+
+#svg-horizontal-container svg path {
+    fill-opacity: 0%;
+    stroke: #fff;
 }
 
 

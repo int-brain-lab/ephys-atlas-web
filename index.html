@@ -221,7 +221,8 @@
         <div id="svg-coronal-container" class="svg-wrapper">
             <div id="maximizer-coronal" class="maximizer"></div>
 
-            <div id="svg-coronal-container-inner" style="">
+            <!--  SVG container -->
+            <div id="svg-coronal-container-inner">
                 <svg xmlns="http://www.w3.org/2000/svg" id="svg-coronal" version="1.1" viewBox="60 25 350 284">
                     <g id="figure-coronal">
                     </g>
@@ -234,6 +235,7 @@
                 </svg>
             </div>
 
+            <!--  Slider -->
             <div id="slider-coronal-container">
                 <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2">
                 <div class="slice-label">coronal projection</div>
@@ -247,15 +249,19 @@
         <div id="svg-sagittal-container" class="svg-wrapper">
             <div id="maximizer-sagittal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-sagittal" version="1.1" viewBox="-10 65 545 221">
-                <g id="figure-sagittal">
-                </g>
-                <g id="lines-sagittal">
-                    <line id="sagittal-vline" x1="236" y1="45" x2="236" y2="280" stroke="#333" stroke-width="1px" />
-                    <line id="sagittal-hline" x1="50" y1="170" x2="420" y2="170" stroke="#333" stroke-width="1px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-sagittal-container-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-sagittal" version="1.1" viewBox="-10 65 545 221">
+                    <g id="figure-sagittal">
+                    </g>
+                    <g id="lines-sagittal">
+                        <line id="sagittal-vline" x1="236" y1="45" x2="236" y2="280" stroke="#333" stroke-width="1px" />
+                        <line id="sagittal-hline" x1="50" y1="170" x2="420" y2="170" stroke="#333" stroke-width="1px" />
+                    </g>
+                </svg>
+            </div>
 
+            <!--  Slider -->
             <div id="slider-sagittal-container">
                 <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2">
                 <div class="slice-label">sagittal projection</div>
@@ -269,17 +275,21 @@
         <div id="svg-horizontal-container" class="svg-wrapper">
             <div id="maximizer-horizontal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-horizontal" version="1.1" viewBox="60 20 340 300">
-                <g id="figure-horizontal">
-                </g>
-                <g id="lines-horizontal">
-                    <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333" stroke-width="1.5px" />
-                    <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333"
-                        stroke-width="1.5px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-horizontal-container-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-horizontal" version="1.1" viewBox="60 20 340 300">
+                    <g id="figure-horizontal">
+                    </g>
+                    <g id="lines-horizontal">
+                        <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333"
+                            stroke-width="1.5px" />
+                        <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333"
+                            stroke-width="1.5px" />
+                    </g>
+                </svg>
+            </div>
 
-
+            <!--  Slider -->
             <div id="slider-horizontal-container">
                 <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2">
                 <div class="slice-label">horizontal projection</div>
