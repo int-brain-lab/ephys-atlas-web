@@ -10,6 +10,7 @@ from itertools import groupby
 from operator import itemgetter
 from pathlib import Path
 import gzip
+from io import BytesIO
 import itertools
 import json
 import os
@@ -23,6 +24,7 @@ import uuid
 
 import numpy as np
 from flask import Flask, Response, request, send_file
+from flask_cors import CORS
 import requests
 
 
@@ -31,6 +33,7 @@ import requests
 # -------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
+CORS(app)
 
 ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
@@ -143,16 +146,22 @@ def renormalize_array(arr):
     return normalized_array
 
 
-def npy_to_gzip_binary(npy_filename):
-    npy_filename = Path(npy_filename)
+def make_npy_gz(npy_path):
+    npy_path = Path(npy_path)
+    arr = np.load(npy_path)
 
-    npy_data = np.load(npy_filename)
-    assert npy_data.ndim == 3
-    npy_data = renormalize_array(npy_data)
+    # Renormalize the data.
+    assert arr.ndim == 3
+    arr = renormalize_array(arr)
 
-    output_filename = npy_filename.with_suffix('.bin.gz')
+    output_filename = npy_path.with_suffix('.npy.gz')
+
+    buffer = BytesIO()
+    np.save(buffer, arr)
+    buffer.seek(0)
+
     with gzip.open(output_filename, 'wb') as gzip_file:
-        gzip_file.write(npy_data.tobytes())
+        gzip_file.write(buffer.read())
 
 
 # -------------------------------------------------------------------------------------------------
@@ -349,7 +358,7 @@ def return_volume(uuid, fname):
         return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
     # Retrieve the volume path.
-    volume_path = bucket_path / f'{fname}.npy' # TODO: .bin.gz
+    volume_path = bucket_path / f'{fname}.npy.gz'
     if not volume_path.exists():
         return f'Volume {fname} does not exist in bucket {uuid}.', 404
 
