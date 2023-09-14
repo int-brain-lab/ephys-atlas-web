@@ -30,7 +30,7 @@ class Highlighter {
         let idx = this.state.highlighted;
         let mapping = this.state.mapping;
 
-        this.style.insertRule(`svg path.${mapping}_region_${idx} { stroke: #000f; fill: var(--main-accent-color); }`);
+        this.style.insertRule(`svg path.${mapping}_region_${idx} { stroke: #000f; fill: var(--main-accent-color); stroke-width: 1px; }`);
         this.style.insertRule(`#bar-plot li.${mapping}_region_${idx} { background-color: var(--bar-highlight-color); }`);
     }
 
@@ -62,4 +62,3 @@ class Highlighter {
         }
     }
 };
-
