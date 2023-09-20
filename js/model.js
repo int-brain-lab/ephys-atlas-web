@@ -51,7 +51,7 @@ function fromArrayBuffer(buf) {
     // Hacky conversion of dict literal string to JS Object
     // eval("var info = " + headerStr.toLowerCase().replace('(', '[').replace('),', ']'));
     let info = JSON.parse(headerStr.toLowerCase().replace('(', '[').replace(/\,*\)\,*/g, ']').replace(/'/g, "\""));
-    console.log("npy", headerLength, headerStr, info);
+    // console.log("npy", headerLength, headerStr, info);
 
     // Intepret the bytes according to the specified dtype
     let data;
@@ -93,6 +93,7 @@ class Model {
         this.splash = splash;
         // this.model = this.initDatabase();
         this.model = null;
+        this._lastVolume = null; // cached volume, only keep 1 in memory
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -244,6 +245,16 @@ class Model {
     /*********************************************************************************************/
 
     async getVolume(bucket, fname) {
+        // Memoize pattern, keep last used volume in memory.
+        if (this._lastVolume != null) {
+            if (this._lastVolume[0] == bucket && this._lastVolume[1] == fname) {
+                return this._lastVolume[2];
+            }
+            else {
+                this._lastVolume = null;
+            }
+        }
+
         let url = URLS['features'](bucket, fname);
 
         try {
@@ -261,6 +272,7 @@ class Model {
             const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
 
             let arr = fromArrayBuffer(gunzippedData);
+            this._lastVolume = [bucket, fname, arr];
             return arr;
 
         } catch (error) {

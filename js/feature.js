@@ -179,6 +179,7 @@ class Feature {
     selectFeature(fname) {
         console.log(`select feature ${fname}`);
         this.state.fname = fname;
+        this.state.volume = null;
         this.tree.select(fname);
         this.dispatcher.feature(this, fname);
         this.dispatcher.volume(this, "");

@@ -1,7 +1,13 @@
 export { Volume };
 
-import { e2idx, clamp, rgb2hex } from "./utils.js";
+import { e2idx, clamp, rgb2hex, clearStyle } from "./utils.js";
 import { VOLUME_AXES, VOLUME_SIZE } from "./constants.js";
+
+
+
+/*************************************************************************************************/
+/* Utils                                                                                         */
+/*************************************************************************************************/
 
 function hexToRgb(hexColor) {
     // Remove any leading '#' symbol
@@ -15,6 +21,8 @@ function hexToRgb(hexColor) {
     // Return an object with the RGB components
     return [r, g, b];
 }
+
+
 
 function makeImageData(canvas) {
     return canvas.getContext('2d').createImageData(canvas.width, canvas.height);
@@ -39,6 +47,8 @@ class Volume {
         this.volume = null;
         this.fortran_order = null;
 
+        this.style = document.getElementById('style-volume').sheet;
+
         this.canvas_coronal = document.getElementById("canvas-coronal");
         this.canvas_horizontal = document.getElementById("canvas-horizontal");
         this.canvas_sagittal = document.getElementById("canvas-sagittal");
@@ -53,14 +63,54 @@ class Volume {
     /* Internal functions                                                                        */
     /*********************************************************************************************/
 
+    showVolume() {
+        clearStyle(this.style);
+        let s = 'fill-opacity: 0%; stroke: #ccc;';
+
+        this.style.insertRule(`#svg-coronal-container svg path { ${s} }\n`);
+        this.style.insertRule(`#svg-horizontal-container svg path { ${s} }\n`);
+        this.style.insertRule(`#svg-sagittal-container svg path { ${s} }\n`);
+    }
+
+    hideVolume() {
+        clearStyle(this.style);
+        let s = 'fill-opacity: 100%; stroke: #0;';
+
+        this.style.insertRule(`#svg-coronal-container svg path { ${s} }\n`);
+        this.style.insertRule(`#svg-horizontal-container svg path { ${s} }\n`);
+        this.style.insertRule(`#svg-sagittal-container svg path { ${s} }\n`);
+
+        this.style.insertRule(`#canvas-coronal { display: none; }\n`);
+        this.style.insertRule(`#canvas-horizontal { display: none; }\n`);
+        this.style.insertRule(`#canvas-sagittal { display: none; }\n`);
+    }
+
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupDispatcher() {
         this.dispatcher.on('volume', async (ev) => {
             if (ev.fname) {
+                this.showVolume();
+
                 let volume = await app.model.getVolume(this.state.bucket, ev.fname);
-                app.volume.setArray(volume);
+                this.setArray(volume);
+
+                this.drawSlice('coronal', this.state.coronal);
+                this.drawSlice('horizontal', this.state.horizontal);
+                this.drawSlice('sagittal', this.state.sagittal);
+            }
+            else {
+                this.hideVolume();
+
+                this.shape = null;
+                this.volume = null;
+                this.fortran_order = null;
+            }
+        });
+        this.dispatcher.on('feature', async (ev) => {
+            if (ev.fname) {
+                this.hideVolume();
             }
         });
     }
@@ -69,6 +119,13 @@ class Volume {
     /*********************************************************************************************/
 
     setArray(arr) {
+        if (!arr) {
+            this.shape = null;
+            this.volume = null;
+            this.fortran_order = null;
+            return;
+        }
+
         this.shape = arr.shape;
         this.volume = arr.data;
         this.fortran_order = arr.fortran_order;

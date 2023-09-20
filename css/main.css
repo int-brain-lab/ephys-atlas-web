@@ -428,7 +428,7 @@ body.waiting * {
     z-index: 1;
 }
 
-#svg-coronal-container svg path {
+/* #svg-coronal-container svg path {
     fill-opacity: 0%;
     stroke: #aaa;
 }
@@ -442,7 +442,7 @@ body.waiting * {
 #svg-horizontal-container svg path {
     fill-opacity: 0%;
     stroke: #aaa;
-}
+} */
 
 /* #svg-coronal-container-inner {
     background-image: url("/data/volumes/coronal-0264.jpg");
