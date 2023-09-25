@@ -94,6 +94,8 @@ class Feature {
         await this.setBucket(state.bucket);
         if (state.fname)
             this.selectFeature(state.fname)
+        else if (state.volume)
+            this.selectVolume(state.volume)
     }
 
     /* Setup functions                                                                           */
