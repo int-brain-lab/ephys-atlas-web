@@ -264,8 +264,15 @@ class Model {
         let url = URLS['features'](bucket, fname);
 
         try {
+            // Start splash screen.
+            this.splash.setTotal(2);
+            this.splash.set(0);
+
             // Fetch the binary file
             const response = await fetch(url);
+
+            // Splash progress.
+            this.splash.set(1);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -279,6 +286,10 @@ class Model {
 
             let arr = fromArrayBuffer(gunzippedData);
             this._lastVolume = [bucket, fname, arr];
+
+            // End splash.
+            this.splash.set(2);
+
             return arr;
 
         } catch (error) {

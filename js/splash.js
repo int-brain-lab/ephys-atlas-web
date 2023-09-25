@@ -20,6 +20,10 @@ class Splash {
         this.total += total;
     }
 
+    setTotal(total) {
+        this.total = total;
+    }
+
     setLoading(is_loading) {
         this.splash.style.display = is_loading ? 'block' : 'none';
     }
