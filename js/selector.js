@@ -90,12 +90,39 @@ class Selector {
         let mapping = this.state.mapping;
 
         clearStyle(this.style);
+
         if (this.state.selected.size > 0) {
-            this.style.insertRule(`svg path { fill-opacity: 0.5; }`);
+            this.style.insertRule(`svg path { fill-opacity: 0.5 !important; }`);
         }
         for (let id of this.state.selected) {
-            this.style.insertRule(`svg path.${mapping}_region_${id} { stroke-width: 2px !important; fill-opacity: 1.0; }`);
+            this.style.insertRule(`svg path.${mapping}_region_${id} { stroke-width: 2px !important; fill-opacity: 0.75 !important; }`);
             this.style.insertRule(`ul#bar-plot-list > li.${mapping}_region_${id} { background-color: var(--bar-select-color); }`);
+        }
+
+        // Volume mode.
+        if (this.state.volume) {
+
+            // Unselected regions.
+            if (this.state.selected.size > 0) {
+
+                let s = `fill: #fff; fill-opacity: 0.25 !important;`;
+
+                this.style.insertRule(`#svg-coronal-container svg path { ${s} }`);
+                this.style.insertRule(`#svg-sagittal-container svg path { ${s} }`);
+                this.style.insertRule(`#svg-horizontal-container svg path { ${s} }`);
+            }
+
+            // Selected regions.
+            for (let id of this.state.selected) {
+
+                let s = `stroke-width: 2px; fill-opacity: 0.75 !important;`;
+
+                this.style.insertRule(`#svg-coronal-container svg path.${mapping}_region_${id} { ${s} }`);
+                this.style.insertRule(`#svg-sagittal-container svg path.${mapping}_region_${id} { ${s} }`);
+                this.style.insertRule(`#svg-horizontal-container svg path.${mapping}_region_${id} { ${s} }`);
+
+                this.style.insertRule(`ul#bar-plot-list > li.${mapping}_region_${id} { background-color: var(--bar-select-color); }`);
+            }
         }
     }
 };
