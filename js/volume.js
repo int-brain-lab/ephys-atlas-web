@@ -95,10 +95,7 @@ class Volume {
 
                 let volume = await app.model.getVolume(this.state.bucket, ev.fname);
                 this.setArray(volume);
-
-                this.drawSlice('coronal', this.state.coronal);
-                this.drawSlice('horizontal', this.state.horizontal);
-                this.drawSlice('sagittal', this.state.sagittal);
+                this.draw();
             }
             else {
                 this.hideVolume();
@@ -108,15 +105,34 @@ class Volume {
                 this.fortran_order = null;
             }
         });
+
         this.dispatcher.on('feature', async (ev) => {
             if (ev.fname) {
                 this.hideVolume();
             }
         });
+
+        /* Update the canvases when the colormap changes. */
+        this.dispatcher.on('cmap', async (ev) => {
+            this.setCmap();
+            this.draw();
+        });
+        this.dispatcher.on('cmapRange', async (ev) => {
+            this.draw();
+        });
     }
 
     /* Main functions                                                                            */
     /*********************************************************************************************/
+
+    setCmap() {
+        // Convert the colormap to RGB values.
+        let colors = this.model.getColormap(this.state.cmap);
+        this.colors = [];
+        for (let i = 0; i < colors.length; i++) {
+            this.colors[i] = hexToRgb(colors[i]);
+        }
+    }
 
     setArray(arr) {
         if (!arr) {
@@ -136,13 +152,7 @@ class Volume {
             "fortran order:", this.fortran_order,
         );
 
-        // TODO: react to cmap change
-        // Convert the colormap to RGB values.
-        let colors = this.model.getColormap(this.state.cmap);
-        this.colors = [];
-        for (let i = 0; i < colors.length; i++) {
-            this.colors[i] = hexToRgb(colors[i]);
-        }
+        this.setCmap();
     }
 
     drawSlice(axis, idx) {
@@ -159,11 +169,12 @@ class Volume {
         // NOTE: the array values are always in [0, 255] as they were downsampled from the original
         // array. We can retrieve the min and max values of the original array in this.bounds
 
-        // TODO
-        // let cmin = this.state.cmapmin;
-        // let cmax = this.state.cmapmax;
-        let cmin = 0;
-        let cmax = 255;
+        // NOTE: cmapmin and cmapmax are in [0, 100], but we want values between [0, 255].
+        let cmin = this.state.cmapmin * 2.55;
+        let cmax = this.state.cmapmax * 2.55;
+        if (cmin >= cmax) {
+            return;
+        }
 
         let nTotal = this.colors.length;
 
@@ -242,5 +253,13 @@ class Volume {
         }
 
         canvas.getContext('2d').putImageData(imageData, 0, 0);
+    }
+
+    draw() {
+        console.log("redraw volume bitmaps");
+
+        this.drawSlice('coronal', this.state.coronal);
+        this.drawSlice('horizontal', this.state.horizontal);
+        this.drawSlice('sagittal', this.state.sagittal);
     }
 };
