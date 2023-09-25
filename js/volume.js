@@ -80,9 +80,9 @@ class Volume {
         this.style.insertRule(`#svg-horizontal-container svg path { ${s} }\n`);
         this.style.insertRule(`#svg-sagittal-container svg path { ${s} }\n`);
 
-        this.style.insertRule(`#canvas-coronal { display: none; }\n`);
-        this.style.insertRule(`#canvas-horizontal { display: none; }\n`);
-        this.style.insertRule(`#canvas-sagittal { display: none; }\n`);
+        this.style.insertRule(`#canvas-coronal { visibility: hidden; }\n`);
+        this.style.insertRule(`#canvas-horizontal { visibility: hidden; }\n`);
+        this.style.insertRule(`#canvas-sagittal { visibility: hidden; }\n`);
     }
 
     /* Setup functions                                                                           */
