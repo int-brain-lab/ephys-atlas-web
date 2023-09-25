@@ -129,7 +129,12 @@ class Volume {
         this.shape = arr.shape;
         this.volume = arr.data;
         this.fortran_order = arr.fortran_order;
-        console.log("array is loaded, shape is", this.shape, "fortran order:", this.fortran_order);
+        this.bounds = arr.bounds;
+        console.log(
+            "array is loaded, shape is", this.shape,
+            "bounds are:", this.bounds[0], this.bounds[1],
+            "fortran order:", this.fortran_order,
+        );
 
         // TODO: react to cmap change
         // Convert the colormap to RGB values.
@@ -151,10 +156,15 @@ class Volume {
         // sagittal: 456, WIDTH z
         const [dimX, dimY, dimZ] = this.shape;
 
+        // NOTE: the array values are always in [0, 255] as they were downsampled from the original
+        // array. We can retrieve the min and max values of the original array in this.bounds
+
+        // TODO
         // let cmin = this.state.cmapmin;
         // let cmax = this.state.cmapmax;
         let cmin = 0;
-        let cmax = 500; // TODO
+        let cmax = 255;
+
         let nTotal = this.colors.length;
 
         let canvas = this[`canvas_${axis}`];

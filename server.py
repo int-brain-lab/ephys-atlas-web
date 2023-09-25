@@ -5,6 +5,8 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
+import ast
+import struct
 from datetime import datetime, timedelta
 from itertools import groupby
 from operator import itemgetter
@@ -23,6 +25,13 @@ import unittest
 import uuid
 
 import numpy as np
+from numpy.lib.format import (
+    header_data_from_array_1_0,
+    _write_array_header,
+    # read_magic,
+    # _check_version,
+    # _read_bytes,
+)
 from flask import Flask, Response, request, send_file
 from flask_cors import CORS
 import requests
@@ -143,25 +152,82 @@ def renormalize_array(arr):
     # Normalize the entire array to [0, 255]
     normalized_array = ((arr - min_value) / (max_value - min_value) * 255).astype(np.uint8)
 
-    return normalized_array
+    return (min_value, max_value), normalized_array
 
 
-def make_npy_gz(npy_path):
-    npy_path = Path(npy_path)
-    arr = np.load(npy_path)
+def write_npy_with_metadata(fp, arr, **metadata):
+    info = header_data_from_array_1_0(arr)
+    info.update(metadata)
+    _write_array_header(fp, info, None)
 
+    if arr.flags.f_contiguous and not arr.flags.c_contiguous:
+        fp.write(arr.T.tobytes())
+    else:
+        fp.write(arr.tobytes())
+
+
+def write_npy_gz(path, arr):
     # Renormalize the data.
     assert arr.ndim == 3
-    arr = renormalize_array(arr)
+    (min_value, max_value), arr = renormalize_array(arr)
 
-    output_filename = npy_path.with_suffix('.npy.gz')
+    path = Path(path)
+    assert str(path).endswith('.npy.gz')
 
     buffer = BytesIO()
     np.save(buffer, arr)
     buffer.seek(0)
 
-    with gzip.open(output_filename, 'wb') as gzip_file:
+    with gzip.open(path, 'wb') as gzip_file:
         gzip_file.write(buffer.read())
+
+        # Adding extra metadata at the end of the gzipped byte buffer.
+        additional_data = np.array([min_value, max_value], dtype=np.float32).tobytes()
+        assert len(additional_data) == 8
+        gzip_file.write(additional_data)
+
+    # OR: with gzip.open('your_file.gz', 'ab') as f:
+
+
+def load_npy_gz(path):
+    path = Path(path)
+    assert '.npy.gz' in str(path)
+
+    # Decompress.
+    with gzip.open(path, 'rb') as gzip_file:
+        bytes = gzip_file.read()
+
+    # Read the header to get the extra metadata with the min and max value.
+    buf = BytesIO(bytes)
+    buf.seek(0)
+
+    # NOTE: below is a tentative of adding extra metadata fields in the npy header, but it doesn't
+    # work because the standard numpy npy loader checks that there are no extra metadata fields.
+    # We want generated npy to be readable b the standard npy loader.
+
+    # _header_size_info = {
+    #     (1, 0): ('<H', 'latin1'),
+    #     (2, 0): ('<I', 'latin1'),
+    #     (3, 0): ('<I', 'utf8'),
+    # }
+    # version = read_magic(buf)
+    # _check_version(version)
+    # hinfo = _header_size_info.get(version)
+    # if hinfo is None:
+    #     raise ValueError("Invalid version {!r}".format(version))
+    # hlength_type, encoding = hinfo
+    # hlength_str = _read_bytes(buf, struct.calcsize(hlength_type), "array header length")
+    # header_length = struct.unpack(hlength_type, hlength_str)[0]
+    # header = _read_bytes(buf, header_length, "array header")
+    # header = header.decode(encoding)
+    # d = ast.literal_eval(header)
+
+    # Load the array normally.
+    # buf.seek(0)
+
+    arr = np.load(buf)
+
+    return arr
 
 
 # -------------------------------------------------------------------------------------------------
@@ -953,7 +1019,6 @@ class FeatureUploader:
         _ = params['buckets'].pop(bucket_uuid)
         self._save_params(params)
 
-
     # Global key
     # ---------------------------------------------------------------------------------------------
 
@@ -1018,8 +1083,8 @@ class FeatureUploader:
     # Public methods
     # ---------------------------------------------------------------------------------------------
 
-    def _post_or_patch_features(
-            self, method, fname, acronyms, values, short_desc=None, hemisphere=None, map_nodes=False):
+    def _post_or_patch_features(self, method, fname, acronyms, values,
+                                short_desc=None, hemisphere=None, map_nodes=False):
 
         assert method in ('post', 'patch')
         assert fname
@@ -1064,10 +1129,17 @@ class FeatureUploader:
         self._delete_bucket()
         self._delete_bucket_token(self.bucket_uuid)
 
-    def create_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
+    def create_features(self, fname, acronyms, values, desc=None,
+                        hemisphere=None, map_nodes=False):
         """Create new features in the bucket."""
         self._post_or_patch_features(
-            'post', fname, acronyms, values, short_desc=desc, hemisphere=hemisphere, map_nodes=map_nodes)
+            'post',
+            fname,
+            acronyms,
+            values,
+            short_desc=desc,
+            hemisphere=hemisphere,
+            map_nodes=map_nodes)
 
     def get_bucket_metadata(self):
         response = self._get(f'buckets/{self.bucket_uuid}')
@@ -1094,7 +1166,13 @@ class FeatureUploader:
     def patch_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
         """Update existing features in the bucket."""
         self._post_or_patch_features(
-            'patch', fname, acronyms, values, short_desc=desc, hemisphere=hemisphere, map_nodes=map_nodes)
+            'patch',
+            fname,
+            acronyms,
+            values,
+            short_desc=desc,
+            hemisphere=hemisphere,
+            map_nodes=map_nodes)
 
     def delete_features(self, fname):
         self._delete(f'/buckets/{self.bucket_uuid}/{fname}')
@@ -1328,6 +1406,12 @@ if __name__ == '__main__':
 
         url = up.get_buckets_url([bucket])
         print(url)
+
+    elif sys.argv[-1] == 'npy':
+        path = "data/features/mybucket/vol.npy.gz~"
+        arr = load_npy_gz(path)
+
+        write_npy_gz(path[:-1], arr)
 
     # Run server
     else:

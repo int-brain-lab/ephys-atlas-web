@@ -75,10 +75,16 @@ function fromArrayBuffer(buf) {
         throw new Error('unknown numeric dtype')
     }
 
+    // NOTE: extract the last 8 bytes which contain extra metadata information, the min and max
+    // values of the original value before downsampling to uint8, as two float32 values.
+    const startIndex = buf.length - 8;
+    let bounds = new Float32Array(buf.buffer, startIndex); // min, max value of the original array
+
     return {
         shape: info.shape,
         fortran_order: info.fortran_order,
         data: data,
+        bounds: bounds,
     };
 }
 
