@@ -35,6 +35,7 @@ class Colorbar {
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('feature', (e) => { this.setColorbar(); this.setFeatureRange(); });
+        this.dispatcher.on('volume', (e) => { this.setColorbar(); this.setFeatureRange(); });
         this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
         this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });
     }
@@ -50,18 +51,24 @@ class Colorbar {
 
     async setFeatureRange() {
         // Display vmin and vmax.
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
-        if (features) {
-            let stats = features['statistics'][this.state.stat];
-            let vmin = stats['min'];
-            let vmax = stats['max'];
-            this.featureMin.innerHTML = displayNumber(vmin);
-            this.featureMax.innerHTML = displayNumber(vmax);
+        if (!this.state.volume) {
+            let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
+            if (features) {
+                let stats = features['statistics'][this.state.stat];
+                let vmin = stats['min'];
+                let vmax = stats['max'];
+                this.featureMin.innerHTML = displayNumber(vmin);
+                this.featureMax.innerHTML = displayNumber(vmax);
+            }
+        } else {
+            // TODO
+            this.featureMin.innerHTML = "0";
+            this.featureMax.innerHTML = "1";
         }
     }
 
     setColorbar() {
-        if (!this.state.fname) {
+        if (!this.state.fname && !this.state.volume) {
             this.clear();
             return;
         }
