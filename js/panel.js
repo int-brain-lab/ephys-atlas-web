@@ -169,7 +169,7 @@ class Panel {
     setupResetButton() {
         this.ibreset.addEventListener('click', (e) => {
             if (window.confirm("Are you sure you want to reset the view?")) {
-                this.state.init({});
+                this.state.reset(); // NOTE: this keeps the list of buckets intact
                 this.dispatcher.reset(this);
 
                 // Reset the browser URL.

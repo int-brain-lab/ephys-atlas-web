@@ -167,6 +167,10 @@ class State {
         this.selected = new Set(state.selected || []);
     }
 
+    reset() {
+        this.init({ 'bucket': this.bucket, 'buckets': this.buckets });
+    }
+
     toggleUpdate(toggle) {
         this._toggle = toggle;
     }

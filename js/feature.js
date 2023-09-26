@@ -142,6 +142,7 @@ class Feature {
 
     async setBucket(uuid_or_alias) {
         let bucket = await this.model.getBucket(uuid_or_alias);
+        console.log("set bucket", uuid_or_alias);
         console.assert(bucket);
 
         if (!bucket.metadata) {
