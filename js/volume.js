@@ -258,6 +258,10 @@ class Volume {
     draw() {
         console.log("redraw volume bitmaps");
 
+        if (this.state.logScale) {
+            console.warn("log scale not yet implemented on volumes");
+        }
+
         this.drawSlice('coronal', this.state.coronal);
         this.drawSlice('horizontal', this.state.horizontal);
         this.drawSlice('sagittal', this.state.sagittal);

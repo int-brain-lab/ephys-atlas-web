@@ -25,7 +25,7 @@ class Highlighter {
     /*********************************************************************************************/
 
     makeCSS() {
-        console.log("recompute highlight CSS");
+        // console.log("recompute highlight CSS");
 
         clearStyle(this.style);
 

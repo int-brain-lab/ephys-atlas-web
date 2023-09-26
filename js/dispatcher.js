@@ -102,6 +102,10 @@ class Dispatcher {
         this.emit("cmap", source, { "name": name });
     }
 
+    logScale(source, checked) {
+        this.emit("logScale", source, { "checked": checked });
+    }
+
     mapping(source, name) {
         // when the mapping is changed
         this.emit("mapping", source, { "name": name });

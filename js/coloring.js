@@ -5,6 +5,14 @@ import { normalizeValue, clamp, clearStyle } from "./utils.js";
 
 
 /*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+const LOG_10 = Math.log(10.0);
+
+
+
+/*************************************************************************************************/
 /* Coloring                                                                                      */
 /*************************************************************************************************/
 
@@ -35,6 +43,7 @@ class Coloring {
         this.dispatcher.on('bucket', (ev) => { this.clear(); });
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
+        this.dispatcher.on('logScale', (ev) => { this.buildColors(); });
         this.dispatcher.on('feature', (ev) => { this.buildColors(); });
         this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
         this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
@@ -151,6 +160,21 @@ class Coloring {
             // Compute the color as a function of the cmin/cmax slider values.
             let vmin = features['statistics'][stat]['min'];
             let vmax = features['statistics'][stat]['max'];
+
+            if (this.state.logScale) {
+                if (vmin <= 0) {
+                    console.error("unable to activate the log scale, all values should be >0");
+                }
+                else {
+                    console.assert(vmin > 0);
+                    console.assert(vmax > vmin);
+
+                    value = Math.log(value) / LOG_10;
+                    vmin = Math.log(vmin) / LOG_10;
+                    vmax = Math.log(vmax) / LOG_10;
+                }
+            }
+
             let vdiff = vmax - vmin;
 
             let vminMod = vmin + vdiff * cmin / 100.0;

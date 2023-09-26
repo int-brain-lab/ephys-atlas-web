@@ -12,6 +12,7 @@ import { encode, decode } from "./utils.js";
 const DEFAULT_COLORMAP = "magma";
 const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
+const DEFAULT_LOG_SCALE = false;
 
 const DEFAULT_BUCKET = "ephys";
 const DEFAULT_BUCKETS = ["ephys", "bwm"];
@@ -144,6 +145,7 @@ class State {
         this.cmap = state.cmap || DEFAULT_COLORMAP;
         this.cmapmin = state.cmapmin || DEFAULT_COLORMAP_MIN;
         this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
+        this.logScale = state.logScale || DEFAULT_LOG_SCALE;
 
         // Features.
         this.bucket = state.bucket || DEFAULT_BUCKET;

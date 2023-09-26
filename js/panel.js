@@ -29,6 +29,7 @@ class Panel {
         this.istat = document.getElementById('stat-dropdown');
         this.icmapmin = document.getElementById('colormap-min');
         this.icmapmax = document.getElementById('colormap-max');
+        this.iclog = document.getElementById('log-scale');
         this.ibreset = document.getElementById('reset-view-button');
         this.ibclear = document.getElementById('clear-cache-button');
         this.ishare = document.getElementById('share-button');
@@ -39,6 +40,7 @@ class Panel {
         this.setupColormap();
         this.setupColormapMin();
         this.setupColormapMax();
+        this.setupLogScale();
 
         this.setupClearButton();
         this.setupShareButton();
@@ -64,6 +66,9 @@ class Panel {
 
         // Colormap range.
         this.setCmapRange(state.cmapmin, state.cmapmax);
+
+        // Log scale.
+        this.setLogScale(state.logScale);
     }
 
     /* Set functions                                                                             */
@@ -84,6 +89,11 @@ class Panel {
     setCmapRange(cmapmin, cmapmax) {
         this.icmapmin.value = cmapmin;
         this.icmapmax.value = cmapmax;
+    }
+
+    setLogScale(logScale) {
+        console.log(logScale);
+        this.iclog.checked = logScale;
     }
 
     share() {
@@ -145,6 +155,14 @@ class Panel {
             'input', throttle((e) => { this._updateColormapRange(); }, CMAP_RANGE_THROTTLE));
     }
 
+    setupLogScale() {
+        this.iclog.addEventListener(
+            'change', (e) => {
+                this.state.logScale = e.target.checked;
+                this.dispatcher.logScale(this, this.state.logScale);
+            });
+    }
+
     /* Buttons                                                                                   */
     /*********************************************************************************************/
 
@@ -171,6 +189,9 @@ class Panel {
             if (window.confirm("Are you sure you want to reset the view?")) {
                 this.state.reset(); // NOTE: this keeps the list of buckets intact
                 this.dispatcher.reset(this);
+
+                // Update the panel controls.
+                this.init();
 
                 // Reset the browser URL.
                 const url = new URL(window.location);

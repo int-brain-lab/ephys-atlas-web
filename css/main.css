@@ -286,6 +286,10 @@ body.waiting * {
     cursor: pointer;
 }
 
+#control-panel #log-scale {
+    margin-right: 6px;
+}
+
 #reset-view-button {
     background-color: #FF5C00aa;
 }

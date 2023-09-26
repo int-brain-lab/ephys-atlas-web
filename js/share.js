@@ -23,11 +23,13 @@ class Share {
             'cmap',
             'cmapRange',
             'feature',
+            'logScale',
             'mapping',
             'search',
             'slice',
             'stat',
             'toggle',
+            'volume',
         ];
         for (let name of events) {
             this.dispatcher.on(name, (ev) => {
