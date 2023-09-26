@@ -49,6 +49,9 @@ class Selector {
 
         this.dispatcher.on('clear', (e) => { this.clear(); });
 
+        this.dispatcher.on('feature', (e) => { this.makeCSS(); });
+        this.dispatcher.on('volume', (e) => { this.makeCSS(); });
+
         // NOTE: clear the selection when the mapping changes.
         this.dispatcher.on('mapping', (e) => { this.clear(); });
     }
@@ -88,6 +91,7 @@ class Selector {
 
     makeCSS() {
         let mapping = this.state.mapping;
+        console.log("recompute selection CSS");
 
         clearStyle(this.style);
 

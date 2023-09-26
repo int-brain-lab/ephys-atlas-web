@@ -25,6 +25,8 @@ class Highlighter {
     /*********************************************************************************************/
 
     makeCSS() {
+        console.log("recompute highlight CSS");
+
         clearStyle(this.style);
 
         let idx = this.state.highlighted;
