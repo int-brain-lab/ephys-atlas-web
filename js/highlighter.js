@@ -30,8 +30,18 @@ class Highlighter {
         let idx = this.state.highlighted;
         let mapping = this.state.mapping;
 
-        this.style.insertRule(`svg path.${mapping}_region_${idx} { stroke: #000f; fill: var(--main-accent-color); stroke-width: 1px; }`);
-        this.style.insertRule(`#bar-plot li.${mapping}_region_${idx} { background-color: var(--bar-highlight-color); }`);
+        let s = `stroke: #000f; fill: var(--main-accent-color);  stroke-width: 1px;`;
+        this.style.insertRule(`svg path.${mapping}_region_${idx} { ${s} }`);
+
+        if (this.state.volume) {
+            s = `stroke: #000f; fill: #fff; fill-opacity: .5 !important; stroke-width: 1px;`;
+            this.style.insertRule(`#svg-coronal-container svg path.${mapping}_region_${idx} { ${s} }`);
+            this.style.insertRule(`#svg-sagittal-container svg path.${mapping}_region_${idx} { ${s} }`);
+            this.style.insertRule(`#svg-horizontal-container svg path.${mapping}_region_${idx} { ${s} }`);
+        }
+
+        s = `background-color: var(--bar-highlight-color);`;
+        this.style.insertRule(`#bar-plot li.${mapping}_region_${idx} { ${s} }`);
     }
 
     /* Setup functions                                                                           */
