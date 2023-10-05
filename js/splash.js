@@ -67,7 +67,7 @@ class Loader {
     // Store a JSON file from a URL and put it in memory. Provide a get(key) function.
     // Used for simple key-value mappings.
     constructor(
-        splash, url, process, [downloadSplash, processSplash, storeSplash],
+        splash, url, [downloadSplash, storeSplash],
     ) {
         console.assert(splash);
         console.assert(url);
@@ -76,75 +76,42 @@ class Loader {
         this.items = {};
         this.splash = splash;
         this.url = url;
-        this.process = process; // a function
-
-        this._queue = [];
-        this._status = "pending"; // then "downloading" then "done"
 
         // Splash progress for the different steps.
         this.downloadSplash = downloadSplash; // a number
-        this.processSplash = processSplash; // a number
         this.storeSplash = storeSplash; // a number
 
         // Total splash.
-        this.totalSplash = downloadSplash + processSplash + storeSplash;
+        this.totalSplash = downloadSplash + storeSplash;
         this.splash.addTotal(this.totalSplash);
     }
 
     async start(refresh = false) {
-        // IMPORTANT: start() should always be called when retrieving an object.
-        // The loader will make sure to redownload or not depending on whether the data has
-        // already been downloaded (cache), and whether refresh is true.
-        if (refresh) this._status = "pending";
-        if (this._status == "done") return;
+        console.debug(`loader downloading ${this.url}...`)
 
-        // NOTE: this avoids multiple downloads when there are concurrent calls to this function
-        // for example when multiple components call "model.getFeatures()".
-        if (this._status == "downloading") {
-            console.debug("skip downloading which is already occuring");
-            return new Promise((resolve) => {
-                this._queue.push(resolve);
-            });
-        }
-        else {
-            this._status = "downloading";
-            console.debug(`loader downloading ${this.url}...`)
+        let n = Object.keys(this.items).length;
 
-            let n = Object.keys(this.items).length;
+        let dl = await downloadJSON(this.url, refresh);
+        this.splash.add(this.downloadSplash);
 
-            let dl = await downloadJSON(this.url, refresh);
-            this.splash.add(this.downloadSplash);
+        console.debug(`done downloading ${this.url}`)
 
-            console.debug(`done downloading ${this.url}`)
+        let items = dl;
 
-            // Handle undefined process function.
-            let items = dl;
-            if (this.process)
-                items = this.process(dl);
-            this.splash.add(this.processSplash);
+        if (items) {
+            n = Object.keys(items).length;
+            console.assert(items);
+            console.assert(n > 0);
+            console.debug(`adding ${n} items.`)
+            this.items = items;
 
-            if (items) {
-                n = Object.keys(items).length;
-                console.assert(items);
-                console.assert(n > 0);
-                console.debug(`adding ${n} items.`)
-                this.items = items;
-
-                this.splash.add(this.storeSplash);
-                console.debug(`done adding items.`);
-            }
-
-            this._status = "done";
-            while (this._queue.length > 0) {
-                const resolveFn = this._queue.shift();
-                resolveFn();
-            }
+            this.splash.add(this.storeSplash);
+            console.debug(`done adding items.`);
         }
     }
 
     get(key) {
         console.assert(this.items);
-        // if (!this.items.includes(key)) console.warn(`${key} not in items`)
         return this.items[key];
     }
 };

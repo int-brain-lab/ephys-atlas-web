@@ -48,6 +48,33 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
         <div class="bar_wrapper"><div class="bar" style="width: ${normalized}%;"></div></div>
     </li>
     `;
+
+    // // Create the <li> element
+    // const listItem = document.createElement('li');
+    // listItem.className = `${mapping}_region_${idx}`;
+    // listItem.setAttribute('data-acronym', acronym);
+    // listItem.setAttribute('data-idx', idx);
+    // listItem.setAttribute('data-name', name);
+    // listItem.setAttribute('data-hemisphere', hemisphere);
+
+    // // Create the <div> element for acronym
+    // const acronymDiv = document.createElement('div');
+    // acronymDiv.className = 'acronym';
+    // acronymDiv.textContent = acronym;
+
+    // // Create the <div> elements for the bar
+    // const barWrapperDiv = document.createElement('div');
+    // barWrapperDiv.className = 'bar_wrapper';
+    // const barDiv = document.createElement('div');
+    // barDiv.className = 'bar';
+    // barDiv.style.width = `${normalized}%`;
+
+    // // Append the div elements to the <li> element
+    // barWrapperDiv.appendChild(barDiv);
+    // listItem.appendChild(acronymDiv);
+    // listItem.appendChild(barWrapperDiv);
+
+    // return listItem;
 }
 
 
@@ -109,15 +136,18 @@ class RegionList {
 
     setRegions(mapping, regions) { // idx, name, acronym, normalized
         let s = '';
+        // let items = [];
         for (let idx in regions) {
             let region = regions[idx];
 
             // NOTE: skip void region
             if (region['acronym'] == 'void') continue;
+            // items.push(makeRegionItem(
             s += makeRegionItem(
                 mapping, idx, region['acronym'], region['name'], region['normalized']);
         }
-        this.el.innerHTML = s;
+        // this.el.replaceChildren(...items);
+        // this.el.innerHTML = s;
     }
 }
 
@@ -153,7 +183,7 @@ class Region {
 
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
-        this.dispatcher.on('feature', (ev) => { this.setRegions(); });
+        // this.dispatcher.on('feature', (ev) => { this.setRegions(); });
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
         this.dispatcher.on('search', (ev) => { this.setRegions(); });

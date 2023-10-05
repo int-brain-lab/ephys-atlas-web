@@ -71,20 +71,28 @@ class Coloring {
     }
 
     async buildColors(refresh = false) {
-        this.dispatcher.spinning(this, true);
-
-        // Load the region and features data.
-        let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
-
-        // Clear the styles.
-        this.clear();
 
         // Remove the feature colors when deselecting a feature.
         if (!this.state.fname) {
+
+            // Clear the styles.
+            this.clear();
+
             this.dispatcher.spinning(this, false);
             return;
         }
+
+
+        /// NOTE: the weird Chrome freeze when unselecting a feature after changing a bucket
+        // (that could not be reproduced with the profiler on) is "fixed" by putting the lines
+        // below AFTER the if/return above. The await getFeatures() call below was freezing
+        // for some reason. Avoiding these unnecessary calls seems to be a workaround for this
+        // issue.
+
+        this.dispatcher.spinning(this, true);
+
+        ///
+
 
         // Get the state information.
         let mapping = this.state.mapping;
@@ -95,6 +103,10 @@ class Coloring {
 
         // Load the colormap.
         let colors = this.model.getColormap(this.state.cmap);
+
+        // Load the region and features data.
+        let regions = this.model.getRegions(this.state.mapping);
+        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
 
         // Figure out what hemisphere values we have
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
@@ -120,6 +132,9 @@ class Coloring {
         }
         // Here the hasLeft and hasRight values should be set. At least one of them is true.
         console.assert(hasLeft || hasRight);
+
+        // Clear the styles.
+        this.clear();
 
         // Go through all regions.
         for (let regionIdx in regions) {

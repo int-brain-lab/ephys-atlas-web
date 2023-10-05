@@ -108,6 +108,35 @@ export function throttle(func, wait, options) {
 
 
 
+export function cached(download) {
+    const cache = new Map();
+
+    return async function (...id) {
+        console.log("CACHED");
+
+        // Convert the id to a string for Map key, ensuring uniqueness
+        const idString = JSON.stringify(id);
+
+        if (cache.has(idString)) {
+            console.log("FROM CACHE");
+            return cache.get(idString);
+        }
+
+        const downloadPromise = download(...id).then((result) => {
+            console.log("DOWNLOADED, PUT IN CACHE");
+            cache.set(idString, result);
+            return result;
+        });
+
+        console.log("SAVE IN CACHE");
+        cache.set(idString, downloadPromise);
+
+        return await downloadPromise;
+    };
+}
+
+
+
 /*************************************************************************************************/
 /* DOM                                                                                           */
 /*************************************************************************************************/

@@ -1,6 +1,7 @@
 export { Model, URLS };
 
 import { Loader } from "./splash.js";
+import { cached } from "./utils.js";
 
 
 
@@ -97,9 +98,6 @@ function fromArrayBuffer(buf) {
 class Model {
     constructor(splash) {
         this.splash = splash;
-        // this.model = this.initDatabase();
-        this.model = null;
-        this._lastVolume = null; // cached volume, only keep 1 in memory
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -114,6 +112,11 @@ class Model {
             'ephys': this.setupBucket('ephys', [1, 1, 1]),
             'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
+
+        // Cached versions of the methods.
+        this.getBucket = cached(this._getBucket.bind(this));
+        this.getFeatures = cached(this._getFeatures.bind(this));
+        this.getVolume = cached(this._getVolume.bind(this));
     }
 
     /* Internal                                                                                  */
@@ -133,7 +136,7 @@ class Model {
     /*********************************************************************************************/
 
     setupColormaps(progress) {
-        return new Loader(this.splash, URLS['colormaps'], null, progress);
+        return new Loader(this.splash, URLS['colormaps'], progress);
     }
 
     getColormap(cmap) {
@@ -148,7 +151,7 @@ class Model {
     /*********************************************************************************************/
 
     setupRegions(progress) {
-        return new Loader(this.splash, URLS['regions'], null, progress);
+        return new Loader(this.splash, URLS['regions'], progress);
     }
 
     getRegions(mapping) {
@@ -172,7 +175,7 @@ class Model {
     /*********************************************************************************************/
 
     setupSlices(name, progress) {
-        return new Loader(this.splash, URLS['slices'](name), null, progress);
+        return new Loader(this.splash, URLS['slices'](name), progress);
     }
 
     getSlice(axis, idx) {
@@ -185,25 +188,22 @@ class Model {
     /*********************************************************************************************/
 
     setupBucket(bucket, progress) {
-        return new Loader(this.splash, URLS['bucket'](bucket), null, progress);
+        return new Loader(this.splash, URLS['bucket'](bucket), progress);
     }
 
-    async getBucket(bucket, refresh = false) {
+    async _getBucket(bucket, refresh = false) {
         console.assert(bucket);
 
         if (!(bucket in this.loaders)) {
             let url = URLS['bucket'](bucket);
             console.log(`creating bucket loader for ${url}`);
-            this.loaders[bucket] = new Loader(this.splash, url, null, [0, 0, 0]);
+            this.loaders[bucket] = new Loader(this.splash, url, [0, 0, 0]);
         }
-        await this.loaders[bucket].start(refresh);
-        // if (refresh) {
-        //     console.log("refreshing bucket");
-        //     await this.loaders[bucket].start(refresh);
-        // }
         let loader = this.loaders[bucket];
-
         console.assert(loader);
+
+        await loader.start(refresh);
+
         let data = loader.items;
         console.assert(data);
         return data;
@@ -212,12 +212,12 @@ class Model {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async getFeatures(bucket, mapping, fname, refresh = false) {
+    async _getFeatures(bucket, mapping, fname, refresh = false) {
         // NOTE: this is async because this dynamically creates a new loader and therefore
         // make a HTTP request on demand to get the requested feature.
         console.assert(bucket);
         console.assert(mapping);
-        if (!fname) return;
+        if (!fname) return null;
         console.assert(fname);
         console.debug(`getting features ${fname}`);
 
@@ -226,13 +226,9 @@ class Model {
             let url = URLS['features'](bucket, fname);
             console.log(`downloading features for ${bucket}, ${fname}`);
 
-            this.loaders[key] = new Loader(this.splash, url, null, [0, 0, 0]);
+            this.loaders[key] = new Loader(this.splash, url, [0, 0, 0]);
         }
         await this.loaders[key].start(refresh);
-        // if (refresh) {
-        //     console.log("refreshing features");
-        //     await this.loaders[key].start(refresh);
-        // }
         let loader = this.loaders[key];
         console.assert(loader);
 
@@ -250,17 +246,7 @@ class Model {
     /* Volumes                                                                                   */
     /*********************************************************************************************/
 
-    async getVolume(bucket, fname) {
-        // Memoize pattern, keep last used volume in memory.
-        if (this._lastVolume != null) {
-            if (this._lastVolume[0] == bucket && this._lastVolume[1] == fname) {
-                return this._lastVolume[2];
-            }
-            else {
-                this._lastVolume = null;
-            }
-        }
-
+    async _getVolume(bucket, fname) {
         let url = URLS['features'](bucket, fname);
 
         try {
@@ -285,7 +271,6 @@ class Model {
             const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
 
             let arr = fromArrayBuffer(gunzippedData);
-            this._lastVolume = [bucket, fname, arr];
 
             // End splash.
             this.splash.set(2);
@@ -296,11 +281,4 @@ class Model {
             console.error('Error:', error);
         }
     }
-
-    /* Logic functions                                                                           */
-    /*********************************************************************************************/
-
-    // normalize(values, vmin, vmax) {
-    //     return values.map(value => normalizeValue(value, vmin, vmax));
-    // }
 }

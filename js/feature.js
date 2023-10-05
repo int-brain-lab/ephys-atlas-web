@@ -93,10 +93,7 @@ class Feature {
     async setState(state) {
         await this.setBucket(state.bucket);
         if (state.fname) {
-            if (state.isVolume)
-                this.selectVolume(state.fname);
-            else
-                this.selectFeature(state.fname);
+            this.selectFeature(state.fname, state.isVolume);
         }
 
     }
@@ -118,10 +115,8 @@ class Feature {
                 let isVol = e.target.dataset.volume == "true";
                 if (this.tree.selected(fname))
                     this.selectFeature('');
-                else if (!isVol)
-                    this.selectFeature(fname);
-                else if (isVol)
-                    this.selectVolume(fname);
+                else
+                    this.selectFeature(fname, isVol);
             }
         });
 
@@ -182,20 +177,12 @@ class Feature {
         this.dispatcher.spinning(this, false);
     }
 
-    selectFeature(fname) {
-        console.log(`select feature ${fname}`);
+    selectFeature(fname, isVolume) {
+        console.log(`select feature ${fname}, volume=${isVolume}`);
         this.state.fname = fname;
-        this.state.isVolume = false;
+        this.state.isVolume = isVolume;
         this.tree.select(fname);
-        this.dispatcher.feature(this, fname, false);
-    }
-
-    selectVolume(fname) {
-        console.log(`select volume ${fname}`);
-        this.state.fname = fname;
-        this.state.isVolume = true;
-        this.tree.select(fname);
-        this.dispatcher.feature(this, fname, true);
+        this.dispatcher.feature(this, fname, isVolume);
     }
 
     async download() {

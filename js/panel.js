@@ -92,7 +92,7 @@ class Panel {
     }
 
     setLogScale(logScale) {
-        console.log(logScale);
+        console.log("log scale", logScale);
         this.iclog.checked = logScale;
     }
 
