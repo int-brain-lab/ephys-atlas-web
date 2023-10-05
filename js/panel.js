@@ -97,14 +97,7 @@ class Panel {
     }
 
     share() {
-        let url = window.location.href;
-
-        // Copy the URL to the clipboard.
-        navigator.clipboard.writeText(url);
-
-        // Feedback.
-        this.ishare.innerHTML = "copied!";
-        setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+        this.dispatcher.share(this);
     }
 
     // if (this.unity)

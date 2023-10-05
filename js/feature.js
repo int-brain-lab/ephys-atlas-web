@@ -92,10 +92,13 @@ class Feature {
 
     async setState(state) {
         await this.setBucket(state.bucket);
-        if (state.fname)
-            this.selectFeature(state.fname)
-        else if (state.volume)
-            this.selectVolume(state.volume)
+        if (state.fname) {
+            if (state.isVolume)
+                this.selectVolume(state.fname);
+            else
+                this.selectFeature(state.fname);
+        }
+
     }
 
     /* Setup functions                                                                           */
@@ -182,19 +185,17 @@ class Feature {
     selectFeature(fname) {
         console.log(`select feature ${fname}`);
         this.state.fname = fname;
-        this.state.volume = null;
+        this.state.isVolume = false;
         this.tree.select(fname);
-        this.dispatcher.feature(this, fname);
-        this.dispatcher.volume(this, "");
+        this.dispatcher.feature(this, fname, false);
     }
 
     selectVolume(fname) {
         console.log(`select volume ${fname}`);
-        this.state.fname = null;
-        this.state.volume = fname;
+        this.state.fname = fname;
+        this.state.isVolume = true;
         this.tree.select(fname);
-        this.dispatcher.feature(this, "");
-        this.dispatcher.volume(this, fname);
+        this.dispatcher.feature(this, fname, true);
     }
 
     async download() {

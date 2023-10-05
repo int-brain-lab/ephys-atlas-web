@@ -89,26 +89,20 @@ class Volume {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('volume', async (ev) => {
-            if (ev.fname) {
-                this.showVolume();
-
-                let volume = await app.model.getVolume(this.state.bucket, ev.fname);
-                this.setArray(volume);
-                this.draw();
-            }
-            else {
+        this.dispatcher.on('feature', async (ev) => {
+            if (!ev.isVolume) {
                 this.hideVolume();
 
                 this.shape = null;
                 this.volume = null;
                 this.fortran_order = null;
             }
-        });
+            else {
+                this.showVolume();
 
-        this.dispatcher.on('feature', async (ev) => {
-            if (ev.fname) {
-                this.hideVolume();
+                let volume = await app.model.getVolume(this.state.bucket, ev.fname);
+                this.setArray(volume);
+                this.draw();
             }
         });
 

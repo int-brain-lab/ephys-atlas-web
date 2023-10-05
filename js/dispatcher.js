@@ -77,14 +77,9 @@ class Dispatcher {
         this.emit("spinning", source, { "isSpinning": isSpinning });
     }
 
-    feature(source, fname) {
+    feature(source, fname, isVolume) {
         // when a feature is selected
-        this.emit("feature", source, { "fname": fname });
-    }
-
-    volume(source, fname) {
-        // when a volume is selected
-        this.emit("volume", source, { "fname": fname });
+        this.emit("feature", source, { "fname": fname, "isVolume": isVolume });
     }
 
     featureHover(source, fname, desc, e) {
@@ -116,5 +111,8 @@ class Dispatcher {
         this.emit("cmapRange", source, { "cmin": cmin, "cmax": cmax });
     }
 
+    share(source) {
+        this.emit("share", source);
+    }
 
 };

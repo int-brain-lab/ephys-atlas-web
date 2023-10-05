@@ -84,7 +84,7 @@ function url2state() {
     if (!DEFAULT_BUCKETS.includes(state.bucket) && !state.buckets.includes(state.bucket)) {
         state.bucket = null;
         state.fname = null;
-        state.volume = null;
+        state.isVolume = null;
     }
 
     return state;
@@ -151,7 +151,7 @@ class State {
         this.bucket = state.bucket || DEFAULT_BUCKET;
         this.buckets = state.buckets || DEFAULT_BUCKETS;
         this.fname = state.fname;
-        this.volume = state.volume;
+        this.isVolume = state.isVolume;
         this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.
@@ -189,6 +189,8 @@ class State {
 
         // Set the URL in the location bar.
         window.history.replaceState(null, '', url.toString());
+
+        return url;
     }
 
     fromURL() {

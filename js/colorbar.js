@@ -35,7 +35,6 @@ class Colorbar {
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('feature', (e) => { this.setColorbar(); this.setFeatureRange(); });
-        this.dispatcher.on('volume', (e) => { this.setColorbar(); this.setFeatureRange(); });
         this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
         this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });
     }
@@ -51,7 +50,7 @@ class Colorbar {
 
     async setFeatureRange() {
         // Display vmin and vmax.
-        if (!this.state.volume) {
+        if (!this.state.isVolume) {
             let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
             if (features) {
                 let stats = features['statistics'][this.state.stat];
@@ -68,7 +67,7 @@ class Colorbar {
     }
 
     setColorbar() {
-        if (!this.state.fname && !this.state.volume) {
+        if (!this.state.fname) {
             this.clear();
             return;
         }

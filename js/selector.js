@@ -50,7 +50,6 @@ class Selector {
         this.dispatcher.on('clear', (e) => { this.clear(); });
 
         this.dispatcher.on('feature', (e) => { this.makeCSS(); });
-        this.dispatcher.on('volume', (e) => { this.makeCSS(); });
 
         // NOTE: clear the selection when the mapping changes.
         this.dispatcher.on('mapping', (e) => { this.clear(); });
@@ -104,7 +103,7 @@ class Selector {
         }
 
         // Volume mode.
-        if (this.state.volume) {
+        if (this.state.isVolume) {
 
             // Unselected regions.
             if (this.state.selected.size > 0) {

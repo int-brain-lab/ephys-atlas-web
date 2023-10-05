@@ -35,7 +35,7 @@ class Highlighter {
         let s = `stroke: #000f; fill: var(--main-accent-color);  stroke-width: 1px;`;
         this.style.insertRule(`svg path.${mapping}_region_${idx} { ${s} }`);
 
-        if (this.state.volume) {
+        if (this.state.isVolume) {
             s = `stroke: #000f; fill: #fff; fill-opacity: .5 !important; stroke-width: 1px;`;
             this.style.insertRule(`#svg-coronal-container svg path.${mapping}_region_${idx} { ${s} }`);
             this.style.insertRule(`#svg-sagittal-container svg path.${mapping}_region_${idx} { ${s} }`);
