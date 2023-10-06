@@ -28,7 +28,7 @@ class Coloring {
     }
 
     init() {
-        this.setState(this.state);
+        // this.setState(this.state);
     }
 
     setState(state) {

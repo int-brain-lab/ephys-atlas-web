@@ -22,7 +22,7 @@ class Cache {
     }
 
     get(...id) {
-        console.log(`load ${id} from cache`);
+        // console.log(`load ${id} from cache`);
         const idString = this._hash(id);
         console.assert(this._cache.has(idString));
         return this._cache.get(idString);
@@ -32,17 +32,17 @@ class Cache {
         const idString = this._hash(id);
 
         if (this._cache.has(idString)) {
-            console.log(`load ${id} from cache`);
+            // console.log(`load ${id} from cache`);
             return this._cache.get(idString);
         }
 
         const downloadPromise = this._downloadFunction(...id).then((result) => {
-            console.log(`downloaded ${id}`);
+            console.log(`finish downloading ${id}`);
             this._cache.set(idString, result);
             return result;
         });
 
-        console.log(`save ${id} in cache`);
+        // console.log(`save ${id} in cache`);
         this._cache.set(idString, downloadPromise);
 
         return await downloadPromise;

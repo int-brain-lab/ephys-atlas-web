@@ -87,15 +87,16 @@ class Feature {
     }
 
     init() {
-        this.setState(this.state);
+        // this.setState(this.state);
     }
 
     async setState(state) {
-        // await this.setBucket(state.bucket);
-        // if (state.fname) {
-        //     this.selectFeature(state.fname, state.isVolume);
-        // }
-
+        if (state.fname) {
+            this.model.downloadFeatures(state.bucket, state.fname).then(() => {
+                // Dispatch the feature selected event.
+                this.selectFeature(state.fname, state.isVolume);
+            });
+        }
     }
 
     /* Setup functions                                                                           */
@@ -103,7 +104,20 @@ class Feature {
 
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
-        this.dispatcher.on('bucket', (ev) => { this.setBucket(ev.uuid_or_alias); });
+        this.dispatcher.on('bucket', async (ev) => {
+            this.setBucket(ev.uuid_or_alias);
+
+            if (this.state.fname) {
+                // Select the features.
+                const state = this.state;
+                // Download the features.
+                if (!this.model.hasFeatures(state.bucket, state.fname)) {
+                    await this.model.downloadFeatures(state.bucket, state.fname);
+                }
+
+                this.selectFeature(state.fname, state.isVolume);
+            }
+        });
         this.dispatcher.on('refresh', (ev) => { this.refreshBucket(); });
         this.dispatcher.on('bucketRemove', (ev) => { this.setBucket(DEFAULT_BUCKET); });
     }
@@ -120,14 +134,13 @@ class Feature {
 
                 else {
                     // Download the features.
-                    // TODO: splash
-                    if (!this.model.hasFeatures(this.state.bucket, this.state.mapping, fname)) {
-                        await this.model.downloadFeatures(this.state.bucket, this.state.mapping, fname);
+                    if (!this.model.hasFeatures(this.state.bucket, fname)) {
+                        // TODO: splash
+                        await this.model.downloadFeatures(this.state.bucket, fname);
                     }
 
-                    let isVol = e.target.dataset.volume == "true";
-
                     // Dispatch the feature selected event.
+                    let isVol = e.target.dataset.volume == "true";
                     this.selectFeature(fname, isVol);
                 }
             }

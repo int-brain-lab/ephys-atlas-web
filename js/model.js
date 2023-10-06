@@ -115,21 +115,26 @@ class Model {
         };
 
         this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
-        this.features = new Cache(async (bucket, mapping, fname) => {
+        this.features = new Cache(async (bucket, fname) => {
+            if (!fname) return null;
 
             const url = URLS['features'](bucket, fname);
             let f = await downloadJSON(url);
-
-            let g = f["feature_data"];
-            if (g) {
-                let data = g["mappings"][mapping];
-                if (!data) {
-                    console.error(`missing data for mapping ${mapping}`);
-                }
-                return data;
+            if (!f) {
+                return null;
             }
+            return f["feature_data"];
 
-            return null;
+            // let g = f["feature_data"];
+            // if (g) {
+            //     let data = g["mappings"][mapping];
+            //     if (!data) {
+            //         console.error(`missing data for mapping ${mapping}`);
+            //     }
+            //     return data;
+            // }
+
+            // return null;
         });
     }
 
@@ -202,63 +207,49 @@ class Model {
     /*********************************************************************************************/
 
     downloadBucket(bucket) {
+        console.assert(bucket);
+        console.log(`download bucket ${bucket}`);
         return this.buckets.download(bucket);
     }
 
     hasBucket(bucket) {
+        console.assert(bucket);
         return this.buckets.has(bucket);
     }
 
     getBucket(bucket) {
+        console.assert(bucket);
         return this.buckets.get(bucket);
     }
 
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    downloadFeatures(bucket, mapping, fname) {
-        return this.features.download(bucket, mapping, fname);
+    downloadFeatures(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        console.log(`download features ${fname}`);
+        return this.features.download(bucket, fname);
     }
 
-    hasFeatures(bucket, mapping, fname) {
-        return this.features.has(bucket, mapping, fname);
+    hasFeatures(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        return this.features.has(bucket, fname);
     }
 
     getFeatures(bucket, mapping, fname) {
-        if (!fname)
-            return null;
-        return this.features.get(bucket, mapping, fname);
-    }
-
-    async _OLD_getFeatures(bucket, mapping, fname, refresh = false) {
-        // NOTE: this is async because this dynamically creates a new loader and therefore
-        // make a HTTP request on demand to get the requested feature.
         console.assert(bucket);
         console.assert(mapping);
-        if (!fname) return null;
-        console.assert(fname);
-        console.debug(`getting features ${fname}`);
 
-        let key = [bucket, fname];
-        if (!(key in this.loaders)) {
-            let url = URLS['features'](bucket, fname);
-            console.log(`downloading features for ${bucket}, ${fname}`);
-
-            this.loaders[key] = new Loader(this.splash, url, [0, 0, 0]);
-        }
-        await this.loaders[key].start(refresh);
-        let loader = this.loaders[key];
-        console.assert(loader);
-
-        let g = loader.get("feature_data");
-        if (g) {
-            let data = g["mappings"][mapping];
-            if (!data) {
-                console.error(`missing data for mapping ${mapping}`);
-            }
-            return data;
-        }
-        return null;
+        if (!fname)
+            return null;
+        let g = this.features.get(bucket, fname);
+        if (!g) return null;
+        if (!g["mappings"]) return null;
+        return g["mappings"][mapping];
     }
 
     /* Volumes                                                                                   */

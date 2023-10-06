@@ -179,18 +179,18 @@ class Panel {
 
     setupResetButton() {
         this.ibreset.addEventListener('click', (e) => {
-            if (window.confirm("Are you sure you want to reset the view?")) {
-                this.state.reset(); // NOTE: this keeps the list of buckets intact
-                this.dispatcher.reset(this);
+            // if (window.confirm("Are you sure you want to reset the view?")) {
+            this.state.reset(); // NOTE: this keeps the list of buckets intact
+            this.dispatcher.reset(this);
 
-                // Update the panel controls.
-                this.init();
+            // Update the panel controls.
+            this.init();
 
-                // Reset the browser URL.
-                const url = new URL(window.location);
-                url.searchParams.set('state', '');
-                window.history.pushState(null, '', url.toString());
-            }
+            // Reset the browser URL.
+            const url = new URL(window.location);
+            url.searchParams.set('state', '');
+            window.history.pushState(null, '', url.toString());
+            // }
         });
     }
 

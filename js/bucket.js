@@ -34,7 +34,7 @@ class Bucket {
 
         // Initially, download the bucket, and raise the bucket selection event afterwards.
         this.model.downloadBucket(bucket).then(() => {
-            this.select(bucket);
+            // this.select(bucket);
 
             this.dispatcher.bucket(this, bucket);
         });
@@ -53,6 +53,9 @@ class Bucket {
         this.el.addEventListener('change', async (e) => {
             let bucket = e.target.value;
 
+            // Clear the selected feature when changing bucket.
+            this.state.fname = '';
+
             // Download the bucket before dispatching the bucket selection event.
             // this.splash.setDescription(`Loading bucket ${bucket}...`);
             // this.splash.start();
@@ -60,8 +63,9 @@ class Bucket {
 
             if (bucket) {
                 await this.model.downloadBucket(bucket);
-                this.select(bucket);
+                // this.select(bucket);
             }
+            // The features component with trigger a features download if state.fname is set.
             this.dispatcher.bucket(this, bucket);
         });
 
@@ -111,14 +115,14 @@ class Bucket {
     }
 
     select(bucket) {
-        console.log(`select ${bucket}`);
+        console.log(`select bucket ${bucket}`);
         if (!bucket)
             return;
 
         this.el.value = bucket;
 
         this.state.bucket = bucket;
-        this.state.fname = '';
+        // this.state.fname = '';
     }
 
 };
