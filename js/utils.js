@@ -2,7 +2,7 @@
 /* Math                                                                                          */
 /*************************************************************************************************/
 
-const DISPLAY_NUMBER_PRECISION = 4;
+const DISPLAY_NUMBER_PRECISION = 6;
 
 
 
