@@ -31,7 +31,7 @@ export { App };
 
 class App {
     constructor() {
-        this.splash = new Splash();
+        this.splash = new Splash("Please wait, the website is downloading tens of MB of data.");
 
         // Common objects.
         this.state = new State();
