@@ -92,6 +92,14 @@ class Dispatcher {
         this.emit("stat", source, { "name": name });
     }
 
+    colors(source, regionColors) {
+        this.emit("colors", source, { "colors": regionColors });
+    }
+
+    unityLoaded(source, instance) {
+        this.emit("unityLoaded", source, { "instance": instance });
+    }
+
     cmap(source, name) {
         // when the colormap is changed
         this.emit("cmap", source, { "name": name });

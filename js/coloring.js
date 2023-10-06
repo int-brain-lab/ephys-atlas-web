@@ -48,6 +48,11 @@ class Coloring {
         this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
         this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });
+
+        // NOTE: when Unity is loaded, send the colors.
+        this.dispatcher.on('unityLoaded', (ev) => {
+            this.dispatcher.colors(this, this.getColors());
+        });
     }
 
     /* Internal functions                                                                        */
@@ -55,6 +60,9 @@ class Coloring {
 
     clear() {
         clearStyle(this.style);
+
+        // Clear colors in Unity.
+        this.dispatcher.colors(this, {});
     }
 
     _setRegionColor(regionIdx, color) {
@@ -70,34 +78,10 @@ class Coloring {
         this._setRegionColor(regionIdx, '#d3d3d3');
     }
 
-    buildColors(refresh = false) {
-
-        // Remove the feature colors when deselecting a feature.
-        if (!this.state.fname) {
-
-            // Clear the styles.
-            this.clear();
-
-            this.dispatcher.spinning(this, false);
-            return;
-        }
-
-
-        /// NOTE: the weird Chrome freeze when unselecting a feature after changing a bucket
-        // (that could not be reproduced with the profiler on) is "fixed" by putting the lines
-        // below AFTER the if/return above. The await getFeatures() call below was freezing
-        // for some reason. Avoiding these unnecessary calls seems to be a workaround for this
-        // issue.
-
-        this.dispatcher.spinning(this, true);
-
-        ///
-
+    getColors(refresh = false) {
 
         // Get the state information.
-        let mapping = this.state.mapping;
         let stat = this.state.stat;
-        let cmap = this.state.cmap;
         let cmin = this.state.cmapmin;
         let cmax = this.state.cmapmax;
 
@@ -133,8 +117,7 @@ class Coloring {
         // Here the hasLeft and hasRight values should be set. At least one of them is true.
         console.assert(hasLeft || hasRight);
 
-        // Clear the styles.
-        this.clear();
+        let regionColors = {};
 
         // Go through all regions.
         for (let regionIdx in regions) {
@@ -200,10 +183,46 @@ class Coloring {
             // Compute the color.
             let hex = colors[clamp(normalized, 0, 99)];
 
-            // Insert the SVG CSS style with the color.
-            this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* ${acronym}: ${value} */\n`);
+            regionColors[regionIdx] = hex;
         }
 
+        return regionColors;
+    }
+
+    buildColors(refresh = false) {
+
+        // Remove the feature colors when deselecting a feature.
+        if (!this.state.fname) {
+
+            // Clear the styles.
+            this.clear();
+
+            this.dispatcher.spinning(this, false);
+            return;
+        }
+
+        // Show the spinning mouse cursor.
+        this.dispatcher.spinning(this, true);
+
+        let mapping = this.state.mapping;
+        let regionColors = this.getColors();
+
+        // Clear the styles.
+        this.clear();
+
+        // Go through all regions.
+        for (let regionIdx in regionColors) {
+
+            let hex = regionColors[regionIdx];
+
+            // Insert the SVG CSS style with the color.
+            this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; }\n`);
+        }
+
+        // Push color change to Unity.
+        this.dispatcher.colors(this, regionColors);
+
+        // Hide the spinning mouse cursor.
         this.dispatcher.spinning(this, false);
     }
 };

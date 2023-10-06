@@ -15,29 +15,27 @@ const UNITY_SPLASH_TOTAL = 50;
 /*************************************************************************************************/
 
 class Unity {
-    constructor(splash, model, state, region, feature) {
+    constructor(state, model, dispatcher) {
         console.log("setting up Unity");
 
-        this.splash = splash;
-        this.model = model;
         this.state = state;
-        this.region = region;
-        this.feature = feature;
+        this.model = model;
+        this.dispatcher = dispatcher;
         this.instance = null;
 
         // Declare the total splash progress for this component.
-        this.total
-        this.splash.addTotal(UNITY_SPLASH_TOTAL);
+        // this.splash.addTotal(UNITY_SPLASH_TOTAL);
 
         this.setupSlider();
+        this.setupDispatcher();
     }
 
     init() {
         let that = this;
         createUnityInstance(document.getElementById("unity-canvas"), {
-            dataUrl: "Build/webgl.data.gz",
-            frameworkUrl: "Build/webgl.framework.js.gz",
-            codeUrl: "Build/webgl.wasm.gz",
+            dataUrl: "Build/webgl.data",
+            frameworkUrl: "Build/webgl.framework.js",
+            codeUrl: "Build/webgl.wasm",
             companyName: "Daniel Birman @ UW",
             productName: "ephys_atlas",
             productVersion: "0.1.0",
@@ -46,14 +44,20 @@ class Unity {
         });
     }
 
-    setExploded(value) {
-        if (value == undefined) return;
-        if (typeof value == "string")
-            value = parseFloat(value);
-        this.state.exploded = value;
-        if (this.instance) {
-            this.instance.SendMessage('main', 'SetPercentageExploded', value);
-        }
+    async update() {
+        await this.setAreas();
+        this.setExploded();
+        this.setVisibility();
+    }
+
+    /* Setup functions                                                                           */
+    /*********************************************************************************************/
+
+    setupDispatcher() {
+        this.dispatcher.on('colors', (ev) => {
+            if (!this.instance) return;
+            this.setColors(ev.colors);
+        });
     }
 
     setupSlider() {
@@ -65,8 +69,46 @@ class Unity {
         };
     }
 
+    /* Internal functions                                                                        */
+    /*********************************************************************************************/
+
+    loadedCallback() {
+        console.log("unity has loaded!");
+        // this.splash.add(UNITY_SPLASH_TOTAL);
+        this.update();
+    }
+
+    setColors(regionColors) {
+        let regions = this.model.getRegions(this.state.mapping);
+
+        let colors = []
+        for (let regionIdx in regions) {
+            let region = regions[regionIdx];
+            let color = (
+                (regionColors ? regionColors[regionIdx] : null) ||
+                (region.atlas_id > 0 ? '-' : '#FFFFFF'));
+            colors.push(`${color.toUpperCase()}`);
+        }
+
+        // NOTE: how to reset the colors?
+        this.instance.SendMessage('main', 'SetColors', colors.toString());
+    }
+
+    /* Set functions                                                                             */
+    /*********************************************************************************************/
+
+    setExploded(value) {
+        if (value == undefined) return;
+        if (typeof value == "string")
+            value = parseFloat(value);
+        this.state.exploded = value;
+        if (this.instance) {
+            this.instance.SendMessage('main', 'SetPercentageExploded', value);
+        }
+    }
+
     // Tell Unity what mapping we are using
-    async setAreas() {
+    setAreas() {
         if (!this.instance) return;
 
         let regions = this.model.getRegions(this.state.mapping);
@@ -82,34 +124,14 @@ class Unity {
         }
 
         this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
-    }
 
-    // Set the colors for the current mapping
-    async setColors() {
-        if (!this.instance) return;
-
-        let regions = this.model.getRegions(this.state.mapping);
-
-        let colors = []
-        for (let regionIdx in regions) {
-            let color = this.feature.getColor(regionIdx)
-            let region = regions[regionIdx];
-            if (!color) {
-                if (region.atlas_id > 0) {
-                    color = '-';
-                }
-                else {
-                    color = '#FFFFFF';
-                }
-            }
-            colors.push(`${color.toUpperCase()}`);
-        }
-
-        this.instance.SendMessage('main', 'SetColors', colors.toString());
+        // HACK: trigger a callback in the Coloring module that will compute the colors, and pass
+        // them to the setColors() method here via the "colors" event.
+        this.dispatcher.unityLoaded(this, this.instance);
     }
 
     // Set the visibility of regions, for use when regions are selected
-    async setVisibility() {
+    setVisibility() {
         if (!this.instance) return;
 
         let regions = this.model.getRegions(this.state.mapping);
@@ -128,21 +150,9 @@ class Unity {
             }
         }
 
-        this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
+        // this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
         this.setExploded(this.state.exploded);
     }
 
-    async update() {
-        await this.setAreas();
-        this.setExploded();
-        this.setVisibility();
-        this.setColors();
-    }
-
-    loadedCallback() {
-        console.log("unity has loaded!");
-        this.splash.add(UNITY_SPLASH_TOTAL);
-        this.update();
-    }
 }
