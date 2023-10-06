@@ -12,6 +12,7 @@ import { encode, decode } from "./utils.js";
 const DEFAULT_COLORMAP = "magma";
 const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
+const DEFAULT_LOG_SCALE = false;
 
 const DEFAULT_BUCKET = "ephys";
 const DEFAULT_BUCKETS = ["ephys", "bwm"];
@@ -83,6 +84,7 @@ function url2state() {
     if (!DEFAULT_BUCKETS.includes(state.bucket) && !state.buckets.includes(state.bucket)) {
         state.bucket = null;
         state.fname = null;
+        state.isVolume = null;
     }
 
     return state;
@@ -143,11 +145,13 @@ class State {
         this.cmap = state.cmap || DEFAULT_COLORMAP;
         this.cmapmin = state.cmapmin || DEFAULT_COLORMAP_MIN;
         this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
+        this.logScale = state.logScale || DEFAULT_LOG_SCALE;
 
         // Features.
         this.bucket = state.bucket || DEFAULT_BUCKET;
         this.buckets = state.buckets || DEFAULT_BUCKETS;
         this.fname = state.fname;
+        this.isVolume = state.isVolume;
         this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.
@@ -163,6 +167,10 @@ class State {
         this.search = state.search || DEFAULT_SEARCH;
         this.highlighted = state.highlighted || DEFAULT_HIGHLIGHTED;
         this.selected = new Set(state.selected || []);
+    }
+
+    reset() {
+        this.init({ 'bucket': this.bucket, 'buckets': this.buckets });
     }
 
     toggleUpdate(toggle) {
@@ -181,6 +189,8 @@ class State {
 
         // Set the URL in the location bar.
         window.history.replaceState(null, '', url.toString());
+
+        return url;
     }
 
     fromURL() {

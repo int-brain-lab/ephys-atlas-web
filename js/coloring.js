@@ -5,6 +5,14 @@ import { normalizeValue, clamp, clearStyle } from "./utils.js";
 
 
 /*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+const LOG_10 = Math.log(10.0);
+
+
+
+/*************************************************************************************************/
 /* Coloring                                                                                      */
 /*************************************************************************************************/
 
@@ -20,7 +28,7 @@ class Coloring {
     }
 
     init() {
-        this.setState(this.state);
+        // this.setState(this.state);
     }
 
     setState(state) {
@@ -35,10 +43,16 @@ class Coloring {
         this.dispatcher.on('bucket', (ev) => { this.clear(); });
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
-        this.dispatcher.on('feature', (ev) => { this.buildColors(); });
+        this.dispatcher.on('logScale', (ev) => { this.buildColors(); });
+        this.dispatcher.on('feature', (ev) => { if (!ev.isVolume) this.buildColors(); });
         this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
         this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });
+
+        // NOTE: when Unity is loaded, send the colors.
+        this.dispatcher.on('unityLoaded', (ev) => {
+            this.dispatcher.colors(this, this.getColors());
+        });
     }
 
     /* Internal functions                                                                        */
@@ -46,6 +60,9 @@ class Coloring {
 
     clear() {
         clearStyle(this.style);
+
+        // Clear colors in Unity.
+        this.dispatcher.colors(this, {});
     }
 
     _setRegionColor(regionIdx, color) {
@@ -61,31 +78,19 @@ class Coloring {
         this._setRegionColor(regionIdx, '#d3d3d3');
     }
 
-    async buildColors(refresh = false) {
-        this.dispatcher.spinning(this, true);
-
-        // Load the region and features data.
-        let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
-
-        // Clear the styles.
-        this.clear();
-
-        // Remove the feature colors when deselecting a feature.
-        if (!this.state.fname) {
-            this.dispatcher.spinning(this, false);
-            return;
-        }
+    getColors(refresh = false) {
 
         // Get the state information.
-        let mapping = this.state.mapping;
         let stat = this.state.stat;
-        let cmap = this.state.cmap;
         let cmin = this.state.cmapmin;
         let cmax = this.state.cmapmax;
 
         // Load the colormap.
         let colors = this.model.getColormap(this.state.cmap);
+
+        // Load the region and features data.
+        let regions = this.model.getRegions(this.state.mapping);
+        let features = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
 
         // Figure out what hemisphere values we have
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
@@ -111,6 +116,8 @@ class Coloring {
         }
         // Here the hasLeft and hasRight values should be set. At least one of them is true.
         console.assert(hasLeft || hasRight);
+
+        let regionColors = {};
 
         // Go through all regions.
         for (let regionIdx in regions) {
@@ -151,6 +158,21 @@ class Coloring {
             // Compute the color as a function of the cmin/cmax slider values.
             let vmin = features['statistics'][stat]['min'];
             let vmax = features['statistics'][stat]['max'];
+
+            if (this.state.logScale) {
+                if (vmin <= 0) {
+                    console.error("unable to activate the log scale, all values should be >0");
+                }
+                else {
+                    console.assert(vmin > 0);
+                    console.assert(vmax > vmin);
+
+                    value = Math.log(value) / LOG_10;
+                    vmin = Math.log(vmin) / LOG_10;
+                    vmax = Math.log(vmax) / LOG_10;
+                }
+            }
+
             let vdiff = vmax - vmin;
 
             let vminMod = vmin + vdiff * cmin / 100.0;
@@ -161,10 +183,46 @@ class Coloring {
             // Compute the color.
             let hex = colors[clamp(normalized, 0, 99)];
 
-            // Insert the SVG CSS style with the color.
-            this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* ${acronym}: ${value} */\n`);
+            regionColors[regionIdx] = hex;
         }
 
+        return regionColors;
+    }
+
+    buildColors(refresh = false) {
+
+        // Remove the feature colors when deselecting a feature.
+        if (!this.state.fname) {
+
+            // Clear the styles.
+            this.clear();
+
+            this.dispatcher.spinning(this, false);
+            return;
+        }
+
+        // Show the spinning mouse cursor.
+        this.dispatcher.spinning(this, true);
+
+        let mapping = this.state.mapping;
+        let regionColors = this.getColors();
+
+        // Clear the styles.
+        this.clear();
+
+        // Go through all regions.
+        for (let regionIdx in regionColors) {
+
+            let hex = regionColors[regionIdx];
+
+            // Insert the SVG CSS style with the color.
+            this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; }\n`);
+        }
+
+        // Push color change to Unity.
+        this.dispatcher.colors(this, regionColors);
+
+        // Hide the spinning mouse cursor.
         this.dispatcher.spinning(this, false);
     }
 };

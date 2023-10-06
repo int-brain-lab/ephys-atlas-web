@@ -77,9 +77,9 @@ class Dispatcher {
         this.emit("spinning", source, { "isSpinning": isSpinning });
     }
 
-    feature(source, fname) {
+    feature(source, fname, isVolume) {
         // when a feature is selected
-        this.emit("feature", source, { "fname": fname });
+        this.emit("feature", source, { "fname": fname, "isVolume": isVolume });
     }
 
     featureHover(source, fname, desc, e) {
@@ -92,9 +92,21 @@ class Dispatcher {
         this.emit("stat", source, { "name": name });
     }
 
+    colors(source, regionColors) {
+        this.emit("colors", source, { "colors": regionColors });
+    }
+
+    unityLoaded(source, instance) {
+        this.emit("unityLoaded", source, { "instance": instance });
+    }
+
     cmap(source, name) {
         // when the colormap is changed
         this.emit("cmap", source, { "name": name });
+    }
+
+    logScale(source, checked) {
+        this.emit("logScale", source, { "checked": checked });
     }
 
     mapping(source, name) {
@@ -107,5 +119,8 @@ class Dispatcher {
         this.emit("cmapRange", source, { "cmin": cmin, "cmax": cmax });
     }
 
+    share(source) {
+        this.emit("share", source);
+    }
 
 };

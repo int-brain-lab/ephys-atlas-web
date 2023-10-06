@@ -1,6 +1,8 @@
 export { Model, URLS };
 
-import { Loader } from "./splash.js";
+import { Loader } from "./loader.js";
+import { Cache } from "./cache.js";
+import { downloadJSON } from "./utils.js";
 
 
 
@@ -8,8 +10,8 @@ import { Loader } from "./splash.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-// const BASE_URL = 'https://localhost:5000';
-const BASE_URL = 'https://features.internationalbrainlab.org';
+// const BASE_URL = 'https://features.internationalbrainlab.org';
+const BASE_URL = 'https://localhost:5000';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
@@ -21,14 +23,82 @@ const URLS = {
 
 
 /*************************************************************************************************/
+/* NPY loading                                                                                   */
+/*************************************************************************************************/
+
+function asciiDecode(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+function readUint16LE(buffer) {
+    var view = new DataView(buffer.buffer);
+    var val = view.getUint8(0);
+    val |= view.getUint8(1) << 8;
+    return val;
+}
+
+function fromArrayBuffer(buf) {
+    // Check the magic number
+    let magic = asciiDecode(buf.slice(0, 6));
+    if (magic.slice(1, 6) != 'NUMPY') {
+        throw new Error('unknown file type');
+    }
+
+    let version = new Uint8Array(buf.slice(6, 8)),
+        headerLength = readUint16LE(buf.slice(8, 10)),
+        headerStr = asciiDecode(buf.slice(10, 10 + headerLength));
+    let offsetBytes = 10 + headerLength;
+    //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
+
+    // Hacky conversion of dict literal string to JS Object
+    // eval("var info = " + headerStr.toLowerCase().replace('(', '[').replace('),', ']'));
+    let info = JSON.parse(headerStr.toLowerCase().replace('(', '[').replace(/\,*\)\,*/g, ']').replace(/'/g, "\""));
+    // console.log("npy", headerLength, headerStr, info);
+
+    // Intepret the bytes according to the specified dtype
+    let data;
+    if (info.descr === "|u1") {
+        data = new Uint8Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "|i1") {
+        data = new Int8Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "<u2") {
+        data = new Uint16Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "<i2") {
+        data = new Int16Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "<u4") {
+        data = new Uint32Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "<i4") {
+        data = new Int32Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "<f4") {
+        data = new Float32Array(buf.buffer, offsetBytes);
+    } else if (info.descr === "<f8") {
+        data = new Float64Array(buf.buffer, offsetBytes);
+    } else {
+        throw new Error('unknown numeric dtype')
+    }
+
+    // NOTE: extract the last 8 bytes which contain extra metadata information, the min and max
+    // values of the original value before downsampling to uint8, as two float32 values.
+    const startIndex = buf.length - 8;
+    let bounds = new Float32Array(buf.buffer, startIndex); // min, max value of the original array
+
+    return {
+        shape: info.shape,
+        fortran_order: info.fortran_order,
+        data: data,
+        bounds: bounds,
+    };
+}
+
+
+
+/*************************************************************************************************/
 /* Model class                                                                                      */
 /*************************************************************************************************/
 
 class Model {
     constructor(splash) {
         this.splash = splash;
-        // this.model = this.initDatabase();
-        this.model = null;
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -40,9 +110,46 @@ class Model {
             'slices_top': this.setupSlices('top', [2, 0, 2]),
             'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
 
-            'ephys': this.setupBucket('ephys', [1, 1, 1]),
-            'bwm': this.setupBucket('bwm', [1, 1, 1]),
+            // 'ephys': this.setupBucket('ephys', [1, 1, 1]),
+            // 'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
+
+        // Caches.
+
+        this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
+
+        this.features = new Cache(async (bucket, fname) => {
+            if (!fname) return null;
+            const url = URLS['features'](bucket, fname);
+            let f = await downloadJSON(url);
+            if (!f) return null;
+            return f["feature_data"];
+        });
+
+        this.volumes = new Cache(async (bucket, fname) => {
+            let url = URLS['features'](bucket, fname);
+
+            this.splash.setTotal(4);
+            this.splash.setDescription(`Downloading volume ${fname}`);
+
+            this.splash.start();
+
+            const response = await fetch(url);
+            this.splash.add(1);
+
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = new Uint8Array(await response.arrayBuffer());
+            this.splash.add(1);
+
+            const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
+            this.splash.add(1);
+
+            let out = fromArrayBuffer(gunzippedData);
+            this.splash.add(1);
+
+            this.splash.end();
+            return out;
+        });
     }
 
     /* Internal                                                                                  */
@@ -62,9 +169,8 @@ class Model {
     /*********************************************************************************************/
 
     setupColormaps(progress) {
-        return new Loader(this.splash, URLS['colormaps'], null, progress);
+        return new Loader(this.splash, URLS['colormaps'], progress);
     }
-
 
     getColormap(cmap) {
         console.assert(cmap);
@@ -78,7 +184,7 @@ class Model {
     /*********************************************************************************************/
 
     setupRegions(progress) {
-        return new Loader(this.splash, URLS['regions'], null, progress);
+        return new Loader(this.splash, URLS['regions'], progress);
     }
 
     getRegions(mapping) {
@@ -102,7 +208,7 @@ class Model {
     /*********************************************************************************************/
 
     setupSlices(name, progress) {
-        return new Loader(this.splash, URLS['slices'](name), null, progress);
+        return new Loader(this.splash, URLS['slices'](name), progress);
     }
 
     getSlice(axis, idx) {
@@ -114,73 +220,75 @@ class Model {
     /* Buckets                                                                                   */
     /*********************************************************************************************/
 
-    setupBucket(bucket, progress) {
-        return new Loader(this.splash, URLS['bucket'](bucket), null, progress);
+    downloadBucket(bucket) {
+        console.assert(bucket);
+        console.log(`download bucket ${bucket}`);
+        return this.buckets.download(bucket);
     }
 
-    async getBucket(bucket, refresh = false) {
+    hasBucket(bucket) {
         console.assert(bucket);
+        return this.buckets.has(bucket);
+    }
 
-        if (!(bucket in this.loaders)) {
-            let url = URLS['bucket'](bucket);
-            console.log(`creating bucket loader for ${url}`);
-            this.loaders[bucket] = new Loader(this.splash, url, null, [0, 0, 0]);
-        }
-        await this.loaders[bucket].start(refresh);
-        // if (refresh) {
-        //     console.log("refreshing bucket");
-        //     await this.loaders[bucket].start(refresh);
-        // }
-        let loader = this.loaders[bucket];
-
-        console.assert(loader);
-        let data = loader.items;
-        console.assert(data);
-        return data;
+    getBucket(bucket) {
+        console.assert(bucket);
+        return this.buckets.get(bucket);
     }
 
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async getFeatures(bucket, mapping, fname, refresh = false) {
-        // NOTE: this is async because this dynamically creates a new loader and therefore
-        // make a HTTP request on demand to get the requested feature.
+    downloadFeatures(bucket, fname) {
         console.assert(bucket);
-        console.assert(mapping);
-        if (!fname) return;
         console.assert(fname);
-        console.debug(`getting features ${fname}`);
 
-        let key = [bucket, fname];
-        if (!(key in this.loaders)) {
-            let url = URLS['features'](bucket, fname);
-            console.log(`downloading features for ${bucket}, ${fname}`);
-
-            this.loaders[key] = new Loader(this.splash, url, null, [0, 0, 0]);
-        }
-        await this.loaders[key].start(refresh);
-        // if (refresh) {
-        //     console.log("refreshing features");
-        //     await this.loaders[key].start(refresh);
-        // }
-        let loader = this.loaders[key];
-        console.assert(loader);
-
-        let g = loader.get("feature_data");
-        if (g) {
-            let data = g["mappings"][mapping];
-            if (!data) {
-                console.error(`missing data for mapping ${mapping}`);
-            }
-            return data;
-        }
-        return null;
+        console.log(`download features ${fname}`);
+        return this.features.download(bucket, fname);
     }
 
-    /* Logic functions                                                                           */
+    hasFeatures(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        return this.features.has(bucket, fname);
+    }
+
+    getFeatures(bucket, mapping, fname) {
+        console.assert(bucket);
+        console.assert(mapping);
+
+        if (!fname)
+            return null;
+        let g = this.features.get(bucket, fname);
+        if (!g) return null;
+        if (!g["mappings"]) return null;
+        return g["mappings"][mapping];
+    }
+
+    /* Volumes                                                                                   */
     /*********************************************************************************************/
 
-    // normalize(values, vmin, vmax) {
-    //     return values.map(value => normalizeValue(value, vmin, vmax));
-    // }
+    downloadVolume(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        console.log(`download volume ${fname}`);
+        return this.volumes.download(bucket, fname);
+    }
+
+    hasVolume(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        return this.volumes.has(bucket, fname);
+    }
+
+    getVolume(bucket, fname) {
+        console.assert(bucket);
+        if (!fname)
+            return null;
+        return this.volumes.get(bucket, fname);
+    }
+
 }

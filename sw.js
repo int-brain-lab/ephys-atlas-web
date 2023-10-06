@@ -78,6 +78,9 @@ const CACHE_URLS = [
     '/api/buckets/bwm/stimulus_mannwhitney_effect',
     '/api/buckets/bwm/stimulus_mannwhitney_significant',
 
+    // DEBUG
+    '/api/buckets/mybucket/vol',
+
     '/css/normalize.min.css',
     '/css/wvm8pxc.css',
     '/images/ibl.png',

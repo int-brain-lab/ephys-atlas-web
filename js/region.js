@@ -48,19 +48,34 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
         <div class="bar_wrapper"><div class="bar" style="width: ${normalized}%;"></div></div>
     </li>
     `;
+
+    // // Create the <li> element
+    // const listItem = document.createElement('li');
+    // listItem.className = `${mapping}_region_${idx}`;
+    // listItem.setAttribute('data-acronym', acronym);
+    // listItem.setAttribute('data-idx', idx);
+    // listItem.setAttribute('data-name', name);
+    // listItem.setAttribute('data-hemisphere', hemisphere);
+
+    // // Create the <div> element for acronym
+    // const acronymDiv = document.createElement('div');
+    // acronymDiv.className = 'acronym';
+    // acronymDiv.textContent = acronym;
+
+    // // Create the <div> elements for the bar
+    // const barWrapperDiv = document.createElement('div');
+    // barWrapperDiv.className = 'bar_wrapper';
+    // const barDiv = document.createElement('div');
+    // barDiv.className = 'bar';
+    // barDiv.style.width = `${normalized}%`;
+
+    // // Append the div elements to the <li> element
+    // barWrapperDiv.appendChild(barDiv);
+    // listItem.appendChild(acronymDiv);
+    // listItem.appendChild(barWrapperDiv);
+
+    // return listItem;
 }
-
-
-
-// function setupToggle(el) {
-//     el.addEventListener('click', (e) => {
-//         if (e.target.tagName == 'LI') {
-//             const ev = customItemEvent("toggle", e.target);
-//             console.log(`emit toggle event on region ${ev.detail.idx}`);
-//             el.dispatchEvent(ev);
-//         }
-//     });
-// }
 
 
 
@@ -109,14 +124,17 @@ class RegionList {
 
     setRegions(mapping, regions) { // idx, name, acronym, normalized
         let s = '';
+        // let items = [];
         for (let idx in regions) {
             let region = regions[idx];
 
             // NOTE: skip void region
             if (region['acronym'] == 'void') continue;
+            // items.push(makeRegionItem(
             s += makeRegionItem(
                 mapping, idx, region['acronym'], region['name'], region['normalized']);
         }
+        // this.el.replaceChildren(...items);
         this.el.innerHTML = s;
     }
 }
@@ -141,7 +159,7 @@ class Region {
     }
 
     async init() {
-        await this.setState(this.state);
+        // await this.setState(this.state);
     }
 
     async setState(state) {
@@ -166,7 +184,8 @@ class Region {
     async setRegions() {
         console.assert(this.state.mapping);
         let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
+
+        let features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
 
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;

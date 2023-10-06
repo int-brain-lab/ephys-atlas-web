@@ -12,6 +12,8 @@ class Share {
         this.model = model;
         this.dispatcher = dispatcher;
 
+        this.ishare = document.getElementById('share-button');
+
         this.setupDispatcher();
     }
 
@@ -23,6 +25,7 @@ class Share {
             'cmap',
             'cmapRange',
             'feature',
+            'logScale',
             'mapping',
             'search',
             'slice',
@@ -34,5 +37,16 @@ class Share {
                 this.state.updateURL();
             });
         }
+
+        this.dispatcher.on('share', (ev) => {
+            let url = this.state.updateURL();
+
+            // Copy the URL to the clipboard.
+            navigator.clipboard.writeText(url);
+
+            // Feedback.
+            this.ishare.innerHTML = "copied!";
+            setTimeout(() => { this.ishare.innerHTML = "share"; }, 1500);
+        });
     }
 };

@@ -17,8 +17,8 @@ import { Spinner } from "./spinner.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
 import { Tooltip } from "./tooltip.js";
-
-// import { Unity } from "./unity.js";
+import { Unity } from "./unity.js";
+import { Volume } from "./volume.js";
 
 export { App };
 
@@ -30,7 +30,7 @@ export { App };
 
 class App {
     constructor() {
-        this.splash = new Splash();
+        this.splash = new Splash("Please wait, the website is downloading tens of MB of data.");
 
         // Common objects.
         this.state = new State();
@@ -53,8 +53,8 @@ class App {
         this.slice = new Slice(this.state, this.model, this.dispatcher);
         this.spinner = new Spinner(this.state, this.model, this.dispatcher);
         this.tooltip = new Tooltip(this.state, this.model, this.dispatcher);
-
-        // this.unity = new Unity(this.splash, this.model, this.state, this.region, this.feature);
+        this.unity = new Unity(this.state, this.model, this.dispatcher);
+        this.volume = new Volume(this.state, this.model, this.dispatcher);
     }
 
     init() {
@@ -74,8 +74,8 @@ class App {
 
             this.state.toggleUpdate(true);
 
-            // if (this.unity)
-            //     this.unity.init();
+            if (this.unity)
+                this.unity.init();
         });
     }
 

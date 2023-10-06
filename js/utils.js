@@ -2,7 +2,7 @@
 /* Math                                                                                          */
 /*************************************************************************************************/
 
-const DISPLAY_NUMBER_PRECISION = 4;
+const DISPLAY_NUMBER_PRECISION = 6;
 
 
 
@@ -33,7 +33,7 @@ export function rgb2hex(s) {
     // return b;
     let rgb = s.split(',');
 
-    let r = parseInt(rgb[0].substring(4));
+    let r = parseInt(rgb[0]);
     let g = parseInt(rgb[1]);
     let b = parseInt(rgb[2]);
 
@@ -108,6 +108,24 @@ export function throttle(func, wait, options) {
 
 
 
+// export function cached(download) {
+//     const cache = new Map();
+//     return async function (...id) {
+//         const idString = JSON.stringify(id);
+//         if (cache.has(idString)) {
+//             return cache.get(idString);
+//         }
+//         const downloadPromise = download(...id).then((result) => {
+//             cache.set(idString, result);
+//             return result;
+//         });
+//         cache.set(idString, downloadPromise);
+//         return await downloadPromise;
+//     };
+// }
+
+
+
 /*************************************************************************************************/
 /* DOM                                                                                           */
 /*************************************************************************************************/
@@ -155,6 +173,15 @@ export function removeFromArray(array, toRemove) {
     return array.filter(item => item !== toRemove);
 }
 
+
+
+export function setBackgroundImage(el, url) {
+    var tempImage = new Image();
+    tempImage.src = url;
+    tempImage.onload = function () {
+        el.style.backgroundImage = `url("${url}")`;
+    };
+}
 
 
 // export function getBarPlot() {

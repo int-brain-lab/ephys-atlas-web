@@ -13,9 +13,7 @@
     <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
 
     <!-- Normalize -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
-        integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Custom styles -->
     <link rel="stylesheet" href="css/main.css" />
@@ -25,6 +23,7 @@
     <!-- Dynamic CSS styles -->
     <style id="style-regions"></style>
     <style id="style-features"></style>
+    <style id="style-volume"></style>
     <style id="style-selector"></style>
     <style id="style-highlighter"></style>
     <style id="style-search"></style>
@@ -32,6 +31,9 @@
 
 
     <!-- Javascript -->
+
+    <!-- Pako (gzip) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
 
     <!-- Dexie (IndexedDB wrapper) -->
     <script src="js/dexie.min.js"></script>
@@ -100,6 +102,16 @@
                 <input type="range" min="0" max="100" value="100" class="slider" id="colormap-max">
             </div>
 
+            <!-- LOG SCALE -->
+            <!-- <div class="label">log scale</div> -->
+
+            <div class="control">
+                <label>
+                    <input type="checkbox" id="log-scale">log scale
+                </label>
+                <!-- <input type="checkbox" class="checkbox" id="log-scale"> -->
+            </div>
+
             <!-- BUTTONS -->
             <div class="controls">
                 <button id="reset-view-button">reset view</button>
@@ -130,7 +142,7 @@
         <div id="splash-loading">
             <span class="loader"></span>
             Loading... <span class="progress">0</span>%<br>
-            <span class="description">Please wait, the website is downloading tens of MB of data.</span>
+            <span id="splash-description" class="description"></span>
         </div>
     </div>
 
@@ -204,8 +216,7 @@
             <!-- FEATURE SEARCH BAR -->
             <div id="bar-plot-search">
                 <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
-                <input type="text" id="search-input" placeholder="search... hover for help"
-                    title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
+                <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
             </div>
 
         </div>
@@ -221,16 +232,21 @@
         <div id="svg-coronal-container" class="svg-wrapper">
             <div id="maximizer-coronal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-coronal" version="1.1" viewBox="60 25 350 284">
-                <g id="figure-coronal">
-                </g>
-                <g id="lines-coronal">
-                    <line id="coronal-vline" x1="237" y1="50" x2="237" y2="300" stroke="#333" stroke-width="1.5px" />
-                    <line id="coronal-hline" x1="70" y1="169" x2="404" y2="169" stroke="#333" stroke-width="1.5px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-coronal-container-inner" class="svg-canvas-container">
+                <canvas id="canvas-coronal" width="456" height="320"></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-coronal" version="1.1" viewBox="58 50 356 250">
+                    <g id="figure-coronal">
+                    </g>
+                    <g id="lines-coronal">
+                        <line id="coronal-vline" x1="237" y1="50" x2="237" y2="300" stroke="#333" stroke-width="1.5px" />
+                        <line id="coronal-hline" x1="70" y1="169" x2="404" y2="169" stroke="#333" stroke-width="1.5px" />
+                    </g>
+                </svg>
+            </div>
 
-            <div id="slider-coronal-container">
+            <!--  Slider -->
+            <div id="slider-coronal-container" class="slider-container">
                 <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2">
                 <div class="slice-label">coronal projection</div>
                 <div class="coord-value" id="coord-ap">AP: -1200</div>
@@ -243,16 +259,21 @@
         <div id="svg-sagittal-container" class="svg-wrapper">
             <div id="maximizer-sagittal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-sagittal" version="1.1" viewBox="-10 65 545 221">
-                <g id="figure-sagittal">
-                </g>
-                <g id="lines-sagittal">
-                    <line id="sagittal-vline" x1="236" y1="45" x2="236" y2="280" stroke="#333" stroke-width="1px" />
-                    <line id="sagittal-hline" x1="50" y1="170" x2="420" y2="170" stroke="#333" stroke-width="1px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-sagittal-container-inner" class="svg-canvas-container">
+                <canvas id="canvas-sagittal" width="528" height="320"></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-sagittal" version="1.1" viewBox="56 66 358 217">
+                    <g id="figure-sagittal">
+                    </g>
+                    <g id="lines-sagittal">
+                        <line id="sagittal-vline" x1="236" y1="45" x2="236" y2="280" stroke="#333" stroke-width="1px" />
+                        <line id="sagittal-hline" x1="50" y1="170" x2="420" y2="170" stroke="#333" stroke-width="1px" />
+                    </g>
+                </svg>
+            </div>
 
-            <div id="slider-sagittal-container">
+            <!--  Slider -->
+            <div id="slider-sagittal-container" class="slider-container">
                 <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2">
                 <div class="slice-label">sagittal projection</div>
                 <div class="coord-value" id="coord-ml">ML: -39</div>
@@ -265,18 +286,21 @@
         <div id="svg-horizontal-container" class="svg-wrapper">
             <div id="maximizer-horizontal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-horizontal" version="1.1" viewBox="60 20 340 300">
-                <g id="figure-horizontal">
-                </g>
-                <g id="lines-horizontal">
-                    <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333" stroke-width="1.5px" />
-                    <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333"
-                        stroke-width="1.5px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-horizontal-container-inner" class="svg-canvas-container">
+                <canvas id="canvas-horizontal" width="456" height="528"></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-horizontal" version="1.1" viewBox="122 42 230 266">
+                    <g id="figure-horizontal">
+                    </g>
+                    <g id="lines-horizontal">
+                        <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333" stroke-width="1.5px" />
+                        <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333" stroke-width="1.5px" />
+                    </g>
+                </svg>
+            </div>
 
-
-            <div id="slider-horizontal-container">
+            <!--  Slider -->
+            <div id="slider-horizontal-container" class="slider-container">
                 <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2">
                 <div class="slice-label">horizontal projection</div>
                 <div class="coord-value" id="coord-dv">DV: -3668</div>

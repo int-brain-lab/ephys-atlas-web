@@ -19,7 +19,6 @@ from xml.dom import minidom
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
-from ibllib.atlas.regions import BrainRegions
 from joblib import Parallel, delayed
 # from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap, to_hex
@@ -647,6 +646,8 @@ def generate_bwm_features():
 
 class FeatureGenerator:
     def __init__(self, bucket='', mapping='Beryl'):
+        from ibllib.atlas.regions import BrainRegions
+
         assert bucket
         mapping = mapping.title()
         self.br = BrainRegions()

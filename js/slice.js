@@ -1,6 +1,6 @@
 export { Slice };
 
-import { throttle, clamp, getOS, e2idx } from "./utils.js";
+import { throttle, clamp, getOS, e2idx, setBackgroundImage } from "./utils.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 
 
@@ -37,6 +37,7 @@ class Slice {
 
         this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
 
+        // Slice lines.
         this.tv = document.getElementById('top-vline');
         this.th = document.getElementById('top-hline');
         this.cv = document.getElementById('coronal-vline');
@@ -46,9 +47,17 @@ class Slice {
         this.sv = document.getElementById('sagittal-vline');
         this.sh = document.getElementById('sagittal-hline');
 
+        // Coordinate labels.
         this.ml = document.getElementById('coord-ml');
         this.ap = document.getElementById('coord-ap');
         this.dv = document.getElementById('coord-dv');
+
+        // Bitmaps.
+        this.bitmaps = {
+            'coronal': document.getElementById(`svg-coronal-container-inner`),
+            'horizontal': document.getElementById(`svg-horizontal-container-inner`),
+            'sagittal': document.getElementById(`svg-sagittal-container-inner`),
+        };
 
         this.setupDispatcher();
         this.setupSlices();
@@ -211,10 +220,22 @@ class Slice {
         // call setSagittal() etc to update the hlines and vlines.
         if (SLICE_AXES.includes(axis)) {
             this[`set_${axis}`](idx);
+
+            // Set the bitmap image.
+            this.setBitmap(axis, idx);
         }
 
         // Emit the slice event.
         this.dispatcher.slice(this, axis, idx);
+    }
+
+    setBitmap(axis, idx) {
+        // let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
+        // let url = `data/volumes/allen/${axis}/${axis}-${sidx}.jpg`;
+        // let el = this.bitmaps[axis];
+        // setBackgroundImage(el, url);
+
+        app.volume.drawSlice(axis, idx);
     }
 
     set_sagittal(idx) {

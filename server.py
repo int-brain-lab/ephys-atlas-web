@@ -5,10 +5,14 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
+import ast
+import struct
 from datetime import datetime, timedelta
 from itertools import groupby
 from operator import itemgetter
 from pathlib import Path
+import gzip
+from io import BytesIO
 import itertools
 import json
 import os
@@ -21,7 +25,15 @@ import unittest
 import uuid
 
 import numpy as np
-from flask import Flask, Response, request
+from numpy.lib.format import (
+    header_data_from_array_1_0,
+    _write_array_header,
+    # read_magic,
+    # _check_version,
+    # _read_bytes,
+)
+from flask import Flask, Response, request, send_file
+from flask_cors import CORS
 import requests
 
 
@@ -30,6 +42,7 @@ import requests
 # -------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
+CORS(app)
 
 ROOT_DIR = Path(__file__).resolve().parent
 FEATURES_DIR = ROOT_DIR / 'data/features'
@@ -120,6 +133,104 @@ def save_features(path, json_data):
 
 
 # -------------------------------------------------------------------------------------------------
+# Volumes
+# -------------------------------------------------------------------------------------------------
+
+def renormalize_array(arr):
+    # Ensure that the input array has exactly three dimensions
+    if arr.ndim != 3:
+        raise ValueError("Input array must have exactly 3 dimensions.")
+
+    # Compute the min and max values for the entire array
+    min_value = arr.min()
+    max_value = arr.max()
+
+    # Check if the array is constant (min and max values are the same)
+    if min_value == max_value:
+        return (np.ones_like(arr) * 127).astype(np.uint8)
+
+    # Normalize the entire array to [0, 255]
+    normalized_array = ((arr - min_value) / (max_value - min_value) * 255).astype(np.uint8)
+
+    return (min_value, max_value), normalized_array
+
+
+def write_npy_with_metadata(fp, arr, **metadata):
+    info = header_data_from_array_1_0(arr)
+    info.update(metadata)
+    _write_array_header(fp, info, None)
+
+    if arr.flags.f_contiguous and not arr.flags.c_contiguous:
+        fp.write(arr.T.tobytes())
+    else:
+        fp.write(arr.tobytes())
+
+
+def write_npy_gz(path, arr):
+    # Renormalize the data.
+    assert arr.ndim == 3
+    (min_value, max_value), arr = renormalize_array(arr)
+
+    path = Path(path)
+    assert str(path).endswith('.npy.gz')
+
+    buffer = BytesIO()
+    np.save(buffer, arr)
+    buffer.seek(0)
+
+    with gzip.open(path, 'wb') as gzip_file:
+        gzip_file.write(buffer.read())
+
+        # Adding extra metadata at the end of the gzipped byte buffer.
+        additional_data = np.array([min_value, max_value], dtype=np.float32).tobytes()
+        assert len(additional_data) == 8
+        gzip_file.write(additional_data)
+
+    # OR: with gzip.open('your_file.gz', 'ab') as f:
+
+
+def load_npy_gz(path):
+    path = Path(path)
+    assert '.npy.gz' in str(path)
+
+    # Decompress.
+    with gzip.open(path, 'rb') as gzip_file:
+        bytes = gzip_file.read()
+
+    # Read the header to get the extra metadata with the min and max value.
+    buf = BytesIO(bytes)
+    buf.seek(0)
+
+    # NOTE: below is a tentative of adding extra metadata fields in the npy header, but it doesn't
+    # work because the standard numpy npy loader checks that there are no extra metadata fields.
+    # We want generated npy to be readable b the standard npy loader.
+
+    # _header_size_info = {
+    #     (1, 0): ('<H', 'latin1'),
+    #     (2, 0): ('<I', 'latin1'),
+    #     (3, 0): ('<I', 'utf8'),
+    # }
+    # version = read_magic(buf)
+    # _check_version(version)
+    # hinfo = _header_size_info.get(version)
+    # if hinfo is None:
+    #     raise ValueError("Invalid version {!r}".format(version))
+    # hlength_type, encoding = hinfo
+    # hlength_str = _read_bytes(buf, struct.calcsize(hlength_type), "array header length")
+    # header_length = struct.unpack(hlength_type, hlength_str)[0]
+    # header = _read_bytes(buf, header_length, "array header")
+    # header = header.decode(encoding)
+    # d = ast.literal_eval(header)
+
+    # Load the array normally.
+    # buf.seek(0)
+
+    arr = np.load(buf)
+
+    return arr
+
+
+# -------------------------------------------------------------------------------------------------
 # Bucket metadata
 # -------------------------------------------------------------------------------------------------
 
@@ -185,12 +296,14 @@ def now():
 
 
 def create_bucket_metadata(
-        bucket_uuid, alias=None, short_desc=None, long_desc=None, url=None, tree=None):
+        bucket_uuid, alias=None, short_desc=None, long_desc=None,
+        url=None, tree=None, volume=None):
     return {
         'uuid': bucket_uuid,
         'alias': alias,
         'url': url,
         'tree': tree,
+        'volumes': volume,
         'short_desc': short_desc,
         'long_desc': long_desc,
         'token': new_token(),
@@ -302,6 +415,20 @@ def get_feature_metadata(uuid, fname):
         metadata = json.load(f)
 
     return {'short_desc': metadata.get('short_desc', '') or ''}
+
+
+def return_volume(uuid, fname):
+    # Retrieve the bucket path.
+    bucket_path = get_bucket_path(uuid)
+    if not bucket_path or not bucket_path.exists():
+        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+    # Retrieve the volume path.
+    volume_path = bucket_path / f'{fname}.npy.gz'
+    if not volume_path.exists():
+        return f'Volume {fname} does not exist in bucket {uuid}.', 404
+
+    return send_file(volume_path, as_attachment=True)
 
 
 def get_bucket(uuid):
@@ -529,18 +656,21 @@ def api_get_features(uuid, fname):
     if not bucket_path or not bucket_path.exists():
         return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
+    # Update the last_access_date field.
+    meta = update_bucket_metadata(uuid)
+
+    # Special handling of volumes.
+    volumes = meta.get('volumes', None) or ()
+    if fname in volumes:
+        return return_volume(uuid, fname)
+
     # Retrieve the features path.
     features_path = bucket_path / f'{fname}.json'
     if not features_path.exists():
         return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
 
-    # Update the last_access_date field.
-    update_bucket_metadata(uuid)
-
     # Return the contents of the features file.
-
-    if not features_path.exists():
-        return response_file_not_found(features_path)
+    assert features_path.exists()
     with open(features_path, 'r') as f:
         text = f.read()
 
@@ -889,7 +1019,6 @@ class FeatureUploader:
         _ = params['buckets'].pop(bucket_uuid)
         self._save_params(params)
 
-
     # Global key
     # ---------------------------------------------------------------------------------------------
 
@@ -954,8 +1083,8 @@ class FeatureUploader:
     # Public methods
     # ---------------------------------------------------------------------------------------------
 
-    def _post_or_patch_features(
-            self, method, fname, acronyms, values, short_desc=None, hemisphere=None, map_nodes=False):
+    def _post_or_patch_features(self, method, fname, acronyms, values,
+                                short_desc=None, hemisphere=None, map_nodes=False):
 
         assert method in ('post', 'patch')
         assert fname
@@ -1000,10 +1129,17 @@ class FeatureUploader:
         self._delete_bucket()
         self._delete_bucket_token(self.bucket_uuid)
 
-    def create_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
+    def create_features(self, fname, acronyms, values, desc=None,
+                        hemisphere=None, map_nodes=False):
         """Create new features in the bucket."""
         self._post_or_patch_features(
-            'post', fname, acronyms, values, short_desc=desc, hemisphere=hemisphere, map_nodes=map_nodes)
+            'post',
+            fname,
+            acronyms,
+            values,
+            short_desc=desc,
+            hemisphere=hemisphere,
+            map_nodes=map_nodes)
 
     def get_bucket_metadata(self):
         response = self._get(f'buckets/{self.bucket_uuid}')
@@ -1030,15 +1166,21 @@ class FeatureUploader:
     def patch_features(self, fname, acronyms, values, desc=None, hemisphere=None, map_nodes=False):
         """Update existing features in the bucket."""
         self._post_or_patch_features(
-            'patch', fname, acronyms, values, short_desc=desc, hemisphere=hemisphere, map_nodes=map_nodes)
+            'patch',
+            fname,
+            acronyms,
+            values,
+            short_desc=desc,
+            hemisphere=hemisphere,
+            map_nodes=map_nodes)
 
     def delete_features(self, fname):
         self._delete(f'/buckets/{self.bucket_uuid}/{fname}')
 
+
 # -------------------------------------------------------------------------------------------------
 # Tests
 # -------------------------------------------------------------------------------------------------
-
 
 class TestApp(unittest.TestCase):
     @classmethod
@@ -1264,6 +1406,12 @@ if __name__ == '__main__':
 
         url = up.get_buckets_url([bucket])
         print(url)
+
+    elif sys.argv[-1] == 'npy':
+        path = "data/features/mybucket/vol.npy.gz~"
+        arr = load_npy_gz(path)
+
+        write_npy_gz(path[:-1], arr)
 
     # Run server
     else:

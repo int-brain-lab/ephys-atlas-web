@@ -286,6 +286,10 @@ body.waiting * {
     cursor: pointer;
 }
 
+#control-panel #log-scale {
+    margin-right: 6px;
+}
+
 #reset-view-button {
     background-color: #FF5C00aa;
 }
@@ -379,30 +383,28 @@ body.waiting * {
 
 
 /*************************************************************************************************/
-/*  Share button                                                                                 */
+/*  Bitmaps                                                                                      */
 /*************************************************************************************************/
 
-/* #share-wrapper {
-    margin: 0;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-
+.svg-canvas-container {
+    position: relative;
+    flex: 1 1 0;
+    overflow: hidden;
 }
 
-#share-button {
-    padding: 8px 14px;
-    font-size: 1.2em;
-    background-color: #0898D4;
-    font-weight: bold;
-    border-radius: 8px;
-    width: 100%;
-    color: white;
-    border: 0;
-    text-align: center;
-    cursor: pointer;
-} */
+.svg-canvas-container>canvas {
+    max-width: 100%;
+    max-height: 100%;
+    z-index: 0;
+}
+
+.svg-canvas-container>svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
 
 
 /*************************************************************************************************/
@@ -677,15 +679,21 @@ div#container>.svg-wrapper {
     justify-content: center;
     text-align: center;
 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+
     position: relative;
     top: 0;
     left: 0;
 }
 
 .svg-wrapper svg {
-    width: 100%;
-    max-height: calc(100% - 96px);
     display: block;
+
+    max-width: 100%;
+    max-height: 100%;
 
     /* DEBUG */
     /* background-color: red; */
@@ -770,6 +778,11 @@ div#container .maximized .maximizer {
 /*  SVG slider                                                                                   */
 /*************************************************************************************************/
 
+.slider-container {
+    width: 100%;
+    flex: 0 1 100px;
+}
+
 .slider {
     width: 200px;
     margin: 5px auto;
@@ -818,9 +831,11 @@ line {
 #unity-canvas {
     width: 100%;
     height: calc(100% - 116.5px);
-    background-image: url('/images/fallback.png');
+
+    /* FALLBACK */
+    /* background-image: url('/images/fallback.png');
     background-size: contain;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat; */
 
     /* DEBUG */
     /* background-color: red; */

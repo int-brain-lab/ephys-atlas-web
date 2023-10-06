@@ -49,6 +49,8 @@ class Selector {
 
         this.dispatcher.on('clear', (e) => { this.clear(); });
 
+        this.dispatcher.on('feature', (e) => { this.makeCSS(); });
+
         // NOTE: clear the selection when the mapping changes.
         this.dispatcher.on('mapping', (e) => { this.clear(); });
     }
@@ -88,15 +90,42 @@ class Selector {
 
     makeCSS() {
         let mapping = this.state.mapping;
+        console.log("recompute selection CSS");
 
         clearStyle(this.style);
+
         if (this.state.selected.size > 0) {
-            this.style.insertRule(`svg path { fill-opacity: 0.5; }`);
+            this.style.insertRule(`svg path { fill-opacity: 0.5 !important; }`);
         }
         for (let id of this.state.selected) {
-            this.style.insertRule(`svg path.${mapping}_region_${id} { stroke-width: 3px; fill-opacity: 1.0; }`);
+            this.style.insertRule(`svg path.${mapping}_region_${id} { stroke-width: 2px !important; fill-opacity: 0.75 !important; }`);
             this.style.insertRule(`ul#bar-plot-list > li.${mapping}_region_${id} { background-color: var(--bar-select-color); }`);
+        }
+
+        // Volume mode.
+        if (this.state.isVolume) {
+
+            // Unselected regions.
+            if (this.state.selected.size > 0) {
+
+                let s = `fill: #fff; fill-opacity: 0.25 !important;`;
+
+                this.style.insertRule(`#svg-coronal-container svg path { ${s} }`);
+                this.style.insertRule(`#svg-sagittal-container svg path { ${s} }`);
+                this.style.insertRule(`#svg-horizontal-container svg path { ${s} }`);
+            }
+
+            // Selected regions.
+            for (let id of this.state.selected) {
+
+                let s = `stroke-width: 2px; fill-opacity: 0.75 !important;`;
+
+                this.style.insertRule(`#svg-coronal-container svg path.${mapping}_region_${id} { ${s} }`);
+                this.style.insertRule(`#svg-sagittal-container svg path.${mapping}_region_${id} { ${s} }`);
+                this.style.insertRule(`#svg-horizontal-container svg path.${mapping}_region_${id} { ${s} }`);
+
+                this.style.insertRule(`ul#bar-plot-list > li.${mapping}_region_${id} { background-color: var(--bar-select-color); }`);
+            }
         }
     }
 };
-
