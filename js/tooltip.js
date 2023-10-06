@@ -55,11 +55,10 @@ class Tooltip {
         if (!regionIdx) {
             return '';
         }
-        if (this.state.isVolume) return null;
 
         let info = this.model.getRegions(this.state.mapping)[regionIdx];
 
-        let fet = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
+        let fet = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
 
         // Triggered when hovering over a Swanson region that does not exist in the mapping, or
         // a region in the right hemisphere.
