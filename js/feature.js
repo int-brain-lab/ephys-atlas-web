@@ -109,14 +109,27 @@ class Feature {
     }
 
     setupFeature() {
-        this.el.addEventListener('click', (e) => {
+        this.el.addEventListener('click', async (e) => {
             if (e.target.tagName == 'LI') {
                 let fname = e.target.dataset.fname;
-                let isVol = e.target.dataset.volume == "true";
-                if (this.tree.selected(fname))
+
+                // Deselect.
+                if (this.tree.selected(fname)) {
                     this.selectFeature('');
-                else
+                }
+
+                else {
+                    // Download the features.
+                    // TODO: splash
+                    if (!this.model.hasFeatures(this.state.bucket, this.state.mapping, fname)) {
+                        await this.model.downloadFeatures(this.state.bucket, this.state.mapping, fname);
+                    }
+
+                    let isVol = e.target.dataset.volume == "true";
+
+                    // Dispatch the feature selected event.
                     this.selectFeature(fname, isVol);
+                }
             }
         });
 

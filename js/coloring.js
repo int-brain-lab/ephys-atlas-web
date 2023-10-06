@@ -70,7 +70,7 @@ class Coloring {
         this._setRegionColor(regionIdx, '#d3d3d3');
     }
 
-    async buildColors(refresh = false) {
+    buildColors(refresh = false) {
 
         // Remove the feature colors when deselecting a feature.
         if (!this.state.fname) {
@@ -106,7 +106,7 @@ class Coloring {
 
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
+        let features = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
 
         // Figure out what hemisphere values we have
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;

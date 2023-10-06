@@ -79,18 +79,6 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
 
 
 
-// function setupToggle(el) {
-//     el.addEventListener('click', (e) => {
-//         if (e.target.tagName == 'LI') {
-//             const ev = customItemEvent("toggle", e.target);
-//             console.log(`emit toggle event on region ${ev.detail.idx}`);
-//             el.dispatchEvent(ev);
-//         }
-//     });
-// }
-
-
-
 /*************************************************************************************************/
 /* Region list                                                                                   */
 /*************************************************************************************************/
@@ -147,7 +135,7 @@ class RegionList {
                 mapping, idx, region['acronym'], region['name'], region['normalized']);
         }
         // this.el.replaceChildren(...items);
-        // this.el.innerHTML = s;
+        this.el.innerHTML = s;
     }
 }
 
@@ -171,7 +159,7 @@ class Region {
     }
 
     async init() {
-        await this.setState(this.state);
+        // await this.setState(this.state);
     }
 
     async setState(state) {
@@ -183,7 +171,7 @@ class Region {
 
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
-        // this.dispatcher.on('feature', (ev) => { this.setRegions(); });
+        this.dispatcher.on('feature', (ev) => { this.setRegions(); });
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
         this.dispatcher.on('search', (ev) => { this.setRegions(); });
@@ -196,7 +184,7 @@ class Region {
     async setRegions() {
         console.assert(this.state.mapping);
         let regions = this.model.getRegions(this.state.mapping);
-        let features = await this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
+        let features = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
 
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;

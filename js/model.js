@@ -115,11 +115,22 @@ class Model {
         };
 
         this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
+        this.features = new Cache(async (bucket, mapping, fname) => {
 
-        // // Cached versions of the methods.
-        // this.getBucket = cached(this._getBucket.bind(this));
-        // this.getFeatures = cached(this._getFeatures.bind(this));
-        // this.getVolume = cached(this._getVolume.bind(this));
+            const url = URLS['features'](bucket, fname);
+            let f = await downloadJSON(url);
+
+            let g = f["feature_data"];
+            if (g) {
+                let data = g["mappings"][mapping];
+                if (!data) {
+                    console.error(`missing data for mapping ${mapping}`);
+                }
+                return data;
+            }
+
+            return null;
+        });
     }
 
     /* Internal                                                                                  */
@@ -202,32 +213,24 @@ class Model {
         return this.buckets.get(bucket);
     }
 
-    // setupBucket(bucket, progress) {
-    //     return new Loader(this.splash, URLS['bucket'](bucket), progress);
-    // }
-
-    // async getBucket(bucket, refresh = false) {
-    //     console.assert(bucket);
-
-    //     if (!(bucket in this.loaders)) {
-    //         let url = URLS['bucket'](bucket);
-    //         console.log(`creating bucket loader for ${url}`);
-    //         this.loaders[bucket] = new Loader(this.splash, url, [0, 0, 0]);
-    //     }
-    //     let loader = this.loaders[bucket];
-    //     console.assert(loader);
-
-    //     await loader.start(refresh);
-
-    //     let data = loader.items;
-    //     console.assert(data);
-    //     return data;
-    // }
-
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async getFeatures(bucket, mapping, fname, refresh = false) {
+    downloadFeatures(bucket, mapping, fname) {
+        return this.features.download(bucket, mapping, fname);
+    }
+
+    hasFeatures(bucket, mapping, fname) {
+        return this.features.has(bucket, mapping, fname);
+    }
+
+    getFeatures(bucket, mapping, fname) {
+        if (!fname)
+            return null;
+        return this.features.get(bucket, mapping, fname);
+    }
+
+    async _OLD_getFeatures(bucket, mapping, fname, refresh = false) {
         // NOTE: this is async because this dynamically creates a new loader and therefore
         // make a HTTP request on demand to get the requested feature.
         console.assert(bucket);

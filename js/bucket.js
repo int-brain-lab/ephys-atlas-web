@@ -35,6 +35,7 @@ class Bucket {
         // Initially, download the bucket, and raise the bucket selection event afterwards.
         this.model.downloadBucket(bucket).then(() => {
             this.select(bucket);
+
             this.dispatcher.bucket(this, bucket);
         });
     }
@@ -55,10 +56,12 @@ class Bucket {
             // Download the bucket before dispatching the bucket selection event.
             // this.splash.setDescription(`Loading bucket ${bucket}...`);
             // this.splash.start();
-            await this.model.downloadBucket(bucket);
             // this.splash.end();
 
-            this.select(bucket);
+            if (bucket) {
+                await this.model.downloadBucket(bucket);
+                this.select(bucket);
+            }
             this.dispatcher.bucket(this, bucket);
         });
 
