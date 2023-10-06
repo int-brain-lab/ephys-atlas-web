@@ -1,6 +1,6 @@
 export { Model, URLS };
 
-import { Loader } from "./splash.js";
+import { Loader } from "./loader.js";
 import { cached } from "./utils.js";
 
 
