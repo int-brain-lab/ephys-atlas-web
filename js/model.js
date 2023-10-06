@@ -1,7 +1,8 @@
 export { Model, URLS };
 
 import { Loader } from "./loader.js";
-import { cached } from "./utils.js";
+import { Cache } from "./cache.js";
+import { downloadJSON } from "./utils.js";
 
 
 
@@ -109,14 +110,16 @@ class Model {
             'slices_top': this.setupSlices('top', [2, 0, 2]),
             'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
 
-            'ephys': this.setupBucket('ephys', [1, 1, 1]),
-            'bwm': this.setupBucket('bwm', [1, 1, 1]),
+            // 'ephys': this.setupBucket('ephys', [1, 1, 1]),
+            // 'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
 
-        // Cached versions of the methods.
-        this.getBucket = cached(this._getBucket.bind(this));
-        this.getFeatures = cached(this._getFeatures.bind(this));
-        this.getVolume = cached(this._getVolume.bind(this));
+        this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
+
+        // // Cached versions of the methods.
+        // this.getBucket = cached(this._getBucket.bind(this));
+        // this.getFeatures = cached(this._getFeatures.bind(this));
+        // this.getVolume = cached(this._getVolume.bind(this));
     }
 
     /* Internal                                                                                  */
@@ -187,32 +190,44 @@ class Model {
     /* Buckets                                                                                   */
     /*********************************************************************************************/
 
-    setupBucket(bucket, progress) {
-        return new Loader(this.splash, URLS['bucket'](bucket), progress);
+    downloadBucket(bucket) {
+        return this.buckets.download(bucket);
     }
 
-    async _getBucket(bucket, refresh = false) {
-        console.assert(bucket);
-
-        if (!(bucket in this.loaders)) {
-            let url = URLS['bucket'](bucket);
-            console.log(`creating bucket loader for ${url}`);
-            this.loaders[bucket] = new Loader(this.splash, url, [0, 0, 0]);
-        }
-        let loader = this.loaders[bucket];
-        console.assert(loader);
-
-        await loader.start(refresh);
-
-        let data = loader.items;
-        console.assert(data);
-        return data;
+    hasBucket(bucket) {
+        return this.buckets.has(bucket);
     }
+
+    getBucket(bucket) {
+        return this.buckets.get(bucket);
+    }
+
+    // setupBucket(bucket, progress) {
+    //     return new Loader(this.splash, URLS['bucket'](bucket), progress);
+    // }
+
+    // async getBucket(bucket, refresh = false) {
+    //     console.assert(bucket);
+
+    //     if (!(bucket in this.loaders)) {
+    //         let url = URLS['bucket'](bucket);
+    //         console.log(`creating bucket loader for ${url}`);
+    //         this.loaders[bucket] = new Loader(this.splash, url, [0, 0, 0]);
+    //     }
+    //     let loader = this.loaders[bucket];
+    //     console.assert(loader);
+
+    //     await loader.start(refresh);
+
+    //     let data = loader.items;
+    //     console.assert(data);
+    //     return data;
+    // }
 
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    async _getFeatures(bucket, mapping, fname, refresh = false) {
+    async getFeatures(bucket, mapping, fname, refresh = false) {
         // NOTE: this is async because this dynamically creates a new loader and therefore
         // make a HTTP request on demand to get the requested feature.
         console.assert(bucket);
@@ -246,7 +261,7 @@ class Model {
     /* Volumes                                                                                   */
     /*********************************************************************************************/
 
-    async _getVolume(bucket, fname) {
+    async getVolume(bucket, fname) {
         let url = URLS['features'](bucket, fname);
 
         try {

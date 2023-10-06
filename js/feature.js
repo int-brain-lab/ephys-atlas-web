@@ -91,10 +91,10 @@ class Feature {
     }
 
     async setState(state) {
-        await this.setBucket(state.bucket);
-        if (state.fname) {
-            this.selectFeature(state.fname, state.isVolume);
-        }
+        // await this.setBucket(state.bucket);
+        // if (state.fname) {
+        //     this.selectFeature(state.fname, state.isVolume);
+        // }
 
     }
 

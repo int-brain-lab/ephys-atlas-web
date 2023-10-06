@@ -8,6 +8,7 @@ export { Cache };
 
 class Cache {
     constructor(download) {
+        console.assert(download);
         this._downloadFunction = download;
         this._cache = new Map();
     }

@@ -12,6 +12,7 @@ class Bucket {
     constructor(state, model, dispatcher) {
         this.state = state;
         this.model = model;
+        this.splash = model.splash;
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bucket-dropdown');
@@ -28,7 +29,14 @@ class Bucket {
     }
 
     setState(state) {
-        setOptions(this.el, state.buckets, state.bucket);
+        const bucket = state.bucket;
+        setOptions(this.el, state.buckets, bucket);
+
+        // Initially, download the bucket, and raise the bucket selection event afterwards.
+        this.model.downloadBucket(bucket).then(() => {
+            this.select(bucket);
+            this.dispatcher.bucket(this, bucket);
+        });
     }
 
     /* Setup functions                                                                           */
@@ -41,18 +49,28 @@ class Bucket {
     }
 
     setupBucket() {
-        this.el.addEventListener('change', (e) => {
+        this.el.addEventListener('change', async (e) => {
             let bucket = e.target.value;
+
+            // Download the bucket before dispatching the bucket selection event.
+            // this.splash.setDescription(`Loading bucket ${bucket}...`);
+            // this.splash.start();
+            await this.model.downloadBucket(bucket);
+            // this.splash.end();
+
             this.select(bucket);
             this.dispatcher.bucket(this, bucket);
         });
 
         // Add bucket.
-        this.buttonAdd.addEventListener('click', (e) => {
+        this.buttonAdd.addEventListener('click', async (e) => {
             let bucket = window.prompt("write a new bucket UUID or alias", "");
             if (bucket) {
                 this.add(bucket, true);
                 this.select(bucket);
+
+                await this.model.downloadBucket(bucket);
+
                 this.dispatcher.bucket(this, bucket);
             }
         });
@@ -60,7 +78,6 @@ class Bucket {
         // Refresh bucket.
         this.buttonRefresh.addEventListener('click', (e) => {
             let bucket = this.state.bucket;
-            this.refresh(); // no-op
             this.dispatcher.refresh(this, bucket);
         });
 
@@ -81,9 +98,6 @@ class Bucket {
         if (!this.state.buckets.includes(bucket))
             this.state.buckets.push(bucket);
         addOption(this.el, bucket, bucket, selected);
-    }
-
-    refresh() { // no op
     }
 
     remove(bucket) {
