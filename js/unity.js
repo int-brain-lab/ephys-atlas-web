@@ -45,7 +45,7 @@ class Unity {
     }
 
     async update() {
-        await this.setAreas();
+        this.setAreas();
         this.setExploded();
         this.setVisibility();
     }
