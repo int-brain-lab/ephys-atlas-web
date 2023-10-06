@@ -114,27 +114,41 @@ class Model {
             // 'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
 
+        // Caches.
+
         this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
+
         this.features = new Cache(async (bucket, fname) => {
             if (!fname) return null;
-
             const url = URLS['features'](bucket, fname);
             let f = await downloadJSON(url);
-            if (!f) {
-                return null;
-            }
+            if (!f) return null;
             return f["feature_data"];
+        });
 
-            // let g = f["feature_data"];
-            // if (g) {
-            //     let data = g["mappings"][mapping];
-            //     if (!data) {
-            //         console.error(`missing data for mapping ${mapping}`);
-            //     }
-            //     return data;
-            // }
+        this.volumes = new Cache(async (bucket, fname) => {
+            let url = URLS['features'](bucket, fname);
 
-            // return null;
+            this.splash.setTotal(4);
+            this.splash.setDescription(`Downloading volume ${fname}`);
+
+            this.splash.start();
+
+            const response = await fetch(url);
+            this.splash.add(1);
+
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = new Uint8Array(await response.arrayBuffer());
+            this.splash.add(1);
+
+            const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
+            this.splash.add(1);
+
+            let out = fromArrayBuffer(gunzippedData);
+            this.splash.add(1);
+
+            this.splash.end();
+            return out;
         });
     }
 
@@ -255,39 +269,26 @@ class Model {
     /* Volumes                                                                                   */
     /*********************************************************************************************/
 
-    async getVolume(bucket, fname) {
-        let url = URLS['features'](bucket, fname);
+    downloadVolume(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
 
-        try {
-            // Start splash screen.
-            this.splash.setTotal(2);
-            this.splash.set(0);
-
-            // Fetch the binary file
-            const response = await fetch(url);
-
-            // Splash progress.
-            this.splash.set(1);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            // Get the response body as a Uint8Array
-            const data = new Uint8Array(await response.arrayBuffer());
-
-            // Gunzip the data using pako
-            const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
-
-            let arr = fromArrayBuffer(gunzippedData);
-
-            // End splash.
-            this.splash.set(2);
-
-            return arr;
-
-        } catch (error) {
-            console.error('Error:', error);
-        }
+        console.log(`download volume ${fname}`);
+        return this.volumes.download(bucket, fname);
     }
+
+    hasVolume(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        return this.volumes.has(bucket, fname);
+    }
+
+    getVolume(bucket, fname) {
+        console.assert(bucket);
+        if (!fname)
+            return null;
+        return this.volumes.get(bucket, fname);
+    }
+
 }

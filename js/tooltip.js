@@ -55,6 +55,8 @@ class Tooltip {
         if (!regionIdx) {
             return '';
         }
+        if (this.state.isVolume) return null;
+
         let info = this.model.getRegions(this.state.mapping)[regionIdx];
 
         let fet = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);

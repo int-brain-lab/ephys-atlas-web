@@ -108,13 +108,22 @@ class Feature {
             this.setBucket(ev.uuid_or_alias);
 
             if (this.state.fname) {
-                // Select the features.
                 const state = this.state;
-                // Download the features.
-                if (!this.model.hasFeatures(state.bucket, state.fname)) {
-                    await this.model.downloadFeatures(state.bucket, state.fname);
+
+                if (!state.isVolume) {
+                    // Download the features.
+                    if (!this.model.hasFeatures(state.bucket, state.fname)) {
+                        await this.model.downloadFeatures(state.bucket, state.fname);
+                    }
+
+                }
+                else {
+                    // Download the volume.
+                    if (!this.model.hasVolume(state.bucket, state.fname))
+                        await this.model.downloadVolume(state.bucket, state.fname);
                 }
 
+                // Select the features.
                 this.selectFeature(state.fname, state.isVolume);
             }
         });
@@ -126,6 +135,7 @@ class Feature {
         this.el.addEventListener('click', async (e) => {
             if (e.target.tagName == 'LI') {
                 let fname = e.target.dataset.fname;
+                const state = this.state;
 
                 // Deselect.
                 if (this.tree.selected(fname)) {
@@ -133,14 +143,22 @@ class Feature {
                 }
 
                 else {
-                    // Download the features.
-                    if (!this.model.hasFeatures(this.state.bucket, fname)) {
-                        // TODO: splash
-                        await this.model.downloadFeatures(this.state.bucket, fname);
+                    let isVol = e.target.dataset.volume == "true";
+
+                    if (!isVol) {
+                        // Download the features.
+                        if (!this.model.hasFeatures(state.bucket, fname)) {
+                            // TODO: splash
+                            await this.model.downloadFeatures(state.bucket, fname);
+                        }
+                    }
+                    else {
+                        // Download the volume.
+                        if (!this.model.hasVolume(state.bucket, fname))
+                            await this.model.downloadVolume(state.bucket, fname);
                     }
 
                     // Dispatch the feature selected event.
-                    let isVol = e.target.dataset.volume == "true";
                     this.selectFeature(fname, isVol);
                 }
             }

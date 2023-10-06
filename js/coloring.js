@@ -44,7 +44,7 @@ class Coloring {
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
         this.dispatcher.on('logScale', (ev) => { this.buildColors(); });
-        this.dispatcher.on('feature', (ev) => { this.buildColors(); });
+        this.dispatcher.on('feature', (ev) => { if (!ev.isVolume) this.buildColors(); });
         this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
         this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });

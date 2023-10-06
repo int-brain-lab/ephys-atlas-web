@@ -100,7 +100,9 @@ class Volume {
             else {
                 this.showVolume();
 
-                let volume = await app.model.getVolume(this.state.bucket, ev.fname);
+                const state = this.state;
+                const volume = this.model.getVolume(state.bucket, state.fname);
+
                 this.setArray(volume);
                 this.draw();
             }
