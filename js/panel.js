@@ -35,6 +35,7 @@ class Panel {
         this.ishare = document.getElementById('share-button');
 
         // Setup the event callbacks that change the global state and update the components.
+        this.setupDispatcher();
         this.setupMapping();
         this.setupStat();
         this.setupColormap();
@@ -69,6 +70,13 @@ class Panel {
 
         // Log scale.
         this.setLogScale(state.logScale);
+    }
+
+    setupDispatcher() {
+        this.dispatcher.on('mapping', (ev, source) => {
+            if (source != this && ev.name)
+                this.imapping.value = ev.name;
+        });
     }
 
     /* Set functions                                                                             */

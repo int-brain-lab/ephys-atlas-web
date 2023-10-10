@@ -25,7 +25,7 @@ class Dispatcher {
     }
 
     on(name, callback) {
-        this.el.addEventListener(name, (ev) => { return callback(ev.detail.data); });
+        this.el.addEventListener(name, (ev) => { return callback(ev.detail.data, ev.detail.source); });
     }
 
     slice(source, axis, idx) {

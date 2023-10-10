@@ -144,9 +144,6 @@ class Coloring {
                     regionColors[regionIdx] = '#ffffff'; // white
                 }
                 // else, do nothing = default allen color.
-                else {
-                    console.log(`region ${regionIdx} in default colors because there is no data in hemisphere`);
-                }
                 continue;
             }
             value = value[stat];

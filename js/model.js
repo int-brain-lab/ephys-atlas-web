@@ -11,9 +11,7 @@ import { downloadJSON } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const BASE_URL = 'https://features.internationalbrainlab.org';
-if (DEBUG)
-    BASE_URL = 'https://localhost:5000';
+const BASE_URL = DEBUG ? 'https://localhost:5000' : 'https://features.internationalbrainlab.org';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
@@ -260,14 +258,20 @@ class Model {
         return this.features.has(bucket, fname);
     }
 
-    getFeaturesMapping(bucket, fname) {
-        // Return the first non-empty mapping of a feature.
+    getFeaturesMappings(bucket, fname) {
+        // Return the non-empty mappings of a feature.
         if (!fname)
             return null;
         let g = this.features.get(bucket, fname);
         if (!g) return null;
         if (!g["mappings"]) return null;
-        return Object.keys(g["mappings"])[0];
+        let mappings = [];
+        for (let mapping in g["mappings"]) {
+            let ids = Object.keys(g["mappings"][mapping]["data"]);
+            ids.pop("1");
+            if (ids.length > 0) mappings.push(mapping);
+        }
+        return mappings;
     }
 
     getFeatures(bucket, mapping, fname) {

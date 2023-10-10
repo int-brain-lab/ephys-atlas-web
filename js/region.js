@@ -171,7 +171,21 @@ class Region {
 
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
-        this.dispatcher.on('feature', (ev) => { this.setRegions(); });
+
+        this.dispatcher.on('feature', (ev) => {
+            if (ev.fname) {
+                // If the selected feature has no data for the current mapping, change the mapping.
+                const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
+                if (!mappings.includes(this.state.mapping)) {
+                    const mapping = mappings[0];
+                    console.warn(`automatically switching to mapping ${mapping} as the selected features do not contain any data with the current mapping`);
+                    this.state.mapping = mapping;
+                    this.dispatcher.mapping(this, mapping);
+                    return;
+                }
+            }
+            this.setRegions();
+        });
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
         this.dispatcher.on('search', (ev) => { this.setRegions(); });
@@ -186,16 +200,6 @@ class Region {
         let regions = this.model.getRegions(this.state.mapping);
 
         let features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
-
-        // If no features, it may be that there is no data for this mapping. So we try to change the mapping automatically.
-        if (!features) {
-            const mapping = this.model.getFeaturesMapping(this.state.bucket, this.state.fname);
-            if (mapping && mapping != this.state.mapping) {
-                this.dispatcher.mapping(this, mapping);
-                features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, mapping, this.state.fname);
-            }
-        }
-
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;
         let search = this.state.search;
