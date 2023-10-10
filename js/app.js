@@ -1,14 +1,24 @@
-import { State } from "./state.js";
-import { Splash } from "./splash.js";
-import { Slice } from "./slice.js";
+import { Bucket } from "./bucket.js";
+import { Colorbar } from "./colorbar.js";
+import { Coloring } from "./coloring.js";
+import { Model } from "./model.js";
+import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
-import { DB } from "./db.js";
-import { CustomFeature } from "./custom_feature.js";
-import { Region } from "./region.js";
-import { Highlighter, Selector, Tooltip } from "./interact.js";
-import { Panel } from "./panel.js";
+import { Highlighter } from "./highlighter.js";
 import { Maximizer } from "./maximizer.js";
+import { Panel } from "./panel.js";
+import { Region } from "./region.js";
+import { Search } from "./search.js";
+import { Selection } from "./selection.js";
+import { Selector } from "./selector.js";
+import { Share } from "./share.js";
+import { Slice } from "./slice.js";
+import { Spinner } from "./spinner.js";
+import { Splash } from "./splash.js";
+import { State } from "./state.js";
+import { Tooltip } from "./tooltip.js";
 import { Unity } from "./unity.js";
+import { Volume } from "./volume.js";
 
 export { App };
 
@@ -20,39 +30,52 @@ export { App };
 
 class App {
     constructor() {
-        // Create the State.
+        this.splash = new Splash("Please wait, the website is downloading tens of MB of data.");
+
+        // Common objects.
         this.state = new State();
+        this.model = new Model(this.splash);
+        this.dispatcher = new Dispatcher();
 
-        // Create the Splash.
-        this.splash = new Splash();
-
-        // Create the components.
-        this.highlighter = new Highlighter(this.state);
-        this.selector = new Selector(this.state);
-        this.maximizer = new Maximizer(this.state);
-
-        this.db = new DB(this.splash);
-
-        this.feature = new Feature(this.db, this.state);
-        this.region = new Region(this.db, this.state, this.feature, this.highlighter, this.selector);
-        this.tooltip = new Tooltip(this.state, this.region, this.feature);
-        this.unity = new Unity(this.splash, this.db, this.state, this.region, this.feature);
-        this.slice = new Slice(this.db, this.state, this.region, this.tooltip, this.highlighter, this.selector);
-        this.panel = new Panel(this.db, this.state, this.feature, this.region, this.selector, this.unity);
-        // TODO
-        // this.custom_feature = new CustomFeature(this.db);
+        // Components.
+        this.bucket = new Bucket(this.state, this.model, this.dispatcher);
+        this.colorbar = new Colorbar(this.state, this.model, this.dispatcher);
+        this.coloring = new Coloring(this.state, this.model, this.dispatcher);
+        this.feature = new Feature(this.state, this.model, this.dispatcher);
+        this.highlighter = new Highlighter(this.state, this.model, this.dispatcher);
+        this.maximizer = new Maximizer(this.state, this.model, this.dispatcher);
+        this.panel = new Panel(this.state, this.model, this.dispatcher);
+        this.region = new Region(this.state, this.model, this.dispatcher);
+        this.search = new Search(this.state, this.model, this.dispatcher);
+        this.selection = new Selection(this.state, this.model, this.dispatcher);
+        this.selector = new Selector(this.state, this.model, this.dispatcher);
+        this.share = new Share(this.state, this.model, this.dispatcher);
+        this.slice = new Slice(this.state, this.model, this.dispatcher);
+        this.spinner = new Spinner(this.state, this.model, this.dispatcher);
+        this.tooltip = new Tooltip(this.state, this.model, this.dispatcher);
+        this.unity = new Unity(this.state, this.model, this.dispatcher);
+        this.volume = new Volume(this.state, this.model, this.dispatcher);
     }
 
     init() {
         // Load the data.
         this.splash.start();
-        this.db.load().then(() => {
+        this.model.load().then(async () => {
+            // Prevent URL update when loading the app.
+            this.state.toggleUpdate(false);
+
+            this.bucket.init();
+            this.slice.init();
             this.feature.init();
-            this.region.init();
+            this.coloring.init();
+            this.selector.init();
+            this.panel.init();
+            this.region.init().then(() => { this.selection.init(); });
+
+            this.state.toggleUpdate(true);
+
             if (this.unity)
                 this.unity.init();
-            this.slice.init();
-            this.panel.init();
         });
     }
 

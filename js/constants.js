@@ -15,5 +15,13 @@ export const SLICE_DEFAULT = {
     sagittal: 1140 / 2 - 20,
 };
 
+export const VOLUME_SIZE = {
+    coronal: 528,
+    horizontal: 320,
+    sagittal: 456,
+};
+
+export const VOLUME_AXES = ["coronal", "horizontal", "sagittal"]
+
 export const SLICE_AXES = Object.keys(SLICE_MAX);
 export const SLICE_STATIC_AXES = ['top', 'swanson'];

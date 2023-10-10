@@ -12,19 +12,15 @@ import os
 import re
 from datetime import datetime, timezone
 from math import isnan
-from operator import itemgetter, attrgetter
 from pathlib import Path
 from textwrap import dedent
 from xml.dom import minidom
 
-import lxml.etree as le
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from ibllib.atlas.regions import BrainRegions
 from joblib import Parallel, delayed
-from matplotlib import cm
+# from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap, to_hex
 from pandas.core.groupby import DataFrameGroupBy
 from tqdm import tqdm
@@ -105,7 +101,7 @@ def float_json(x):
 
 def save_json(d, filename):
     with open(filename, "w") as f:
-        json.dump(d, f, indent=1)
+        json.dump(d, f, indent=1, sort_keys=True)
 
 
 def base64_encode(input_string):
@@ -301,7 +297,8 @@ def clean_svg(file):
 
 
 def get_figure_string(file):
-    # NOTE: this function is obsolete now that the SVG files have been integrated in the slices.json file
+    # NOTE: this function is obsolete now that the SVG files have been
+    # integrated in the slices.json file
     return
     with open(file, 'r') as f:
         root = minidom.parse(f)
@@ -324,7 +321,8 @@ def make_slices_json(dir):
     for file in tqdm(svg_files):
         ax, idx = file.stem.split('_')
         idx = int(idx)
-        # NOTE: only keep even indexes as we don't need full resolution on the client
+        # NOTE: only keep even indexes as we don't need full resolution on the
+        # client
         if idx % 2 == 1:
             continue
         assert ax in AXES
@@ -347,10 +345,12 @@ def run_single(file):
     #    parameter .0007 (in inkscape settings)
     simplify(file)
 
-    # 5. Apply svgo independently on each file (and not in batch as svgo silently deletes all files!)
+    # 5. Apply svgo independently on each file (and not in batch as svgo
+    # silently deletes all files!)
     svgo(file)
 
-    # 6. Apply a simple regex in Python to remove all useless path ID (but keep the <g> region IDs)
+    # 6. Apply a simple regex in Python to remove all useless path ID (but
+    # keep the <g> region IDs)
     remove_path_id(file)
 
     # 7. Some SVG Python processing to cleanup the SVGs further.
@@ -376,6 +376,20 @@ def run_all(path):
     # Step 8.
     make_slices_json(path)
 
+# -------------------------------------------------------------------------------------------------
+# Slice processing
+# -------------------------------------------------------------------------------------------------
+
+
+def process_slices():
+    pass
+    # for axis in ('coronal', 'horizontal', 'sagittal', 'swanson', 'top'):
+    #     with open(DATA_DIR / f'json/slices_{axis}.json', 'r') as f:
+    #         slices = json.load(f)
+    #     slices = slices[axis]
+    #     with open(DATA_DIR / f'json/slices_{axis}.json', 'w') as f:
+    #         json.dump(slices, f, indent=1, sort_keys=True)
+
 
 # -------------------------------------------------------------------------------------------------
 # Region processing
@@ -386,24 +400,24 @@ def get_mappings():
     # {mapping_name: [{idx: ..., atlas_id: ..., acronym: ..., name: ..., hex: ...}]}
     out = {}
     for mapping in MAPPINGS:
-        regions = pd.read_parquet(
-            DATA_DIR / f'pqt/{mapping}_regions.pqt')
-        out[mapping] = [
-            {
-                'idx': abs(idx_),
+        regions = pd.read_parquet(DATA_DIR / f'pqt/{mapping}_regions.pqt')
+        out[mapping] = {
+            abs(idx_): {
                 'atlas_id': atlas_id_,
                 'acronym': acronym_,
                 'name': name_,
                 'hex': hex_,
             }
             for idx_, atlas_id_, acronym_, name_, hex_ in zip(
-                regions['idx'], regions['atlas_id'], regions['acronym'], regions['atlas_name'], regions['hex'])
-        ]
-        out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
+                regions['idx'], regions['atlas_id'], regions['acronym'],
+                regions['atlas_name'], regions['hex'])
+        }
+        # out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
     return out
 
 
-# mappings is a dictionary {mapping_name: [{idx, atlas_id, acronym, name, hex}]}
+# mappings is a dictionary {mapping_name: [{idx, atlas_id, acronym, name,
+# hex}]}
 def generate_regions_json(mappings):
     print("Generating regions.json...")
     filename = DATA_DIR / 'json/regions.json'
@@ -415,7 +429,7 @@ def generate_default_regions_css(mappings, mapping):
     css = f'/* default SVG path background color for mapping {mapping} */\n'
     css = ''.join(
         dedent(f'''
-        svg path.{mapping}_region_{r['idx']} {{ fill: var(--region-{mapping}-{r['idx']}); /* {r['acronym']} */ }}''') for r in mappings[mapping])
+        svg path.{mapping}_region_{idx} {{ fill: var(--region-{mapping}-{idx}); /* {r['acronym']} */ }}''') for idx, r in mappings[mapping].items())
     css += '\n\n'
     write_text(css, DATA_DIR / f'css/default_region_colors_{mapping}.css')
 
@@ -431,16 +445,16 @@ def generate_regions_css(mappings):
     for mapping, regions in mappings.items():
 
         colors = '\n'.join(
-            f'''    --region-{mapping}-{r['idx']}: {r['hex']}; /* {r['acronym']} */ '''
-            for r in regions)
+            f'''    --region-{mapping}-{idx}: {r['hex']}; /* {r['acronym']} */ '''
+            for idx, r in regions.items())
         css += f'/* Mapping {mapping}: default region colors */\n\n:root {{\n\n{colors}\n\n}}\n'
 
         css += ''.join(
             dedent(f'''
             /* {r['acronym']} */
-            #bar-plot-container li.{mapping}_region_{r['idx']} .bar {{ background-color: var(--region-{mapping}-{r['idx']}); }}
-            #bar-plot-container li.{mapping}_region_{r['idx']} .acronym {{ color: var(--region-{mapping}-{r['idx']}); }}
-            ''') for r in regions)
+            .bar-plot li.{mapping}_region_{idx} .bar {{ background-color: var(--region-{mapping}-{idx}); }}
+            .bar-plot li.{mapping}_region_{idx} .acronym {{ color: var(--region-{mapping}-{idx}); }}
+            ''') for idx, r in regions.items())
 
         css += '\n\n'
     write_text(css, DATA_DIR / 'css/region_colors.css')
@@ -457,7 +471,8 @@ def get_aggregates(df):
     return {
         'mean': df.mean(numeric_only=True),
         'median': df.median(numeric_only=True),
-        # NOTE: if ddof is not set to 0, will return NaN if only 1 element in the groupby DF...
+        # NOTE: if ddof is not set to 0, will return NaN if only 1 element in
+        # the groupby DF...
         'std': df.std(ddof=0, numeric_only=True),
         'min': df.min(),
         'max': df.max(),
@@ -465,7 +480,7 @@ def get_aggregates(df):
 
 
 # features dictionary:
-# {mapping: {fet: {data: {atlas_id: {stat: value}}}, statistics: {stat: {mean: value, std: value...}}}}}
+# {mapping: {fet: {data: {atlas_id: {stat: value}}}, statistics: {stat: {m
 
 def generate_features_groupedby(br, mapping, df, feature_names):
     print(f"Generating features for mapping {mapping}")
@@ -485,9 +500,8 @@ def generate_features_groupedby(br, mapping, df, feature_names):
 
     for fet in feature_names:
         # Collect feature values.
-        for region in regions:
+        for regionIdx, region in regions.items():
             atlas_id = region['atlas_id']
-            regionIdx = region['idx']
             d = {}  # stat: value
             for stat, dfg in dfs.items():
                 if dfg is None:
@@ -497,7 +511,8 @@ def generate_features_groupedby(br, mapping, df, feature_names):
             if d:
                 features[fet]['data'][regionIdx] = d
 
-        # Collect statistics across regions, for each feature. Used for bar plot.
+        # Collect statistics across regions, for each feature. Used for bar
+        # plot.
         for stat, dfg in dfs.items():
             features[fet]['statistics'][stat] = get_stats(dfg[fet])
 
@@ -511,12 +526,13 @@ class FeatureBrainRegions:
         # for each mapping a dictionary atlas_id => idx
         self.atlas_id_map = {
             mapping: {
-                r['atlas_id']: r['idx']
-                for r in regions
+                r['atlas_id']: idx
+                for idx, r in regions.items()
             } for mapping, regions in self.mappings.items()
         }
 
-        # for each mapping, the list of region idx of regions to keep, or None if all are kept
+        # for each mapping, the list of region idx of regions to keep, or None
+        # if all are kept
         self.kept = {mapping: None for mapping in MAPPINGS}
 
     def keep(self, mapping, atlas_ids):
@@ -527,7 +543,8 @@ class FeatureBrainRegions:
 
     def get_regions(self, mapping):
         # return the kept brain regions
-        return [r for r in self.mappings[mapping] if r['idx'] in self.kept[mapping]]
+        return {idx: r for idx, r in self.mappings[mapping].items(
+        ) if idx in self.kept[mapping]}
 
 
 # -------------------------------------------------------------------------------------------------
@@ -580,14 +597,13 @@ def generate_bwm_features():
     df_wheel_speed = pd.read_parquet(DATA_DIR / 'pqt/wheel_speed_bwm.pqt')
     df_wheel_velocity = pd.read_parquet(DATA_DIR / 'pqt/wheel_velocity_bwm.pqt')
 
-    # # Put the data for decoding, single_cell, manifold in the separate DataFrames
-    # for fn in BWM_FNAMES:
-    #     df_block[fn] = df_sessions[f'block_{fn}']
-    #     df_choice[fn] = df_sessions[f'choice_{fn}']
-    #     df_feedback[fn] = df_sessions[f'feedback_{fn}']
-    #     df_stimulus[fn] = df_sessions[f'stimulus_{fn}']
-    #     df_wheel_speed[fn] = df_sessions[f'wheel_speed_{fn}']
-    #     df_wheel_velocity[fn] = df_sessions[f'wheel_velocity_{fn}']
+    # Put the data for decoding, single_cell, manifold in the separate
+    # DataFrames
+    for fn in BWM_FNAMES:
+        df_block[fn] = df_sessions[f'block_{fn}']
+        df_choice[fn] = df_sessions[f'choice_{fn}']
+        df_feedback[fn] = df_sessions[f'feedback_{fn}']
+        df_stimulus[fn] = df_sessions[f'stimulus_{fn}']
 
     # Detect boolean columns.
     def _debooleanize(df):
@@ -609,8 +625,8 @@ def generate_bwm_features():
     df_wheel_speed = _debooleanize(df_wheel_speed)
     df_wheel_velocity = _debooleanize(df_wheel_velocity)
 
-    for fset in BWM_FSETS:
-        df = locals()[f'df_{fset}']
+    for bucket in BWM_FSETS:
+        df = locals()[f'df_{bucket}']
 
         # Lateralize the sessions DataFrame.
         df = lateralize_features(df)
@@ -623,18 +639,23 @@ def generate_bwm_features():
         dfg = df.groupby(f'atlas_id_{mapping[0]}')
         features = generate_features_groupedby(br, mapping, dfg, feature_names)
         out = {mapping: features}
-        save_json(out, DATA_DIR / f"json/features_bwm_{fset}.json")
+        save_json(out, DATA_DIR / f"json/features_bwm_{bucket}.json")
 
 
 # -------------------------------------------------------------------------------------------------
 # Custom features
+# NOTE: OBSOLETE, this was to encode custom features directly in the query string, but browsers
+# do not support query strings that long.
 # -------------------------------------------------------------------------------------------------
 
 class FeatureGenerator:
-    def __init__(self, fset='', mapping='Beryl'):
-        assert fset
+    def __init__(self, bucket='', mapping='Beryl'):
+        from ibllib.atlas.regions import BrainRegions
+
+        assert bucket
+        mapping = mapping.title()
         self.br = BrainRegions()
-        self.fset = fset
+        self.bucket = bucket
         self.mapping = mapping
         self.values = {}  # mapping (name, stat) => values
         self.idx = None
@@ -664,7 +685,7 @@ class FeatureGenerator:
         assert self.idx is not None
         assert len(self.values) > 0
         obj = {
-            'fset': self.fset,
+            'bucket': self.bucket,
             'mapping': self.mapping,
             'region_idx': encode_numpy_array(self.idx),
             'features': [],
@@ -684,7 +705,7 @@ class FeatureGenerator:
     def decode(self, s):
         obj = json.loads(self.decompress(base64_decode(s)))
         assert obj['mapping'] == self.mapping
-        assert obj['fset'] == self.fset
+        assert obj['bucket'] == self.bucket
 
         # Set the list of regions.
         self.idx = decode_numpy_array(obj['region_idx'], np.int32)
@@ -698,7 +719,7 @@ class FeatureGenerator:
 
 
 def generate_custom_features():
-    mapping = 'Allen'
+    mapping = 'allen'
 
     fg = FeatureGenerator('custom', mapping)
     br = fg.br
@@ -721,13 +742,15 @@ def generate_custom_features():
 # -------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    pass
 
     # generate_colormaps()
+    # process_slices()
     # mappings = get_mappings()
     # generate_regions_json(mappings)
     # generate_regions_css(mappings)
     # generate_ephys_features()
-    generate_bwm_features()
+    # generate_bwm_features()
     # generate_custom_features()
 
     ##############

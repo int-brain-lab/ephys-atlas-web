@@ -1,15 +1,70 @@
 export { Feature };
 
-import { clearStyle, clamp, normalizeValue } from "./utils.js";
-import { DEFAULT_FEATURE } from "./state.js";
+import { DEFAULT_BUCKET } from "./state.js";
+import { URLS } from "./model.js";
+import { downloadBinaryFile, removeFromArray, removeClassChildren } from "./utils.js";
 
 
 
 /*************************************************************************************************/
-/* Constants                                                                                     */
+/* Feature tree                                                                                  */
 /*************************************************************************************************/
 
+class FeatureTree {
+    constructor(el) {
+        this.el = el;
+    }
 
+    setFeatures(features, tree, volumes) {
+        if (!tree || tree.length == 0) {
+            // Convert a flat array into a flat tree.
+            tree = Object.keys(features).reduce((obj, key) => { obj[key] = key; return obj; }, {});
+        }
+        console.assert(tree);
+        volumes = volumes || [];
+        const generateTree = (obj) => {
+            let html = '';
+            for (const key in obj) {
+                let fname = obj[key];
+                let displayName = key;
+                let desc = features[fname] ? features[fname]['short_desc'] : '';
+                let isVol = volumes.includes(fname);
+
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    html += `<details><summary>${key}</summary><ul>`;
+                    html += generateTree(obj[key]);
+                    html += `</ul></details>`;
+                } else {
+                    html += `<li data-fname="${fname}" data-desc="${desc}" data-volume="${isVol}">${displayName}</li>`;
+                }
+            }
+            return html;
+        };
+        this.el.innerHTML = `<ul>${generateTree(tree)}</ul>`;
+    }
+
+    clear() {
+        removeClassChildren(this.el, 'LI', 'selected');
+    }
+
+    get(fname) {
+        return this.el.querySelector(`[data-fname=${fname}]`);
+    }
+
+    select(fname) {
+        this.clear();
+        if (fname) {
+            let el = this.get(fname);
+            if (el)
+                el.classList.add('selected');
+        }
+
+    }
+
+    selected(fname) {
+        return this.get(fname).classList.contains('selected');
+    }
+}
 
 
 
@@ -18,172 +73,169 @@ import { DEFAULT_FEATURE } from "./state.js";
 /*************************************************************************************************/
 
 class Feature {
-    constructor(db, state) {
-        this.db = db;
+    constructor(state, model, dispatcher) {
         this.state = state;
+        this.model = model;
+        this.dispatcher = dispatcher;
 
-        this.style = document.getElementById('style-features').sheet;
-        this.defaultStyle = document.getElementById('style-default-regions');
-        // this.featureName = document.getElementById('bar-fname');
+        this.el = document.getElementById('feature-tree');
+
+        this.tree = new FeatureTree(this.el);
+
+        this.setupDispatcher();
+        this.setupFeature();
     }
 
     init() {
-        this.setDefaultColors();
-        this.setColormap(this.state.cmap);
+        // this.setState(this.state);
+    }
+
+    async setState(state) {
+        if (state.fname) {
+            this.model.downloadFeatures(state.bucket, state.fname).then(() => {
+                // Dispatch the feature selected event.
+                this.selectFeature(state.fname, state.isVolume);
+            });
+        }
+    }
+
+    /* Setup functions                                                                           */
+    /*********************************************************************************************/
+
+    setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on('bucket', async (ev) => {
+            this.setBucket(ev.uuid_or_alias);
+
+            if (this.state.fname) {
+                const state = this.state;
+
+                if (!state.isVolume) {
+                    // Download the features.
+                    if (!this.model.hasFeatures(state.bucket, state.fname)) {
+                        await this.model.downloadFeatures(state.bucket, state.fname);
+                    }
+
+                }
+                else {
+                    // Download the volume.
+                    if (!this.model.hasVolume(state.bucket, state.fname))
+                        await this.model.downloadVolume(state.bucket, state.fname);
+                }
+
+                // Select the features.
+                this.selectFeature(state.fname, state.isVolume);
+            }
+        });
+        this.dispatcher.on('refresh', (ev) => { this.refreshBucket(); });
+        this.dispatcher.on('bucketRemove', (ev) => { this.setBucket(DEFAULT_BUCKET); });
+    }
+
+    setupFeature() {
+        this.el.addEventListener('click', async (e) => {
+            if (e.target.tagName == 'LI') {
+                let fname = e.target.dataset.fname;
+                const state = this.state;
+
+                // Deselect.
+                if (this.tree.selected(fname)) {
+                    this.selectFeature('');
+                }
+
+                else {
+                    let isVol = e.target.dataset.volume == "true";
+
+                    if (!isVol) {
+                        // Download the features.
+                        if (!this.model.hasFeatures(state.bucket, fname)) {
+                            // TODO: splash
+                            await this.model.downloadFeatures(state.bucket, fname);
+                        }
+                    }
+                    else {
+                        // Download the volume.
+                        if (!this.model.hasVolume(state.bucket, fname))
+                            await this.model.downloadVolume(state.bucket, fname);
+                    }
+
+                    // Dispatch the feature selected event.
+                    this.selectFeature(fname, isVol);
+                }
+            }
+        });
+
+        this.el.addEventListener('mouseover', (e) => {
+            if (e.target.tagName == 'LI') {
+                let fname = e.target.dataset.fname;
+                let desc = e.target.dataset.desc;
+                this.dispatcher.featureHover(this, fname, desc, e);
+            }
+        });
+
+        this.el.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'LI') {
+                this.dispatcher.featureHover(this, null, null, null);
+            }
+        });
     }
 
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    setMapping(name) {
-        this.state.mapping = name;
-        this.update();
+    async setBucket(uuid_or_alias) {
+        let bucket = await this.model.getBucket(uuid_or_alias);
+        console.log("set bucket", uuid_or_alias);
+        console.assert(bucket);
+
+        if (!bucket.metadata) {
+            // Error message if the bucket does not exist.
+
+            this.state.bucket = DEFAULT_BUCKET;
+            this.state.buckets = removeFromArray(this.state.buckets, uuid_or_alias);
+            this.state.fname = '';
+
+            if (uuid_or_alias != DEFAULT_BUCKET) {
+                this.dispatcher.bucketRemove(this, uuid_or_alias);
+                this.dispatcher.bucket(this, this.state.bucket);
+            }
+
+            // Finally display an error message.
+            let msg = `error retrieving bucket ${uuid_or_alias}`;
+            console.error(msg);
+            window.alert(msg);
+        }
+        else {
+            this.tree.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
+        }
     }
 
-    // Change the current feature set.
-    setFset(fset, fname) {
-        this.state.setFset(fset, fname); // will also change the fname.
-        this.update();
+    async refreshBucket() {
+        this.dispatcher.spinning(this, true);
+
+        console.debug(`refreshing bucket ${this.state.bucket}`)
+        let bucket = await this.model.getBucket(this.state.bucket, { cache: "reload" });
+        console.assert(bucket);
+        this.tree.setFeatures(bucket.features, bucket.metadata.tree);
+        this.tree.select(this.state.fname);
+
+        this.dispatcher.spinning(this, false);
     }
 
-    // Change a feature within the current feature set.
-    setFname(fname) {
+    selectFeature(fname, isVolume) {
+        console.log(`select feature ${fname}, volume=${isVolume}`);
         this.state.fname = fname;
-        this.update();
+        this.state.isVolume = isVolume;
+        this.tree.select(fname);
+        this.dispatcher.feature(this, fname, isVolume);
     }
 
-    // set the stat: mean, std, min, max
-    setStat(stat) {
-        this.state.stat = stat;
-        this.update();
-    }
-
-    /* Colormap functions                                                                        */
-    /*********************************************************************************************/
-
-    async setColormap(cmap) {
-        this.state.cmap = cmap;
-        this.colors = (await this.db.getColormap(this.state.cmap))['colors'];
-        this.update();
-    }
-
-    setColormapRange(cmin, cmax) {
-        if (cmin >= cmax) {
+    async download() {
+        if (!this.state.bucket || !this.state.fname) {
+            // TODO: what should the DOWNLOAD button do when no feature is selected?
             return;
         }
-        this.state.cmapmin = cmin;
-        this.state.cmapmax = cmax;
-        this.update();
-    }
-
-    makeHex(normalized) {
-        return this.colors[clamp(normalized, 0, 99)];
-    }
-
-    makeRegionColor(mapping, regionIdx, value, hex) {
-        return `svg path.${mapping}_region_${regionIdx} { fill: ${hex}; } /* FRP5: ${value} */`;
-    }
-
-    /* Feature functions                                                                         */
-    /*********************************************************************************************/
-
-    async getFeatures() {
-        // dict {mapping: {data: {idx: {mean...}, statistics: {mean: xxx, ...}, statistics: {mean: {mean: ...}, ...}}}
-        let fet = await this.db.getFeatures(this.state.fset, this.state.mapping, this.state.fname);
-        return fet;
-    }
-
-    setDefaultColors() {
-        this.defaultStyle.href = `data/css/default_region_colors_${this.state.mapping}.css`;
-    }
-
-    async update() {
-        // this.featureName.innerHTML = `fet: ${this.state.fname}`;
-        this.setDefaultColors();
-
-        let fet = (await this.getFeatures());
-
-        if (!fet) {
-            // Default colors: the original region colors. Nothing to do apart from clearing the extra feature-dependent styling.
-            console.debug(`loading default colors for unknown feature ${this.state.fname} (fset is ${this.state.fset})`);
-            clearStyle(this.style);
-            return;
-        }
-        let stat = this.state.stat;
-
-        // dict {mean: xxx, ...}
-        let stats = fet["statistics"];
-
-        let mapping = this.state.mapping;
-        let cmap = this.state.cmap;
-        let cmin = this.state.cmapmin;
-        let cmax = this.state.cmapmax;
-
-        // dict {idx: {mean...}, statistics: {mean: xxx, ...}
-        let data = fet["data"];
-
-        if (!stats[stat]) return;
-
-        // Initial vmin-vmax cmap range.
-        let vmin = stats[stat]["min"];
-        let vmax = stats[stat]["max"];
-
-        // Colormap range modifier using the min/max sliders.
-        let vdiff = vmax - vmin;
-        let vminMod = vmin + vdiff * cmin / 100.0;
-        let vmaxMod = vmin + vdiff * cmax / 100.0;
-
-        clearStyle(this.style);
-
-        for (let regionIdx in data) {
-            let value = data[regionIdx][stat];
-            let normalizedMod = normalizeValue(value, vminMod, vmaxMod);
-            let hex = '';
-            if (normalizedMod == null || normalizedMod == undefined) {
-                hex = '#d3d3d3';
-            }
-            else {
-                hex = this.makeHex(normalizedMod);
-            }
-            let stl = this.makeRegionColor(mapping, regionIdx, value, hex);
-            this.style.insertRule(stl);
-        }
-    }
-
-    getColor(regionIdx) {
-        const ruleList = this.style.cssRules;
-        const CSS_REGEX = new RegExp(`svg path\.${this.state.mapping}_region_${regionIdx} \{ fill: (.+); \}`);
-        for (let rule of ruleList) {
-            let m = rule.cssText.match(CSS_REGEX);
-            if (m) {
-                let rgb = m[1];
-                rgb = rgb.split(',');
-
-                let r = parseInt(rgb[0].substring(4));
-                let g = parseInt(rgb[1]);
-                let b = parseInt(rgb[2]);
-
-                r = r.toString(16).padStart(2, '0');
-                g = g.toString(16).padStart(2, '0');
-                b = b.toString(16).padStart(2, '0');
-
-                let hex = `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
-                return hex;
-            }
-        }
-    }
-
-    async get(regionIdx) {
-        // Return the feature value of a given region.
-        // This depends on the currently-selected feature set, feature, stat.
-        let data = (await this.getFeatures());
-        if (!data) {
-            // console.warn(`unable to get feature for region ${regionIdx}`);
-            return 'not significant';
-        }
-        data = data['data'];
-        if (data && data[regionIdx])
-            return data[regionIdx][this.state.stat];
-        return 'excluded';
+        let url = URLS['features'](this.state.bucket, this.state.fname) + "?download=1";
+        let filename = `${this.state.fname}.json`;
+        downloadBinaryFile(url, filename);
     }
 };

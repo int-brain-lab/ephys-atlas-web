@@ -7,19 +7,29 @@ export { Splash };
 /*************************************************************************************************/
 
 class Splash {
-    constructor() {
+    constructor(description) {
         this.progress = 0;
         this.total = 0;
         this.splash = document.getElementById('splash');
         this.loading = document.querySelector('#splash-loading span.progress');
+        this.elDescription = document.getElementById('splash-description');
+        this.description = description;
     }
 
     addTotal(total) {
         this.total += total;
     }
 
+    setTotal(total) {
+        this.total = total;
+    }
+
     setLoading(is_loading) {
         this.splash.style.display = is_loading ? 'block' : 'none';
+    }
+
+    setDescription(description) {
+        this.description = description;
     }
 
     start() {
@@ -27,6 +37,7 @@ class Splash {
     }
 
     end() {
+        console.assert(this.total > 0);
         this.set(this.total);
     }
 
@@ -44,6 +55,7 @@ class Splash {
         this.progress = value;
 
         // Update the splash loading percentage.
+        this.elDescription.innerHTML = this.description;
         this.loading.innerHTML = (100 * value / this.total).toFixed(1);
 
         // Display or hide the loading splash.

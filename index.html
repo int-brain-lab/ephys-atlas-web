@@ -34,6 +34,7 @@
     <!-- Dynamic CSS styles -->
     <style id="style-regions"></style>
     <style id="style-features"></style>
+    <style id="style-volume"></style>
     <style id="style-selector"></style>
     <style id="style-highlighter"></style>
     <style id="style-search"></style>
@@ -41,6 +42,9 @@
 
 
     <!-- Javascript -->
+
+    <!-- Pako (gzip) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
 
     <!-- Dexie (IndexedDB wrapper) -->
     <script src="js/dexie.min.js"></script>
@@ -55,32 +59,7 @@
 
 <body>
 
-    <!-------------------------------------------------------------------------------------------->
-    <!-- HEADER -->
-    <!-------------------------------------------------------------------------------------------->
-
-    <header id="header">
-        <nav>
-            <!-- IBL LOGO -->
-            <a href="/"><img src="/images/ibl.png"></a>
-
-            <!-- MENU -->
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="#" class="menu-explore">Explore</a></li>
-                <li><a href="#">Paper</a></li>
-                <li><a href="#">Download</a>
-                </li>
-                <li><a href="https://www.internationalbrainlab.com/">Lab</a></li>
-            </ul>
-        </nav>
-    </header>
-
-
-
-    <!-------------------------------------------------------------------------------------------->
     <!-- CONTROL PANEL -->
-    <!-------------------------------------------------------------------------------------------->
 
     <div id="control-panel">
         <details>
@@ -135,20 +114,49 @@
                 <input type="range" min="0" max="100" value="100" class="slider" id="colormap-max">
             </div>
 
-            <!-- ADVANCED -->
-            <div class="advanced">
-                <details>
-                    <summary>Advanced</summary>
-                    <div class="controls">
-                        <button id="reset-view-button">reset view</button>
-                        <button id="clear-cache-button">reset cache</button>
-                    </div>
-                </details>
+            <!-- LOG SCALE -->
+            <!-- <div class="label">log scale</div> -->
+
+            <div class="control">
+                <label>
+                    <input type="checkbox" id="log-scale">log scale
+                </label>
+                <!-- <input type="checkbox" class="checkbox" id="log-scale"> -->
+            </div>
+
+            <!-- BUTTONS -->
+            <div class="controls">
+                <button id="reset-view-button">reset view</button>
+                <button id="clear-cache-button">reset cache</button>
             </div>
         </details>
     </div>
 
+
+    <!-- DISPATCHER -->
+
+    <div id="dispatcher"></div>
+
+
+    <!-- TOOLTIP -->
+
     <div id="region-info"></div>
+
+
+    <!-- SHARE BUTTON -->
+    <!-- <div id="share-wrapper">
+        <button id="share-button">share</button>
+    </div> -->
+
+
+    <!-- SPLASH -->
+    <div id="splash">
+        <div id="splash-loading">
+            <span class="loader"></span>
+            Loading... <span class="progress">0</span>%<br>
+            <span id="splash-description" class="description"></span>
+        </div>
+    </div>
 
 
     <!-------------------------------------------------------------------------------------------->
@@ -157,94 +165,78 @@
 
     <div id="container">
 
-        <!-- SHARE BUTTON -->
-        <div id="share-wrapper">
-            <button id="share-button">share</button>
-        </div>
 
-        <!-- SPLASH -->
-        <div id="splash">
-            <div id="splash-loading">
-                <span class="loader"></span>
-                Loading... <span class="progress">0</span>%
+        <!-- HEADER -->
+
+        <header id="header">
+            <nav>
+                <!-- IBL LOGO -->
+                <a href="/"><img src="/images/ibl.png"></a>
+
+                <!-- MENU -->
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="javascript:app.panel.share();" id="share-button">Share</a></li>
+                    <li><a href="javascript:app.feature.download();">Download</a></li>
+                    <!-- <li><a href="#">Paper</a></li> -->
+                    <li><a href="https://www.internationalbrainlab.com/">Lab</a></li>
+                </ul>
+            </nav>
+        </header>
+
+
+        <!-- BAR HEADER -->
+        <div id="bar-plot-header" class="bar-plot">
+
+            <!-- BUCKET SELECTION -->
+            <div class="control">
+                <select id="bucket-dropdown">
+                </select>
             </div>
+
+            <!-- BUCKET BUTTONS -->
+            <div class="control">
+                <div id="button-remove-bucket">-</div>
+                <div id="button-refresh-bucket">&#8635;</div>
+                <div id="button-new-bucket">+</div>
+            </div>
+
+            <!-- FEATURE TREE -->
+            <div id="feature-tree">
+            </div>
+
+            <!-- COLOR BAR -->
+            <div id="bar-scale">
+                <div class="colorbar">
+                </div>
+                <div class="wrapper">
+                    <div class="min"></div>
+                    <div class="max"></div>
+                </div>
+            </div>
+
+            <!-- SELECTED REGIONS -->
+            <div id="bar-selected-wrapper">
+                <div id="bar-selected-title">
+                    <!-- Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>) -->
+                    Selected regions (<a id="clear-selection" href="javascript:;">clear</a>)
+                </div>
+                <ul id="bar-selected-list">
+                </ul>
+            </div>
+
+            <!-- FEATURE SEARCH BAR -->
+            <div id="bar-plot-search">
+                <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
+                <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
+            </div>
+
         </div>
 
 
         <!-- BAR PLOT -->
-        <div id="bar-plot-container">
-
-
-            <!-- BAR HEADER -->
-            <div id="bar-plot-header">
-
-                <!-- FEATURE NAME -->
-                <!-- <div id="bar-fname"></div> -->
-
-                <!-- FEATURE SET -->
-                <div class="label">fset</div>
-
-                <div class="control">
-                    <select id="feature-set-dropdown">
-                        <option value="ephys">ephys</option>
-                        <option value="bwm_block">bwm_block</option>
-                        <option value="bwm_choice">bwm_choice</option>
-                        <option value="bwm_feedback">bwm_feedback</option>
-                        <option value="bwm_stimulus">bwm_stimulus</option>
-                        <option value="bwm_wheel_speed">bwm_wheel_speed</option>
-                        <option value="bwm_wheel_velocity">bwm_wheel_velocity</option>
-                    </select>
-                </div>
-
-                <!-- FEATURE -->
-                <div class="label">fname</div>
-
-                <div class="control">
-                    <select id="feature-dropdown">
-                        <option value="psd_alpha">psd_alpha</option>
-                        <option value="psd_beta">psd_beta</option>
-                        <option value="psd_delta">psd_delta</option>
-                        <option value="psd_gamma">psd_gamma</option>
-                        <option value="psd_theta">psd_theta</option>
-                        <option value="rms_ap">rms_ap</option>
-                        <option value="rms_lf">rms_lf</option>
-                        <option value="spike_rate">spike_rate</option>
-                    </select>
-                </div>
-
-                <!-- FEATURE SCALE -->
-                <div id="bar-scale">
-                    <div class="colorbar">
-                    </div>
-                    <div class="wrapper">
-                        <div class="min"></div>
-                        <div class="max"></div>
-                    </div>
-                </div>
-
-                <!-- SELECTED REGIONS -->
-                <div id="bar-selected-wrapper">
-                    <div id="bar-selected-title">
-                        Selected regions (<a href="javascript:app.selector.clear(); app.region.clearSelection(); if (app.unity) app.unity.update();">clear</a>)
-                    </div>
-                    <ul id="bar-selected-list">
-                    </ul>
-                </div>
-
-                <!-- FEATURE SEARCH BAR -->
-                <div id="bar-plot-search">
-                    <!-- <p>type a region name or acronym. Exact acronym match: <code>acronym=FRP</code></p> -->
-                    <input type="text" id="search-input" placeholder="search... hover for help" title="ex: 'anterior cingulate area', 'FRP', 'acronym=ACAd'">
-                </div>
-
-            </div>
-
-
-            <!-- REGION LIST -->
-            <div id="bar-plot">
-                <ul id="bar-plot-list"></ul>
-            </div>
-
+        <div id="bar-plot" class="bar-plot">
+            <ul id="bar-plot-list"></ul>
         </div>
 
 
@@ -252,16 +244,21 @@
         <div id="svg-coronal-container" class="svg-wrapper">
             <div id="maximizer-coronal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-coronal" version="1.1" viewBox="60 25 350 284">
-                <g id="figure-coronal">
-                </g>
-                <g id="lines-coronal">
-                    <line id="coronal-vline" x1="237" y1="50" x2="237" y2="300" stroke="#333" stroke-width="1.5px" />
-                    <line id="coronal-hline" x1="70" y1="169" x2="404" y2="169" stroke="#333" stroke-width="1.5px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-coronal-container-inner" class="svg-canvas-container">
+                <canvas id="canvas-coronal" width="456" height="320"></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-coronal" version="1.1" viewBox="58 50 356 250">
+                    <g id="figure-coronal">
+                    </g>
+                    <g id="lines-coronal">
+                        <line id="coronal-vline" x1="237" y1="50" x2="237" y2="300" stroke="#333" stroke-width="1.5px" />
+                        <line id="coronal-hline" x1="70" y1="169" x2="404" y2="169" stroke="#333" stroke-width="1.5px" />
+                    </g>
+                </svg>
+            </div>
 
-            <div id="slider-coronal-container">
+            <!--  Slider -->
+            <div id="slider-coronal-container" class="slider-container">
                 <input type="range" class="slider" id="slider-coronal" min="0" max="1319" step="2">
                 <div class="slice-label">coronal projection</div>
                 <div class="coord-value" id="coord-ap">AP: -1200</div>
@@ -274,16 +271,21 @@
         <div id="svg-sagittal-container" class="svg-wrapper">
             <div id="maximizer-sagittal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-sagittal" version="1.1" viewBox="-10 65 545 221">
-                <g id="figure-sagittal">
-                </g>
-                <g id="lines-sagittal">
-                    <line id="sagittal-vline" x1="236" y1="45" x2="236" y2="280" stroke="#333" stroke-width="1px" />
-                    <line id="sagittal-hline" x1="50" y1="170" x2="420" y2="170" stroke="#333" stroke-width="1px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-sagittal-container-inner" class="svg-canvas-container">
+                <canvas id="canvas-sagittal" width="528" height="320"></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-sagittal" version="1.1" viewBox="56 66 358 217">
+                    <g id="figure-sagittal">
+                    </g>
+                    <g id="lines-sagittal">
+                        <line id="sagittal-vline" x1="236" y1="45" x2="236" y2="280" stroke="#333" stroke-width="1px" />
+                        <line id="sagittal-hline" x1="50" y1="170" x2="420" y2="170" stroke="#333" stroke-width="1px" />
+                    </g>
+                </svg>
+            </div>
 
-            <div id="slider-sagittal-container">
+            <!--  Slider -->
+            <div id="slider-sagittal-container" class="slider-container">
                 <input type="range" class="slider" id="slider-sagittal" min="0" max="1139" step="2">
                 <div class="slice-label">sagittal projection</div>
                 <div class="coord-value" id="coord-ml">ML: -39</div>
@@ -296,17 +298,21 @@
         <div id="svg-horizontal-container" class="svg-wrapper">
             <div id="maximizer-horizontal" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-horizontal" version="1.1" viewBox="60 20 340 300">
-                <g id="figure-horizontal">
-                </g>
-                <g id="lines-horizontal">
-                    <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333" stroke-width="1.5px" />
-                    <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333" stroke-width="1.5px" />
-                </g>
-            </svg>
+            <!--  SVG container -->
+            <div id="svg-horizontal-container-inner" class="svg-canvas-container">
+                <canvas id="canvas-horizontal" width="456" height="528"></canvas>
+                <svg xmlns="http://www.w3.org/2000/svg" id="svg-horizontal" version="1.1" viewBox="122 42 230 266">
+                    <g id="figure-horizontal">
+                    </g>
+                    <g id="lines-horizontal">
+                        <line id="horizontal-vline" x1="237" y1="35" x2="237" y2="315" stroke="#333" stroke-width="1.5px" />
+                        <line id="horizontal-hline" x1="120" y1="174" x2="350" y2="174" stroke="#333" stroke-width="1.5px" />
+                    </g>
+                </svg>
+            </div>
 
-
-            <div id="slider-horizontal-container">
+            <!--  Slider -->
+            <div id="slider-horizontal-container" class="slider-container">
                 <input type="range" class="slider" id="slider-horizontal" min="0" max="799" step="2">
                 <div class="slice-label">horizontal projection</div>
                 <div class="coord-value" id="coord-dv">DV: -3668</div>
@@ -319,12 +325,12 @@
         <div id="svg-swanson-container" class="svg-wrapper">
             <div id="maximizer-swanson" class="maximizer"></div>
 
-            <svg xmlns="http://www.w3.org/2000/svg" id="svg-swanson" version="1.1" viewBox="50 20 700 320">
+            <svg xmlns="http://www.w3.org/2000/svg" id="svg-swanson" version="1.1" viewBox="60 20 340 300">
                 <g id="figure-swanson">
                 </g>
             </svg>
 
-            <div id="slider-top-container">
+            <div id="slider-swanson-container">
                 <input type="range" class="slider" style="visibility: hidden;">
                 <div class="slice-label">Swanson projection</div>
             </div>

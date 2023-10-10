@@ -1,4 +1,4 @@
-export { State };
+export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
 import { SLICE_MAX, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
@@ -12,17 +12,10 @@ import { encode, decode } from "./utils.js";
 const DEFAULT_COLORMAP = "magma";
 const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
+const DEFAULT_LOG_SCALE = false;
 
-const DEFAULT_FSET = "ephys";
-export const DEFAULT_FEATURE = {
-    "ephys": "psd_alpha",
-    "bwm_block": "euclidean_effect",
-    "bwm_choice": "euclidean_effect",
-    "bwm_feedback": "euclidean_effect",
-    "bwm_stimulus": "euclidean_effect",
-    "bwm_wheel_speed": "euclidean_effect",
-    "bwm_wheel_velocity": "euclidean_effect",
-};
+const DEFAULT_BUCKET = "ephys";
+const DEFAULT_BUCKETS = ["ephys", "bwm"];
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
 
@@ -31,16 +24,16 @@ const DEFAULT_SEARCH = "";
 const DEFAULT_HIGHLIGHTED = null;
 
 // Stimulus YlGn
-// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9zdGltdWx1cyIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0OTksMTUyNywyMTU4LDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0
+// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9zdGltdWx1cyIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ%3D%3D
 
 // Choice YlOrRd
-// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjoyMzAzLCJzZWxlY3RlZCI6WzE5NzMsMjE3MiwyMjQxLDIzMDNdLCJ0b3AiOjAsInN3YW5zb24iOjB9
+// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ%3D%3D
 
 // Feedback Reds
-// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiUmVkcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9mZWVkYmFjayIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0NjQsMjE2NiwyMTk1LDIyNDcsMjI0MV0sInRvcCI6MCwic3dhbnNvbiI6MH0
+// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiUmVkcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9mZWVkYmFjayIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ%3D%3D
 
 // Block Purples
-// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9ibG9jayIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6Ik0iLCJoaWdobGlnaHRlZCI6MTM5Mywic2VsZWN0ZWQiOlsxMzQ2XSwidG9wIjowLCJzd2Fuc29uIjowfQ
+// https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9ibG9jayIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ%3D%3D
 
 // Wheel Blues
 // https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfc3BlZWQiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6bnVsbCwic2VsZWN0ZWQiOlsxOTc1LDIzMTYsMjMwMywyMzA2LDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9
@@ -49,7 +42,7 @@ const DEFAULT_HIGHLIGHTED = null;
 // https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfdmVsb2NpdHkiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6MjQxMiwic2VsZWN0ZWQiOlsxNjAwLDEzOTMsMjMzMSwyMzAzLDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9
 
 const ALIAS_STATES = {
-    "bwm_choice": "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjoyMzAzLCJzZWxlY3RlZCI6WzE5NzMsMjE3MiwyMjQxLDIzMDNdLCJ0b3AiOjAsInN3YW5zb24iOjB9",
+    "bwm_choice": "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmciLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwic2VhcmNoIjoiIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowfQ",
     "bwm_block":
         "eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9ibG9jayIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6Ik0iLCJoaWdobGlnaHRlZCI6MTM5Mywic2VsZWN0ZWQiOlsxMzQ2XSwidG9wIjowLCJzd2Fuc29uIjowfQ",
     "bwm_feedback":
@@ -69,23 +62,80 @@ function url2state() {
     });
     let state = {};
 
+    // Determine the list of buckets to show in the buckets dropdown.
+    // NOTE: make a copy to avoid modifying the default buckets.
+    let buckets = new Array(...DEFAULT_BUCKETS);
+
     // Alias states.
     if (query.alias) {
         state = decode(ALIAS_STATES[query.alias]);
+        // NOTE: we could later decide to add some buckets as a function of the alias.
     }
     else if (query.state) {
         state = decode(query.state);
+    }
+
+    // Add buckets passed in the query string.
+    if (query.buckets) {
+        let newBuckets = query.buckets.split(",");
+        buckets.push(...newBuckets);
+    }
+
+    // Remove duplicate buckets.
+    state.buckets = buckets.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+    });
+
+    console.log(`buckets are: `, state.buckets.join(','));
+
+    // Take the bucket from the URL query string.
+    state.bucket = state.bucket || query.bucket;
+
+    // If the state's bucket does not belong to the buckets, clear the bucket and fname.
+    if (!DEFAULT_BUCKETS.includes(state.bucket) && !state.buckets.includes(state.bucket)) {
+        state.bucket = null;
+        state.fname = null;
+        state.isVolume = null;
     }
 
     return state;
 }
 
 
-function state2url(state) {
+function state2url(state_) {
+    // Perform a copy of the state.
+    let state = { ...state_ };
+
+    // Extract the list of buckets from the state and put them separately in the URL.
+    let buckets = state.buckets || DEFAULT_BUCKETS;
+
+    // Remove default buckets.
+    buckets = buckets.filter(item => !DEFAULT_BUCKETS.includes(item));
+
+    // Remove the buckets from the state before computing its hash.
+    delete state.buckets;
+    // console.log(`buckets are: `, buckets);
+
+    // Generate the URL.
     let url = new URL(window.location);
     let params = url.searchParams;
+
+    // Remove the alias from the URL.
     params.delete('alias');
+
+    // Add the buckets separately in the URL query string.
+    if (buckets.length > 0)
+        params.set('buckets', buckets.join(','));
+    else
+        params.delete('buckets');
+
+    // Remove state.bucket from the encoded state, put it separately.
+    params.set('bucket', state.bucket);
+    delete state.bucket;
+
+    // Add the state to the query string
     params.set('state', encode(state));
+
     return url.toString();
 }
 
@@ -97,6 +147,7 @@ function state2url(state) {
 
 class State {
     constructor() {
+        this._toggle = true;
         this.fromURL();
     }
 
@@ -105,10 +156,13 @@ class State {
         this.cmap = state.cmap || DEFAULT_COLORMAP;
         this.cmapmin = state.cmapmin || DEFAULT_COLORMAP_MIN;
         this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
+        this.logScale = state.logScale || DEFAULT_LOG_SCALE;
 
         // Features.
-        this.fset = state.fset || DEFAULT_FSET;
-        this.fname = state.fname || DEFAULT_FEATURE[this.fset];
+        this.bucket = state.bucket || DEFAULT_BUCKET;
+        this.buckets = state.buckets || DEFAULT_BUCKETS;
+        this.fname = state.fname;
+        this.isVolume = state.isVolume;
         this.stat = state.stat || DEFAULT_STAT;
 
         // Slices.
@@ -126,6 +180,30 @@ class State {
         this.selected = new Set(state.selected || []);
     }
 
+    reset() {
+        this.init({ 'bucket': this.bucket, 'buckets': this.buckets });
+    }
+
+    toggleUpdate(toggle) {
+        this._toggle = toggle;
+    }
+
+    updateURL() {
+        if (!this._toggle) return;
+
+        console.log("update URL with current state");
+
+        // Update the address bar URL.
+
+        // Generate the URL from the state.
+        let url = this.toURL();
+
+        // Set the URL in the location bar.
+        window.history.replaceState(null, '', url.toString());
+
+        return url;
+    }
+
     fromURL() {
         let state = url2state();
         this.init(state);
@@ -135,16 +213,9 @@ class State {
         // HACK: temporarily replace selected, a Set(), by an array, otherwise the JSON
         // serialization won't work.
         let cpy = { ...this };
+        delete cpy._toggle;
         cpy.selected = Array.from(cpy.selected);
         let url = state2url(cpy);
         return url;
-    }
-
-    setFset(fset, fname) {
-        console.assert(fset);
-        this.fset = fset;
-        this.fname = fname || this.fname;
-        console.assert(this.fname);
-        this.stat = DEFAULT_STAT;
     }
 };

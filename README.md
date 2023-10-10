@@ -71,3 +71,44 @@ Apache configuration file, for example `/etc/apache2/sites-available/atlas.conf`
     CustomLog ${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 ```
+
+## Fix CORS issues
+
+You can add this in `/etc/apache2/apache2.conf`:
+
+```
+# NOTE: setup CORS policy for all websites
+Header set Access-Control-Allow-Origin *
+Header set Access-Control-Allow-Methods: "GET, POST, OPTIONS, PUT, DELETE"
+Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Content-Encoding"
+```
+
+## Serving the flask features server
+
+- Create `/.ibl/globalkey` with `f9134149-fcb5-4142-a0eb-4e76a0811cf9`.
+- Apache configuration:
+
+```
+<VirtualHost *:443>
+    ServerName features.internationalbrainlab.org
+
+    WSGIDaemonProcess features user=ubuntu group=www-data threads=5 python-home=/var/www/ibl_website/atlas2/venv python-path=/var/www/ibl_website/atlas2/
+    WSGIScriptAlias / /var/www/ibl_website/atlas2/features.wsgi
+
+    <Directory /var/www/ibl_website/atlas2>
+        WSGIProcessGroup features
+        WSGIApplicationGroup %{GLOBAL}
+        Require all granted
+    </Directory>
+
+    # !!!!!!!!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!!!!
+    <LocationMatch ".*">
+        # necessary if when using token-based authentication, to ensure the Authentication
+        # HTTP header is not removed when being passed to django via WSGI
+        CGIPassAuth On
+    </LocationMatch>
+
+    ErrorLog ${APACHE_LOG_DIR}/error_features.log
+    CustomLog ${APACHE_LOG_DIR}/access_features.log combined
+</VirtualHost>
+```

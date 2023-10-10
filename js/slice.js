@@ -1,7 +1,15 @@
 export { Slice };
 
-import { throttle, clamp, getOS } from "./utils.js";
+import { throttle, clamp, getOS, e2idx, setBackgroundImage } from "./utils.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
+
+
+
+/*************************************************************************************************/
+/* Constants                                                                                     */
+/*************************************************************************************************/
+
+const SLICE_THROTTLE = 40;
 
 
 
@@ -21,16 +29,15 @@ function isRoot(e) {
 /*************************************************************************************************/
 
 class Slice {
-    constructor(db, state, region, tooltip, highlighter, selector) {
-        this.setSlice = throttle(this._setSlice, 30);
+    constructor(state, model, dispatcher) {
 
-        this.db = db;
         this.state = state;
-        this.region = region;
-        this.tooltip = tooltip;
-        this.highlighter = highlighter;
-        this.selector = selector;
+        this.model = model;
+        this.dispatcher = dispatcher;
 
+        this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
+
+        // Slice lines.
         this.tv = document.getElementById('top-vline');
         this.th = document.getElementById('top-hline');
         this.cv = document.getElementById('coronal-vline');
@@ -40,10 +47,19 @@ class Slice {
         this.sv = document.getElementById('sagittal-vline');
         this.sh = document.getElementById('sagittal-hline');
 
+        // Coordinate labels.
         this.ml = document.getElementById('coord-ml');
         this.ap = document.getElementById('coord-ap');
         this.dv = document.getElementById('coord-dv');
 
+        // Bitmaps.
+        this.bitmaps = {
+            'coronal': document.getElementById(`svg-coronal-container-inner`),
+            'horizontal': document.getElementById(`svg-horizontal-container-inner`),
+            'sagittal': document.getElementById(`svg-sagittal-container-inner`),
+        };
+
+        this.setupDispatcher();
         this.setupSlices();
     }
 
@@ -81,6 +97,10 @@ class Slice {
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
+
+    setupDispatcher() {
+        this.dispatcher.on('reset', (ev) => { this.init(); });
+    }
 
     setupSlices() {
         // coronal, sagittal, horizontal
@@ -144,8 +164,14 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                this.highlighter.highlight(e);
-                this.tooltip.show(e);
+                let idx = e2idx(this.state.mapping, e);
+                this.dispatcher.highlight(this, idx, e);
+            }
+        });
+
+        svg.addEventListener('mouseout', (e) => {
+            if (e.target.tagName == 'path') {
+                this.dispatcher.highlight(this, null, null);
             }
         });
     }
@@ -159,9 +185,8 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                this.selector.toggle(e);
-
-                this.region.updateSelection();
+                let idx = e2idx(this.state.mapping, e);
+                this.dispatcher.toggle(this, idx);
             }
         });
     }
@@ -171,8 +196,7 @@ class Slice {
 
         svg.addEventListener('mouseout', (e) => {
             if (e.target.tagName == 'path') {
-                this.highlighter.clear();
-                this.tooltip.hide();
+                this.dispatcher.highlight(this, null, null);
             }
         });
     };
@@ -181,20 +205,37 @@ class Slice {
     /*********************************************************************************************/
 
     _setSlice(axis, idx) {
-        this.db.getSlice(axis, idx).then((item) => {
-            if (item) {
-                let svg = item["svg"];
-                document.getElementById(`figure-${axis}`).innerHTML = svg;
+        let svg = this.model.getSlice(axis, idx);
+        if (svg) {
+            document.getElementById(`figure-${axis}`).innerHTML = svg;
 
-                // Update the global state.
-                this.state[axis] = idx;
-            }
+            // Update the global state.
+            this.state[axis] = idx;
+        }
+        else {
+            // console.debug(`${idx} not in ${axis} slice`);
+            return;
+        }
 
-            // call setSagittal() etc to update the hlines and vlines.
-            if (SLICE_AXES.includes(axis)) {
-                this[`set_${axis}`](idx);
-            }
-        });
+        // call setSagittal() etc to update the hlines and vlines.
+        if (SLICE_AXES.includes(axis)) {
+            this[`set_${axis}`](idx);
+
+            // Set the bitmap image.
+            this.setBitmap(axis, idx);
+        }
+
+        // Emit the slice event.
+        this.dispatcher.slice(this, axis, idx);
+    }
+
+    setBitmap(axis, idx) {
+        // let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
+        // let url = `data/volumes/allen/${axis}/${axis}-${sidx}.jpg`;
+        // let el = this.bitmaps[axis];
+        // setBackgroundImage(el, url);
+
+        app.volume.drawSlice(axis, idx);
     }
 
     set_sagittal(idx) {
