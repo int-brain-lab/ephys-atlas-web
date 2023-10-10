@@ -21,8 +21,10 @@ class Search {
     }
 
     setState(state) {
-        this.searchInput.value = state.search;
-        this.setText(state.search);
+        if (state.search) {
+            this.el.value = state.search;
+            this.setText(state.search)
+        };
     }
 
     /* Setup functions                                                                           */

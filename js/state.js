@@ -1,6 +1,6 @@
 export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
-import { SLICE_MAX, SLICE_DEFAULT } from "./constants.js";
+import { DEBUG, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
 
 
@@ -42,17 +42,24 @@ const DEFAULT_HIGHLIGHTED = null;
 // https://atlas.internationalbrainlab.org/?state=eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfdmVsb2NpdHkiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6MjQxMiwic2VsZWN0ZWQiOlsxNjAwLDEzOTMsMjMzMSwyMzAzLDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9
 
 const ALIAS_STATES = {
-    "bwm_choice": "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJmc2V0IjoiYndtX2Nob2ljZSIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjoyMzAzLCJzZWxlY3RlZCI6WzE5NzMsMjE3MiwyMjQxLDIzMDNdLCJ0b3AiOjAsInN3YW5zb24iOjB9",
+    "bwm_choice": {
+        "bucket": "bwm",
+        "state": "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJsb2dTY2FsZSI6ZmFsc2UsImZuYW1lIjoiY2hvaWNlX2RlY29kaW5nX2VmZmVjdCIsImlzVm9sdW1lIjpmYWxzZSwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IkdSTiIsImhpZ2hsaWdodGVkIjo0OTUsInNlbGVjdGVkIjpbMTk3MywyMTcyLDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0"
+    },
+
+    // TODO
     "bwm_block":
         "eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9ibG9jayIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6Ik0iLCJoaWdobGlnaHRlZCI6MTM5Mywic2VsZWN0ZWQiOlsxMzQ2XSwidG9wIjowLCJzd2Fuc29uIjowfQ",
     "bwm_feedback":
         "eyJjbWFwIjoiUmVkcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9mZWVkYmFjayIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0NjQsMjE2NiwyMTk1LDIyNDcsMjI0MV0sInRvcCI6MCwic3dhbnNvbiI6MH0",
-    "bwm_stimulus": "eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9zdGltdWx1cyIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0OTksMTUyNywyMTU4LDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0",
-    "bwm": "eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9zdGltdWx1cyIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0OTksMTUyNywyMTU4LDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0",
-
-    // TODO
-    "bwm_wheel_speed": "eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfc3BlZWQiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6bnVsbCwic2VsZWN0ZWQiOlsxOTc1LDIzMTYsMjMwMywyMzA2LDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9",
-    "bwm_wheel_velocity": "eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfdmVsb2NpdHkiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6MjQxMiwic2VsZWN0ZWQiOlsxNjAwLDEzOTMsMjMzMSwyMzAzLDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9",
+    "bwm_stimulus":
+        "eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9zdGltdWx1cyIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0OTksMTUyNywyMTU4LDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0",
+    "bwm_wheel_speed":
+        "eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfc3BlZWQiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6bnVsbCwic2VsZWN0ZWQiOlsxOTc1LDIzMTYsMjMwMywyMzA2LDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9",
+    "bwm_wheel_velocity":
+        "eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImZzZXQiOiJid21fd2hlZWxfdmVsb2NpdHkiLCJmbmFtZSI6ImRlY29kaW5nX2VmZmVjdCIsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJzZWFyY2giOiIiLCJoaWdobGlnaHRlZCI6MjQxMiwic2VsZWN0ZWQiOlsxNjAwLDEzOTMsMjMzMSwyMzAzLDI0MTJdLCJ0b3AiOjAsInN3YW5zb24iOjB9",
+    "bwm":
+        "eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwiZnNldCI6ImJ3bV9zdGltdWx1cyIsImZuYW1lIjoiZGVjb2RpbmdfZWZmZWN0Iiwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IiIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0OTksMTUyNywyMTU4LDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0",
 
 };
 
@@ -68,8 +75,16 @@ function url2state() {
 
     // Alias states.
     if (query.alias) {
-        state = decode(ALIAS_STATES[query.alias]);
-        // NOTE: we could later decide to add some buckets as a function of the alias.
+        const s = ALIAS_STATES[query.alias];
+        const decodedState = decode(s.state);
+        if (DEBUG)
+            console.log("decoded state", decodedState);
+        state = decodedState;
+
+        // NOTE: special handling for bucket and buckets, as these are NOT part of the state,
+        // in order to keep them human readable in the URL.
+        state.bucket = s.bucket || DEFAULT_BUCKET;
+        state.buckets = s.buckets || DEFAULT_BUCKETS;
     }
     else if (query.state) {
         state = decode(query.state);
@@ -175,7 +190,10 @@ class State {
 
         // Regions.
         this.mapping = state.mapping || DEFAULT_MAPPING;
-        this.search = state.search || DEFAULT_SEARCH;
+
+        // NOTE: remove search from state
+        // this.search = state.search || DEFAULT_SEARCH;
+
         this.highlighted = state.highlighted || DEFAULT_HIGHLIGHTED;
         this.selected = new Set(state.selected || []);
     }
@@ -199,7 +217,9 @@ class State {
         let url = this.toURL();
 
         // Set the URL in the location bar.
-        window.history.replaceState(null, '', url.toString());
+
+        if (!DEBUG)
+            window.history.replaceState(null, '', url.toString());
 
         return url;
     }

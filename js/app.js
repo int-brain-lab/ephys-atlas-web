@@ -1,6 +1,7 @@
 import { Bucket } from "./bucket.js";
 import { Colorbar } from "./colorbar.js";
 import { Coloring } from "./coloring.js";
+import { DEBUG } from "./constants.js";
 import { Model } from "./model.js";
 import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
@@ -70,11 +71,12 @@ class App {
             this.coloring.init();
             this.selector.init();
             this.panel.init();
+            this.search.init();
             this.region.init().then(() => { this.selection.init(); });
 
             this.state.toggleUpdate(true);
 
-            if (this.unity)
+            if (!DEBUG && this.unity)
                 this.unity.init();
         });
     }

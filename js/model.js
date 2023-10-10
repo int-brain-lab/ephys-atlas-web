@@ -1,5 +1,6 @@
 export { Model, URLS };
 
+import { DEBUG } from "./constants.js";
 import { Loader } from "./loader.js";
 import { Cache } from "./cache.js";
 import { downloadJSON } from "./utils.js";
@@ -10,8 +11,9 @@ import { downloadJSON } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-// const BASE_URL = 'https://features.internationalbrainlab.org';
-const BASE_URL = 'https://localhost:5000';
+const BASE_URL = 'https://features.internationalbrainlab.org';
+if (DEBUG)
+    BASE_URL = 'https://localhost:5000';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
@@ -109,9 +111,6 @@ class Model {
             'slices_horizontal': this.setupSlices('horizontal', [10, 0, 5]),
             'slices_top': this.setupSlices('top', [2, 0, 2]),
             'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
-
-            // 'ephys': this.setupBucket('ephys', [1, 1, 1]),
-            // 'bwm': this.setupBucket('bwm', [1, 1, 1]),
         };
 
         // Caches.
@@ -121,7 +120,15 @@ class Model {
         this.features = new Cache(async (bucket, fname) => {
             if (!fname) return null;
             const url = URLS['features'](bucket, fname);
+
+            this.splash.setTotal(1);
+            this.splash.setDescription(`Downloading feature ${fname}`);
+            this.splash.start();
+
             let f = await downloadJSON(url);
+
+            this.splash.end();
+
             if (!f) return null;
             return f["feature_data"];
         });
@@ -131,7 +138,6 @@ class Model {
 
             this.splash.setTotal(4);
             this.splash.setDescription(`Downloading volume ${fname}`);
-
             this.splash.start();
 
             const response = await fetch(url);

@@ -3,6 +3,8 @@
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
+export const DEBUG = false;
+
 export const SLICE_MAX = {
     coronal: 1320,
     horizontal: 800,
