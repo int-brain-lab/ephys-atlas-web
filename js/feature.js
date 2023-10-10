@@ -7,6 +7,24 @@ import { downloadBinaryFile, removeFromArray, removeClassChildren } from "./util
 
 
 /*************************************************************************************************/
+/* Utils                                                                                         */
+/*************************************************************************************************/
+
+function openTree(element) {
+    let currentElement = element.parentElement;
+
+    while (currentElement) {
+        if (currentElement.tagName === 'DETAILS') {
+            currentElement.open = true;
+        }
+
+        currentElement = currentElement.parentElement;
+    }
+}
+
+
+
+/*************************************************************************************************/
 /* Feature tree                                                                                  */
 /*************************************************************************************************/
 
@@ -55,10 +73,12 @@ class FeatureTree {
         this.clear();
         if (fname) {
             let el = this.get(fname);
-            if (el)
+            if (el) {
                 el.classList.add('selected');
+                // Open all DETAILS tags above in the hierarchy.
+                openTree(el);
+            }
         }
-
     }
 
     selected(fname) {
