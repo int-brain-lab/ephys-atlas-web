@@ -187,6 +187,15 @@ class Region {
 
         let features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
 
+        // If no features, it may be that there is no data for this mapping. So we try to change the mapping automatically.
+        if (!features) {
+            const mapping = this.model.getFeaturesMapping(this.state.bucket, this.state.fname);
+            if (mapping && mapping != this.state.mapping) {
+                this.dispatcher.mapping(this, mapping);
+                features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, mapping, this.state.fname);
+            }
+        }
+
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;
         let search = this.state.search;
@@ -233,62 +242,4 @@ class Region {
 
         this.regionList.setRegions(this.state.mapping, keptRegions);
     }
-
-
-
-    /* Internal functions                                                                        */
-    /*********************************************************************************************/
-
-    // getSelectedRegionElements() {
-    //     /* Return the list of LI elements that are selected. */
-    //     let out = [];
-    //     for (let child of this.regionList.children) {
-    //         if (window.getComputedStyle(child, null).display == 'none') continue;
-    //         let idx = getRegionIdx(this.state.mapping, child);
-    //         if (this.state.selected.has(idx)) {
-    //             out.push(child);
-    //         }
-    //     }
-    //     return out;
-    // }
-
-
-    /* Get functions                                                                             */
-    /*********************************************************************************************/
-
-    // getInfo(regionIdx) {
-    //     let regions = this.model.getRegions(this.state.mapping);
-    //     let region = regions[regionIdx];
-    //     if (region)
-    //         return region;
-    //     // console.warn(`region #${regionIdx} could not be found`);
-    // }
-
-    /* Update function                                                                           */
-    /*********************************************************************************************/
-
-    // updateColormap(cmin, cmax) {
-    //     if (!this.colors) return;
-    //     let colors = this.colors;
-    //     let nTotal = colors.length;
-    //     let barScale = document.querySelector('#bar-scale .colorbar');
-    //     let n = 50;
-    //     let child = null;
-    //     if (barScale.children.length == 0) {
-    //         for (let i = 0; i < n; i++) {
-    //             child = document.createElement('div');
-    //             child.classList.add(`bar-${i}`);
-    //             barScale.appendChild(child);
-    //         }
-    //     }
-    //     let children = barScale.children;
-    //     let x = 0;
-    //     for (let i = 0; i < n; i++) {
-    //         child = children[i];
-    //         x = i * 100.0 / n;
-    //         x = (x - cmin) / (cmax - cmin);
-    //         x = clamp(x, 0, .9999);
-    //         child.style.backgroundColor = colors[Math.floor(x * nTotal)];
-    //     }
-    // }
 };

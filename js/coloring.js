@@ -70,13 +70,13 @@ class Coloring {
         this.style.insertRule(rule);
     }
 
-    _setRegionWhite(regionIdx) {
-        this._setRegionColor(regionIdx, '#ffffff');
-    }
+    // _setRegionWhite(regionIdx) {
+    //     this._setRegionColor(regionIdx, '#ffffff');
+    // }
 
-    _setRegionGrey(regionIdx) {
-        this._setRegionColor(regionIdx, '#d3d3d3');
-    }
+    // _setRegionGrey(regionIdx) {
+    //     this._setRegionColor(regionIdx, '#d3d3d3');
+    // }
 
     getColors(refresh = false) {
 
@@ -101,7 +101,7 @@ class Coloring {
         let hasRight = true; // whether there is at least a left hemisphere region with a value
 
         if (feature_max == null || feature_min == null) {
-            console.error("there is no data! skipping region coloring");
+            console.warn("there is no data! skipping region coloring");
             this.dispatcher.spinning(this, false);
             return;
         }
@@ -126,7 +126,7 @@ class Coloring {
 
             // Region name and acronym.
             let name = region['name'];
-            let acronym = region['acronym'];
+            // let acronym = region['acronym'];
 
             // Which hemisphere this region is in.
             let isLeft = name.includes('left'); // false => isRight :)
@@ -134,21 +134,26 @@ class Coloring {
             // True iff there is at least another region in that hemisphere with data.
             let dataInHemisphere = (isLeft && hasLeft) || (!isLeft && hasRight);
 
+            // Retrieve the region value.
             let value = features ? features['data'][regionIdx] : null;
 
             // Region that does not appear in the features? White if there is data in its
             // hemisphere, default allen color otherwise.
             if (!value) {
-                if (dataInHemisphere)
-                    this._setRegionWhite(regionIdx);
+                if (dataInHemisphere) {
+                    regionColors[regionIdx] = '#ffffff'; // white
+                }
                 // else, do nothing = default allen color.
+                else {
+                    console.log(`region ${regionIdx} in default colors because there is no data in hemisphere`);
+                }
                 continue;
             }
             value = value[stat];
 
             // Region that appears in the features but with a null value? Grey.
             if (!value) {
-                this._setRegionGrey(regionIdx);
+                regionColors[regionIdx] = '#d3d3d3'; // grey
                 continue;
             }
 
