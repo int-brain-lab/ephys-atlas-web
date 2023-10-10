@@ -260,6 +260,16 @@ class Model {
         return this.features.has(bucket, fname);
     }
 
+    getFeaturesMapping(bucket, fname) {
+        // Return the first non-empty mapping of a feature.
+        if (!fname)
+            return null;
+        let g = this.features.get(bucket, fname);
+        if (!g) return null;
+        if (!g["mappings"]) return null;
+        return Object.keys(g["mappings"])[0];
+    }
+
     getFeatures(bucket, mapping, fname) {
         console.assert(bucket);
         console.assert(mapping);
