@@ -52,7 +52,7 @@ Steps to cleanup the SVGs:
 
 ROOT_DIR = Path(__file__).parent.parent
 COLORMAPS = ('viridis', 'cividis', 'magma',
-             'YlGn', 'YlOrRd', 'Reds', 'Purples')
+             'YlGn', 'YlOrRd', 'Reds', 'Purples','Blues')
 COLORMAP_VALUE_COUNT = 100  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
@@ -63,7 +63,7 @@ RE_PATH = re.compile(r'<path id="path[0-9]+"')
 RE_WHITESPACE = re.compile(r'\s+(?=<)')
 STYLE = "* { stroke-linecap: butt; stroke-linejoin: round; fill: white; stroke: black; }"
 ROOT_ID = 997  # skip the root to avoid bug with lateralization
-BWM_FSETS = ('block', 'choice', 'feedback', 'stimulus')
+BWM_FSETS = ('block', 'choice', 'feedback', 'stimulus', 'wheel_speed', 'wheel_velocity')
 BWM_FNAMES = (
     'decoding',
     'single_cell',
@@ -578,22 +578,24 @@ def generate_bwm_features():
     # NOTE: only Beryl is supported for the BWM features
     mapping = 'beryl'
 
-    # Initial features (column name is fset_fname).
-    df_sessions = pd.read_parquet(DATA_DIR / 'pqt/bwm_features.pqt')
+    # # Initial features (column name is fset_fname).
+    # df_sessions = pd.read_parquet(DATA_DIR / 'pqt/bwm_features.pqt')
 
-    # Rename reward into feedback.
-    df_sessions = df_sessions.rename(
-        columns={
-            'reward_decoding': 'feedback_decoding',
-            'reward_single_cell': 'feedback_single_cell',
-            'reward_manifold': 'feedback_manifold',
-        })
+    # # Rename reward into feedback.
+    # df_sessions = df_sessions.rename(
+    #     columns={
+    #         'reward_decoding': 'feedback_decoding',
+    #         'reward_single_cell': 'feedback_single_cell',
+    #         'reward_manifold': 'feedback_manifold',
+    #     })
 
     # Extra features (column name is fname).
-    df_block = pd.read_parquet(DATA_DIR / 'pqt/bwm_block.pqt')
-    df_choice = pd.read_parquet(DATA_DIR / 'pqt/bwm_choice.pqt')
-    df_feedback = pd.read_parquet(DATA_DIR / 'pqt/bwm_feedback.pqt')
-    df_stimulus = pd.read_parquet(DATA_DIR / 'pqt/bwm_stimulus.pqt')
+    df_block = pd.read_parquet(DATA_DIR / 'pqt/block_bwm.pqt')
+    df_choice = pd.read_parquet(DATA_DIR / 'pqt/choice_bwm.pqt')
+    df_feedback = pd.read_parquet(DATA_DIR / 'pqt/feedback_bwm.pqt')
+    df_stimulus = pd.read_parquet(DATA_DIR / 'pqt/stimulus_bwm.pqt')
+    df_wheel_speed = pd.read_parquet(DATA_DIR / 'pqt/wheel_speed_bwm.pqt')
+    df_wheel_velocity = pd.read_parquet(DATA_DIR / 'pqt/wheel_velocity_bwm.pqt')
 
     # Put the data for decoding, single_cell, manifold in the separate
     # DataFrames
@@ -620,6 +622,8 @@ def generate_bwm_features():
     df_choice = _debooleanize(df_choice)
     df_feedback = _debooleanize(df_feedback)
     df_stimulus = _debooleanize(df_stimulus)
+    df_wheel_speed = _debooleanize(df_wheel_speed)
+    df_wheel_velocity = _debooleanize(df_wheel_velocity)
 
     for bucket in BWM_FSETS:
         df = locals()[f'df_{bucket}']
