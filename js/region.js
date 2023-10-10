@@ -176,7 +176,7 @@ class Region {
             if (ev.fname) {
                 // If the selected feature has no data for the current mapping, change the mapping.
                 const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
-                if (!mappings.includes(this.state.mapping)) {
+                if (mappings && !mappings.includes(this.state.mapping)) {
                     const mapping = mappings[0];
                     console.warn(`automatically switching to mapping ${mapping} as the selected features do not contain any data with the current mapping`);
                     this.state.mapping = mapping;
