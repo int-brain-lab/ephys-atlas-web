@@ -53,7 +53,7 @@ GLOBAL_KEY_PATH = Path('~/.ibl/globalkey').expanduser()
 NATIVE_FNAMES = (
     'ephys', 'bwm_block', 'bwm_choice', 'bwm_feedback', 'bwm_stimulus')
 
-FEATURES_BASE_URL = "https://atlas2.internationalbrainlab.org/"
+FEATURES_BASE_URL = "https://atlas.internationalbrainlab.org/"
 FEATURES_API_BASE_URL = "https://features.internationalbrainlab.org/api/"
 
 # DEBUG
