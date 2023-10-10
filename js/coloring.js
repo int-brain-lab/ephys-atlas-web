@@ -90,7 +90,7 @@ class Coloring {
 
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
-        let features = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
+        let features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
 
         // Figure out what hemisphere values we have
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;

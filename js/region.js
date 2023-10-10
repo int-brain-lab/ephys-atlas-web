@@ -173,7 +173,7 @@ class Region {
         this.dispatcher.on('reset', (ev) => { this.init(); });
 
         this.dispatcher.on('feature', (ev) => {
-            if (ev.fname) {
+            if (!this.state.isVolume && ev.fname) {
                 // If the selected feature has no data for the current mapping, change the mapping.
                 const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
                 if (mappings && !mappings.includes(this.state.mapping)) {

@@ -155,36 +155,40 @@ def renormalize_array(arr):
     return (min_value, max_value), normalized_array
 
 
-def write_npy_with_metadata(fp, arr, **metadata):
-    info = header_data_from_array_1_0(arr)
-    info.update(metadata)
-    _write_array_header(fp, info, None)
+# def write_npy_with_metadata(fp, arr, **metadata):
+#     info = header_data_from_array_1_0(arr)
+#     info.update(metadata)
+#     _write_array_header(fp, info, None)
 
-    if arr.flags.f_contiguous and not arr.flags.c_contiguous:
-        fp.write(arr.T.tobytes())
-    else:
-        fp.write(arr.tobytes())
+#     if arr.flags.f_contiguous and not arr.flags.c_contiguous:
+#         fp.write(arr.T.tobytes())
+#     else:
+#         fp.write(arr.tobytes())
 
 
-def write_npy_gz(path, arr):
-    # Renormalize the data.
+def write_npy_gz(path, arr, extra=None):
     assert arr.ndim == 3
-    (min_value, max_value), arr = renormalize_array(arr)
+    # (min_value, max_value), arr = renormalize_array(arr)
 
     path = Path(path)
+    if str(path).endswith('.npy'):
+        path = path.with_suffix('.npy.gz')
     assert str(path).endswith('.npy.gz')
 
     buffer = BytesIO()
-    np.save(buffer, arr)
+    np.save(buffer, np.asfortranarray(arr))
     buffer.seek(0)
 
     with gzip.open(path, 'wb') as gzip_file:
         gzip_file.write(buffer.read())
 
         # Adding extra metadata at the end of the gzipped byte buffer.
-        additional_data = np.array([min_value, max_value], dtype=np.float32).tobytes()
-        assert len(additional_data) == 8
-        gzip_file.write(additional_data)
+        # additional_data = np.array([min_value, max_value], dtype=np.float32).tobytes()
+        if extra is not None:
+            extra = np.array(extra)
+            additional_data = extra.astype(np.float32).tobytes()
+            assert len(additional_data) == (4 * extra.size)
+            gzip_file.write(additional_data)
 
     # OR: with gzip.open('your_file.gz', 'ab') as f:
 
@@ -1407,11 +1411,12 @@ if __name__ == '__main__':
         url = up.get_buckets_url([bucket])
         print(url)
 
-    elif sys.argv[-1] == 'npy':
-        path = "data/features/mybucket/vol.npy.gz~"
-        arr = load_npy_gz(path)
+    elif sys.argv[-1].endswith('npy'):
+        path = sys.argv[-1]
+        arr = np.load(path)
 
-        write_npy_gz(path[:-1], arr)
+        m, M = 0, 255
+        write_npy_gz(path, arr, extra=(m, M))
 
     # Run server
     else:

@@ -218,8 +218,8 @@ class State {
 
         // Set the URL in the location bar.
 
-        if (!DEBUG)
-            window.history.replaceState(null, '', url.toString());
+        // if (!DEBUG)
+        window.history.replaceState(null, '', url.toString());
 
         return url;
     }
