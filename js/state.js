@@ -46,6 +46,22 @@ const ALIAS_STATES = {
         "bucket": "bwm",
         "state": "eyJjbWFwIjoiWWxPclJkIiwiY21hcG1pbiI6MCwiY21hcG1heCI6MTAwLCJsb2dTY2FsZSI6ZmFsc2UsImZuYW1lIjoiY2hvaWNlX2RlY29kaW5nX2VmZmVjdCIsImlzVm9sdW1lIjpmYWxzZSwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsInNlYXJjaCI6IkdSTiIsImhpZ2hsaWdodGVkIjo0OTUsInNlbGVjdGVkIjpbMTk3MywyMTcyLDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MH0"
     },
+    "bwm_block": {
+        "bucket": "bwm",
+        "state": "eyJjbWFwIjoiUHVycGxlcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwibG9nU2NhbGUiOmZhbHNlLCJmbmFtZSI6ImJsb2NrX2RlY29kaW5nX2VmZmVjdCIsImlzVm9sdW1lIjpmYWxzZSwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzEzNDZdLCJ0b3AiOjAsInN3YW5zb24iOjAsInNlYXJjaCI6IiJ9"
+    },
+    "bwm_feedback": {
+        "bucket": "bwm",
+        "state": "eyJjbWFwIjoiUmVkcyIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwibG9nU2NhbGUiOmZhbHNlLCJmbmFtZSI6ImZlZWRiYWNrX2RlY29kaW5nX2VmZmVjdCIsImlzVm9sdW1lIjpmYWxzZSwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0NjQsMjE2NiwyMTk1LDIyNDcsMjI0MV0sInRvcCI6MCwic3dhbnNvbiI6MCwic2VhcmNoIjoiIn0%3D"
+    },
+    "bwm_stimulus": {
+        "bucket": "bwm",
+        "state": "eyJjbWFwIjoiWWxHbiIsImNtYXBtaW4iOjAsImNtYXBtYXgiOjEwMCwibG9nU2NhbGUiOmZhbHNlLCJmbmFtZSI6InN0aW11bHVzX2RlY29kaW5nX2VmZmVjdCIsImlzVm9sdW1lIjpmYWxzZSwic3RhdCI6Im1lYW4iLCJjb3JvbmFsIjo2NjAsInNhZ2l0dGFsIjo1NTAsImhvcml6b250YWwiOjQwMCwiZXhwbG9kZWQiOjAsIm1hcHBpbmciOiJiZXJ5bCIsImhpZ2hsaWdodGVkIjpudWxsLCJzZWxlY3RlZCI6WzE0OTksMTUyNywyMTU4LDIyNDEsMjMwM10sInRvcCI6MCwic3dhbnNvbiI6MCwic2VhcmNoIjoiIn0%3D"
+    },
+    "bwm": {
+        "bucket": "bwm",
+        "state": "yJjbWFwIjoibWFnbWEiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImxvZ1NjYWxlIjpmYWxzZSwiZm5hbWUiOiIiLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowLCJzZWFyY2giOiIifQ%3D%3D"
+    },
 
     // TODO
     "bwm_block":
