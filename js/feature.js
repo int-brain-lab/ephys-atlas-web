@@ -111,7 +111,7 @@ class Feature {
     }
 
     async setState(state) {
-        if (state.fname) {
+        if (state.fname && !state.isVolume) {
             this.model.downloadFeatures(state.bucket, state.fname).then(() => {
                 // Dispatch the feature selected event.
                 this.selectFeature(state.fname, state.isVolume);
@@ -202,8 +202,8 @@ class Feature {
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    async setBucket(uuid_or_alias) {
-        let bucket = await this.model.getBucket(uuid_or_alias);
+    setBucket(uuid_or_alias) {
+        let bucket = this.model.getBucket(uuid_or_alias);
         console.log("set bucket", uuid_or_alias);
         console.assert(bucket);
 
@@ -231,12 +231,18 @@ class Feature {
 
     async refreshBucket() {
         this.dispatcher.spinning(this, true);
+        console.debug(`refreshing bucket ${this.state.bucket}`);
 
-        console.debug(`refreshing bucket ${this.state.bucket}`)
-        let bucket = await this.model.getBucket(this.state.bucket, { cache: "reload" });
+        await this.model.downloadBucket(this.state.bucket, { refresh: true });
+        let bucket = this.model.getBucket(this.state.bucket);
         console.assert(bucket);
-        this.tree.setFeatures(bucket.features, bucket.metadata.tree);
-        this.tree.select(this.state.fname);
+        this.tree.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
+
+        if (this.state.fname) {
+            if (!this.state.isVolume)
+                await this.model.downloadFeatures(this.state.bucket, this.state.fname, { refresh: true });
+            this.tree.select(this.state.fname);
+        }
 
         this.dispatcher.spinning(this, false);
     }

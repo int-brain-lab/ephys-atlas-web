@@ -113,9 +113,15 @@ class Model {
 
         // Caches.
 
-        this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
+        // Buckets.
+        this.buckets = new Cache(async (bucket, options) => {
+            const refresh = options ? options.refresh : false;
+            return downloadJSON(URLS['bucket'](bucket), refresh);
+        });
 
-        this.features = new Cache(async (bucket, fname) => {
+        // Features.
+        this.features = new Cache(async (bucket, fname, options) => {
+            const refresh = options ? options.refresh : false;
             if (!fname) return null;
             const url = URLS['features'](bucket, fname);
 
@@ -123,7 +129,7 @@ class Model {
             this.splash.setDescription(`Downloading feature ${fname}`);
             this.splash.start();
 
-            let f = await downloadJSON(url);
+            let f = await downloadJSON(url, refresh);
 
             this.splash.end();
 
@@ -131,6 +137,7 @@ class Model {
             return f["feature_data"];
         });
 
+        // Volumes.
         this.volumes = new Cache(async (bucket, fname) => {
             let url = URLS['features'](bucket, fname);
 
@@ -224,10 +231,10 @@ class Model {
     /* Buckets                                                                                   */
     /*********************************************************************************************/
 
-    downloadBucket(bucket) {
+    downloadBucket(bucket, options) {
         console.assert(bucket);
         console.log(`download bucket ${bucket}`);
-        return this.buckets.download(bucket);
+        return this.buckets.download(bucket, options);
     }
 
     hasBucket(bucket) {
@@ -243,12 +250,12 @@ class Model {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    downloadFeatures(bucket, fname) {
+    downloadFeatures(bucket, fname, options) {
         console.assert(bucket);
         console.assert(fname);
 
         console.log(`download features ${fname}`);
-        return this.features.download(bucket, fname);
+        return this.features.download(bucket, fname, options);
     }
 
     hasFeatures(bucket, fname) {
