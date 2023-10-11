@@ -239,18 +239,19 @@ class Slice {
     }
 
     set_sagittal(idx) {
-        let x = idx / SLICE_MAX['sagittal'];
-        x = clamp(x, .05, .95);
+        const m = SLICE_MAX['sagittal'];
+        idx = clamp(idx, 10, m - 10);
+        let x = idx / m;
 
         let v = 236 + 225 * (x - .5);
         this.tv.setAttribute("x1", v);
         this.tv.setAttribute("x2", v);
 
-        let w = 237 + 341 * (x - .5);
+        let w = 237 + 354 * (x - .5);
         this.cv.setAttribute("x1", w);
         this.cv.setAttribute("x2", w);
 
-        let t = 237 + 215 * (x - .5);
+        let t = 237 + 230 * (x - .5);
         this.hv.setAttribute("x1", t);
         this.hv.setAttribute("x2", t);
 
@@ -260,13 +261,15 @@ class Slice {
     }
 
     set_coronal(idx) {
-        let y = idx / SLICE_MAX['coronal'];
+        const m = SLICE_MAX['coronal'];
+        idx = clamp(idx, 10, m - 10);
+        let y = idx / m;
 
         let v = 174 + 268 * (y - .5);
         this.th.setAttribute("y1", v);
         this.th.setAttribute("y2", v);
 
-        let w = 236 + 352 * (y - .5);
+        let w = 236 + 354 * (y - .5);
         this.sv.setAttribute("x1", w);
         this.sv.setAttribute("x2", w);
 
@@ -282,11 +285,11 @@ class Slice {
     set_horizontal(idx) {
         let y = idx / SLICE_MAX['horizontal'];
 
-        let v = 169 + 224 * (y - .5);
+        let v = 174 + 242 * (y - .5);
         this.ch.setAttribute("y1", v);
         this.ch.setAttribute("y2", v);
 
-        let w = 170 + 198 * (y - .5);
+        let w = 174 + 210 * (y - .5);
         this.sh.setAttribute("y1", w);
         this.sh.setAttribute("y2", w);
 
