@@ -7,6 +7,8 @@ from ibllib.atlas import AllenAtlas
 import ephys_atlas.data
 from one.api import ONE
 
+from server import write_npy_gz
+
 
 one = ONE(mode='local')
 local_path = Path('.')
@@ -28,9 +30,19 @@ i, j, k = a.bc.xyz2i(pos, mode='clip').T
 # is :          456, 528, 320
 
 volume = np.zeros((528, 320, 456), dtype=np.uint8)
+a, b, c = volume.shape
 m = np.quantile(value[~np.isnan(value)], .95)
 value_8 = np.clip(255 * value.values / m, 0, 255).astype(np.uint8)
-volume[j, k, i] = value_8
+for u in (-1, 0, +1):
+    for v in (-1, 0, +1):
+        for w in (-1, 0, +1):
+            volume[np.clip(j + u, 0, a - 1), np.clip(k + v, 0, b - 1),
+                   np.clip(i + w, 0, c - 1)] = value_8
+
+path = "data/features/mybucket/gaelle.npy.gz"
+write_npy_gz(path, volume, extra=(0, m))
+
+# np.save("data/features/mybucket/gaelle.npy", volume)
 
 # should be:    528, 320, 456
 
