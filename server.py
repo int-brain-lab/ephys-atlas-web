@@ -192,7 +192,6 @@ def create_bucket_metadata(
         'alias': alias,
         'url': url,
         'tree': tree,
-        'volumes': volume,
         'short_desc': short_desc,
         'long_desc': long_desc,
         'token': new_token(),
@@ -429,64 +428,6 @@ def delete_features(uuid, fname):
         return f"Successfully deleted {features_path}", 200
     except Exception as e:
         return f"Unable to delete {features_path}", 500
-
-
-def is_volume(uuid, fname):
-    meta = load_bucket_metadata(uuid)
-    # TODO: remove the volumes part of the metadata, and only put the is_volume information in
-    # the feature JSON data
-    volumes = meta.get('volumes', None) or ()
-    return fname in volumes
-
-
-# def create_volume(uuid, fname, npy_gz, patch=False):
-#     assert uuid
-#     assert fname
-#     assert npy_gz is not None
-
-#     # Retrieve the bucket path.
-#     bucket_path = get_bucket_path(uuid)
-#     if not bucket_path.exists():
-#         return f'Bucket {uuid} does not exist, you need to create it first.', 404
-
-#     # Retrieve the volume path.
-#     volume_path = bucket_path / f'{fname}.npy.gz'
-#     if not patch and volume_path.exists():
-#         return f'Volume {fname} already exist, use a PATCH request instead.', 409
-#     if patch and not volume_path.exists():
-# return f'Volume {fname} does not exist in bucket {uuid}, you need to
-# create it first.', 404
-
-#     # Save the volume.
-#     with open(volume_path, 'wb') as f:
-#         f.write(npy_gz)
-
-    # return f'Volume {fname} successfully {"created" if not patch else
-    # "patched"} in bucket {uuid}.', 200
-
-
-# def delete_volume(uuid, fname):
-#     assert uuid
-#     assert fname
-
-#     # Retrieve the bucket path.
-#     bucket_path = get_bucket_path(uuid)
-#     if not bucket_path.exists():
-#         return f'Bucket {uuid} does not exist, you need to create it first.', 404
-
-#     # Retrieve the volume path.
-#     volume_path = bucket_path / f'{fname}.npy.gz'
-#     if not volume_path.exists():
-# return f'Volume {fname} does not exist in bucket {uuid}, you need to
-# create it first.', 404
-
-#     # Save the volume.
-#     assert volume_path.exists()
-#     try:
-#         os.remove(volume_path)
-#         return f"Successfully deleted {volume_path}", 200
-#     except Exception as e:
-#         return f"Unable to delete {volume_path}", 500
 
 
 # -------------------------------------------------------------------------------------------------

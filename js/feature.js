@@ -46,14 +46,13 @@ class FeatureTree {
                 let fname = obj[key];
                 let displayName = key;
                 let desc = features[fname] ? features[fname]['short_desc'] : '';
-                let isVol = volumes.includes(fname);
 
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
                     html += `<details><summary>${key}</summary><ul>`;
                     html += generateTree(obj[key]);
                     html += `</ul></details>`;
                 } else {
-                    html += `<li data-fname="${fname}" data-desc="${desc}" data-volume="${isVol}">${displayName}</li>`;
+                    html += `<li data-fname="${fname}" data-desc="${desc}">${displayName}</li>`;
                 }
             }
             return html;
@@ -155,13 +154,14 @@ class Feature {
                 }
 
                 else {
-                    let isVol = e.target.dataset.volume == "true";
-
                     // Download the features.
                     if (!this.model.hasFeatures(state.bucket, fname)) {
                         // TODO: splash
                         await this.model.downloadFeatures(state.bucket, fname);
                     }
+
+                    // Determine whether this feature is a volume or not.
+                    let isVol = "shape" in this.model.getFeatures(state.bucket, fname, this.state.mapping);
 
                     // Dispatch the feature selected event.
                     this.selectFeature(fname, isVol);
