@@ -5,14 +5,10 @@
 # Imports
 # -------------------------------------------------------------------------------------------------
 
-import ast
-import struct
 from datetime import datetime, timedelta
 from itertools import groupby
 from operator import itemgetter
 from pathlib import Path
-import gzip
-from io import BytesIO
 import itertools
 import json
 import os
@@ -24,17 +20,8 @@ import sys
 import unittest
 import uuid
 
-import numpy as np
-from numpy.lib.format import (
-    header_data_from_array_1_0,
-    _write_array_header,
-    # read_magic,
-    # _check_version,
-    # _read_bytes,
-)
 from flask import Flask, Response, request, send_file
 from flask_cors import CORS
-import requests
 
 
 # -------------------------------------------------------------------------------------------------
@@ -130,108 +117,6 @@ def save_features(path, json_data):
     assert json_data
     with open(path, 'w') as f:
         json.dump(json_data, f, indent=1)
-
-
-# -------------------------------------------------------------------------------------------------
-# Volumes
-# -------------------------------------------------------------------------------------------------
-
-def renormalize_array(arr):
-    # Ensure that the input array has exactly three dimensions
-    if arr.ndim != 3:
-        raise ValueError("Input array must have exactly 3 dimensions.")
-
-    # Compute the min and max values for the entire array
-    min_value = arr.min()
-    max_value = arr.max()
-
-    # Check if the array is constant (min and max values are the same)
-    if min_value == max_value:
-        return (np.ones_like(arr) * 127).astype(np.uint8)
-
-    # Normalize the entire array to [0, 255]
-    normalized_array = ((arr - min_value) / (max_value - min_value) * 255).astype(np.uint8)
-
-    return (min_value, max_value), normalized_array
-
-
-# def write_npy_with_metadata(fp, arr, **metadata):
-#     info = header_data_from_array_1_0(arr)
-#     info.update(metadata)
-#     _write_array_header(fp, info, None)
-
-#     if arr.flags.f_contiguous and not arr.flags.c_contiguous:
-#         fp.write(arr.T.tobytes())
-#     else:
-#         fp.write(arr.tobytes())
-
-
-def write_npy_gz(path, arr, extra=None):
-    assert arr.ndim == 3
-    # (min_value, max_value), arr = renormalize_array(arr)
-
-    path = Path(path)
-    if str(path).endswith('.npy'):
-        path = path.with_suffix('.npy.gz')
-    assert str(path).endswith('.npy.gz')
-
-    buffer = BytesIO()
-    np.save(buffer, arr)  # np.asfortranarray(arr))
-    buffer.seek(0)
-
-    with gzip.open(path, 'wb') as gzip_file:
-        gzip_file.write(buffer.read())
-
-        # Adding extra metadata at the end of the gzipped byte buffer.
-        # additional_data = np.array([min_value, max_value], dtype=np.float32).tobytes()
-        if extra is not None:
-            extra = np.array(extra)
-            additional_data = extra.astype(np.float32).tobytes()
-            assert len(additional_data) == (4 * extra.size)
-            gzip_file.write(additional_data)
-
-    # OR: with gzip.open('your_file.gz', 'ab') as f:
-
-
-def load_npy_gz(path):
-    path = Path(path)
-    assert '.npy.gz' in str(path)
-
-    # Decompress.
-    with gzip.open(path, 'rb') as gzip_file:
-        bytes = gzip_file.read()
-
-    # Read the header to get the extra metadata with the min and max value.
-    buf = BytesIO(bytes)
-    buf.seek(0)
-
-    # NOTE: below is a tentative of adding extra metadata fields in the npy header, but it doesn't
-    # work because the standard numpy npy loader checks that there are no extra metadata fields.
-    # We want generated npy to be readable b the standard npy loader.
-
-    # _header_size_info = {
-    #     (1, 0): ('<H', 'latin1'),
-    #     (2, 0): ('<I', 'latin1'),
-    #     (3, 0): ('<I', 'utf8'),
-    # }
-    # version = read_magic(buf)
-    # _check_version(version)
-    # hinfo = _header_size_info.get(version)
-    # if hinfo is None:
-    #     raise ValueError("Invalid version {!r}".format(version))
-    # hlength_type, encoding = hinfo
-    # hlength_str = _read_bytes(buf, struct.calcsize(hlength_type), "array header length")
-    # header_length = struct.unpack(hlength_type, hlength_str)[0]
-    # header = _read_bytes(buf, header_length, "array header")
-    # header = header.decode(encoding)
-    # d = ast.literal_eval(header)
-
-    # Load the array normally.
-    # buf.seek(0)
-
-    arr = np.load(buf)
-
-    return arr
 
 
 # -------------------------------------------------------------------------------------------------

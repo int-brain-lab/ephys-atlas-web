@@ -36,7 +36,8 @@ value_8 = np.clip(255 * value.values / m, 0, 255).astype(np.uint8)
 for u in (-1, 0, +1):
     for v in (-1, 0, +1):
         for w in (-1, 0, +1):
-            volume[np.clip(j + u, 0, a - 1), np.clip(k + v, 0, b - 1),
+            volume[np.clip(j + u, 0, a - 1),
+                   np.clip(k + v, 0, b - 1),
                    np.clip(i + w, 0, c - 1)] = value_8
 
 path = "data/features/mybucket/gaelle.npy.gz"
