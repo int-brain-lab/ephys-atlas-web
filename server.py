@@ -176,7 +176,7 @@ def write_npy_gz(path, arr, extra=None):
     assert str(path).endswith('.npy.gz')
 
     buffer = BytesIO()
-    np.save(buffer, np.asfortranarray(arr))
+    np.save(buffer, arr)  # np.asfortranarray(arr))
     buffer.seek(0)
 
     with gzip.open(path, 'wb') as gzip_file:
