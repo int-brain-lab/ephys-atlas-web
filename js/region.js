@@ -199,7 +199,8 @@ class Region {
         console.assert(this.state.mapping);
         let regions = this.model.getRegions(this.state.mapping);
 
-        let features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping);
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;
         let search = this.state.search;

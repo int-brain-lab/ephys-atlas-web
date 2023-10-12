@@ -101,7 +101,7 @@ class Volume {
                 this.showVolume();
 
                 const state = this.state;
-                const volume = this.model.getVolume(state.bucket, state.fname);
+                const volume = this.model.getFeatures(state.bucket, state.fname);
 
                 this.setArray(volume);
                 this.draw();

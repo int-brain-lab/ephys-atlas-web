@@ -53,7 +53,7 @@ class Colorbar {
         // Display vmin and vmax.
         const state = this.state;
         if (!state.isVolume) {
-            let features = this.model.getFeatures(state.bucket, state.mapping, state.fname);
+            let features = this.model.getFeatures(state.bucket, state.fname, state.mapping);
             if (features) {
                 let stats = features['statistics'][state.stat];
                 let vmin = stats['min'];
@@ -62,8 +62,7 @@ class Colorbar {
                 this.featureMax.innerHTML = displayNumber(vmax);
             }
         } else {
-            // TODO
-            const volume = this.model.getVolume(state.bucket, state.fname);
+            const volume = this.model.getFeatures(state.bucket, state.fname);
             if (volume) {
                 let vmin = volume['bounds'][0];
                 let vmax = volume['bounds'][1];

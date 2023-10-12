@@ -37,7 +37,7 @@ function readUint16LE(buffer) {
     return val;
 }
 
-function fromArrayBuffer(buf) {
+function loadNPY(buf) {
     // Check the magic number
     let magic = asciiDecode(buf.slice(0, 6));
     if (magic.slice(1, 6) != 'NUMPY') {
@@ -90,6 +90,13 @@ function fromArrayBuffer(buf) {
     };
 }
 
+function getVolume(base64) {
+    const gzippedData = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const inflatedData = pako.inflate(gzippedData);
+    const uint8Array = new Uint8Array(inflatedData);
+    return loadNPY(uint8Array);
+}
+
 
 
 /*************************************************************************************************/
@@ -125,38 +132,25 @@ class Model {
             if (!fname) return null;
             const url = URLS['features'](bucket, fname);
 
-            this.splash.setTotal(1);
-            this.splash.setDescription(`Downloading feature ${fname}`);
+            this.splash.setTotal(2);
+            this.splash.setDescription(`Downloading feature "${fname}"`);
             this.splash.start();
 
             let f = await downloadJSON(url, refresh);
-
-            this.splash.end();
-
-            if (!f) return null;
-            return f["feature_data"];
-        });
-
-        // Volumes.
-        this.volumes = new Cache(async (bucket, fname) => {
-            let url = URLS['features'](bucket, fname);
-
-            this.splash.setTotal(4);
-            this.splash.setDescription(`Downloading volume ${fname}`);
-            this.splash.start();
-
-            const response = await fetch(url);
             this.splash.add(1);
 
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const data = new Uint8Array(await response.arrayBuffer());
-            this.splash.add(1);
+            let out = null;
 
-            const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
-            this.splash.add(1);
+            if (f) {
+                out = f["feature_data"];
 
-            let out = fromArrayBuffer(gunzippedData);
-            this.splash.add(1);
+                // Special handling of volumes.
+                if ("volume" in f["feature_data"]) {
+                    // Load the base64 string into a decompressed array buffer.
+                    f["feature_data"]["volume"] = getVolume(f["feature_data"]["volume"]);
+                    this.splash.add(1);
+                }
+            }
 
             this.splash.end();
             return out;
@@ -281,41 +275,24 @@ class Model {
         return mappings;
     }
 
-    getFeatures(bucket, mapping, fname) {
+    getFeatures(bucket, fname, mapping) {
         console.assert(bucket);
-        console.assert(mapping);
 
-        if (!fname)
+        if (!fname) {
             return null;
+        }
         let g = this.features.get(bucket, fname);
-        if (!g) return null;
-        if (!g["mappings"]) return null;
-        return g["mappings"][mapping];
-    }
-
-    /* Volumes                                                                                   */
-    /*********************************************************************************************/
-
-    downloadVolume(bucket, fname) {
-        console.assert(bucket);
-        console.assert(fname);
-
-        console.log(`download volume ${fname}`);
-        return this.volumes.download(bucket, fname);
-    }
-
-    hasVolume(bucket, fname) {
-        console.assert(bucket);
-        console.assert(fname);
-
-        return this.volumes.has(bucket, fname);
-    }
-
-    getVolume(bucket, fname) {
-        console.assert(bucket);
-        if (!fname)
+        if (!g) {
             return null;
-        return this.volumes.get(bucket, fname);
-    }
+        }
 
+        if ("volume" in g) {
+            return g["volume"];
+        }
+        else if ("mappings" in g) {
+            console.assert(mapping);
+            return g["mappings"][mapping];
+        }
+        return null;
+    }
 }

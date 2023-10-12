@@ -248,7 +248,6 @@ def load_bucket_token(uuid):
 
 def authenticate_bucket(uuid):
     # HACK: False means bad authentication, None means the bucket does not exist.
-
     try:
         passed_token = extract_token()
     except RuntimeError as e:
@@ -301,23 +300,24 @@ def get_feature_metadata(uuid, fname):
 
     # Open the JSON file.
     with open(features_path, 'r') as f:
+        print(features_path)
         metadata = json.load(f)
 
     return {'short_desc': metadata.get('short_desc', '') or ''}
 
 
-def return_volume(uuid, fname):
-    # Retrieve the bucket path.
-    bucket_path = get_bucket_path(uuid)
-    if not bucket_path or not bucket_path.exists():
-        return f'Bucket {uuid} does not exist, you need to create it first.', 404
+# def return_volume(uuid, fname):
+#     # Retrieve the bucket path.
+#     bucket_path = get_bucket_path(uuid)
+#     if not bucket_path or not bucket_path.exists():
+#         return f'Bucket {uuid} does not exist, you need to create it first.', 404
 
-    # Retrieve the volume path.
-    volume_path = bucket_path / f'{fname}.npy.gz'
-    if not volume_path.exists():
-        return f'Volume {fname} does not exist in bucket {uuid}.', 404
+#     # Retrieve the volume path.
+#     volume_path = bucket_path / f'{fname}.npy.gz'
+#     if not volume_path.exists():
+#         return f'Volume {fname} does not exist in bucket {uuid}.', 404
 
-    return send_file(volume_path, as_attachment=True)
+#     return send_file(volume_path, as_attachment=True)
 
 
 def get_bucket(uuid):
@@ -383,7 +383,8 @@ def create_features(uuid, fname, feature_data, short_desc=None, patch=False):
     assert uuid
     assert fname
     assert feature_data
-    assert 'mappings' in feature_data
+
+    assert 'mappings' in feature_data or 'volume' in feature_data
 
     # Retrieve the bucket path.
     bucket_path = get_bucket_path(uuid)
@@ -428,6 +429,64 @@ def delete_features(uuid, fname):
         return f"Successfully deleted {features_path}", 200
     except Exception as e:
         return f"Unable to delete {features_path}", 500
+
+
+def is_volume(uuid, fname):
+    meta = load_bucket_metadata(uuid)
+    # TODO: remove the volumes part of the metadata, and only put the is_volume information in
+    # the feature JSON data
+    volumes = meta.get('volumes', None) or ()
+    return fname in volumes
+
+
+# def create_volume(uuid, fname, npy_gz, patch=False):
+#     assert uuid
+#     assert fname
+#     assert npy_gz is not None
+
+#     # Retrieve the bucket path.
+#     bucket_path = get_bucket_path(uuid)
+#     if not bucket_path.exists():
+#         return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+#     # Retrieve the volume path.
+#     volume_path = bucket_path / f'{fname}.npy.gz'
+#     if not patch and volume_path.exists():
+#         return f'Volume {fname} already exist, use a PATCH request instead.', 409
+#     if patch and not volume_path.exists():
+# return f'Volume {fname} does not exist in bucket {uuid}, you need to
+# create it first.', 404
+
+#     # Save the volume.
+#     with open(volume_path, 'wb') as f:
+#         f.write(npy_gz)
+
+    # return f'Volume {fname} successfully {"created" if not patch else
+    # "patched"} in bucket {uuid}.', 200
+
+
+# def delete_volume(uuid, fname):
+#     assert uuid
+#     assert fname
+
+#     # Retrieve the bucket path.
+#     bucket_path = get_bucket_path(uuid)
+#     if not bucket_path.exists():
+#         return f'Bucket {uuid} does not exist, you need to create it first.', 404
+
+#     # Retrieve the volume path.
+#     volume_path = bucket_path / f'{fname}.npy.gz'
+#     if not volume_path.exists():
+# return f'Volume {fname} does not exist in bucket {uuid}, you need to
+# create it first.', 404
+
+#     # Save the volume.
+#     assert volume_path.exists()
+#     try:
+#         os.remove(volume_path)
+#         return f"Successfully deleted {volume_path}", 200
+#     except Exception as e:
+#         return f"Unable to delete {volume_path}", 500
 
 
 # -------------------------------------------------------------------------------------------------
@@ -528,7 +587,7 @@ def api_post_features(uuid):
     fname = request.json['fname']
     short_desc = request.json.get('short_desc', None)
     feature_data = request.json['feature_data']
-    assert 'mappings' in feature_data
+    assert 'mappings' in feature_data or 'volume' in feature_data
     return create_features(uuid, fname, feature_data, short_desc=short_desc)
 
 
@@ -547,11 +606,6 @@ def api_get_features(uuid, fname):
 
     # Update the last_access_date field.
     meta = update_bucket_metadata(uuid)
-
-    # Special handling of volumes.
-    volumes = meta.get('volumes', None) or ()
-    if fname in volumes:
-        return return_volume(uuid, fname)
 
     # Retrieve the features path.
     features_path = bucket_path / f'{fname}.json'
@@ -590,7 +644,7 @@ def api_patch_features(uuid, fname):
         return 'Bucket does not exist.', 404
     short_desc = request.json.get('short_desc', None)
     feature_data = request.json['feature_data']
-    assert 'mappings' in feature_data
+    assert 'mappings' in feature_data or 'volume' in feature_data
     return create_features(
         uuid, fname, feature_data, short_desc=short_desc, patch=True)
 
@@ -878,42 +932,12 @@ class TestApp(unittest.TestCase):
         # Get the path to the bucket
         path = get_bucket_path(uuid)
         # Delete the bucket
-        response = self.client.delete(f'/api/buckets/{uuid}')
+        response = self.client.delete(f'/api/buckets/{uuid}', headers=headers)
         self.assertEqual(response.status_code, 200)
         # Make sure the bucket no longer exists
         self.assertFalse(path.exists())
-        response = self.client.delete(f'/api/buckets/{uuid}')
+        response = self.client.delete(f'/api/buckets/{uuid}', headers=headers)
         self.assertEqual(response.status_code, 404)
-
-    def test_client(self):
-        bucket_uuid = 'myuuid'
-        fname = 'newfeatures'
-
-        acronyms = ['CP', 'SUB']
-        values = [42, 420]
-        tree = {'dir': {'my custom features': fname}}
-
-        # Create or load the bucket.
-        up = FeatureUploader(bucket_uuid, tree=tree, token=self.token)
-
-        # Create the features.
-        if not up.features_exist(fname):
-            up.create_features(fname, acronyms, values)
-
-        # Patch the bucket metadata.
-        tree['duplicate features'] = fname
-        up.patch_bucket(tree=tree)
-
-        # List all features in the bucket.
-        print(up.list_features())
-
-        # Retrieve one feature.
-        features = up.get_features(fname)
-        print(features)
-
-        # Patch the features.
-        values[1] = 10
-        up.patch_features(fname, acronyms, values)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -933,7 +957,7 @@ if __name__ == '__main__':
     # Launch tests
     elif sys.argv[-1] == 'test':
         test_suite = unittest.TestLoader().loadTestsFromTestCase(TestApp)
-        test_runner = unittest.TextTestRunner()
+        test_runner = unittest.TextTestRunner(verbosity=3, failfast=True)
         test_runner.run(test_suite)
 
     # elif sys.argv[-1].endswith('npy'):
