@@ -31,6 +31,11 @@ class Dispatcher {
         this.el.addEventListener(name, (ev) => { return callback(ev.detail.data, ev.detail.source); });
     }
 
+    data(source, name, key, data) {
+        // when data has to be sent to the websocket server
+        this.emit("data", source, { "name": name, "key": key, "data": data });
+    }
+
     slice(source, axis, idx) {
         // when a slice changes
         this.emit("slice", source, { "axis": axis, "idx": idx });
@@ -93,10 +98,6 @@ class Dispatcher {
     stat(source, name) {
         // when the stat is changed
         this.emit("stat", source, { "name": name });
-    }
-
-    colors(source, regionColors) {
-        this.emit("colors", source, { "colors": regionColors });
     }
 
     unityLoaded(source, instance) {

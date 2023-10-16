@@ -55,9 +55,11 @@ class Unity {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('colors', (ev) => {
+        this.dispatcher.on('data', (ev) => {
             if (!this.instance) return;
-            this.setColors(ev.colors);
+            if (ev.name == 'regionColors') {
+                this.setColors(ev.data);
+            }
         });
     }
 

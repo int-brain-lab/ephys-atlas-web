@@ -62,7 +62,7 @@ class Coloring {
         clearStyle(this.style);
 
         // Clear colors in Unity.
-        this.dispatcher.colors(this, {});
+        this.dispatcher.data(this, 'regionColors', '', {});
     }
 
     _setRegionColor(regionIdx, color) {
@@ -223,7 +223,7 @@ class Coloring {
         }
 
         // Push color change to Unity.
-        this.dispatcher.colors(this, regionColors);
+        this.dispatcher.data(this, 'regionColors', this.state.fname, regionColors)
 
         // Hide the spinning mouse cursor.
         this.dispatcher.spinning(this, false);

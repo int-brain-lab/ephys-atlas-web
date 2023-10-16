@@ -26,7 +26,7 @@ class LocalSocket {
 
         this.socket.onclose = (event) => {
             if (event.wasClean) {
-                console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+                console.warn(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
             } else {
                 console.warn("Connection abruptly closed.");
             }
@@ -37,14 +37,18 @@ class LocalSocket {
     }
 
     setupDispatcher() {
+        this.dispatcher.on('data', (ev) => {
+            this.send({ event: 'data', ev: ev });
+        });
+
         this.dispatcher.on('feature', (ev) => {
-            this.send({ name: 'feature', ev: ev });
+            this.send({ event: 'feature', ev: ev });
         });
     }
 
     send(msg) {
         if (this.open) {
-            console.log(`sending message to websocket`);//, msg);
+            console.log(`sending message to websocket`);  //, msg);
             this.socket.send(JSON.stringify(msg));
         }
     }
