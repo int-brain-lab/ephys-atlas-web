@@ -1,8 +1,14 @@
 import asyncio
+from contextlib import contextmanager
 import json
-from functools import wraps
+import threading
 
+import numpy as np
+import matplotlib.pyplot as plt
 import websockets
+
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 class WebSocketServer:
@@ -12,7 +18,10 @@ class WebSocketServer:
         self.data_storage = {}
         self.callbacks = {}
 
+        self.websocket_server = None
+
     async def handle_client(self, websocket, path):
+        self.websocket_server = websocket
         while True:
             async for message in websocket:
                 try:
@@ -58,12 +67,71 @@ class WebSocketServer:
             await asyncio.Future()
 
 
+class MatplotlibPlotter(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+
+        self.layout = QVBoxLayout(self.central_widget)
+        self.figure = plt.Figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.layout.addWidget(self.canvas)
+
+
+class MatplotlibServer:
+    def __init__(self):
+        self.server = WebSocketServer()
+
+        self.app = QApplication([])
+        self.event_loop = asyncio.get_event_loop()
+
+        self.plotter = MatplotlibPlotter()
+        self.ax = self.plotter.figure.subplots()
+
+    def on(self, event_name, func=None):
+        return self.server.on(event_name, func=func)
+
+    def get_data(self, name, key=None):
+        return self.server.get_data(name, key=key)
+
+    @contextmanager
+    def make_plot(self):
+        self.ax.clear()
+        yield self.ax
+        self.plotter.canvas.draw()
+
+    def run(self):
+        websocket_thread = threading.Thread(target=lambda: asyncio.run(self.server.start_server()))
+        websocket_thread.daemon = True
+        websocket_thread.start()
+
+        self.plotter.show()
+        self.app.exec()
+
+
 if __name__ == "__main__":
-    server = WebSocketServer()
+    server = MatplotlibServer()
 
     @server.on("feature")
     def on_feature(fname=None, isVolume=None):
         print(f"selected feature {fname}")
-        colors = server.get_data('regionColors', fname)
 
-    asyncio.run(server.start_server())
+        # Get the data.
+        colors = server.get_data('regionColors', fname)
+        values = server.get_data('regionValues', fname)
+        if values is None:
+            return
+
+        # Make a plot.
+        values = {d['idx']: d['normalized'] for d in values.values()}
+        arr = list(values.values())
+
+        with server.make_plot() as ax:
+            ax.hist(arr, bins=50, alpha=0.75)
+            ax.set_xlabel('Values')
+            ax.set_ylabel('Frequency')
+            ax.set_title('Histogram')
+
+    server.run()

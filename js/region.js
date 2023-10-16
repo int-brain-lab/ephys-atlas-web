@@ -245,6 +245,9 @@ class Region {
             keptRegions[regionIdx] = region;
         }
 
+        // Register the data to Unity and WebSocket.
+        this.dispatcher.data(this, 'regionValues', this.state.fname, keptRegions);
+
         this.regionList.setRegions(this.state.mapping, keptRegions);
     }
 };

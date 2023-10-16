@@ -222,7 +222,7 @@ class Coloring {
             this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; }\n`);
         }
 
-        // Push color change to Unity.
+        // Register the data to Unity and WebSocket.
         this.dispatcher.data(this, 'regionColors', this.state.fname, regionColors)
 
         // Hide the spinning mouse cursor.
