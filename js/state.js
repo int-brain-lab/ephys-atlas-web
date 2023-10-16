@@ -196,6 +196,9 @@ class State {
 
         this.highlighted = state.highlighted || DEFAULT_HIGHLIGHTED;
         this.selected = new Set(state.selected || []);
+
+        // Panel.
+        this.panelOpen = state.panelOpen;
     }
 
     reset() {

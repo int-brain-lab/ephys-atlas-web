@@ -27,6 +27,7 @@ class Share {
             'feature',
             'logScale',
             'mapping',
+            'panel',
             'search',
             'slice',
             'stat',

@@ -31,6 +31,11 @@ class Dispatcher {
         this.el.addEventListener(name, (ev) => { return callback(ev.detail.data, ev.detail.source); });
     }
 
+    connect(source) {
+        // Request a WebSocket connection.
+        this.emit("connect", source);
+    }
+
     data(source, name, key, data) {
         // when data has to be sent to the websocket server
         this.emit("data", source, { "name": name, "key": key, "data": data });
@@ -111,6 +116,10 @@ class Dispatcher {
 
     logScale(source, checked) {
         this.emit("logScale", source, { "checked": checked });
+    }
+
+    panel(source, open) {
+        this.emit("panel", source, { "open": open });
     }
 
     mapping(source, name) {
