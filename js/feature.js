@@ -48,8 +48,10 @@ class FeatureTree {
                 let desc = features[fname] ? features[fname]['short_desc'] : '';
 
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    let children = generateTree(obj[key]);
+                    if (!children) continue;
                     html += `<details><summary>${key}</summary><ul>`;
-                    html += generateTree(obj[key]);
+                    html += children;
                     html += `</ul></details>`;
                 } else {
                     html += `<li data-fname="${fname}" data-desc="${desc}">${displayName}</li>`;
