@@ -36,13 +36,14 @@ class Maximizer {
     }
 
     setupMaximizers() {
+        let that = this;
+
         for (let maximizer of this.maximizers) {
             maximizer.addEventListener("click", (e) => {
                 this.maximize(e.target.parentElement);
             });
         }
 
-        let that = this;
         document.body.addEventListener('keydown', function (e) {
             if (e.key == "Escape") {
                 that.clear();

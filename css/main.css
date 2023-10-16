@@ -360,7 +360,7 @@ body.waiting * {
 }
 
 #container>div {
-    border: 0 solid black;
+    border: 1px solid #eee;
     overflow-y: auto;
 }
 
@@ -425,6 +425,14 @@ body.waiting * {
     position: relative;
     flex: 1 1 0;
     overflow: hidden;
+}
+
+.maximized .svg-canvas-container {
+    width: 50%;
+}
+
+.maximized .svg-canvas-container>canvas {
+    width: 100%;
 }
 
 .svg-canvas-container>canvas {
@@ -711,7 +719,7 @@ body.waiting * {
 div#container>.svg-wrapper {
     overflow: hidden;
     align-items: center;
-    justify-content: center;
+    justify-content: stretch;
     text-align: center;
 
     display: flex;
@@ -770,7 +778,8 @@ div#container .maximizer {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: 0 0;
-    /* z-index: 100; */
+    background-color: white;
+    z-index: 10;
 
     position: absolute;
     top: 10px;
@@ -780,14 +789,6 @@ div#container .maximizer {
 div#container .maximizer:hover {
     filter: brightness(115%);
     background-color: #d0d0d0;
-}
-
-div#container #maximizer-sagittal {
-    right: 100px;
-}
-
-div#container #maximizer-swanson {
-    right: 50px;
 }
 
 
@@ -816,6 +817,7 @@ div#container .maximized .maximizer {
 .slider-container {
     width: 100%;
     flex: 0 1 100px;
+    /* z-index: 20; */
 }
 
 .slider {
