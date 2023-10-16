@@ -191,6 +191,8 @@ class Feature {
 
     setBucket(uuid_or_alias) {
         let bucket = this.model.getBucket(uuid_or_alias);
+        if (!bucket) return;
+
         console.log("set bucket", uuid_or_alias);
         console.assert(bucket);
 

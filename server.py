@@ -759,26 +759,11 @@ class TestApp(unittest.TestCase):
 
 if __name__ == '__main__':
 
-    # Rebuild ephys bucket
-    if sys.argv[-1] == 'make_ephys':
-        create_ephys_features()
-
-    # Rebuild BWM bucket
-    elif sys.argv[-1] == 'make_bwm':
-        create_bwm_features()
-
     # Launch tests
-    elif sys.argv[-1] == 'test':
+    if sys.argv[-1] == 'test':
         test_suite = unittest.TestLoader().loadTestsFromTestCase(TestApp)
         test_runner = unittest.TextTestRunner(verbosity=3, failfast=True)
         test_runner.run(test_suite)
-
-    # elif sys.argv[-1].endswith('npy'):
-    #     path = sys.argv[-1]
-    #     arr = np.load(path)
-
-    #     m, M = 0, 255
-    #     write_npy_gz(path, arr, extra=(m, M))
 
     # Run server
     else:
