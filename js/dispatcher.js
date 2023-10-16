@@ -14,12 +14,15 @@ class Dispatcher {
     }
 
     emit(name, source, data) {
-        const ev = new CustomEvent(name, {
+        const payload = {
+            name: name,
             detail: {
                 source: source,
                 data: data,
             },
-        });
+        };
+        const ev = new CustomEvent(name, payload);
+
         // console.debug(`emit ${name} event`);
         this.el.dispatchEvent(ev);
     }

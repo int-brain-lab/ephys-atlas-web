@@ -6,6 +6,7 @@ import { Model } from "./model.js";
 import { Dispatcher } from "./dispatcher.js";
 import { Feature } from "./feature.js";
 import { Highlighter } from "./highlighter.js";
+import { LocalSocket } from "./socket.js";
 import { Maximizer } from "./maximizer.js";
 import { Panel } from "./panel.js";
 import { Region } from "./region.js";
@@ -53,6 +54,7 @@ class App {
         this.share = new Share(this.state, this.model, this.dispatcher);
         this.slice = new Slice(this.state, this.model, this.dispatcher);
         this.spinner = new Spinner(this.state, this.model, this.dispatcher);
+        this.localSocket = new LocalSocket(this.state, this.model, this.dispatcher);
         this.tooltip = new Tooltip(this.state, this.model, this.dispatcher);
         this.unity = new Unity(this.state, this.model, this.dispatcher);
         this.volume = new Volume(this.state, this.model, this.dispatcher);
