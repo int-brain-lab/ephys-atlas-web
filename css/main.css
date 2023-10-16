@@ -295,7 +295,42 @@ body.waiting * {
 }
 
 #clear-cache-button {
-    background-color: #f88a4aaa;
+    background-color: #ff0000aa;
+}
+
+#connect-button {
+    background-color: #4cac20a5;
+    margin-top: 4px !important;
+}
+
+#connect-status {
+    display: flex;
+    align-items: center;
+    /* padding: 5px; */
+    /* border: 1px solid #ccc; */
+    /* border-radius: 5px; */
+    /* max-width: 200px; */
+}
+
+#connect-status .icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+#connect-status .text {
+    color: #888;
+}
+
+#connect-status.connected .icon,
+#connect-status.connected .text {
+    color: #4cac20a5;
+}
+
+#connect-status.disconnected .icon,
+#connect-status.disconnected .text {
+    color: #ff0000aa;
 }
 
 #region-info {

@@ -2,17 +2,17 @@
 <html>
 
 <head>
-    
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-E0ZMRPFXJY"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    
-    gtag('config', 'G-E0ZMRPFXJY');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-E0ZMRPFXJY');
     </script>
-    
+
     <title>IBL Brain Atlas</title>
 
     <!-- CSS -->
@@ -126,8 +126,13 @@
 
             <!-- BUTTONS -->
             <div class="controls">
+                <div id="connect-status" class="status disconnected">
+                    <div class="icon"></div>
+                    <div class="text"></div>
+                </div>
+                <button id="connect-button">connect</button>
                 <button id="reset-view-button">reset view</button>
-                <button id="clear-cache-button">reset cache</button>
+                <button id="clear-cache-button">clear cache</button>
             </div>
         </details>
     </div>
@@ -380,7 +385,7 @@
         </footer>
 
     </div>
-    
+
 </body>
 
 </html>
