@@ -50,9 +50,9 @@ class Coloring {
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });
 
         // NOTE: when Unity is loaded, send the colors.
-        this.dispatcher.on('unityLoaded', (ev) => {
-            this.dispatcher.colors(this, this.getColors());
-        });
+        // this.dispatcher.on('unityLoaded', (ev) => {
+        //     this.dispatcher.data(this, this.getColors());
+        // });
     }
 
     /* Internal functions                                                                        */
