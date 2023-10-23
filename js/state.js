@@ -207,6 +207,9 @@ class State {
 
         this.highlighted = state.highlighted || DEFAULT_HIGHLIGHTED;
         this.selected = new Set(state.selected || []);
+
+        // Panel.
+        this.panelOpen = state.panelOpen;
     }
 
     reset() {
@@ -229,8 +232,8 @@ class State {
 
         // Set the URL in the location bar.
 
-        if (!DEBUG)
-            window.history.replaceState(null, '', url.toString());
+        // if (!DEBUG)
+        window.history.replaceState(null, '', url.toString());
 
         return url;
     }

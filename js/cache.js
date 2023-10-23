@@ -13,7 +13,24 @@ class Cache {
         this._cache = new Map();
     }
 
-    _hash(id) {
+    _doRefresh(id) {
+        // Determine if the last argument to download() is an object with refresh=true.
+        let last = id[id.length - 1];
+        if (last != undefined && typeof last === 'object') {
+            return last.refresh;
+        }
+        return false;
+    }
+
+    _hash(id_) {
+        // Make a copy to avoid modifying the original object.
+        let id = [...id_];
+
+        // HACK: remove optional "options" object from the ID
+        let last = id[id.length - 1];
+        if (last == undefined || typeof last === 'object') {
+            id.pop();
+        }
         return JSON.stringify(id);
     }
 
@@ -31,7 +48,8 @@ class Cache {
     async download(...id) {
         const idString = this._hash(id);
 
-        if (this._cache.has(idString)) {
+        const refresh = this._doRefresh(id);
+        if (!refresh && this._cache.has(idString)) {
             // console.log(`load ${id} from cache`);
             return this._cache.get(idString);
         }

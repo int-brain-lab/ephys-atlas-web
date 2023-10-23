@@ -22,6 +22,7 @@ class Panel {
         this.model = model;
         this.dispatcher = dispatcher;
 
+        this.el = document.querySelector('#control-panel details');
         this.imapping = document.getElementById('mapping-dropdown');
         this.ifname = document.getElementById('feature-tree');
         this.ibucket = document.getElementById('bucket-dropdown');
@@ -32,9 +33,11 @@ class Panel {
         this.iclog = document.getElementById('log-scale');
         this.ibreset = document.getElementById('reset-view-button');
         this.ibclear = document.getElementById('clear-cache-button');
+        this.ibconnect = document.getElementById('connect-button');
         this.ishare = document.getElementById('share-button');
 
         // Setup the event callbacks that change the global state and update the components.
+        this.setupDispatcher();
         this.setupMapping();
         this.setupStat();
         this.setupColormap();
@@ -43,6 +46,7 @@ class Panel {
         this.setupLogScale();
 
         this.setupClearButton();
+        this.setupConnectButton();
         this.setupShareButton();
         this.setupResetButton();
 
@@ -69,10 +73,32 @@ class Panel {
 
         // Log scale.
         this.setLogScale(state.logScale);
+
+        // Panel open.
+        this.setOpen(state.panelOpen);
+    }
+
+    setupDispatcher() {
+        this.dispatcher.on('mapping', (ev, source) => {
+            if (source != this && ev.name)
+                this.imapping.value = ev.name;
+        });
     }
 
     /* Set functions                                                                             */
     /*********************************************************************************************/
+
+    setOpen(open) {
+        if (open)
+            this.el.open = true;
+        else
+            this.el.removeAttribute("open");
+
+        this.el.addEventListener('toggle', (ev) => {
+            this.state.panelOpen = this.el.open;
+            this.dispatcher.panel(this, { 'open': this.state.panelOpen });
+        })
+    }
 
     setMapping(mapping) {
         this.imapping.value = mapping;
@@ -158,6 +184,12 @@ class Panel {
 
     /* Buttons                                                                                   */
     /*********************************************************************************************/
+
+    setupConnectButton() {
+        this.ibconnect.addEventListener('click', (e) => {
+            this.dispatcher.connect(this);
+        });
+    }
 
     setupClearButton() {
         this.ibclear.addEventListener('click', (e) => {

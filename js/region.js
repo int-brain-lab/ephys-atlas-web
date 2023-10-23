@@ -171,7 +171,21 @@ class Region {
 
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
-        this.dispatcher.on('feature', (ev) => { this.setRegions(); });
+
+        this.dispatcher.on('feature', (ev) => {
+            if (!this.state.isVolume && ev.fname) {
+                // If the selected feature has no data for the current mapping, change the mapping.
+                const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
+                if (mappings && !mappings.includes(this.state.mapping)) {
+                    const mapping = mappings[0];
+                    console.warn(`automatically switching to mapping ${mapping} as the selected features do not contain any data with the current mapping`);
+                    this.state.mapping = mapping;
+                    this.dispatcher.mapping(this, mapping);
+                    return;
+                }
+            }
+            this.setRegions();
+        });
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
         this.dispatcher.on('search', (ev) => { this.setRegions(); });
@@ -185,8 +199,8 @@ class Region {
         console.assert(this.state.mapping);
         let regions = this.model.getRegions(this.state.mapping);
 
-        let features = this.state.isVolume ? null : this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname);
-
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping);
         let stats = features ? features["statistics"] : undefined;
         let stat = this.state.stat;
         let search = this.state.search;
@@ -231,64 +245,9 @@ class Region {
             keptRegions[regionIdx] = region;
         }
 
+        // Register the data to Unity and WebSocket.
+        this.dispatcher.data(this, 'regionValues', this.state.fname, keptRegions);
+
         this.regionList.setRegions(this.state.mapping, keptRegions);
     }
-
-
-
-    /* Internal functions                                                                        */
-    /*********************************************************************************************/
-
-    // getSelectedRegionElements() {
-    //     /* Return the list of LI elements that are selected. */
-    //     let out = [];
-    //     for (let child of this.regionList.children) {
-    //         if (window.getComputedStyle(child, null).display == 'none') continue;
-    //         let idx = getRegionIdx(this.state.mapping, child);
-    //         if (this.state.selected.has(idx)) {
-    //             out.push(child);
-    //         }
-    //     }
-    //     return out;
-    // }
-
-
-    /* Get functions                                                                             */
-    /*********************************************************************************************/
-
-    // getInfo(regionIdx) {
-    //     let regions = this.model.getRegions(this.state.mapping);
-    //     let region = regions[regionIdx];
-    //     if (region)
-    //         return region;
-    //     // console.warn(`region #${regionIdx} could not be found`);
-    // }
-
-    /* Update function                                                                           */
-    /*********************************************************************************************/
-
-    // updateColormap(cmin, cmax) {
-    //     if (!this.colors) return;
-    //     let colors = this.colors;
-    //     let nTotal = colors.length;
-    //     let barScale = document.querySelector('#bar-scale .colorbar');
-    //     let n = 50;
-    //     let child = null;
-    //     if (barScale.children.length == 0) {
-    //         for (let i = 0; i < n; i++) {
-    //             child = document.createElement('div');
-    //             child.classList.add(`bar-${i}`);
-    //             barScale.appendChild(child);
-    //         }
-    //     }
-    //     let children = barScale.children;
-    //     let x = 0;
-    //     for (let i = 0; i < n; i++) {
-    //         child = children[i];
-    //         x = i * 100.0 / n;
-    //         x = (x - cmin) / (cmax - cmin);
-    //         x = clamp(x, 0, .9999);
-    //         child.style.backgroundColor = colors[Math.floor(x * nTotal)];
-    //     }
-    // }
 };

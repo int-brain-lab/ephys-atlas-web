@@ -22,6 +22,7 @@ class Unity {
         this.model = model;
         this.dispatcher = dispatcher;
         this.instance = null;
+        this.loaded = false;
 
         // Declare the total splash progress for this component.
         // this.splash.addTotal(UNITY_SPLASH_TOTAL);
@@ -54,9 +55,11 @@ class Unity {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('colors', (ev) => {
+        this.dispatcher.on('data', (ev) => {
             if (!this.instance) return;
-            this.setColors(ev.colors);
+            if (ev.name == 'regionColors') {
+                this.setColors(ev.data);
+            }
         });
     }
 
@@ -79,6 +82,8 @@ class Unity {
     }
 
     setColors(regionColors) {
+        if (!this.loaded) return;
+
         let regions = this.model.getRegions(this.state.mapping);
 
         let colors = []
@@ -90,6 +95,7 @@ class Unity {
             colors.push(`${color.toUpperCase()}`);
         }
 
+        // NOTE: do not through an error if the areas were not set, just save the colors
         // NOTE: how to reset the colors?
         this.instance.SendMessage('main', 'SetColors', colors.toString());
     }
@@ -123,10 +129,13 @@ class Unity {
             acronyms.push(acronym);
         }
 
-        this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
+        if (acronyms) {
+            this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
+        }
 
         // HACK: trigger a callback in the Coloring module that will compute the colors, and pass
         // them to the setColors() method here via the "colors" event.
+        this.loaded = true;
         this.dispatcher.unityLoaded(this, this.instance);
     }
 

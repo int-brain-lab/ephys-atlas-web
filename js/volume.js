@@ -101,7 +101,7 @@ class Volume {
                 this.showVolume();
 
                 const state = this.state;
-                const volume = this.model.getVolume(state.bucket, state.fname);
+                const volume = this.model.getFeatures(state.bucket, state.fname);
 
                 this.setArray(volume);
                 this.draw();
@@ -185,17 +185,13 @@ class Volume {
         let value = 0;
         let rgb = null;
 
-        // HACK: we have only implemented Fortran order so far.
-        console.assert(this.fortran_order);
-
         // NOTE: we copy-paste instead of using a function otherwise the javascript engine won't
         // be able to optimize this tight loop properly.
         if (axis == 'coronal') {
             let x = Math.floor(idx / 2.5);
             for (let y = 0; y < dimY; y++) {
                 for (let z = 0; z < dimZ; z++) {
-                    // let j = x * dimY * dimZ + y * dimZ + z; // C order
-                    j = x + dimX * (y + dimY * z); // Fortran order
+                    j = this.fortran_order ? x + dimX * (y + dimY * z) : x * dimY * dimZ + y * dimZ + z;
                     value = this.volume[j];
 
                     value = (value - cmin) / (cmax - cmin);
@@ -213,8 +209,7 @@ class Volume {
             let y = Math.floor(idx / 2.5);
             for (let x = 0; x < dimX; x++) {
                 for (let z = 0; z < dimZ; z++) {
-                    // let j = x * dimY * dimZ + y * dimZ + z; // C order
-                    j = x + dimX * (y + dimY * z); // Fortran order
+                    j = this.fortran_order ? x + dimX * (y + dimY * z) : x * dimY * dimZ + y * dimZ + z;
                     value = this.volume[j];
 
                     value = (value - cmin) / (cmax - cmin);
@@ -232,8 +227,7 @@ class Volume {
             let z = Math.floor(idx / 2.5);
             for (let y = 0; y < dimY; y++) {
                 for (let x = 0; x < dimX; x++) {
-                    // let j = x * dimY * dimZ + y * dimZ + z; // C order
-                    j = x + dimX * (y + dimY * z); // Fortran order
+                    j = this.fortran_order ? x + dimX * (y + dimY * z) : x * dimY * dimZ + y * dimZ + z;
                     value = this.volume[j];
 
                     value = (value - cmin) / (cmax - cmin);

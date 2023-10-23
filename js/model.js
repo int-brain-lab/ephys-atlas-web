@@ -11,9 +11,7 @@ import { downloadJSON } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const BASE_URL = 'https://features.internationalbrainlab.org';
-if (DEBUG)
-    BASE_URL = 'https://localhost:5000';
+const BASE_URL = DEBUG ? 'https://localhost:5000' : 'https://features.internationalbrainlab.org';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
@@ -39,7 +37,7 @@ function readUint16LE(buffer) {
     return val;
 }
 
-function fromArrayBuffer(buf) {
+function loadNPY(buf) {
     // Check the magic number
     let magic = asciiDecode(buf.slice(0, 6));
     if (magic.slice(1, 6) != 'NUMPY') {
@@ -92,6 +90,13 @@ function fromArrayBuffer(buf) {
     };
 }
 
+function getVolume(base64) {
+    const gzippedData = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const inflatedData = pako.inflate(gzippedData);
+    const uint8Array = new Uint8Array(inflatedData);
+    return loadNPY(uint8Array);
+}
+
 
 
 /*************************************************************************************************/
@@ -115,43 +120,37 @@ class Model {
 
         // Caches.
 
-        this.buckets = new Cache(async (bucket) => { return downloadJSON(URLS['bucket'](bucket)); });
+        // Buckets.
+        this.buckets = new Cache(async (bucket, options) => {
+            const refresh = options ? options.refresh : false;
+            return downloadJSON(URLS['bucket'](bucket), refresh);
+        });
 
-        this.features = new Cache(async (bucket, fname) => {
+        // Features.
+        this.features = new Cache(async (bucket, fname, options) => {
+            const refresh = options ? options.refresh : false;
             if (!fname) return null;
             const url = URLS['features'](bucket, fname);
 
-            this.splash.setTotal(1);
-            this.splash.setDescription(`Downloading feature ${fname}`);
+            this.splash.setTotal(2);
+            this.splash.setDescription(`Downloading feature "${fname}"`);
             this.splash.start();
 
-            let f = await downloadJSON(url);
-
-            this.splash.end();
-
-            if (!f) return null;
-            return f["feature_data"];
-        });
-
-        this.volumes = new Cache(async (bucket, fname) => {
-            let url = URLS['features'](bucket, fname);
-
-            this.splash.setTotal(4);
-            this.splash.setDescription(`Downloading volume ${fname}`);
-            this.splash.start();
-
-            const response = await fetch(url);
+            let f = await downloadJSON(url, refresh);
             this.splash.add(1);
 
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const data = new Uint8Array(await response.arrayBuffer());
-            this.splash.add(1);
+            let out = null;
 
-            const gunzippedData = pako.inflate(data, { to: 'Uint8Array' });
-            this.splash.add(1);
+            if (f) {
+                out = f["feature_data"];
 
-            let out = fromArrayBuffer(gunzippedData);
-            this.splash.add(1);
+                // Special handling of volumes.
+                if ("volume" in f["feature_data"]) {
+                    // Load the base64 string into a decompressed array buffer.
+                    f["feature_data"]["volume"] = getVolume(f["feature_data"]["volume"]);
+                    this.splash.add(1);
+                }
+            }
 
             this.splash.end();
             return out;
@@ -226,10 +225,10 @@ class Model {
     /* Buckets                                                                                   */
     /*********************************************************************************************/
 
-    downloadBucket(bucket) {
+    downloadBucket(bucket, options) {
         console.assert(bucket);
         console.log(`download bucket ${bucket}`);
-        return this.buckets.download(bucket);
+        return this.buckets.download(bucket, options);
     }
 
     hasBucket(bucket) {
@@ -245,12 +244,12 @@ class Model {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
-    downloadFeatures(bucket, fname) {
+    downloadFeatures(bucket, fname, options) {
         console.assert(bucket);
         console.assert(fname);
 
         console.log(`download features ${fname}`);
-        return this.features.download(bucket, fname);
+        return this.features.download(bucket, fname, options);
     }
 
     hasFeatures(bucket, fname) {
@@ -260,41 +259,40 @@ class Model {
         return this.features.has(bucket, fname);
     }
 
-    getFeatures(bucket, mapping, fname) {
-        console.assert(bucket);
-        console.assert(mapping);
-
+    getFeaturesMappings(bucket, fname) {
+        // Return the non-empty mappings of a feature.
         if (!fname)
             return null;
         let g = this.features.get(bucket, fname);
         if (!g) return null;
         if (!g["mappings"]) return null;
-        return g["mappings"][mapping];
+        let mappings = [];
+        for (let mapping in g["mappings"]) {
+            let ids = Object.keys(g["mappings"][mapping]["data"]);
+            ids.pop("1");
+            if (ids.length > 0) mappings.push(mapping);
+        }
+        return mappings;
     }
 
-    /* Volumes                                                                                   */
-    /*********************************************************************************************/
-
-    downloadVolume(bucket, fname) {
+    getFeatures(bucket, fname, mapping) {
         console.assert(bucket);
-        console.assert(fname);
 
-        console.log(`download volume ${fname}`);
-        return this.volumes.download(bucket, fname);
-    }
-
-    hasVolume(bucket, fname) {
-        console.assert(bucket);
-        console.assert(fname);
-
-        return this.volumes.has(bucket, fname);
-    }
-
-    getVolume(bucket, fname) {
-        console.assert(bucket);
-        if (!fname)
+        if (!fname) {
             return null;
-        return this.volumes.get(bucket, fname);
-    }
+        }
+        let g = this.features.get(bucket, fname);
+        if (!g) {
+            return null;
+        }
 
+        if ("volume" in g) {
+            return g["volume"];
+        }
+        else if ("mappings" in g) {
+            console.assert(mapping);
+            return g["mappings"][mapping];
+        }
+        return null;
+    }
 }

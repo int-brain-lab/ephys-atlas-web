@@ -46,14 +46,15 @@ class FeatureTree {
                 let fname = obj[key];
                 let displayName = key;
                 let desc = features[fname] ? features[fname]['short_desc'] : '';
-                let isVol = volumes.includes(fname);
 
                 if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    let children = generateTree(obj[key]);
+                    if (!children) continue;
                     html += `<details><summary>${key}</summary><ul>`;
-                    html += generateTree(obj[key]);
+                    html += children;
                     html += `</ul></details>`;
                 } else {
-                    html += `<li data-fname="${fname}" data-desc="${desc}" data-volume="${isVol}">${displayName}</li>`;
+                    html += `<li data-fname="${fname}" data-desc="${desc}">${displayName}</li>`;
                 }
             }
             return html;
@@ -111,7 +112,7 @@ class Feature {
     }
 
     async setState(state) {
-        if (state.fname) {
+        if (state.fname && !state.isVolume) {
             this.model.downloadFeatures(state.bucket, state.fname).then(() => {
                 // Dispatch the feature selected event.
                 this.selectFeature(state.fname, state.isVolume);
@@ -123,24 +124,16 @@ class Feature {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on('reset', (ev) => { this.init(); this.selectFeature(); });
         this.dispatcher.on('bucket', async (ev) => {
             this.setBucket(ev.uuid_or_alias);
 
             if (this.state.fname) {
                 const state = this.state;
 
-                if (!state.isVolume) {
-                    // Download the features.
-                    if (!this.model.hasFeatures(state.bucket, state.fname)) {
-                        await this.model.downloadFeatures(state.bucket, state.fname);
-                    }
-
-                }
-                else {
-                    // Download the volume.
-                    if (!this.model.hasVolume(state.bucket, state.fname))
-                        await this.model.downloadVolume(state.bucket, state.fname);
+                // Download the features.
+                if (!this.model.hasFeatures(state.bucket, state.fname)) {
+                    await this.model.downloadFeatures(state.bucket, state.fname);
                 }
 
                 // Select the features.
@@ -163,20 +156,14 @@ class Feature {
                 }
 
                 else {
-                    let isVol = e.target.dataset.volume == "true";
+                    // Download the features.
+                    if (!this.model.hasFeatures(state.bucket, fname)) {
+                        // TODO: splash
+                        await this.model.downloadFeatures(state.bucket, fname);
+                    }
 
-                    if (!isVol) {
-                        // Download the features.
-                        if (!this.model.hasFeatures(state.bucket, fname)) {
-                            // TODO: splash
-                            await this.model.downloadFeatures(state.bucket, fname);
-                        }
-                    }
-                    else {
-                        // Download the volume.
-                        if (!this.model.hasVolume(state.bucket, fname))
-                            await this.model.downloadVolume(state.bucket, fname);
-                    }
+                    // Determine whether this feature is a volume or not.
+                    let isVol = "shape" in this.model.getFeatures(state.bucket, fname, this.state.mapping);
 
                     // Dispatch the feature selected event.
                     this.selectFeature(fname, isVol);
@@ -202,8 +189,10 @@ class Feature {
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    async setBucket(uuid_or_alias) {
-        let bucket = await this.model.getBucket(uuid_or_alias);
+    setBucket(uuid_or_alias) {
+        let bucket = this.model.getBucket(uuid_or_alias);
+        if (!bucket) return;
+
         console.log("set bucket", uuid_or_alias);
         console.assert(bucket);
 
@@ -231,12 +220,17 @@ class Feature {
 
     async refreshBucket() {
         this.dispatcher.spinning(this, true);
+        console.debug(`refreshing bucket ${this.state.bucket}`);
 
-        console.debug(`refreshing bucket ${this.state.bucket}`)
-        let bucket = await this.model.getBucket(this.state.bucket, { cache: "reload" });
+        await this.model.downloadBucket(this.state.bucket, { refresh: true });
+        let bucket = this.model.getBucket(this.state.bucket);
         console.assert(bucket);
-        this.tree.setFeatures(bucket.features, bucket.metadata.tree);
-        this.tree.select(this.state.fname);
+        this.tree.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
+
+        if (this.state.fname) {
+            await this.model.downloadFeatures(this.state.bucket, this.state.fname, { refresh: true });
+            this.tree.select(this.state.fname);
+        }
 
         this.dispatcher.spinning(this, false);
     }

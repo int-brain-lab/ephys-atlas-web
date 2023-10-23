@@ -39,7 +39,7 @@ class Coloring {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on('reset', (ev) => { this.init(); this.buildColors(); });
         this.dispatcher.on('bucket', (ev) => { this.clear(); });
         this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
         this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
@@ -50,9 +50,9 @@ class Coloring {
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });
 
         // NOTE: when Unity is loaded, send the colors.
-        this.dispatcher.on('unityLoaded', (ev) => {
-            this.dispatcher.colors(this, this.getColors());
-        });
+        // this.dispatcher.on('unityLoaded', (ev) => {
+        //     this.dispatcher.data(this, this.getColors());
+        // });
     }
 
     /* Internal functions                                                                        */
@@ -62,7 +62,7 @@ class Coloring {
         clearStyle(this.style);
 
         // Clear colors in Unity.
-        this.dispatcher.colors(this, {});
+        this.dispatcher.data(this, 'regionColors', '', {});
     }
 
     _setRegionColor(regionIdx, color) {
@@ -70,13 +70,13 @@ class Coloring {
         this.style.insertRule(rule);
     }
 
-    _setRegionWhite(regionIdx) {
-        this._setRegionColor(regionIdx, '#ffffff');
-    }
+    // _setRegionWhite(regionIdx) {
+    //     this._setRegionColor(regionIdx, '#ffffff');
+    // }
 
-    _setRegionGrey(regionIdx) {
-        this._setRegionColor(regionIdx, '#d3d3d3');
-    }
+    // _setRegionGrey(regionIdx) {
+    //     this._setRegionColor(regionIdx, '#d3d3d3');
+    // }
 
     getColors(refresh = false) {
 
@@ -90,7 +90,8 @@ class Coloring {
 
         // Load the region and features data.
         let regions = this.model.getRegions(this.state.mapping);
-        let features = this.model.getFeatures(this.state.bucket, this.state.mapping, this.state.fname, refresh);
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping, refresh);
 
         // Figure out what hemisphere values we have
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
@@ -101,7 +102,7 @@ class Coloring {
         let hasRight = true; // whether there is at least a left hemisphere region with a value
 
         if (feature_max == null || feature_min == null) {
-            console.error("there is no data! skipping region coloring");
+            console.warn("there is no data! skipping region coloring");
             this.dispatcher.spinning(this, false);
             return;
         }
@@ -126,7 +127,7 @@ class Coloring {
 
             // Region name and acronym.
             let name = region['name'];
-            let acronym = region['acronym'];
+            // let acronym = region['acronym'];
 
             // Which hemisphere this region is in.
             let isLeft = name.includes('left'); // false => isRight :)
@@ -134,13 +135,15 @@ class Coloring {
             // True iff there is at least another region in that hemisphere with data.
             let dataInHemisphere = (isLeft && hasLeft) || (!isLeft && hasRight);
 
+            // Retrieve the region value.
             let value = features ? features['data'][regionIdx] : null;
 
             // Region that does not appear in the features? White if there is data in its
             // hemisphere, default allen color otherwise.
             if (!value) {
-                if (dataInHemisphere)
-                    this._setRegionWhite(regionIdx);
+                if (dataInHemisphere) {
+                    regionColors[regionIdx] = '#ffffff'; // white
+                }
                 // else, do nothing = default allen color.
                 continue;
             }
@@ -148,7 +151,7 @@ class Coloring {
 
             // Region that appears in the features but with a null value? Grey.
             if (!value) {
-                this._setRegionGrey(regionIdx);
+                regionColors[regionIdx] = '#d3d3d3'; // grey
                 continue;
             }
 
@@ -219,8 +222,8 @@ class Coloring {
             this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; }\n`);
         }
 
-        // Push color change to Unity.
-        this.dispatcher.colors(this, regionColors);
+        // Register the data to Unity and WebSocket.
+        this.dispatcher.data(this, 'regionColors', this.state.fname, regionColors)
 
         // Hide the spinning mouse cursor.
         this.dispatcher.spinning(this, false);

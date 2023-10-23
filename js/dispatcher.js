@@ -14,18 +14,31 @@ class Dispatcher {
     }
 
     emit(name, source, data) {
-        const ev = new CustomEvent(name, {
+        const payload = {
+            name: name,
             detail: {
                 source: source,
                 data: data,
             },
-        });
+        };
+        const ev = new CustomEvent(name, payload);
+
         // console.debug(`emit ${name} event`);
         this.el.dispatchEvent(ev);
     }
 
     on(name, callback) {
-        this.el.addEventListener(name, (ev) => { return callback(ev.detail.data); });
+        this.el.addEventListener(name, (ev) => { return callback(ev.detail.data, ev.detail.source); });
+    }
+
+    connect(source) {
+        // Request a WebSocket connection.
+        this.emit("connect", source);
+    }
+
+    data(source, name, key, data) {
+        // when data has to be sent to the websocket server
+        this.emit("data", source, { "name": name, "key": key, "data": data });
     }
 
     slice(source, axis, idx) {
@@ -92,10 +105,6 @@ class Dispatcher {
         this.emit("stat", source, { "name": name });
     }
 
-    colors(source, regionColors) {
-        this.emit("colors", source, { "colors": regionColors });
-    }
-
     unityLoaded(source, instance) {
         this.emit("unityLoaded", source, { "instance": instance });
     }
@@ -107,6 +116,10 @@ class Dispatcher {
 
     logScale(source, checked) {
         this.emit("logScale", source, { "checked": checked });
+    }
+
+    panel(source, open) {
+        this.emit("panel", source, { "open": open });
     }
 
     mapping(source, name) {
