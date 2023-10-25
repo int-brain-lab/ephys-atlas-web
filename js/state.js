@@ -62,13 +62,11 @@ const ALIAS_STATES = {
         "bucket": "bwm",
         "state": "yJjbWFwIjoibWFnbWEiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImxvZ1NjYWxlIjpmYWxzZSwiZm5hbWUiOiIiLCJzdGF0IjoibWVhbiIsImNvcm9uYWwiOjY2MCwic2FnaXR0YWwiOjU1MCwiaG9yaXpvbnRhbCI6NDAwLCJleHBsb2RlZCI6MCwibWFwcGluZyI6ImJlcnlsIiwiaGlnaGxpZ2h0ZWQiOm51bGwsInNlbGVjdGVkIjpbXSwidG9wIjowLCJzd2Fuc29uIjowLCJzZWFyY2giOiIifQ%3D%3D"
     },
-
-    "bwm_wheel_speed" {
+    "bwm_wheel_speed": {
         "bucket": "bwm",
         "state": "eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImxvZ1NjYWxlIjpmYWxzZSwiZm5hbWUiOiJ3aGVlbF9zcGVlZF9kZWNvZGluZ19lZmZlY3QiLCJpc1ZvbHVtZSI6ZmFsc2UsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJoaWdobGlnaHRlZCI6bnVsbCwic2VsZWN0ZWQiOlsxOTc1LDIzMTYsMjMwMywyMzA2LDI0MTJdLCJwYW5lbE9wZW4iOmZhbHNlLCJ0b3AiOjAsInN3YW5zb24iOjAsInNlYXJjaCI6IiJ9"
     },
-
-    "bwm_wheel_velocity" {
+    "bwm_wheel_velocity": {
         "bucket": "bwm",
         "state": "eyJjbWFwIjoiQmx1ZXMiLCJjbWFwbWluIjowLCJjbWFwbWF4IjoxMDAsImxvZ1NjYWxlIjpmYWxzZSwiZm5hbWUiOiJ3aGVlbF92ZWxvY2l0eV9kZWNvZGluZ19lZmZlY3QiLCJpc1ZvbHVtZSI6ZmFsc2UsInN0YXQiOiJtZWFuIiwiY29yb25hbCI6NjYwLCJzYWdpdHRhbCI6NTUwLCJob3Jpem9udGFsIjo0MDAsImV4cGxvZGVkIjowLCJtYXBwaW5nIjoiYmVyeWwiLCJoaWdobGlnaHRlZCI6bnVsbCwic2VsZWN0ZWQiOlsxOTc1LDIzMTYsMjMwMywyMzA2LDI0MTJdLCJwYW5lbE9wZW4iOmZhbHNlLCJ0b3AiOjAsInN3YW5zb24iOjAsInNlYXJjaCI6IiJ9"
     },
