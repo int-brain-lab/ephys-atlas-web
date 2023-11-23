@@ -19,7 +19,7 @@ const DEFAULT_BUCKETS = ["ephys", "bwm"];
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
 
-const DEFAULT_MAPPING = "beryl";
+const DEFAULT_MAPPING = "allen";
 const DEFAULT_SEARCH = "";
 const DEFAULT_HIGHLIGHTED = null;
 

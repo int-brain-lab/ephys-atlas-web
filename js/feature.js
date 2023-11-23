@@ -163,7 +163,8 @@ class Feature {
                     }
 
                     // Determine whether this feature is a volume or not.
-                    let isVol = "shape" in this.model.getFeatures(state.bucket, fname, this.state.mapping);
+                    let fet = this.model.getFeatures(state.bucket, fname, this.state.mapping);
+                    let isVol = fet ? "shape" in fet : false;
 
                     // Dispatch the feature selected event.
                     this.selectFeature(fname, isVol);
