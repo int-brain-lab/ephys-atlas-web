@@ -55,7 +55,7 @@ class Cache {
         }
 
         const downloadPromise = this._downloadFunction(...id).then((result) => {
-            console.log(`finish downloading ${id}`);
+            console.log(`finish downloading ${idString}`);
             this._cache.set(idString, result);
             return result;
         });

@@ -111,17 +111,26 @@ class Bucket {
             // Create a file input element
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
+            fileInput.multiple = 'multiple';
 
             // Set up event listener for file selection
             fileInput.addEventListener('change', async (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const fileName = file.name;
-                    const text = await file.text();
-                    const cache = await caches.open('localCache');
-                    await cache.put(fileName, new Response(text));
-                    console.log('File uploaded and stored in cache.');
-                    this.dispatcher.refresh(this, this.state.bucket);
+
+                // Force selection of local bucket.
+                if (event.target.files.length > 0) {
+                    this.select('local');
+                    this.dispatcher.bucket(this, 'local');
+                }
+
+                for (let file of event.target.files) {
+                    if (file) {
+                        const fileName = file.name;
+                        const text = await file.text();
+                        const cache = await caches.open('localCache');
+                        await cache.put(fileName, new Response(text));
+                        console.log(`File ${fileName} uploaded and stored in cache.`);
+                        this.dispatcher.refresh(this, this.state.bucket);
+                    }
                 }
             });
 
