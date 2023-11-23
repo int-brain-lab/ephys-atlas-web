@@ -15,7 +15,7 @@ const DEFAULT_COLORMAP_MAX = 100;
 const DEFAULT_LOG_SCALE = false;
 
 const DEFAULT_BUCKET = "ephys";
-const DEFAULT_BUCKETS = ["ephys", "bwm"];
+const DEFAULT_BUCKETS = ["ephys", "bwm", "local"];
 const DEFAULT_STAT = "mean";
 const DEFAULT_EXPLODED = 0;
 

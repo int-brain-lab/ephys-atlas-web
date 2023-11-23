@@ -100,6 +100,11 @@ class Dispatcher {
         this.emit("featureHover", source, { "fname": fname, "desc": desc, "e": e });
     }
 
+    featureRemove(source, uuid_or_alias, fname) {
+        // when a local feature is removed
+        this.emit("featureRemove", source, { "uuid_or_alias": uuid_or_alias, "fname": fname });
+    }
+
     stat(source, name) {
         // when the stat is changed
         this.emit("stat", source, { "name": name });

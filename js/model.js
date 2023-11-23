@@ -103,6 +103,40 @@ function getVolume(base64) {
 /* Model class                                                                                      */
 /*************************************************************************************************/
 
+async function loadCacheFiles(cache) {
+    const requests = await cache.keys();
+
+    const dictionary = {
+        "features": {},
+        "metadata": {
+            "alias": "local",
+            "short_desc": "local bucket",
+        }
+    };
+
+    for (const request of requests) {
+        // Extract the filename from the URL
+        const fileName = request.url.split('/').pop();
+        const name = fileName.replace(/\.json$/, '');
+
+        if (fileName.endsWith('.json')) {
+            // const response = await cache.match(request);
+            // if (response) {
+            //     const jsonContent = await response.json();
+            //     if (jsonContent.short_desc) {
+
+            dictionary.features[name] = {
+                "short_desc": ""//name //jsonContent.short_desc
+            };
+
+            //     }
+            // }
+        }
+    }
+
+    return dictionary;
+}
+
 class Model {
     constructor(splash) {
         this.splash = splash;
@@ -120,8 +154,19 @@ class Model {
 
         // Caches.
 
+        // Open the local cache.
+        caches.open('localCache').then((c) => {
+            this.localCache = c;
+        });
+
         // Buckets.
         this.buckets = new Cache(async (bucket, options) => {
+
+            // NOTE: special handling of local bucket
+            if (bucket == "local") {
+                return loadCacheFiles(this.localCache);
+            }
+
             const refresh = options ? options.refresh : false;
             return downloadJSON(URLS['bucket'](bucket), refresh);
         });
@@ -136,7 +181,23 @@ class Model {
             this.splash.setDescription(`Downloading feature "${fname}"`);
             this.splash.start();
 
-            let f = await downloadJSON(url, refresh);
+            let f = null;
+
+            // NOTE: special handling of local features.
+            if (bucket == "local") {
+                console.log(`looking for ${fname}.json in cache...`);
+                const response = await this.localCache.match(`${fname}.json`);
+                if (response) {
+                    f = await response.json();
+                }
+                else {
+                    console.error('File not found in cache.');
+                }
+            }
+            else {
+                f = await downloadJSON(url, refresh);
+            }
+
             this.splash.add(1);
 
             let out = null;

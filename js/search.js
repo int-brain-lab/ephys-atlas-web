@@ -35,7 +35,7 @@ class Search {
 
         this.el.addEventListener("input", (e) => {
             this.state.search = e.target.value;
-            this.dispatcher.search(e.target.value);
+            this.dispatcher.search(this, e.target.value);
         });
 
         // NOTE: clear the selection when the mapping changes.

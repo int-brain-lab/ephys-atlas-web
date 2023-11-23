@@ -92,9 +92,17 @@ class Bucket {
         // Remove bucket.
         this.buttonRemove.addEventListener('click', (e) => {
             let bucket = this.state.bucket;
+
+            // NOTE: special handling of local bucket: removing means deleting the current
+            // feature from the local cache.
+            if (bucket == "local") {
+                this.dispatcher.featureRemove(this, bucket, this.state.fname);
+                return;
+            }
+
             if (DEFAULT_BUCKETS.includes(bucket)) return;
             this.remove(bucket);
-            this.dispatcher.bucketRemove(bucket);
+            this.dispatcher.bucketRemove(this, bucket);
         });
 
         // Upload feature.
@@ -106,40 +114,15 @@ class Bucket {
 
             // Set up event listener for file selection
             fileInput.addEventListener('change', async (event) => {
-
-                // Access the selected file(s) from the event
                 const file = event.target.files[0];
-
-                // Do something with the selected file, e.g., display its name
                 if (file) {
                     const fileName = file.name;
-
-                    // Read the file as an ArrayBuffer
-                    const arrayBuffer = await file.arrayBuffer();
-
-                    // Open a cache
-                    const cache = await caches.open('filecache');
-
-                    // Store the file in the cache
-                    await cache.put(fileName, new Response(arrayBuffer));
-
+                    const text = await file.text();
+                    const cache = await caches.open('localCache');
+                    await cache.put(fileName, new Response(text));
                     console.log('File uploaded and stored in cache.');
-
-
-                    // Retrieve the file from the cache
-                    const response = await cache.match(fileName);
-
-                    if (response) {
-                        // Convert the response to an ArrayBuffer
-                        const arrayBuffer = await response.arrayBuffer();
-
-                        // Do something with the file content, e.g., display it
-                        console.log('File content:', arrayBuffer);
-                    } else {
-                        console.error('File not found in cache.');
-                    }
+                    this.dispatcher.refresh(this, this.state.bucket);
                 }
-
             });
 
             // Trigger the click event on the file input

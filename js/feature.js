@@ -142,6 +142,11 @@ class Feature {
         });
         this.dispatcher.on('refresh', (ev) => { this.refreshBucket(); });
         this.dispatcher.on('bucketRemove', (ev) => { this.setBucket(DEFAULT_BUCKET); });
+        this.dispatcher.on('featureRemove', (ev) => {
+            this.selectFeature(''); // deselect
+            this.model.localCache.delete(`${ev.fname}.json`);
+            this.refreshBucket();
+        });
     }
 
     setupFeature() {
