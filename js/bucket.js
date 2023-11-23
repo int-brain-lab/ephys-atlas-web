@@ -19,6 +19,7 @@ class Bucket {
         this.buttonAdd = document.getElementById('button-new-bucket');
         this.buttonRefresh = document.getElementById('button-refresh-bucket');
         this.buttonRemove = document.getElementById('button-remove-bucket');
+        this.buttonUpload = document.getElementById('button-upload');
 
         this.setupBucket();
         this.setupDispatcher();
@@ -94,6 +95,57 @@ class Bucket {
             if (DEFAULT_BUCKETS.includes(bucket)) return;
             this.remove(bucket);
             this.dispatcher.bucketRemove(bucket);
+        });
+
+        // Upload feature.
+        this.buttonUpload.addEventListener('click', (e) => {
+
+            // Create a file input element
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+
+            // Set up event listener for file selection
+            fileInput.addEventListener('change', async (event) => {
+
+                // Access the selected file(s) from the event
+                const file = event.target.files[0];
+
+                // Do something with the selected file, e.g., display its name
+                if (file) {
+                    const fileName = file.name;
+
+                    // Read the file as an ArrayBuffer
+                    const arrayBuffer = await file.arrayBuffer();
+
+                    // Open a cache
+                    const cache = await caches.open('filecache');
+
+                    // Store the file in the cache
+                    await cache.put(fileName, new Response(arrayBuffer));
+
+                    console.log('File uploaded and stored in cache.');
+
+
+                    // Retrieve the file from the cache
+                    const response = await cache.match(fileName);
+
+                    if (response) {
+                        // Convert the response to an ArrayBuffer
+                        const arrayBuffer = await response.arrayBuffer();
+
+                        // Do something with the file content, e.g., display it
+                        console.log('File content:', arrayBuffer);
+                    } else {
+                        console.error('File not found in cache.');
+                    }
+                }
+
+            });
+
+            // Trigger the click event on the file input
+            fileInput.click();
+
+            fileInput.remove();
         });
     }
 

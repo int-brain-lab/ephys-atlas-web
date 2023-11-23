@@ -495,7 +495,8 @@ body.waiting * {
 
 #button-new-bucket,
 #button-refresh-bucket,
-#button-remove-bucket {
+#button-remove-bucket,
+#button-upload {
     padding: 4px 8px;
     font-size: 12pt;
     font-family: monospace;
@@ -505,7 +506,8 @@ body.waiting * {
 
 #button-new-bucket:hover,
 #button-refresh-bucket:hover,
-#button-remove-bucket:hover {
+#button-remove-bucket:hover,
+#button-upload:hover {
     background-color: #ccc;
 }
 
