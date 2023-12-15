@@ -47,7 +47,7 @@
         #popup {
             position: absolute;
             top: 20px;
-            left: 20px;
+            right: 20px;
             display: none;
             background-color: white;
             padding: 10px;
@@ -432,17 +432,17 @@
 
             - extract all images_ABBREVIATION.jpg into welldone/
             - python rename.py
-            - cd welldone/
-            - ls -1 | awk -F'[_.]' '/^image_.*\.jpg$/ {print $2}' | paste -sd ","
             - # copy-paste the list of indexes to the line below
+            - cd welldone/
             - bash resize.sh # to resize all images
             - cd ..
             - rsync -avzh welldone iblviz:/var/www/ibl_website/atlas/
 
+
+            # - ls -1 | awk -F'[_.]' '/^image_.*\.jpg$/ {print $2}' | paste -sd ","
         */
 
-        const indexes = [
-            1464, 1674, 1759, 1772, 1785, 1801, 1822, 1890, 1901, 1928, 1976, 2035, 2109, 2120, 2122, 2125, 2130, 2166];
+        const indexes = [1428, 1464, 1674, 1688, 1759, 1772, 1785, 1795, 1801, 1889, 1890, 1901, 1928, 1976, 2029, 2035, 2109, 2120, 2122, 2125, 2130, 2166];
 
         const svgContainer = document.getElementById('svg-container');
         const popup = document.getElementById('popup');
