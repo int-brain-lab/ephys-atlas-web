@@ -5,6 +5,36 @@ import { clamp, displayNumber } from "./utils.js";
 
 
 /*************************************************************************************************/
+/* Utils                                                                                         */
+/*************************************************************************************************/
+
+function computeHistogram(n, cmin, cmax, values) {
+    // Initialize an array to store the histogram bins
+    const histogram = new Array(n).fill(0);
+
+    // Calculate the bin width
+    const binWidth = (cmax - cmin) / n;
+
+    // Iterate through each value and increment the corresponding bin
+    values.forEach(value => {
+        // Skip values outside the specified range
+        if (value < cmin || value >= cmax) {
+            return;
+        }
+
+        // Determine the bin index for the current value
+        const binIndex = Math.floor((value - cmin) / binWidth);
+
+        // Increment the corresponding bin
+        histogram[binIndex]++;
+    });
+
+    return histogram;
+}
+
+
+
+/*************************************************************************************************/
 /* Colorbar                                                                                      */
 /*************************************************************************************************/
 
@@ -72,20 +102,51 @@ class Colorbar {
         }
     }
 
+    getFeatureValues() {
+        // Load the region and features data.
+        let regions = this.model.getRegions(this.state.mapping);
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping);
+        let vmin = +10e100, vmax = -10e100;
+
+        // Go through all regions.
+        let values = [];
+        for (let regionIdx in regions) {
+            let region = regions[regionIdx];
+            console.assert(region);
+            let value = features ? features['data'][regionIdx] : null;
+            if (!value) {
+                continue;
+            }
+            value = value[this.state.stat];
+            values.push(value);
+            vmin = value < vmin ? value : vmin;
+            vmax = value > vmax ? value : vmax;
+        }
+        return [values, vmin, vmax];
+    }
+
     setColorbar() {
         if (!this.state.fname) {
             this.clear();
             return;
         }
 
+        // Get the data.
+        let n = 50; // number of colobar items
         let colors = this.model.getColormap(this.state.cmap);
+        let nTotal = colors.length;
         let cmin = this.state.cmapmin;
         let cmax = this.state.cmapmax;
 
-        let nTotal = colors.length;
-        let n = 50; // number of colobar items
-        let child = null;
+        // Compute the histogram.
+        let [values, vmin, vmax] = this.getFeatureValues();
+        console.log(cmin, cmax, values);
+        let histogram = computeHistogram(n, vmin, vmax, values);
+        let hmax = Math.max(...histogram);
 
+        // Generate the histogram DOM elements.
+        let child = null;
         if (this.cbar.children.length == 0) {
             for (let i = 0; i < n; i++) {
                 child = document.createElement('div');
@@ -101,8 +162,9 @@ class Colorbar {
             x = (x - cmin) / (cmax - cmin);
             x = clamp(x, 0, .9999);
             child.style.backgroundColor = colors[Math.floor(x * nTotal)];
+
+            // Histogram height.
+            child.style.height = `${histogram[i] * 100.0 / hmax}%`;
         }
     }
 };
-
-
