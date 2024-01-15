@@ -141,7 +141,6 @@ class Colorbar {
 
         // Compute the histogram.
         let [values, vmin, vmax] = this.getFeatureValues();
-        console.log(cmin, cmax, values);
         let histogram = computeHistogram(n, vmin, vmax, values);
         let hmax = Math.max(...histogram);
 
