@@ -97,6 +97,10 @@ class Coloring {
         let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
         let feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
 
+        // Compute the color as a function of the cmin/cmax slider values.
+        let vmin = features['statistics'][stat]['min'];
+        let vmax = features['statistics'][stat]['max'];
+
         let idx_lr = 1327; // Below idx_lr: right hemisphere. Above: left hemisphere.
         let hasLeft = true; // whether there is at least a left hemisphere region with a value
         let hasRight = true; // whether there is at least a left hemisphere region with a value
@@ -157,10 +161,6 @@ class Coloring {
 
             // If we make it till here, it means there is a valid value and we can compute the
             // color with the colormap.
-
-            // Compute the color as a function of the cmin/cmax slider values.
-            let vmin = features['statistics'][stat]['min'];
-            let vmax = features['statistics'][stat]['max'];
 
             if (this.state.logScale) {
                 if (vmin <= 0) {

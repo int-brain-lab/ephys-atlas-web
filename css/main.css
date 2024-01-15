@@ -226,9 +226,12 @@ body.waiting * {
     position: absolute;
     top: 10px;
     right: 10px;
-    /* left: calc(50% + 500px); */
     width: var(--left-panel-width);
     z-index: 100;
+}
+
+#control-panel * {
+    font-size: 10pt;
 }
 
 #control-panel>details {
@@ -239,7 +242,7 @@ body.waiting * {
     cursor: pointer;
     font-weight: 500;
 
-    font-size: 16px;
+    /* font-size: 16px; */
     text-transform: uppercase;
     font-family: roboto-condensed;
     white-space: nowrap;
@@ -266,6 +269,10 @@ body.waiting * {
 
 #control-panel .control .slider {
     display: block;
+    width: 100%;
+}
+
+#control-panel .control .input-number {
     width: 100%;
 }
 

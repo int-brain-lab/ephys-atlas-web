@@ -110,11 +110,15 @@ class Volume {
 
         /* Update the canvases when the colormap changes. */
         this.dispatcher.on('cmap', async (ev) => {
-            this.setCmap();
-            this.draw();
+            if (this.state.isVolume) {
+                this.setCmap();
+                this.draw();
+            }
         });
         this.dispatcher.on('cmapRange', async (ev) => {
-            this.draw();
+            if (this.state.isVolume) {
+                this.draw();
+            }
         });
     }
 

@@ -1,7 +1,6 @@
 export { Panel };
 
-import { clamp, setOptions, throttle } from "./utils.js";
-// import { DEFAULT_FEATURE } from "./state.js";
+import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
 
 
 
@@ -30,6 +29,8 @@ class Panel {
         this.istat = document.getElementById('stat-dropdown');
         this.icmapmin = document.getElementById('colormap-min');
         this.icmapmax = document.getElementById('colormap-max');
+        this.icmapminInput = document.getElementById('colormap-min-input');
+        this.icmapmaxInput = document.getElementById('colormap-max-input');
         this.iclog = document.getElementById('log-scale');
         this.ibreset = document.getElementById('reset-view-button');
         this.ibclear = document.getElementById('clear-cache-button');
@@ -41,8 +42,7 @@ class Panel {
         this.setupMapping();
         this.setupStat();
         this.setupColormap();
-        this.setupColormapMin();
-        this.setupColormapMax();
+        this.setupColormapRange();
         this.setupLogScale();
 
         this.setupClearButton();
@@ -83,6 +83,13 @@ class Panel {
             if (source != this && ev.name)
                 this.imapping.value = ev.name;
         });
+
+        // Display the cmap range once the features are loaded.
+        this.dispatcher.on('feature', (ev, source, fname) => {
+            let [vminMod, vmaxMod] = this._toMinMaxValues(this.state.cmapmin, this.state.cmapmax);
+            this.icmapminInput.value = displayNumber(vminMod);
+            this.icmapmaxInput.value = displayNumber(vmaxMod);
+        });
     }
 
     /* Set functions                                                                             */
@@ -112,9 +119,13 @@ class Panel {
         this.icmap.value = cmap;
     }
 
-    setCmapRange(cmapmin, cmapmax) {
-        this.icmapmin.value = cmapmin;
-        this.icmapmax.value = cmapmax;
+    async setCmapRange(cmin, cmax) {
+        this.icmapmin.value = cmin;
+        this.icmapmax.value = cmax;
+
+        // let [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
+        // this.icmapminInput.value = vminMod;
+        // this.icmapmaxInput.value = vmaxMod;
     }
 
     setLogScale(logScale) {
@@ -154,9 +165,7 @@ class Panel {
         });
     }
 
-    _updateColormapRange() {
-        let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
-        let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
+    _updateColormapRange(cmin, cmax) {
 
         this.state.cmapmin = cmin;
         this.state.cmapmax = cmax;
@@ -164,14 +173,65 @@ class Panel {
         this.dispatcher.cmapRange(this, cmin, cmax);
     }
 
-    setupColormapMin() {
-        this.icmapmin.addEventListener(
-            'input', throttle((e) => { this._updateColormapRange(); }, CMAP_RANGE_THROTTLE));
+    _toMinMaxValues(cmin, cmax) {
+        let stat = this.state.stat;
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping);
+        let vmin = features['statistics'][stat]['min'];
+        let vmax = features['statistics'][stat]['max'];
+        let vdiff = vmax - vmin;
+        let vminMod = vmin + vdiff * cmin / 100.0;
+        let vmaxMod = vmin + vdiff * cmax / 100.0;
+        return [vminMod, vmaxMod];
     }
 
-    setupColormapMax() {
-        this.icmapmax.addEventListener(
-            'input', throttle((e) => { this._updateColormapRange(); }, CMAP_RANGE_THROTTLE));
+    _fromMinMaxValues(vminMod, vmaxMod) {
+        let stat = this.state.stat;
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping);
+        let vmin = features['statistics'][stat]['min'];
+        let vmax = features['statistics'][stat]['max'];
+        let vdiff = vmax - vmin;
+        let cmin = (vminMod - vmin) * 100.0 / vdiff;
+        let cmax = (vmaxMod - vmin) * 100.0 / vdiff;
+        return [cmin, cmax];
+    }
+
+    setupColormapRange() {
+
+        // Slider.
+        let onSlider = throttle((e) => {
+            let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
+            let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
+            this._updateColormapRange(cmin, cmax);
+
+            // Update the input number fields.
+            let [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
+            this.icmapminInput.value = displayNumber(vminMod);
+            this.icmapmaxInput.value = displayNumber(vmaxMod);
+
+        }, CMAP_RANGE_THROTTLE);
+
+        this.icmapmin.addEventListener('input', onSlider);
+        this.icmapmax.addEventListener('input', onSlider);
+
+
+
+        //
+
+        // // Input.
+        // let onInput = throttle((e) => {
+        //     let vminMod = Math.min(this.icmapminInput.value, this.icmapmaxInput.value);
+        //     let vmaxMod = Math.max(this.icmapmaxInput.value, this.icmapmaxInput.value);
+        //     let [cmin, cmax] = this._fromMinMaxValues(vminMod, vmaxMod);
+        //     this._updateColormapRange(cmin, cmax);
+
+        //     this.icmapmin.value = cmin;
+        //     this.icmapmax.value = cmax;
+        // }, CMAP_RANGE_THROTTLE);
+
+        // this.icmapminInput.addEventListener('input', onInput);
+        // this.icmapmaxInput.addEventListener('input', onInput);
     }
 
     setupLogScale() {
@@ -194,7 +254,6 @@ class Panel {
     setupClearButton() {
         this.ibclear.addEventListener('click', (e) => {
             if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
-                // this.model.deleteDatabase();
 
                 if ('caches' in window) {
                     caches.keys().then(cacheNames => {

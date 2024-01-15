@@ -110,8 +110,13 @@
             <div class="label">colormap range</div>
 
             <div class="control">
-                <input type="range" min="0" max="100" value="0" class="slider" id="colormap-min">
-                <input type="range" min="0" max="100" value="100" class="slider" id="colormap-max">
+                <input type="number" disabled="true" class="input-number" id="colormap-min-input">
+                <input type="range" step="0.1" min="0" max="100" value="0" class="slider" id="colormap-min">
+            </div>
+
+            <div class="control">
+                <input type="number" disabled="true" class="input-number" id="colormap-max-input">
+                <input type="range" step="0.1" min="0" max="100" value="100" class="slider" id="colormap-max">
             </div>
 
             <!-- LOG SCALE -->
