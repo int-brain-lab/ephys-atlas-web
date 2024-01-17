@@ -598,6 +598,12 @@ body.waiting * {
     /* background-color: red; */
 }
 
+#bar-scale hr {
+    border: 1px solid #eee;
+    position: relative;
+    top: -10px;
+}
+
 #bar-scale .wrapper {
     height: 12px;
 
