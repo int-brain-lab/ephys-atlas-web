@@ -594,6 +594,7 @@ body.waiting * {
 #bar-scale .colorbar div {
     flex-grow: 1;
     height: 100%;
+    border-top: 2px solid #0007;
     /* background-color: red; */
 }
 

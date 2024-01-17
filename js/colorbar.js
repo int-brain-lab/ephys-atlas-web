@@ -68,6 +68,8 @@ class Colorbar {
         this.dispatcher.on('feature', (e) => { this.setColorbar(); this.setFeatureRange(); });
         this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
         this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });
+        this.dispatcher.on('mapping', (e) => { this.setColorbar(); });
+        this.dispatcher.on('stat', (e) => { this.setColorbar(); });
     }
 
     /* Internal functions                                                                        */
@@ -163,7 +165,7 @@ class Colorbar {
             child.style.backgroundColor = colors[Math.floor(x * nTotal)];
 
             // Histogram height.
-            child.style.height = `${histogram[i] * 100.0 / hmax}%`;
+            child.style.height = `calc(10px + ${histogram[i] * 100.0 / hmax}%)`;
         }
     }
 };
