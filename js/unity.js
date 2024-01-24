@@ -97,6 +97,7 @@ class Unity {
 
         // NOTE: do not through an error if the areas were not set, just save the colors
         // NOTE: how to reset the colors?
+        console.log(colors.toString());
         this.instance.SendMessage('main', 'SetColors', colors.toString());
     }
 
@@ -130,6 +131,7 @@ class Unity {
         }
 
         if (acronyms) {
+            console.log(acronyms.toString());
             this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
         }
 
@@ -160,6 +162,7 @@ class Unity {
         }
 
         // this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
+        console.log(visibility.toString());
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
         this.setExploded(this.state.exploded);
     }
