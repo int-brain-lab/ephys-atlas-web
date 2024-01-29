@@ -45,23 +45,25 @@ class Unity {
         });
     }
 
+    setState(state) {
+        this.update();
+    }
+
     update() {
-        this.setAreas();
-        // this.setExploded();
-        // this.setVisibility();
+        this.setRegions();
+        this.setExploded();
+        this.setVisibility();
     }
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('mapping', (e) => { this.update(); });
-        this.dispatcher.on('feature', (e) => { this.update(); });
-        this.dispatcher.on('data', (e) => {
-            if (e.name == "regionColors") {
-                this.setColors(e.data);
-            }
-        });
+        this.dispatcher.on('mapping', (e) => { this.setRegions(); });
+        this.dispatcher.on('feature', (e) => { this.setRegions(false); });
+        this.dispatcher.on('cmap', (e) => { this.setRegions(false); });
+        this.dispatcher.on('cmapRange', (e) => { this.setRegions(false); });
+        this.dispatcher.on('logScale', (e) => { this.setRegions(false); });
     }
 
     setupSlider() {
@@ -85,48 +87,39 @@ class Unity {
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    // Tell Unity what mapping we are using
-    setAreas() {
+    setRegions(areasChanged = true) {
         if (!this.loaded) return;
 
         let regions = this.model.getRegions(this.state.mapping);
+        let regionColors = this.model.getColors(this.state);
+        if (!regionColors) this.dispatcher.spinning(this, false);
 
-        // Construct the list of region acronyms to send to Unity.
+        // Construct the list of region acronyms and colors to send to Unity.
         let acronyms = []
+        let colors = [];
         for (let regionIdx in regions) {
             let region = regions[regionIdx];
             let acronym = region['acronym'];
             let h = region['atlas_id'] < 0 ? 'l' : 'r';
             acronym = h + acronym;
             acronyms.push(acronym);
-        }
 
-        if (acronyms) {
-            this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
-        }
-
-        // HACK: trigger a callback in the Coloring module that will compute the colors, and pass
-        // them to the setColors() method here via the "colors" event.
-        // this.loaded = true;
-        // this.dispatcher.unityLoaded(this, this.instance);
-    }
-
-    setColors(regionColors) {
-        if (!this.loaded) return;
-
-        let regions = this.model.getRegions(this.state.mapping);
-        let colors = [];
-        for (let regionIdx in regions) {
-            let region = regions[regionIdx];
             let color = (
                 (regionColors ? regionColors[regionIdx] : null) ||
                 (region["atlas_id"] > 0 ? '-' : '#ffffff'));
             colors.push(`${color.toUpperCase()}`);
         }
-        this.instance.SendMessage('main', 'SetColors', colors.toString());
+
+        if (acronyms) {
+            if (areasChanged)
+                this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
+            this.instance.SendMessage('main', 'SetColors', colors.toString());
+        }
     }
 
     setExploded(value) {
+        value = value || this.state.exploded;
+
         if (value == undefined) return;
         if (typeof value == "string")
             value = parseFloat(value);
@@ -138,28 +131,27 @@ class Unity {
 
     // Set the visibility of regions, for use when regions are selected
     setVisibility() {
-        // if (!this.instance) return;
+        if (!this.loaded) return;
 
-        // let regions = this.model.getRegions(this.state.mapping);
+        let regions = this.model.getRegions(this.state.mapping);
 
-        // let visibility = [];
-        // let anySelected = this.state.selected.size > 0;
+        let visibility = [];
+        let anySelected = this.state.selected.size > 0;
 
-        // if (anySelected) {
-        //     for (let regionIdx in regions) {
-        //         visibility.push(this.state.selected.has(regionIdx));
-        //     }
-        // }
-        // else {
-        //     for (let region in regions) {
-        //         visibility.push(true);
-        //     }
-        // }
+        if (anySelected) {
+            for (let regionIdx in regions) {
+                visibility.push(this.state.selected.has(regionIdx));
+            }
+        }
+        else {
+            for (let region in regions) {
+                visibility.push(true);
+            }
+        }
 
-        // // this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
-        // // console.log(visibility.toString());
-        // this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
-        // this.setExploded(this.state.exploded);
+        console.log(visibility.toString());
+        this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
+        this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
     }
 
 }
