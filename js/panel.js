@@ -177,6 +177,7 @@ class Panel {
         let stat = this.state.stat;
         let features = this.state.isVolume ? null : this.model.getFeatures(
             this.state.bucket, this.state.fname, this.state.mapping);
+        if (!features) return [0, 0];
         let vmin = features['statistics'][stat]['min'];
         let vmax = features['statistics'][stat]['max'];
         let vdiff = vmax - vmin;

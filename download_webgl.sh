@@ -1,2 +1,2 @@
-rsync -avzh iblviz:/var/www/ibl_website/ephys-atlas-web/Build .
-rsync -avzh iblviz:/var/www/ibl_website/ephys-atlas-web/StreamingAssets .
+rsync -avzh iblviz:/var/www/ibl_website/atlas/Build .
+rsync -avzh iblviz:/var/www/ibl_website/atlas/StreamingAssets .

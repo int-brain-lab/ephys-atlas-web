@@ -45,20 +45,21 @@ class Unity {
         });
     }
 
-    async update() {
+    update() {
         this.setAreas();
-        this.setExploded();
-        this.setVisibility();
+        // this.setExploded();
+        // this.setVisibility();
     }
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('data', (ev) => {
-            if (!this.instance) return;
-            if (ev.name == 'regionColors') {
-                this.setColors(ev.data);
+        this.dispatcher.on('mapping', (e) => { this.update(); });
+        this.dispatcher.on('feature', (e) => { this.update(); });
+        this.dispatcher.on('data', (e) => {
+            if (e.name == "regionColors") {
+                this.setColors(e.data);
             }
         });
     }
@@ -77,46 +78,16 @@ class Unity {
 
     loadedCallback() {
         console.log("unity has loaded!");
-        // this.splash.add(UNITY_SPLASH_TOTAL);
+        this.loaded = true;
         this.update();
-    }
-
-    setColors(regionColors) {
-        if (!this.loaded) return;
-
-        let regions = this.model.getRegions(this.state.mapping);
-
-        let colors = []
-        for (let regionIdx in regions) {
-            let region = regions[regionIdx];
-            let color = (
-                (regionColors ? regionColors[regionIdx] : null) ||
-                (region.atlas_id > 0 ? '-' : '#FFFFFF'));
-            colors.push(`${color.toUpperCase()}`);
-        }
-
-        // NOTE: do not through an error if the areas were not set, just save the colors
-        // NOTE: how to reset the colors?
-        console.log(colors.toString());
-        this.instance.SendMessage('main', 'SetColors', colors.toString());
     }
 
     /* Set functions                                                                             */
     /*********************************************************************************************/
 
-    setExploded(value) {
-        if (value == undefined) return;
-        if (typeof value == "string")
-            value = parseFloat(value);
-        this.state.exploded = value;
-        if (this.instance) {
-            this.instance.SendMessage('main', 'SetPercentageExploded', value);
-        }
-    }
-
     // Tell Unity what mapping we are using
     setAreas() {
-        if (!this.instance) return;
+        if (!this.loaded) return;
 
         let regions = this.model.getRegions(this.state.mapping);
 
@@ -131,40 +102,64 @@ class Unity {
         }
 
         if (acronyms) {
-            console.log(acronyms.toString());
             this.instance.SendMessage('main', 'SetAreas', acronyms.toString());
         }
 
         // HACK: trigger a callback in the Coloring module that will compute the colors, and pass
         // them to the setColors() method here via the "colors" event.
-        this.loaded = true;
-        this.dispatcher.unityLoaded(this, this.instance);
+        // this.loaded = true;
+        // this.dispatcher.unityLoaded(this, this.instance);
+    }
+
+    setColors(regionColors) {
+        if (!this.loaded) return;
+
+        let regions = this.model.getRegions(this.state.mapping);
+        let colors = [];
+        for (let regionIdx in regions) {
+            let region = regions[regionIdx];
+            let color = (
+                (regionColors ? regionColors[regionIdx] : null) ||
+                (region["atlas_id"] > 0 ? '-' : '#ffffff'));
+            colors.push(`${color.toUpperCase()}`);
+        }
+        this.instance.SendMessage('main', 'SetColors', colors.toString());
+    }
+
+    setExploded(value) {
+        if (value == undefined) return;
+        if (typeof value == "string")
+            value = parseFloat(value);
+        this.state.exploded = value;
+        if (this.loaded) {
+            this.instance.SendMessage('main', 'SetPercentageExploded', value);
+        }
     }
 
     // Set the visibility of regions, for use when regions are selected
     setVisibility() {
-        if (!this.instance) return;
+        // if (!this.instance) return;
 
-        let regions = this.model.getRegions(this.state.mapping);
+        // let regions = this.model.getRegions(this.state.mapping);
 
-        let visibility = [];
-        let anySelected = this.state.selected.size > 0;
+        // let visibility = [];
+        // let anySelected = this.state.selected.size > 0;
 
-        if (anySelected) {
-            for (let regionIdx in regions) {
-                visibility.push(this.state.selected.has(regionIdx));
-            }
-        }
-        else {
-            for (let region in regions) {
-                visibility.push(true);
-            }
-        }
+        // if (anySelected) {
+        //     for (let regionIdx in regions) {
+        //         visibility.push(this.state.selected.has(regionIdx));
+        //     }
+        // }
+        // else {
+        //     for (let region in regions) {
+        //         visibility.push(true);
+        //     }
+        // }
 
-        // this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
-        console.log(visibility.toString());
-        this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
-        this.setExploded(this.state.exploded);
+        // // this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
+        // // console.log(visibility.toString());
+        // this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
+        // this.setExploded(this.state.exploded);
     }
 
 }
