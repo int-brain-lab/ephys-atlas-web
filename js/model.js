@@ -263,6 +263,9 @@ class Model {
         for (let relidx in regions) {
             let region = regions[relidx];
             let regionIdx = region['idx'];
+            // NOTE: skip non-leaf Allen regions
+            if (mapping == "allen" && !region['leaf'])
+                continue;
             kept[regionIdx] = region;
         }
         // regions = Object.values(regions).filter(region => region.atlas_id >= 0);

@@ -24,7 +24,8 @@ from server import new_uuid, create_bucket_metadata, create_bucket, create_featu
 # Constants
 # -------------------------------------------------------------------------------------------------
 
-BWM_FSETS = ('block', 'choice', 'feedback', 'stimulus', 'wheel_speed', 'wheel_velocity')
+BWM_FSETS = ('block', 'choice', 'feedback', 'stimulus',
+             'wheel_speed', 'wheel_velocity')
 BWM_FNAMES = (
     'decoding',
     'single_cell',
@@ -74,17 +75,19 @@ def get_mappings():
     out = {}
     for mapping in MAPPINGS:
         regions = pd.read_parquet(DATA_DIR / f'pqt/{mapping}_regions.pqt')
-        out[mapping] = {
-            abs(idx_): {
+        out[mapping] = [
+            {
+                'idx': abs(idx_),
                 'atlas_id': atlas_id_,
                 'acronym': acronym_,
                 'name': name_,
                 'hex': hex_,
+                'leaf': leaf_,
             }
-            for idx_, atlas_id_, acronym_, name_, hex_ in zip(
+            for idx_, atlas_id_, acronym_, name_, hex_, leaf_ in zip(
                 regions['idx'], regions['atlas_id'], regions['acronym'],
-                regions['atlas_name'], regions['hex'])
-        }
+                regions['atlas_name'], regions['hex'], regions['leaf'])
+        ]
         # out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
     return out
 
@@ -264,7 +267,8 @@ def generate_bwm_features():
     df_feedback = pd.read_parquet(DATA_DIR / 'pqt/feedback_bwm.pqt')
     df_stimulus = pd.read_parquet(DATA_DIR / 'pqt/stimulus_bwm.pqt')
     df_wheel_speed = pd.read_parquet(DATA_DIR / 'pqt/wheel_speed_bwm.pqt')
-    df_wheel_velocity = pd.read_parquet(DATA_DIR / 'pqt/wheel_velocity_bwm.pqt')
+    df_wheel_velocity = pd.read_parquet(
+        DATA_DIR / 'pqt/wheel_velocity_bwm.pqt')
 
     # Detect boolean columns.
     def _debooleanize(df):
@@ -387,8 +391,10 @@ def create_bwm_features(patch=False, dry_run=False):
             fnames.append(fname)
             print(f'/api/buckets/{alias}/{fname}')
             if not dry_run:
-                feature_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
-                print(create_features(bucket_uuid, fname, feature_data, patch=patch))
+                feature_data = {'mappings': {
+                    mapping: d for _, mapping, d in mappings}}
+                print(create_features(bucket_uuid,
+                      fname, feature_data, patch=patch))
 
     # Generate the BWM tree.
     tree = {
@@ -430,5 +436,8 @@ def create_bwm_features(patch=False, dry_run=False):
 
 
 if __name__ == '__main__':
-    generate_bwm_features()
-    create_bwm_features()
+    mappings = get_mappings()
+    generate_regions_json(mappings)
+
+    # generate_bwm_features()
+    # create_bwm_features()
