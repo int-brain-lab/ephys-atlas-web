@@ -15,6 +15,12 @@ public class MiniBrainManager : MonoBehaviour
     [SerializeField] private List<string> _materialNames;
     [SerializeField] private List<Material> _materialOpts;
 
+#if UNITY_EDITOR
+    [SerializeField] private string areasString;
+    [SerializeField] private string colorsString;
+    [SerializeField] private string visibilityString;
+#endif
+
     Dictionary<string, CCFTreeNode> modelNodes;
     private Dictionary<string, Material> _materials;
 
@@ -66,9 +72,12 @@ public class MiniBrainManager : MonoBehaviour
 
 #if UNITY_EDITOR
         // Test code
-        SetAreas("lPN,lPa4,lPDTg,lVeCB,lPa5,lHATA,lPeF,lVMPO,lIntG,lPoT,lPIL,lXi,lEth,lI5,lPC5,lAcs5,lP5,lMA3,lRPF,lAPr,lProS,lVISpor,lVISli,lVISa,lSSp-un,lIAM,lIAD,lPS,lIA,lPRNc,lCUL4 5,lPRE,lPR,lPPY,lANcr2,lPPT,lGU,lANcr1,lPPN,lFL,lGRN,lPP,lPFL,lGR,lPOST,lCOPY,lGPi,lPOL,lAUDpo,lPRM,lGPe,lPO,lAUDv,lAUDd,lSIM,lPMv,lAUDp,lFS,lMOs,lFN,lMOp,lCENT3,lFC,lPMd,lCENT2,lEW,lPL,lNOD,lEPv,lPIR,lUVU,lEPd,lPYR,lPH,lFOTU,lPGRN,lDEC,lPG,lPF,lENTm,lPERI,lENTl,lLING,lPCN,lECU,lPCG,lECT,lRSPagl,lRSPv,lDTN,lRSPd,lPBG,lDR,lPB,lPAS,lPARN,lDN,lPAR,lDMX,lDMH,lDP,lZI,lPAG,lPAA,ly,lPA,lXII,lx,lVTN,lOT,lVTA,lORBvl,lVPMpc,lVPM,lORBm,lDG,lVPLpc,lORBl,lVPL,lCU,lOP,lVMH,lVLPO,lVM,lCS,lVISC,lCP,lVII,lVI,lNTS,lCOAp,lNTB,lCOAa,lNPC,lVAL,lNOT,lV,lNLOT,lCUN,lTU,lNLL,lSPA,lTTv,lNI,lCM,lTTd,lNDB,lCLI,lCLA,lTRS,lNB,lCL,lTRN,lTR,lMS,lTM,lTEa,lCEA,lSUT,lVISpm,lMPT,lSUM,lMPO,lMPN,lMOB,lSUB,lMM,lMH,lMG,lSTN,lCA3,lMEPO,lSPVO,lSPVI,lSPVC,lVISpl,lCA2,lVISrl,lVISl,lSPF,lMEA,lVISal,lSOC,lMDRN,lVISam,lSO,lVISp,lCA1,lSNr,lSSs,lSNc,lICB,lSSp-ul,lSMT,lPSTN,lMD,lSSp-tr,lSLD,lSSp-n,lBST,lSLC,lSBPV,lSSp-m,lSI,lSFO,lSSp-ll,lSH,lSSp-bfd,lSGN,lSubG,lBMA,lSG,lSF,lMARN,lSCs,lMA,lBLA,lSCm,lBA,lSCH,lB,lAVPV,lSAG,lLSv,lAVP,lRT,lLSr,lAV,lLSc,lRR,lRPO,lLRN,lAT,lRPA,lLPO,lSPIV,lARH,lRO,lLP,lSUV,lAPN,lRN,lLM,lLAV,lAP,lRM,lLIN,lMV,lRL,lLHA,lRH,lLH,lFRP,lRE,lLGv,lNR,lRCH,lLGd,lPRP,lLDT,lAON,lLD,lAOB,lPVT,lLC,lPRNr,lIRN,lAMB,lPVpo,lLA,lMRN,lAM,lPVp,lAIv,lPVi,lIV,lAIp,lISN,lAId,lVCO,lIPN,lDCO,lIP,lAHN,lIO,lDT,lADP,lLT,lAD,lPVHd,lIMD,lMT,lACB,lACAv,lILA,lACAd,lPVH,lIII,lPVa,lIGL,lAAA,lIG,lPT,lIF,lPSV,lIC,rvoid,rIC,rPSV,rIF,rPT,rIG,rAAA,rIGL,rPVa,rIII,rPVH,rACAd,rILA,rACAv,rACB,rMT,rIMD,rPVHd,rAD,rLT,rADP,rDT,rIO,rAHN,rIP,rDCO,rIPN,rVCO,rAId,rISN,rAIp,rIV,rPVi,rAIv,rPVp,rAM,rMRN,rLA,rPVpo,rAMB,rIRN,rPRNr,rLC,rPVT,rAOB,rLD,rAON,rLDT,rPRP,rLGd,rRCH,rNR,rLGv,rRE,rFRP,rLH,rRH,rLHA,rRL,rMV,rLIN,rRM,rAP,rLAV,rLM,rRN,rAPN,rSUV,rLP,rRO,rARH,rSPIV,rLPO,rRPA,rAT,rLRN,rRPO,rRR,rLSc,rAV,rLSr,rRT,rAVP,rLSv,rSAG,rAVPV,rB,rSCH,rBA,rSCm,rBLA,rMA,rSCs,rMARN,rSF,rSG,rBMA,rSubG,rSGN,rSSp-bfd,rSH,rSSp-ll,rSFO,rSI,rSSp-m,rSBPV,rSLC,rBST,rSSp-n,rSLD,rSSp-tr,rMD,rPSTN,rSMT,rSSp-ul,rICB,rSNc,rSSs,rSNr,rCA1,rVISp,rSO,rVISam,rMDRN,rSOC,rVISal,rMEA,rSPF,rVISl,rVISrl,rCA2,rVISpl,rSPVC,rSPVI,rSPVO,rMEPO,rCA3,rSTN,rMG,rMH,rMM,rSUB,rMOB,rMPN,rMPO,rSUM,rMPT,rVISpm,rSUT,rCEA,rTEa,rTM,rMS,rTR,rTRN,rCL,rNB,rTRS,rCLA,rCLI,rNDB,rTTd,rCM,rNI,rTTv,rSPA,rNLL,rTU,rCUN,rNLOT,rV,rNOT,rVAL,rNPC,rCOAa,rNTB,rCOAp,rNTS,rVI,rVII,rCP,rVISC,rCS,rVM,rVLPO,rVMH,rOP,rCU,rVPL,rORBl,rVPLpc,rDG,rORBm,rVPM,rVPMpc,rORBvl,rVTA,rOT,rVTN,rx,rXII,rPA,ry,rPAA,rPAG,rZI,rDP,rDMH,rDMX,rPAR,rDN,rPARN,rPAS,rPB,rDR,rPBG,rRSPd,rDTN,rRSPv,rRSPagl,rECT,rPCG,rECU,rPCN,rLING,rENTl,rPERI,rENTm,rPF,rPG,rDEC,rPGRN,rFOTU,rPH,rPYR,rEPd,rUVU,rPIR,rEPv,rNOD,rPL,rEW,rCENT2,rPMd,rFC,rCENT3,rMOp,rFN,rMOs,rroot,rFS,rAUDp,rPMv,rSIM,rAUDd,rAUDv,rPO,rGPe,rPRM,rAUDpo,rPOL,rGPi,rCOPY,rPOST,rGR,rPFL,rPP,rGRN,rFL,rPPN,rANcr1,rGU,rPPT,rANcr2,rPPY,rPR,rPRE,rCUL4 5,rPRNc,rIA,rPS,rIAD,rIAM,rSSp-un,rVISa,rVISli,rVISpor,rProS,rAPr,rRPF,rMA3,rP5,rAcs5,rPC5,rI5,rEth,rXi,rPIL,rPoT,rIntG,rVMPO,rPeF,rHATA,rPa5,rVeCB,rPDTg,rPa4,rPN");
-        SetColors("#FFFFFF,#3F4788,#38588C,#39558C,#2A768E,#2EB37C,#443A83,#FFFFFF,#287C8E,#424186,#3C508B,#482173,#3E4989,#20938C,#2A768E,#FFFFFF,#2E6D8E,#32658E,#38588C,#218F8D,#86D549,#24878E,#20A486,#93D741,#25AC82,#460B5E,#453882,#3B528B,#277E8E,#443A83,#306A8E,#1F998A,#1FA088,#FFFFFF,#20928C,#1FA287,#2B748E,#2C718E,#46327E,#31688E,#3C508B,#228D8D,#2B748E,#FFFFFF,#1E9B8A,#32658E,#3C508B,#2D708E,#1F998A,#24878E,#39558C,#32658E,#26818E,#238A8D,#32658E,#FFFFFF,#20938C,#306A8E,#20928C,#414487,#228D8D,#33638D,#3DBC74,#FFFFFF,#3B528B,#433E85,#29798E,#33638D,#1FA287,#28AE80,#32658E,#1F998A,#31688E,#33638D,#2D708E,#3E4989,#2E6D8E,#33638D,#3D4D8A,#3ABA76,#48C16E,#24AA83,#463480,#28AE80,#3F4788,#472E7C,#20938C,#3DBC74,#28AE80,#482475,#32B67A,#39558C,#3B528B,#3E4989,#24AA83,#31688E,#414487,#24878E,#2C718E,#2C718E,#26828E,#34608D,#3C508B,#24AA83,#481D6F,#25AC82,#8ED645,#3F4788,#39558C,#1F968B,#375B8D,#287C8E,#33638D,#32658E,#24878E,#FDE725,#3C508B,#20A486,#31688E,#1F9E89,#1F9E89,#277E8E,#3F4788,#365D8D,#38588C,#2B748E,#375B8D,#34608D,#FFFFFF,#2A768E,#32B67A,#FFFFFF,#1F9E89,#287C8E,#3B528B,#20A486,#1F968B,#25858E,#3E4989,#306A8E,#39558C,#433E85,#25AC82,#365D8D,#46327E,#20938C,#2C718E,#453882,#33638D,#3B528B,#26828E,#1E9B8A,#433E85,#CAE11F,#2B748E,#FFFFFF,#28AE80,#2E6D8E,#29798E,#5CC863,#20A486,#2D708E,#453882,#433E85,#9BD93C,#3DBC74,#31688E,#20928C,#2D708E,#3F4788,#7FD34E,#26828E,#2B748E,#31688E,#2B748E,#26818E,#73D056,#4CC26C,#48C16E,#443A83,#29798E,#228D8D,#33638D,#31688E,#6ECE58,#FFFFFF,#3DBC74,#BDDF26,#306A8E,#24878E,#31688E,#472E7C,#2A768E,#287C8E,#FFFFFF,#277E8E,#3ABA76,#FFFFFF,#22A785,#482475,#FFFFFF,#FFFFFF,#20A486,#3B528B,#1F968B,#1F998A,#482475,#22A785,#287C8E,#3ABA76,#1E9B8A,#FFFFFF,#306A8E,#453882,#1FA088,#365D8D,#277E8E,#306A8E,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#463480,#443A83,#3F4788,#2E6D8E,#3F4788,#287C8E,#443A83,#38588C,#39558C,#39558C,#3B528B,#FFFFFF,#39558C,#39558C,#FFFFFF,#228D8D,#20938C,#433E85,#2D708E,#38588C,#31688E,#424186,#FFFFFF,#FFFFFF,#3B528B,#3B528B,#375B8D,#414487,#471063,#1F968B,#1FA088,#440154,#20A486,#FFFFFF,#FFFFFF,#1F9E89,#31688E,#46085C,#35B779,#24878E,#22A785,#33638D,#481B6D,#424186,#31688E,#433E85,#FFFFFF,#26818E,#3C508B,#31688E,#FFFFFF,#29798E,#FFFFFF,#FFFFFF,#20928C,#FFFFFF,#2B748E,#375B8D,#306A8E,#3B528B,#3E4989,#3D4D8A,#2D708E,#28AE80,#433E85,#FFFFFF,#FFFFFF,#471063,#2A768E,#26818E,#31688E,#29798E,#2C718E,#24878E,#460B5E,#424186,#FFFFFF,#1F9E89,#24878E,#3C508B,#2C718E,#31688E,#2B748E,#306A8E,#218F8D,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF");
-        //SetVisibilities("");
+        if (areasString.Length > 0)
+            SetAreas(areasString);
+        if (colorsString.Length > 0)
+            SetColor(colorsString);
+        if (visibilityString.Length > 0)
+            SetVisibilities(visibilityString);
 #endif
     }
 
@@ -142,6 +151,9 @@ public class MiniBrainManager : MonoBehaviour
     /// <param name="areas"></param>
     public void SetAreas(string areas)
     {
+#if UNITY_EDITOR
+        Debug.Log(areas);
+#endif
         foreach (CCFTreeNode node in _areas)
         {
             node.SetNodeModelVisibility_Left(false);
@@ -156,12 +168,22 @@ public class MiniBrainManager : MonoBehaviour
 
         foreach (string area in areaAcronyms)
         {
-            _areaSideLeft.Add(area.Substring(0, 1) == "l");
+            string sideStr = area.Substring(0, 1);
+            string acronymStr = area.Substring(1, area.Length - 1);
 
-            CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(area.Substring(1, area.Length - 1)));
+#if UNITY_EDITOR
+            Debug.Log($"Searching for {sideStr} {acronymStr}");
+#endif
+
+            _areaSideLeft.Add(sideStr == "l");
+
+            CCFTreeNode node = _modelControl.GetNode(_modelControl.Acronym2ID(acronymStr));
             
             if (node != null)
             {
+#if UNITY_EDITOR
+                Debug.Log($"Found {acronymStr}");
+#endif
                 // reset color
                 node.SetColor(node.DefaultColor);
 
@@ -181,10 +203,16 @@ public class MiniBrainManager : MonoBehaviour
 
     public void SetColors(string colors)
     {
+#if UNITY_EDITOR
+        Debug.Log(colors);
+#endif
         string[] hexColors = colors.Split(",");
 
         if (hexColors.Length != _areas.Count)
-            throw new System.Exception("Number of areas set by SetAreas must match number of colors in SetColors");
+        {
+            Debug.Log("Number of areas set by SetAreas must match number of colors in SetColors");
+            return;
+        }
 
         for (int i = 0; i < hexColors.Length; i++)
         {
@@ -200,11 +228,17 @@ public class MiniBrainManager : MonoBehaviour
 
     public void SetVisibilities(string visibilities)
     {
+#if UNITY_EDITOR
+        Debug.Log(visibilities);
+#endif
         string[] visibility = visibilities.Split(",");
         bool[] visibilityb = visibility.Select(x => bool.Parse(x)).ToArray();
 
         if (visibility.Length != _areas.Count)
-            throw new System.Exception("Number of areas set by SetVisibilities must match number of colors in SetColors");
+        {
+            Debug.Log("Number of areas set by SetVisibilities must match number of colors in SetColors");
+            return;
+        }
 
         // some areas are selected
         if (_anySelected)
