@@ -3,7 +3,10 @@
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-export const DEBUG = false;
+export const DEBUG = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+console.info("DEBUG:", DEBUG);
+
+export const BASE_URL = DEBUG ? 'https://localhost:5000' : 'https://features.internationalbrainlab.org';
 
 export const SLICE_MAX = {
     coronal: 1320,

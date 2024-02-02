@@ -8,7 +8,7 @@ import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const CMAP_RANGE_THROTTLE = 100; // number of milliseconds between updates
+const CMAP_RANGE_THROTTLE = 250; // number of milliseconds between updates
 
 
 /*************************************************************************************************/
@@ -215,24 +215,6 @@ class Panel {
 
         this.icmapmin.addEventListener('input', onSlider);
         this.icmapmax.addEventListener('input', onSlider);
-
-
-
-        //
-
-        // // Input.
-        // let onInput = throttle((e) => {
-        //     let vminMod = Math.min(this.icmapminInput.value, this.icmapmaxInput.value);
-        //     let vmaxMod = Math.max(this.icmapmaxInput.value, this.icmapmaxInput.value);
-        //     let [cmin, cmax] = this._fromMinMaxValues(vminMod, vmaxMod);
-        //     this._updateColormapRange(cmin, cmax);
-
-        //     this.icmapmin.value = cmin;
-        //     this.icmapmax.value = cmax;
-        // }, CMAP_RANGE_THROTTLE);
-
-        // this.icmapminInput.addEventListener('input', onInput);
-        // this.icmapmaxInput.addEventListener('input', onInput);
     }
 
     setupLogScale() {

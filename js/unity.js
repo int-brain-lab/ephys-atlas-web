@@ -64,6 +64,7 @@ class Unity {
         this.dispatcher.on('cmap', (e) => { this.setRegions(false); });
         this.dispatcher.on('cmapRange', (e) => { this.setRegions(false); });
         this.dispatcher.on('logScale', (e) => { this.setRegions(false); });
+        this.dispatcher.on('clear', (e) => { this.setVisibility(); });
     }
 
     setupSlider() {
@@ -99,6 +100,10 @@ class Unity {
         let colors = [];
         for (let regionIdx in regions) {
             let region = regions[regionIdx];
+
+            // NOTE: make sure to skip Allen non-leaf regions.
+            if (this.state.mapping == "allen" && !region['leaf']) continue;
+
             let acronym = region['acronym'];
             let h = region['atlas_id'] < 0 ? 'l' : 'r';
             acronym = h + acronym;
@@ -140,16 +145,23 @@ class Unity {
 
         if (anySelected) {
             for (let regionIdx in regions) {
-                visibility.push(this.state.selected.has(regionIdx));
+                let region = regions[regionIdx];
+
+                // NOTE: make sure to skip Allen non-leaf regions.
+                if (this.state.mapping == "allen" && !region['leaf']) continue;
+
+                // NOTE: regionIdx, as a key, is a string, but the set of selected idxs
+                // contains integers, so we need to convert the string to an integer...
+                visibility.push(this.state.selected.has(parseInt(regionIdx)));
             }
         }
         else {
-            for (let region in regions) {
+            for (let regionIdx in regions) {
                 visibility.push(true);
             }
         }
 
-        console.log(visibility.toString());
+        // console.log(visibility.toString());
         this.instance.SendMessage('main', 'AreaSelected', anySelected ? 1 : 0);
         this.instance.SendMessage('main', 'SetVisibilities', visibility.toString());
     }

@@ -1,6 +1,6 @@
 export { Model, URLS };
 
-import { DEBUG } from "./constants.js";
+import { BASE_URL } from "./constants.js";
 import { Loader } from "./loader.js";
 import { Cache } from "./cache.js";
 import { downloadJSON, memoize, normalizeValue, clamp } from "./utils.js";
@@ -10,7 +10,6 @@ import { downloadJSON, memoize, normalizeValue, clamp } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const BASE_URL = DEBUG ? 'https://localhost:5000' : 'https://features.internationalbrainlab.org';
 const URLS = {
     'colormaps': '/data/json/colormaps.json',
     'regions': '/data/json/regions.json',
@@ -264,8 +263,10 @@ class Model {
             let region = regions[relidx];
             let regionIdx = region['idx'];
             // NOTE: skip non-leaf Allen regions
-            if (mapping == "allen" && !region['leaf'])
+            if (mapping == "allen" && !region['leaf']) {
+                // console.log(region);
                 continue;
+            }
             kept[regionIdx] = region;
         }
         // regions = Object.values(regions).filter(region => region.atlas_id >= 0);
