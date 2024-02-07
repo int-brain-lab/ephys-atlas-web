@@ -266,8 +266,10 @@ public class CCFTreeNode
             else
                 _nodeModelRightGO.GetComponent<Renderer>().material.SetColor("_Color", newColor);
         }
+#if UNITY_EDITOR
         else
             Debug.LogError("Model must be loaded before rendering");
+#endif
     }
 
     public void SetMaterial(Material newMaterial)
@@ -295,8 +297,10 @@ public class CCFTreeNode
             else
                 _nodeModelRightGO.GetComponent<Renderer>().material = newMaterial;
         }
+#if UNITY_EDITOR
         else
             Debug.LogError("Model must be loaded before rendering");
+#endif
 
         SetColorOneSided(color, leftSide, false);
     }
