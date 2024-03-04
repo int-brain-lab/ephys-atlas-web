@@ -4,6 +4,7 @@ import { Coloring } from "./coloring.js";
 import { DEBUG } from "./constants.js";
 import { Model } from "./model.js";
 import { Dispatcher } from "./dispatcher.js";
+import { DotImage } from "./dotimage.js";
 import { Feature } from "./feature.js";
 import { Highlighter } from "./highlighter.js";
 import { LocalSocket } from "./socket.js";
@@ -45,6 +46,7 @@ class App {
         this.coloring = new Coloring(this.state, this.model, this.dispatcher);
         this.feature = new Feature(this.state, this.model, this.dispatcher);
         this.highlighter = new Highlighter(this.state, this.model, this.dispatcher);
+        this.dotimage = new DotImage(this.state, this.model, this.dispatcher);
         this.maximizer = new Maximizer(this.state, this.model, this.dispatcher);
         this.panel = new Panel(this.state, this.model, this.dispatcher);
         this.region = new Region(this.state, this.model, this.dispatcher);

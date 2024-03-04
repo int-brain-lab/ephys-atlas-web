@@ -51,6 +51,11 @@ class Dispatcher {
         this.emit("highlight", source, { "idx": idx, "e": e });
     }
 
+    highlightDot(source, e) {
+        // when a dot is highlighted (when pressing Control)
+        this.emit("highlightDot", source, { "e": e });
+    }
+
     toggle(source, idx) {
         // when a region is added or removed from the selection
         this.emit("toggle", source, { "idx": idx });

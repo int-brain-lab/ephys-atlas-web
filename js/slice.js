@@ -164,8 +164,15 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                let idx = e2idx(this.state.mapping, e);
-                this.dispatcher.highlight(this, idx, e);
+                // When handling Control while hovering over a brain region, do not highlight
+                // regions, but display dot images instead.
+                if (e.ctrlKey) {
+                    this.dispatcher.highlightDot(this, e);
+                }
+                else {
+                    let idx = e2idx(this.state.mapping, e);
+                    this.dispatcher.highlight(this, idx, e);
+                }
             }
         });
 
