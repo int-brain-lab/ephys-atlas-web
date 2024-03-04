@@ -35,6 +35,28 @@ function readUint16LE(buffer) {
     return val;
 }
 
+function utf32ToUnicodeArray(uint8Array, stringLength) {
+    const strings = [];
+    const totalBytes = uint8Array.length;
+    const bytesPerString = stringLength * 4; // Each Unicode character is represented by 4 bytes in UTF-32
+
+    for (let i = 0; i < totalBytes; i += bytesPerString) {
+        let stringBytes = uint8Array.slice(i, i + bytesPerString);
+
+        // Convert UTF-32 bytes to Unicode string (little-endian)
+        let unicodeString = '';
+        for (let j = 0; j < stringBytes.length; j += 4) {
+            let codePoint = (stringBytes[j + 3] << 24) | (stringBytes[j + 2] << 16) | (stringBytes[j + 1] << 8) | stringBytes[j];
+            if (codePoint == 0) break;
+            unicodeString += String.fromCodePoint(codePoint);
+        }
+
+        strings.push(unicodeString);
+    }
+
+    return strings;
+}
+
 function loadNPY(buf) {
     // Check the magic number
     let magic = asciiDecode(buf.slice(0, 6));
@@ -71,6 +93,13 @@ function loadNPY(buf) {
         data = new Float32Array(buf.buffer, offsetBytes);
     } else if (info.descr === "<f8") {
         data = new Float64Array(buf.buffer, offsetBytes);
+    } else if (info.descr.startsWith("<u")) {
+        // String type.
+        data = new Uint8Array(buf.buffer, offsetBytes);
+        // window.data = data; // DEBUG
+        let stringLength = parseInt(info.descr.substring(2));
+        data = utf32ToUnicodeArray(data, stringLength);
+        // console.log(data);
     } else {
         throw new Error('unknown numeric dtype')
     }
@@ -88,11 +117,11 @@ function loadNPY(buf) {
     };
 }
 
-function getVolume(base64) {
+function loadCompressedBase64(base64) {
     const gzippedData = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
     const inflatedData = pako.inflate(gzippedData);
-    const uint8Array = new Uint8Array(inflatedData);
-    return loadNPY(uint8Array);
+    const npydata = new Uint8Array(inflatedData);
+    return loadNPY(npydata);
 }
 
 
@@ -206,7 +235,21 @@ class Model {
                 // Special handling of volumes.
                 if ("volume" in f["feature_data"]) {
                     // Load the base64 string into a decompressed array buffer.
-                    f["feature_data"]["volume"] = getVolume(f["feature_data"]["volume"]);
+                    f["feature_data"]["volume"] = loadCompressedBase64(f["feature_data"]["volume"]);
+
+                    // Load optional data:
+                    // - xyz positions of the dots
+                    if ("xyz" in f["feature_data"])
+                        f["feature_data"]["xyz"] = loadCompressedBase64(f["feature_data"]["xyz"]);
+
+                    // - scalar values associated with the dots
+                    if ("values" in f["feature_data"])
+                        f["feature_data"]["values"] = loadCompressedBase64(f["feature_data"]["values"]);
+
+                    // - image URLs associated to each dot
+                    if ("urls" in f["feature_data"])
+                        f["feature_data"]["urls"] = loadCompressedBase64(f["feature_data"]["urls"]);
+
                     this.splash.add(1);
                 }
             }
@@ -358,6 +401,23 @@ class Model {
         else if ("mappings" in g) {
             console.assert(mapping);
             return g["mappings"][mapping];
+        }
+        return null;
+    }
+
+    getVolumeData(bucket, fname) {
+        console.assert(bucket);
+
+        if (!fname) {
+            return null;
+        }
+        let g = this.features.get(bucket, fname);
+        if (!g) {
+            return null;
+        }
+
+        if ("volume" in g) {
+            return g;
         }
         return null;
     }
