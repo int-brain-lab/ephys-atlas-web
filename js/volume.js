@@ -108,6 +108,10 @@ class Volume {
             }
         });
 
+        this.dispatcher.on('slice', async (ev) => {
+            this.drawSlice(ev.axis, ev.idx);
+        });
+
         /* Update the canvases when the colormap changes. */
         this.dispatcher.on('cmap', async (ev) => {
             if (this.state.isVolume) {

@@ -51,9 +51,9 @@ class Dispatcher {
         this.emit("highlight", source, { "idx": idx, "e": e });
     }
 
-    highlightDot(source, e) {
+    highlightDot(source, axis, sliceIdx, e) {
         // when a dot is highlighted (when pressing Control)
-        this.emit("highlightDot", source, { "e": e });
+        this.emit("highlightDot", source, { "axis": axis, "sliceIdx": sliceIdx, "e": e });
     }
 
     toggle(source, idx) {

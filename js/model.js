@@ -407,7 +407,6 @@ class Model {
 
     getVolumeData(bucket, fname) {
         console.assert(bucket);
-
         if (!fname) {
             return null;
         }
@@ -415,7 +414,6 @@ class Model {
         if (!g) {
             return null;
         }
-
         if ("volume" in g) {
             return g;
         }

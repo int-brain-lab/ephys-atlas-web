@@ -1,6 +1,6 @@
 export { Slice };
 
-import { throttle, clamp, getOS, e2idx, setBackgroundImage } from "./utils.js";
+import { throttle, clamp, getOS, e2idx } from "./utils.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 
 
@@ -35,7 +35,8 @@ class Slice {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.setSlice = throttle(this._setSlice, SLICE_THROTTLE);
+        this.setSlice = throttle(
+            this._setSlice, SLICE_THROTTLE, { leading: true, trailing: true });
 
         // Slice lines.
         this.tv = document.getElementById('top-vline');
@@ -51,13 +52,6 @@ class Slice {
         this.ml = document.getElementById('coord-ml');
         this.ap = document.getElementById('coord-ap');
         this.dv = document.getElementById('coord-dv');
-
-        // Bitmaps.
-        this.bitmaps = {
-            'coronal': document.getElementById(`svg-coronal-container-inner`),
-            'horizontal': document.getElementById(`svg-horizontal-container-inner`),
-            'sagittal': document.getElementById(`svg-sagittal-container-inner`),
-        };
 
         this.setupDispatcher();
         this.setupSlices();
@@ -124,6 +118,12 @@ class Slice {
         }
     }
 
+    _updateLines(axis, idx) {
+        if (SLICE_AXES.includes(axis)) {
+            this[`set_${axis}`](idx);
+        }
+    }
+
     setupSlice(axis) {
         let max = SLICE_MAX[axis];
 
@@ -132,6 +132,7 @@ class Slice {
 
         slider.oninput = (e) => {
             let idx = Math.floor(e.target.value);
+            this._updateLines(axis, idx);
             this.setSlice(axis, idx);
         };
 
@@ -150,8 +151,10 @@ class Slice {
             else if (x > 0) { slider.valueAsNumber -= k; }
 
             slider.valueAsNumber = clamp(slider.valueAsNumber, 0, max);
+            let idx = slider.valueAsNumber;
 
-            that.setSlice(axis, slider.valueAsNumber);
+            that._updateLines(axis, idx);
+            that.setSlice(axis, idx);
         }, { passive: false });
     };
 
@@ -164,12 +167,8 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                // When handling Control while hovering over a brain region, do not highlight
-                // regions, but display dot images instead.
-                if (e.ctrlKey) {
-                    this.dispatcher.highlightDot(this, e);
-                }
-                else {
+                // When handling Control while hovering over a brain region, disable highlighting.
+                if (!e.ctrlKey) {
                     let idx = e2idx(this.state.mapping, e);
                     this.dispatcher.highlight(this, idx, e);
                 }
@@ -192,8 +191,12 @@ class Slice {
                 // HACK: disable root
                 if (isRoot(e)) return;
 
-                let idx = e2idx(this.state.mapping, e);
-                this.dispatcher.toggle(this, idx);
+                // When handling Control while hovering over a brain region, do not select
+                // regions, but display dot images instead.
+                if (!e.ctrlKey) {
+                    let idx = e2idx(this.state.mapping, e);
+                    this.dispatcher.toggle(this, idx);
+                }
             }
         });
     }
@@ -224,25 +227,8 @@ class Slice {
             return;
         }
 
-        // call setSagittal() etc to update the hlines and vlines.
-        if (SLICE_AXES.includes(axis)) {
-            this[`set_${axis}`](idx);
-
-            // Set the bitmap image.
-            this.setBitmap(axis, idx);
-        }
-
         // Emit the slice event.
         this.dispatcher.slice(this, axis, idx);
-    }
-
-    setBitmap(axis, idx) {
-        // let sidx = String(Math.floor(idx / 2.5)).padStart(4, "0");
-        // let url = `data/volumes/allen/${axis}/${axis}-${sidx}.jpg`;
-        // let el = this.bitmaps[axis];
-        // setBackgroundImage(el, url);
-
-        app.volume.drawSlice(axis, idx);
     }
 
     set_sagittal(idx) {
