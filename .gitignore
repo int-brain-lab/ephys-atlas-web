@@ -67,3 +67,5 @@ Build/
 StreamingAssets/
 *.pem
 **/Unity/Assets/AddressableAssets/AllenCCF/*
+*.pyc
+__pycache__
