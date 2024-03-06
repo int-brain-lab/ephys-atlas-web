@@ -81,7 +81,7 @@ class Tooltip {
                 if (value)
                     valueDisplay = displayNumber(value);
                 else
-                    valueDisplay = "(not significant";
+                    valueDisplay = "(not significant)";
             }
             else {
                 valueDisplay = "(not included)";

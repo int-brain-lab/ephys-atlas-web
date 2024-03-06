@@ -136,8 +136,7 @@ class Slice {
             this.setSlice(axis, idx);
         };
 
-        let that = this;
-        svg.parentNode.addEventListener('wheel', function (e) {
+        svg.parentNode.addEventListener('wheel', (e) => {
             e.preventDefault();
 
             // Update the slider.
@@ -153,8 +152,8 @@ class Slice {
             slider.valueAsNumber = clamp(slider.valueAsNumber, 0, max);
             let idx = slider.valueAsNumber;
 
-            that._updateLines(axis, idx);
-            that.setSlice(axis, idx);
+            this._updateLines(axis, idx);
+            this.setSlice(axis, idx);
         }, { passive: false });
     };
 

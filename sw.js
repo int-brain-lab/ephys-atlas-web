@@ -105,15 +105,15 @@ const CACHE_URLS = [
 
 
 // Install event: cache the URLs on service worker installation
-self.addEventListener('install', (event) => {
-    console.debug("install the service worker");
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(CACHE_URLS))
-            .then(() => self.skipWaiting())
-            .catch((e) => console.error(e))
-    );
-});
+// self.addEventListener('install', (event) => {
+//     console.debug("install the service worker");
+//     event.waitUntil(
+//         caches.open(CACHE_NAME)
+//             .then((cache) => cache.addAll(CACHE_URLS))
+//             .then(() => self.skipWaiting())
+//             .catch((e) => console.error(e))
+//     );
+// });
 
 
 self.addEventListener("activate", (event) => {

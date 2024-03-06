@@ -76,7 +76,12 @@ class DotImage {
             'sagittal': document.getElementById(`svg-sagittal-container-inner`),
         };
 
+        this.el = document.getElementById("dot-image-container");
+        this.img = document.getElementById("dot-image");
+        this.closeButton = document.getElementById("close-button");
+
         this.setupDotHover();
+        this.setupCloseButton();
         this.setupDispatcher();
     }
 
@@ -85,7 +90,7 @@ class DotImage {
 
     setupDotHover() {
         for (let axis in this.bitmaps) {
-            this.bitmaps[axis].addEventListener('mousemove', (ev) => {
+            this.bitmaps[axis].addEventListener('click', (ev) => {
                 if (ev.ctrlKey) {
                     let sliceIdx = this.state[axis];
                     let container = this.bitmaps[axis];
@@ -106,11 +111,28 @@ class DotImage {
                     let zClosest = points[pointIdx + 2].toFixed(5);
                     console.log(`closest point was #${pointIdx} at ${[xClosest, yClosest, zClosest]}`);
 
+                    let url = volume["urls"].data[pointIdx];
+                    if (url) {
+                        // If the image is the same, we toggle it, otherwise we show it.
+                        let sameImage = this.img.src == url;
+                        this.img.src = url;
+                        if (sameImage)
+                            this.el.classList.toggle("shown");
+                        else
+                            this.el.classList.add("shown");
+                    }
+
                     // Emit the event.
                     this.dispatcher.highlightDot(this, axis, sliceIdx, xyz, ev);
                 }
             });
         }
+    }
+
+    setupCloseButton() {
+        this.closeButton.addEventListener("click", (ev) => {
+            this.el.classList.remove("shown");
+        });
     }
 
     setupDispatcher() {
