@@ -73,8 +73,21 @@ def get_mappings():
     # open the pqt files and return a mappings dictionary
     # {mapping_name: [{idx: ..., atlas_id: ..., acronym: ..., name: ..., hex: ...}]}
     out = {}
-    for mapping in MAPPINGS:
+    mappings = MAPPINGS
+    for mapping in mappings:
+
+        # Load the parquet file.
         regions = pd.read_parquet(DATA_DIR / f'pqt/{mapping}_regions.pqt')
+
+        # HACK: discrepancy in column names
+        names = regions['atlas_name']
+
+        # HACK: fiber_or_vent is only in the allen mapping
+        if 'fiber_or_vent' in regions:
+            fiber_or_vent = regions['fiber_or_vent']
+        else:
+            fiber_or_vent = [False for _ in range(len(regions))]
+
         out[mapping] = [
             {
                 'idx': abs(idx_),
@@ -83,10 +96,13 @@ def get_mappings():
                 'name': name_,
                 'hex': hex_,
                 'leaf': leaf_,
+                'fiber_or_vent': fiber_or_vent_,
             }
-            for idx_, atlas_id_, acronym_, name_, hex_, leaf_ in zip(
+            for idx_, atlas_id_, acronym_, name_, hex_, leaf_, fiber_or_vent_ in zip(
                 regions['idx'], regions['atlas_id'], regions['acronym'],
-                regions['atlas_name'], regions['hex'], regions['leaf'])
+                names, regions['hex'], regions['leaf'],
+                fiber_or_vent,
+            )
         ]
         # out[mapping] = sorted(out[mapping], key=itemgetter('idx'))
     return out
