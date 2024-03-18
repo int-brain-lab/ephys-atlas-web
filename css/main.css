@@ -472,6 +472,7 @@ body.waiting * {
     margin: 0;
     border: 1px solid #000;
     background: #ffffff;
+    z-index: 200;
 }
 
 #dot-image-container.shown {

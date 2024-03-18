@@ -84,7 +84,50 @@ export function ij2xyz(axis, idx, i, j) {
     return [x, y, z];
 };
 
+export function xyz2ij(axis, sliceIdx, xyz) {
+    let i, j;
 
+    if (axis === "coronal") {
+        i = (xyz[0] - VOLUME_X0) / VOLUME_DF;
+        j = -(xyz[2] - VOLUME_Z0) / VOLUME_DF;
+    } else if (axis === "horizontal") {
+        i = (xyz[0] - VOLUME_X0) / VOLUME_DF;
+        j = -(xyz[1] - VOLUME_Y0) / VOLUME_DF;
+    } else if (axis === "sagittal") {
+        i = (xyz[1] - VOLUME_Y0) / VOLUME_DF;
+        j = -(xyz[2] - VOLUME_Z0) / VOLUME_DF;
+    }
+
+    // // Check if the point is within the visible radius of the slice
+    // let visibleRadius = 10; // Adjust this value as needed
+    // let slicePlanePosition;
+    // if (axis === "coronal") {
+    //     slicePlanePosition = VOLUME_Y0 - sliceIdx * VOLUME_DF;
+    // } else if (axis === "horizontal") {
+    //     slicePlanePosition = VOLUME_Z0 - sliceIdx * VOLUME_DF;
+    // } else if (axis === "sagittal") {
+    //     slicePlanePosition = VOLUME_X0 + sliceIdx * VOLUME_DF;
+    // }
+
+    // let distanceToPlane;
+    // if (axis === "coronal") {
+    //     distanceToPlane = Math.abs(xyz[1] - slicePlanePosition);
+    // } else if (axis === "horizontal") {
+    //     distanceToPlane = Math.abs(xyz[2] - slicePlanePosition);
+    // } else if (axis === "sagittal") {
+    //     distanceToPlane = Math.abs(xyz[0] - slicePlanePosition);
+    // }
+
+    // if (distanceToPlane <= visibleRadius) {
+    //     return [x, y]; // Return pixel coordinates if the point is visible
+    // } else {
+    //     return null; // Return null if the point is not visible
+    // }
+
+    // console.log(distanceToPlane);
+
+    return [i, j];
+}
 
 
 export const VOLUME_AXES = ["coronal", "horizontal", "sagittal"]

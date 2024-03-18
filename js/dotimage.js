@@ -1,7 +1,7 @@
 export { DotImage };
 
 import { clamp } from "./utils.js";
-import { VOLUME_SIZE, VOLUME_XY_AXES, ij2xyz } from "./constants.js";
+import { VOLUME_SIZE, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
 
 
 
@@ -25,6 +25,29 @@ function mouseXYZ(container, axis, sliceIdx, ev) {
 
     let xyz = ij2xyz(axis, sliceIdx, i, j);
     return xyz;
+}
+
+function xyz2px(container, axis, sliceIdx, xyz) {
+    let canvasWidth = container.clientWidth;
+    let canvasHeight = container.clientHeight;
+
+    // Calculate the relative position of the XYZ point within the volume
+    let [i, j] = xyz2ij(axis, sliceIdx, xyz);
+
+    // Calculate the pixel coordinates based on the slice and projection
+    let x, y;
+    if (axis === "coronal") {
+        x = (i / VOLUME_SIZE.sagittal) * canvasWidth;
+        y = (j / VOLUME_SIZE.horizontal) * canvasHeight;
+    } else if (axis === "horizontal") {
+        x = (i / VOLUME_SIZE.sagittal) * canvasWidth;
+        y = (j / VOLUME_SIZE.coronal) * canvasHeight;
+    } else if (axis === "sagittal") {
+        x = (i / VOLUME_SIZE.coronal) * canvasWidth;
+        y = (j / VOLUME_SIZE.horizontal) * canvasHeight;
+    }
+
+    return [x, y];
 }
 
 function findClosest(points, point) {
@@ -56,6 +79,31 @@ function findClosest(points, point) {
     return closestIndex;
 }
 
+function addDot(container, ij) {
+    var dot = document.createElement("div");
+
+    dot.style.position = "absolute";
+    dot.style.left = (ij[0] / container.offsetWidth) * 100 + "%";
+    dot.style.top = (ij[1] / container.offsetHeight) * 100 + "%";
+    dot.style.width = "4px";
+    dot.style.height = "4px";
+    dot.style.backgroundColor = "red";
+    dot.style.opacity = .1;
+
+    container.appendChild(dot);
+}
+
+function displayPoints(container, axis, sliceIdx, points) {
+    const n = points.length / 3;
+    for (let idx = 0; idx < n; idx++) {
+        let x = points[3 * idx + 0];
+        let y = points[3 * idx + 1];
+        let z = points[3 * idx + 2];
+        let xyz = [x, y, z];
+        let ij = xyz2px(container, axis, sliceIdx, xyz);
+        addDot(container, ij);
+    }
+}
 
 
 /*************************************************************************************************/
@@ -85,10 +133,31 @@ class DotImage {
         this.setupDispatcher();
     }
 
+    displayDots() {
+        // DEBUG
+        return false;
+
+        let volume = this.model.getVolumeData(this.state.bucket, this.state.fname);
+        if (volume) {
+            let points = volume["xyz"].data;
+            for (let axis in this.bitmaps) {
+                let sliceIdx = this.state[axis];
+                let container = this.bitmaps[axis];
+                displayPoints(container, axis, sliceIdx, points);
+            }
+        }
+    }
+
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupDotHover() {
+        this.dispatcher.on('feature', async (ev) => {
+            if (ev.isVolume) {
+                this.displayDots();
+            }
+        });
+
         for (let axis in this.bitmaps) {
             this.bitmaps[axis].addEventListener('click', (ev) => {
                 if (ev.ctrlKey) {
@@ -113,13 +182,8 @@ class DotImage {
 
                     let url = volume["urls"].data[pointIdx];
                     if (url) {
-                        // If the image is the same, we toggle it, otherwise we show it.
-                        let sameImage = this.img.src == url;
                         this.img.src = url;
-                        if (sameImage)
-                            this.el.classList.toggle("shown");
-                        else
-                            this.el.classList.add("shown");
+                        this.el.classList.add("shown");
                     }
 
                     // Emit the event.
@@ -137,5 +201,10 @@ class DotImage {
 
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.hide(); });
+        this.dispatcher.on('slice', (ev) => {
+            if (this.state.isVolume) {
+                this.displayDots();
+            }
+        });
     }
 };
