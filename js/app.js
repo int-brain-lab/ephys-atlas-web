@@ -80,8 +80,8 @@ class App {
 
             this.state.toggleUpdate(true);
 
-            // if (this.unity)
-            //     this.unity.init();
+            if (this.unity)
+                this.unity.init();
         });
     }
 
