@@ -40,6 +40,35 @@ function cloneSvgAndSetFillColors(svgElement) {
 
 
 /*************************************************************************************************/
+/* Utils                                                                                         */
+/*************************************************************************************************/
+
+async function unityScreenshot(webglCanvas) {
+
+    // Create a new 2D canvas
+    const width = webglCanvas.width;
+    const height = webglCanvas.height;
+    const canvas2D = document.createElement('canvas');
+    canvas2D.width = width;
+    canvas2D.height = height;
+    const ctx2D = canvas2D.getContext('2d');
+
+    // Draw the WebGL canvas content onto the 2D canvas
+    ctx2D.drawImage(webglCanvas, 0, 0, width, height);
+
+    // Use the toBlob method to get the PNG blob from the 2D canvas
+    const pngBlob = await new Promise((resolve) => {
+        canvas2D.toBlob((blob) => {
+            resolve(blob);
+        }, 'image/png');
+    });
+
+    return pngBlob;
+}
+
+
+
+/*************************************************************************************************/
 /* Panel                                                                                         */
 /*************************************************************************************************/
 
@@ -301,13 +330,10 @@ class Panel {
                 zip.file(`${id}.png`, pngBlob);
             }
 
+            // NOTE: not working yet
             // Unity canvas.
-            const pngBlob = await new Promise((resolve) => {
-                document.getElementById("unity-canvas").toBlob((blob) => {
-                    resolve(blob);
-                }, 'image/png');
-            });
-            zip.file(`3D-view.png`, pngBlob);
+            // const pngBlob = unityScreenshot(document.getElementById("unity-canvas"));
+            // zip.file(`3D-view.png`, pngBlob);
 
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             saveAs(zipBlob, 'svgs.zip');
