@@ -11,6 +11,34 @@ import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
 const CMAP_RANGE_THROTTLE = 250; // number of milliseconds between updates
 
 
+
+function cloneSvgAndSetFillColors(svgElement) {
+    // Get all path elements in the original SVG
+    const originalPathElements = svgElement.querySelectorAll('path');
+    const fillColors = new Map();
+
+    // Loop over each path element to get the computed fill color
+    originalPathElements.forEach(pathElement => {
+        const fillColor = window.getComputedStyle(pathElement).fill;
+        fillColors.set(pathElement, fillColor);
+    });
+
+    // Clone the SVG element
+    const clonedSvg = svgElement.cloneNode(true);
+    const clonedPathElements = clonedSvg.querySelectorAll('path');
+
+    // Loop over each path element in the cloned SVG and set the fill color
+    clonedPathElements.forEach((clonedPathElement, index) => {
+        const originalPathElement = originalPathElements[index];
+        const fillColor = fillColors.get(originalPathElement);
+        clonedPathElement.style.fill = fillColor;
+    });
+
+    return clonedSvg;
+}
+
+
+
 /*************************************************************************************************/
 /* Panel                                                                                         */
 /*************************************************************************************************/
@@ -35,6 +63,7 @@ class Panel {
         this.ibreset = document.getElementById('reset-view-button');
         this.ibclear = document.getElementById('clear-cache-button');
         this.ibconnect = document.getElementById('connect-button');
+        this.ibexport = document.getElementById('export-button');
         this.ishare = document.getElementById('share-button');
 
         // Setup the event callbacks that change the global state and update the components.
@@ -47,6 +76,7 @@ class Panel {
 
         this.setupClearButton();
         this.setupConnectButton();
+        this.setupExportButton();
         this.setupShareButton();
         this.setupResetButton();
 
@@ -231,6 +261,56 @@ class Panel {
     setupConnectButton() {
         this.ibconnect.addEventListener('click', (e) => {
             this.dispatcher.connect(this);
+        });
+    }
+
+    setupExportButton() {
+        this.ibexport.addEventListener('click', async (e) => {
+
+            const svgs = document.getElementsByTagName("svg");
+            const zip = new JSZip();
+
+            for (let svg of svgs) {
+                const svgClone = cloneSvgAndSetFillColors(svg);
+                const svgData = new XMLSerializer().serializeToString(svgClone);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const img = new Image();
+
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        canvas.width = 10 * img.width;
+                        canvas.height = 10 * img.height;
+                        context.drawImage(img, 0, 0);
+                        URL.revokeObjectURL(url);
+                        resolve();
+                    };
+                    img.src = url;
+                });
+
+                const pngBlob = await new Promise((resolve) => {
+                    canvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/png');
+                });
+
+                const id = svg.getAttribute('id') || `svg-${Math.random().toString(36).substr(2, 9)}`;
+                zip.file(`${id}.png`, pngBlob);
+            }
+
+            // Unity canvas.
+            const pngBlob = await new Promise((resolve) => {
+                document.getElementById("unity-canvas").toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/png');
+            });
+            zip.file(`3D-view.png`, pngBlob);
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            saveAs(zipBlob, 'svgs.zip');
         });
     }
 

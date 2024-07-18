@@ -310,6 +310,11 @@ body.waiting * {
     margin-top: 4px !important;
 }
 
+#export-button {
+    background-color: #4cac20a5;
+    margin-top: 4px !important;
+}
+
 #connect-status {
     display: flex;
     align-items: center;

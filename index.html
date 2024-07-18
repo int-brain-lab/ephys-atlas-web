@@ -49,6 +49,11 @@
     <!-- Dexie (IndexedDB wrapper) -->
     <script src="js/dexie.min.js"></script>
 
+    <!-- For the SVG PNG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <!-- Unity -->
     <script src="Build/webgl.loader.js"></script>
 
@@ -136,6 +141,7 @@
                     <div class="text"></div>
                 </div>
                 <button id="connect-button">connect</button>
+                <button id="export-button">export</button>
                 <button id="reset-view-button">reset view</button>
                 <button id="clear-cache-button">clear cache</button>
             </div>

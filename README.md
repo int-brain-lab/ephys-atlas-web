@@ -14,6 +14,12 @@ Install:
 * [inkscape](https://inkscape.org/)
 
 
+```bash
+sudo apt-get install npm
+sudo npm install --global http-server
+```
+
+
 ### 2. Clone the repository
 
 `git clone https://github.com/int-brain-lab/ephys-atlas-web.git`
