@@ -24,7 +24,7 @@ from server import new_uuid, create_bucket_metadata, create_bucket, create_featu
 # Constants
 # -------------------------------------------------------------------------------------------------
 
-BWM_FSETS = ('block', 'choice', 'feedback', 'stimulus',
+BWM_FSETS = ('choice', 'feedback', 'stimulus',
              'wheel_speed', 'wheel_velocity')
 BWM_FNAMES = (
     'decoding',
@@ -225,8 +225,8 @@ class FeatureBrainRegions:
         # for each mapping a dictionary atlas_id => idx
         self.atlas_id_map = {
             mapping: {
-                r['atlas_id']: idx
-                for idx, r in regions.items()
+                r['atlas_id']: r['idx']
+                for r in regions
             } for mapping, regions in self.mappings.items()
         }
 
@@ -242,8 +242,7 @@ class FeatureBrainRegions:
 
     def get_regions(self, mapping):
         # return the kept brain regions
-        return {idx: r for idx, r in self.mappings[mapping].items(
-        ) if idx in self.kept[mapping]}
+        return {r['idx']: r for r in self.mappings[mapping] if r['idx'] in self.kept[mapping]}
 
 
 # -------------------------------------------------------------------------------------------------
@@ -278,7 +277,7 @@ def generate_bwm_features():
     mapping = 'beryl'
 
     # Extra features (column name is fname).
-    df_block = pd.read_parquet(DATA_DIR / 'pqt/block_bwm.pqt')
+    # df_block = pd.read_parquet(DATA_DIR / 'pqt/block_bwm.pqt')
     df_choice = pd.read_parquet(DATA_DIR / 'pqt/choice_bwm.pqt')
     df_feedback = pd.read_parquet(DATA_DIR / 'pqt/feedback_bwm.pqt')
     df_stimulus = pd.read_parquet(DATA_DIR / 'pqt/stimulus_bwm.pqt')
@@ -299,7 +298,7 @@ def generate_bwm_features():
 
         return df
 
-    df_block = _debooleanize(df_block)
+    # df_block = _debooleanize(df_block)
     df_choice = _debooleanize(df_choice)
     df_feedback = _debooleanize(df_feedback)
     df_stimulus = _debooleanize(df_stimulus)
