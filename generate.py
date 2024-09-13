@@ -137,9 +137,11 @@ def generate_regions_css(mappings):
     for mapping, regions in mappings.items():
 
         colors = '\n'.join(
-            f'''    --region-{mapping}-{idx}: {r['hex']}; /* {r['acronym']} */ '''
+            f'''    --region-{mapping}-{idx}
+                : {r['hex']}; /* {r['acronym']} */ '''
             for idx, r in regions.items())
-        css += f'/* Mapping {mapping}: default region colors */\n\n:root {{\n\n{colors}\n\n}}\n'
+        css += f'/* Mapping {
+            mapping}: default region colors */\n\n:root {{\n\n{colors}\n\n}}\n'
 
         css += ''.join(
             dedent(f'''
@@ -451,8 +453,9 @@ def create_bwm_features(patch=False, dry_run=False):
 
 
 if __name__ == '__main__':
-    mappings = get_mappings()
-    generate_regions_json(mappings)
+    pass
+    # mappings = get_mappings()
+    # generate_regions_json(mappings)
 
     # generate_bwm_features()
-    # create_bwm_features()
+    # create_bwm_features(patch=False, dry_run=False)

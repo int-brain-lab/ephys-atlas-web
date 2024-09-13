@@ -1,4 +1,9 @@
 flask
 flask_cors
 numpy
+pandas
+matplotlib
 requests
+joblib
+tqdm
+pyarrow

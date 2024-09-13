@@ -1,7 +1,7 @@
 import { Bucket } from "./bucket.js";
 import { Colorbar } from "./colorbar.js";
 import { Coloring } from "./coloring.js";
-import { DEBUG } from "./constants.js";
+import { DEBUG, ENABLE_UNITY } from "./constants.js";
 import { Model } from "./model.js";
 import { Dispatcher } from "./dispatcher.js";
 import { DotImage } from "./dotimage.js";
@@ -80,7 +80,7 @@ class App {
 
             this.state.toggleUpdate(true);
 
-            if (this.unity)
+            if (this.unity && ENABLE_UNITY)
                 this.unity.init();
         });
     }
