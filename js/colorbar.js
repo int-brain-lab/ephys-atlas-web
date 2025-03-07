@@ -69,7 +69,7 @@ class Colorbar {
         this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
         this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });
         this.dispatcher.on('mapping', (e) => { this.setColorbar(); });
-        this.dispatcher.on('stat', (e) => { this.setColorbar(); });
+        this.dispatcher.on('stat', (e) => { this.setColorbar(); this.setFeatureRange(); });
     }
 
     /* Internal functions                                                                        */
