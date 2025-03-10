@@ -71,6 +71,8 @@ class Tooltip {
             let acronym = info['acronym'];
             let value = null;
             let valueDisplay = '';
+            let count = null;
+            let countDisplay = '';
 
             if (!fet) {
                 valueDisplay = '';
@@ -78,16 +80,24 @@ class Tooltip {
 
             else if (fet && fet['data'] && fet['data'][regionIdx]) {
                 value = fet['data'][regionIdx][this.state.stat];
+                count = fet['data'][regionIdx]["count"];
+
+                if (count)
+                    countDisplay = ` (n=${count})`;
+                else
+                    countDisplay = '';
+
                 if (value)
-                    valueDisplay = displayNumber(value);
+                    valueDisplay = `${displayNumber(value)}`;
                 else
                     valueDisplay = "(not significant)";
+
             }
             else {
                 valueDisplay = "(not included)";
             }
 
-            return `<strong>${acronym}, ${name}</strong><br>${valueDisplay}`;
+            return `<strong>${acronym}, ${name}</strong><br>${valueDisplay}${countDisplay}`;
         }
     }
 

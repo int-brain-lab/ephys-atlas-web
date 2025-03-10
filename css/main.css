@@ -622,12 +622,17 @@ body.waiting * {
     display: inline-block;
     margin: 0 0 0 var(--colorbar-margin);
     width: calc(100% - var(--colorbar-margin));
-
     flex: 0 0 auto;
 }
 
 
+#bar-scale .colorbar-wrapper {
+    position: relative;
+    height: 100px;
+}
+
 #bar-scale .colorbar {
+    position: absolute;
     height: 100px;
     width: 100%;
 
@@ -636,14 +641,21 @@ body.waiting * {
     flex-wrap: nowrap;
     align-items: flex-end;
     justify-content: flex-start;
+
 }
 
+#bar-scale .colorbar:first-of-type div {
+    opacity: 0.25;
+}
+
+#bar-scale .colorbar:last-of-type div {
+    opacity: 0.75;
+}
 
 #bar-scale .colorbar div {
     flex-grow: 1;
     height: 100%;
     border-top: 2px solid #0007;
-    /* background-color: red; */
 }
 
 #bar-scale hr {
@@ -689,6 +701,8 @@ body.waiting * {
     background-color: #eee;
     margin: 2px 0;
     padding: 2px 0;
+    height: 70px;
+    overflow-y: auto;
 
     flex: 0 0 auto;
 }

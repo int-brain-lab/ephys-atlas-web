@@ -45,7 +45,9 @@ class Bucket {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('clear', (ev) => { this.init(); });
+        this.dispatcher.on('clear', (ev) => {
+            // this.init();
+        });
         this.dispatcher.on('bucket', (ev) => { this.select(ev.uuid_or_alias); });
         this.dispatcher.on('bucketRemove', (ev) => { this.remove(ev.uuid_or_alias); });
     }

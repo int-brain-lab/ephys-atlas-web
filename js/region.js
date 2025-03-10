@@ -159,7 +159,7 @@ class Region {
     }
 
     async init() {
-        // await this.setState(this.state);
+        await this.setState(this.state);
     }
 
     async setState(state) {

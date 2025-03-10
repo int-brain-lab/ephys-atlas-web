@@ -42,17 +42,18 @@ class App {
 
         // Components.
         this.bucket = new Bucket(this.state, this.model, this.dispatcher);
+        this.feature = new Feature(this.state, this.model, this.dispatcher);
+        this.region = new Region(this.state, this.model, this.dispatcher);
+        this.selection = new Selection(this.state, this.model, this.dispatcher);
+        this.selector = new Selector(this.state, this.model, this.dispatcher);
+
         this.colorbar = new Colorbar(this.state, this.model, this.dispatcher);
         this.coloring = new Coloring(this.state, this.model, this.dispatcher);
-        this.feature = new Feature(this.state, this.model, this.dispatcher);
         this.highlighter = new Highlighter(this.state, this.model, this.dispatcher);
         this.dotimage = new DotImage(this.state, this.model, this.dispatcher);
         this.maximizer = new Maximizer(this.state, this.model, this.dispatcher);
         this.panel = new Panel(this.state, this.model, this.dispatcher);
-        this.region = new Region(this.state, this.model, this.dispatcher);
         this.search = new Search(this.state, this.model, this.dispatcher);
-        this.selection = new Selection(this.state, this.model, this.dispatcher);
-        this.selector = new Selector(this.state, this.model, this.dispatcher);
         this.share = new Share(this.state, this.model, this.dispatcher);
         this.slice = new Slice(this.state, this.model, this.dispatcher);
         this.spinner = new Spinner(this.state, this.model, this.dispatcher);

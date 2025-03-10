@@ -8,6 +8,9 @@ import { clamp, displayNumber } from "./utils.js";
 /* Utils                                                                                         */
 /*************************************************************************************************/
 
+const BIN_COUNT = 50;
+
+
 function computeHistogram(n, cmin, cmax, values) {
     // Initialize an array to store the histogram bins
     const histogram = new Array(n).fill(0);
@@ -34,6 +37,9 @@ function computeHistogram(n, cmin, cmax, values) {
 
 
 function drawHistogram(container, counts, cmin, cmax, colors) {
+    if (!container) return;
+    if (!counts) return;
+
     // container: div
     // counts: values of the histogram
     // cmin: minimal colormap value, from 0 to 100
@@ -77,7 +83,9 @@ class Colorbar {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.cbar = document.querySelector('#bar-scale .colorbar');
+        this.cbar = document.querySelectorAll('#bar-scale .colorbar')[0];
+        this.cbar2 = document.querySelectorAll('#bar-scale .colorbar')[1];
+
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
 
@@ -90,6 +98,7 @@ class Colorbar {
 
     setState(state) {
         this.setColorbar();
+        this.setColorbarSelected();
     }
 
     /* Setup functions                                                                           */
@@ -98,11 +107,16 @@ class Colorbar {
     setupDispatcher() {
         this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('bucket', (ev) => { this.clear(); });
-        this.dispatcher.on('feature', (e) => { this.setColorbar(); this.setFeatureRange(); });
-        this.dispatcher.on('cmap', (e) => { this.setColorbar(); });
-        this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); });
-        this.dispatcher.on('mapping', (e) => { this.setColorbar(); });
+        this.dispatcher.on('feature', (e) => {
+            this.setColorbar(); this.setColorbarSelected(); this.setFeatureRange();
+        });
+        this.dispatcher.on('cmap', (e) => { this.setColorbar(); this.setColorbarSelected(); });
+        this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); this.setColorbarSelected(); });
+        this.dispatcher.on('mapping', (e) => { this.setColorbar(); this.setColorbarSelected(); });
         this.dispatcher.on('stat', (e) => { this.setColorbar(); this.setFeatureRange(); });
+
+        this.dispatcher.on('toggle', (e) => { this.setColorbarSelected(); });
+        this.dispatcher.on('clear', (e) => { this.setColorbarSelected(); });
     }
 
     /* Internal functions                                                                        */
@@ -160,17 +174,48 @@ class Colorbar {
         return [values, vmin, vmax];
     }
 
+    // Intra-region histogram, found in the feature file.
+    getFeatureHistogram(n) {
+        let selected = this.state.selected;
+        if (!selected) return;
+
+        // Load the region and features data.
+        // let regions = this.model.getRegions(this.state.mapping);
+        let features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket, this.state.fname, this.state.mapping);
+
+        let histogram = new Array(n).fill(0);
+
+        // NOTE: only take the first selected region for now.
+        selected.forEach(regionIdx => {
+            let f = features["data"][regionIdx];
+            if (!f) return;
+
+            Object.keys(f).forEach(key => {
+                let match = key.match(/^h_(\d+)$/);
+                if (match) {
+                    let index = parseInt(match[1], 10);
+                    if (index >= 0 && index < n) {
+                        histogram[index] += f[key];
+                    }
+                }
+            });
+        });
+
+        return histogram;
+    }
+
+    drawHistogram(container, counts) {
+        let colors = this.model.getColormap(this.state.cmap);
+        drawHistogram(container, counts, this.state.cmapmin, this.state.cmapmax, colors);
+    }
+
     setColorbar() {
         if (!this.state.fname) {
             this.clear();
             return;
         }
 
-        // Get the data.
-        let n = 50; // number of colobar items
-        let colors = this.model.getColormap(this.state.cmap);
-        let cmin = this.state.cmapmin;
-        let cmax = this.state.cmapmax;
         let counts = null;
 
         // Try retrieving the global histogram for the current feature.
@@ -180,12 +225,25 @@ class Colorbar {
             counts = histogram["counts"];
         }
         else {
-            // Compute the histogram.
+            // Compute the histogram across all regions (1 value per region).
             console.log("histogram not found in the features file, recomputing it");
             let [values, vmin, vmax] = this.getFeatureValues();
-            counts = computeHistogram(n, vmin, vmax, values);
+            counts = computeHistogram(BIN_COUNT, vmin, vmax, values);
         }
 
-        drawHistogram(this.cbar, counts, cmin, cmax, colors);
+        // Draw the global histogram.
+        this.drawHistogram(this.cbar, counts);
+    }
+
+    setColorbarSelected() {
+        if (this.state.selected.size == 0) {
+            this.cbar2.style.opacity = 0;
+        }
+        else {
+            this.cbar2.style.opacity = 1;
+            // Now, draw the histogram of the selected region(s), if any.
+            let counts2 = this.getFeatureHistogram(BIN_COUNT);
+            this.drawHistogram(this.cbar2, counts2);
+        }
     }
 };

@@ -25,6 +25,7 @@ class Selection {
     }
 
     setState(state) {
+        // NOTE: this needs to occur AFTER the bar plot has been constructed.
         for (let idx of state.selected) {
             this.add(this.getFromIdx(idx));
         }
