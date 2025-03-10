@@ -251,6 +251,8 @@ class FeatureBrainRegions:
 # Feature processing
 # -------------------------------------------------------------------------------------------------
 
+# NOTE: these functions are obsolete, to be deleted
+
 def generate_ephys_features():
     # Load features.
     df_sessions = pd.read_parquet(

@@ -51,7 +51,7 @@ COLORMAPS = ('viridis', 'cividis', 'magma',
 COLORMAP_VALUE_COUNT = 100  # number of different values for the colormap
 DATA_DIR = ROOT_DIR / "data"
 AXES = ('coronal', 'horizontal', 'sagittal')
-MAPPINGS = ('allen', 'beryl', 'cosmos')
+# MAPPINGS = ('allen', 'beryl', 'cosmos')
 NS = "http://www.w3.org/2000/svg"
 SIMPLIFY_CMD = "inkscape --batch-process --actions='EditSelectAll;SelectionSimplify;FileSave;FileClose'"
 RE_PATH = re.compile(r'<path id="path[0-9]+"')

@@ -405,6 +405,23 @@ class Model {
         return null;
     }
 
+    getHistogram(bucket, fname) {
+        console.assert(bucket);
+
+        if (!fname) {
+            return null;
+        }
+        let g = this.features.get(bucket, fname);
+        if (!g) {
+            return null;
+        }
+
+        if ("histogram" in g) {
+            return g["histogram"];
+        }
+        return null;
+    }
+
     getVolumeData(bucket, fname) {
         console.assert(bucket);
         if (!fname) {
