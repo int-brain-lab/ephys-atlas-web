@@ -36,14 +36,43 @@ function searchFilter(search, acronym, name) {
 
 
 
+function updateSort(list, icon, state) {
+    let items = Array.from(list.children);
+
+    if (state === 0) {
+        icon.textContent = "↕️"; // Unsorted state
+        items.sort((a, b) => parseInt(a.getAttribute("data-idx")) - parseInt(b.getAttribute("data-idx")));
+    } else if (state === 1) {
+        icon.textContent = "⬇️"; // Descending state
+        items.sort((a, b) => parseInt(b.getAttribute("data-value")) - parseInt(a.getAttribute("data-value")));
+    } else {
+        icon.textContent = "⬆️"; // Ascending state
+        items.sort((a, b) => parseInt(a.getAttribute("data-value")) - parseInt(b.getAttribute("data-value")));
+    }
+
+    items.forEach(item => list.appendChild(item)); // Reorder elements
+}
+
+
+
+function cycleSort(list, icon) {
+    let state = parseInt(list.getAttribute("data-sort-state")) || 0;
+    state = (state + 1) % 3; // Cycle through 0 (unsorted), 1 (ascending), 2 (descending)
+    list.setAttribute("data-sort-state", state);
+    updateSort(list, icon, state);
+}
+
+
+
 function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
     let hemisphere = name.includes("(left") ? "left" : "right";
     return `
     <li class="${mapping}_region_${idx}"
-        data-acronym="${acronym}"
-        data-idx="${idx}"
-        data-name="${name}"
-        data-hemisphere="${hemisphere}">
+            data-acronym="${acronym}"
+            data-idx="${idx}"
+            data-name="${name}"
+            data-value="${normalized}"
+            data-hemisphere="${hemisphere}">
         <div class="acronym">${acronym}</div>
         <div class="bar_wrapper"><div class="bar" style="width: ${normalized}%;"></div></div>
     </li>
@@ -152,11 +181,13 @@ class Region {
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bar-plot-list');
+        this.sortButton = document.getElementById('bar-plot-sort');
         this.regionTitle = document.getElementById('bar-plot-title');
 
         this.regionList = new RegionList(this.state, this.model, this.dispatcher, this.el);
 
         this.setupDispatcher();
+        this.setupSortButton();
     }
 
     async init() {
@@ -191,6 +222,12 @@ class Region {
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
         this.dispatcher.on('search', (ev) => { this.setRegions(); });
         this.dispatcher.on('bucket', (ev) => { this.setRegions(); });
+    }
+
+    setupSortButton() {
+        this.sortButton.onclick = (ev) => {
+            cycleSort(this.el, this.sortButton)
+        };
     }
 
     /* Set functions                                                                             */
@@ -255,5 +292,6 @@ class Region {
             this.regionTitle.innerHTML = `${this.state.fname}: ${this.state.stat}`;
         else
             this.regionTitle.innerHTML = '';
+        this.sortButton.innerHTML = '↕️';
     }
 };
