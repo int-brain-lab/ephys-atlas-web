@@ -83,7 +83,7 @@ class Tooltip {
                 count = fet['data'][regionIdx]["count"];
 
                 if (count)
-                    countDisplay = ` (n=${count})`;
+                    countDisplay = ` (n<sub>channels</sub>=${count})`;
                 else
                     countDisplay = '';
 
