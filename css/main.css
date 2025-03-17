@@ -764,6 +764,14 @@ body.waiting * {
     flex: 1;
 }
 
+#bar-plot-title {
+    position: sticky;
+    top: 0;
+    background: #ffffffcc;
+    padding: 2px 5px;
+    font-size: 12pt;
+}
+
 .bar-plot * {
     margin: 0;
     padding: 0;

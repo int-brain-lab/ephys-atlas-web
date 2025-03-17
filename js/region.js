@@ -152,6 +152,7 @@ class Region {
         this.dispatcher = dispatcher;
 
         this.el = document.getElementById('bar-plot-list');
+        this.regionTitle = document.getElementById('bar-plot-title');
 
         this.regionList = new RegionList(this.state, this.model, this.dispatcher, this.el);
 
@@ -185,6 +186,7 @@ class Region {
                 }
             }
             this.setRegions();
+            this.regionTitle.innerHTML = `${ev.fname}`;
         });
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
