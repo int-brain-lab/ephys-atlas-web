@@ -23,6 +23,7 @@ class Coloring {
         this.dispatcher = dispatcher;
 
         this.style = document.getElementById('style-regions').sheet;
+        this.styleDefault = document.getElementById('style-default-regions');
 
         this.setupDispatcher();
     }
@@ -46,7 +47,7 @@ class Coloring {
         this.dispatcher.on('logScale', (ev) => { this.buildColors(); });
         this.dispatcher.on('feature', (ev) => { if (!ev.isVolume) this.buildColors(); });
         this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
-        this.dispatcher.on('mapping', (ev) => { this.buildColors(); });
+        this.dispatcher.on('mapping', (ev) => { this.updateDefaultColors(); this.buildColors(); });
         this.dispatcher.on('stat', (ev) => { this.buildColors(); });
 
         // NOTE: when Unity is loaded, send the colors.
@@ -60,23 +61,15 @@ class Coloring {
 
     clear() {
         clearStyle(this.style);
+        this.updateDefaultColors();
 
         // Clear colors in WebSocket.
         this.dispatcher.data(this, 'regionColors', '', {});
     }
 
-    _setRegionColor(regionIdx, color) {
-        let rule = `svg path.${this.state.mapping}_region_${regionIdx} { fill: ${color}; }\n`;
-        this.style.insertRule(rule);
+    updateDefaultColors() {
+        this.styleDefault.href = `data/css/default_region_colors_${this.state.mapping}.css`;
     }
-
-    // _setRegionWhite(regionIdx) {
-    //     this._setRegionColor(regionIdx, '#ffffff');
-    // }
-
-    // _setRegionGrey(regionIdx) {
-    //     this._setRegionColor(regionIdx, '#d3d3d3');
-    // }
 
     buildColors(refresh = false) {
 
@@ -109,7 +102,7 @@ class Coloring {
         }
 
         // Register the data to WebSocket.
-        this.dispatcher.data(this, 'regionColors', this.state.fname, regionColors)
+        this.dispatcher.data(this, 'regionColors', this.state.fname, regionColors);
 
         // Hide the spinning mouse cursor.
         this.dispatcher.spinning(this, false);
