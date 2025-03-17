@@ -629,12 +629,12 @@ body.waiting * {
 
 #bar-scale .colorbar-wrapper {
     position: relative;
-    height: 100px;
+    height: 75px;
 }
 
 #bar-scale .colorbar {
     position: absolute;
-    height: 100px;
+    height: 75px;
     width: 100%;
 
     display: flex;
