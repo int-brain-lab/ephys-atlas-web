@@ -89,6 +89,9 @@ class Colorbar {
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
 
+        this.countTotal = document.querySelector('#bar-scale .count-total');
+        this.countSelected = document.querySelector('#bar-scale .count-selected');
+
         this.setupDispatcher();
     }
 
@@ -126,6 +129,8 @@ class Colorbar {
         this.cbar.innerHTML = '';
         this.featureMin.innerHTML = '';
         this.featureMax.innerHTML = '';
+        this.countTotal.innerHTML = '';
+        this.countSelected.innerHTML = '';
     }
 
     setFeatureRange() {
@@ -136,8 +141,13 @@ class Colorbar {
             if (histogram) {
                 let vmin = histogram['vmin'];
                 let vmax = histogram['vmax'];
+                let count = histogram['total_count'];
+
                 this.featureMin.innerHTML = displayNumber(vmin);
                 this.featureMax.innerHTML = displayNumber(vmax);
+
+                this.countTotal.innerHTML = `n<sub>total</sub>=${count.toLocaleString()}`;
+                // this.countSelected.innerHTML = ;
             }
         } else {
             const volume = this.model.getFeatures(state.bucket, state.fname);
@@ -185,11 +195,13 @@ class Colorbar {
             this.state.bucket, this.state.fname, this.state.mapping);
 
         let histogram = new Array(n).fill(0);
+        let selectedCount = 0;
 
         // NOTE: only take the first selected region for now.
         selected.forEach(regionIdx => {
             let f = features["data"][regionIdx];
             if (!f) return;
+            selectedCount += f["count"];
 
             Object.keys(f).forEach(key => {
                 let match = key.match(/^h_(\d+)$/);
@@ -202,7 +214,7 @@ class Colorbar {
             });
         });
 
-        return histogram;
+        return [histogram, selectedCount];
     }
 
     drawHistogram(container, counts) {
@@ -238,12 +250,15 @@ class Colorbar {
     setColorbarSelected() {
         if (this.state.selected.size == 0) {
             this.cbar2.style.opacity = 0;
+            this.countSelected.innerHTML = '';
         }
         else {
             this.cbar2.style.opacity = 1;
             // Now, draw the histogram of the selected region(s), if any.
-            let counts2 = this.getFeatureHistogram(BIN_COUNT);
+            let [counts2, selectedCount] = this.getFeatureHistogram(BIN_COUNT);
             this.drawHistogram(this.cbar2, counts2);
+
+            this.countSelected.innerHTML = `n<sub>selected</sub>=${selectedCount.toLocaleString()}`;
         }
     }
 };

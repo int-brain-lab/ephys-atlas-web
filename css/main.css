@@ -623,6 +623,7 @@ body.waiting * {
     margin: 0 0 0 var(--colorbar-margin);
     width: calc(100% - var(--colorbar-margin));
     flex: 0 0 auto;
+    position: relative;
 }
 
 
@@ -672,11 +673,26 @@ body.waiting * {
     align-items: center;
 }
 
+#bar-scale .mini-stats {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
 #bar-scale .min,
-#bar-scale .max {
+#bar-scale .max,
+#bar-scale .count-total,
+#bar-scale .count-selected,
+#bar-scale sub,
+#bar-scale sup {
     /* display: inline; */
     /* position: absolute; */
     font-size: 8pt;
+}
+
+#bar-scale sub,
+#bar-scale sup {
+    font-size: 90%;
 }
 
 #bar-scale .min {
