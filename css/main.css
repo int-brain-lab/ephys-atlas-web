@@ -620,7 +620,7 @@ body.waiting * {
 
 #bar-scale {
     display: inline-block;
-    margin: 0 0 0 var(--colorbar-margin);
+    margin: 16px 0 0 var(--colorbar-margin);
     width: calc(100% - var(--colorbar-margin));
     flex: 0 0 auto;
     position: relative;
