@@ -186,7 +186,6 @@ class Region {
                 }
             }
             this.setRegions();
-            this.regionTitle.innerHTML = `${ev.fname}`;
         });
         this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
         this.dispatcher.on('stat', (ev) => { this.setRegions(); });
@@ -251,5 +250,10 @@ class Region {
         this.dispatcher.data(this, 'regionValues', this.state.fname, keptRegions);
 
         this.regionList.setRegions(this.state.mapping, keptRegions);
+
+        if (this.state.fname)
+            this.regionTitle.innerHTML = `${this.state.fname}: ${this.state.stat}`;
+        else
+            this.regionTitle.innerHTML = '';
     }
 };
