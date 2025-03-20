@@ -12,6 +12,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+from pathlib import Path
+import numpy as np
+import pandas as pd
+from ephys_atlas.encoding import voltage_features_set
+from ephys_atlas.data import load_voltage_features
 from iblatlas.regions import BrainRegions
 from iblbrainviewer import api
 
@@ -63,13 +69,6 @@ XLIMS = {
 def save_json(d, filename):
     with open(filename, "w") as f:
         json.dump(d, f, indent=1, sort_keys=True)
-
-
-def get_feature_names(df):
-    return sorted([c for c in df.columns
-        if (not c.startswith('atlas_id') and
-            not c.startswith('acronym') and
-            not c.startswith('pid'))])
 
 
 def lateralize_features(df):
@@ -128,6 +127,7 @@ def get_uncertainty(df):
 
 
 def get_aggregates(df):
+    # Compute the histogram only on features.
     out = {
         'mean': df.mean(numeric_only=True),
         'median': df.median(numeric_only=True),
@@ -180,23 +180,29 @@ def clean(payload):
 # Ephys data creation
 # ---------------------------------------------------------------------------------------------
 
-def make_ephys_data(pqt_path, channels_path, output_dir=None, short_desc=None, key='mean', n_jobs=1):
-
-    hemisphere = 'left'
-
-    df_sessions = pd.read_parquet(pqt_path)
-    feature_names = get_feature_names(df_sessions)
+def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean', n_jobs=1):
 
     br = BrainRegions()
-    df_channels = pd.read_parquet(channels_path)
+    mapping = 'Allen'
+    label = 'latest'
+    hemisphere = 'left'
 
-    df_sessions['atlas_id'] = df_channels['atlas_id'].astype(np.int32)
-    df_sessions['atlas_idx'] = np.array(
-        [_[0] for _ in br.id2index(df_sessions.atlas_id)[1]], dtype=np.int32)
+    df_voltage, df_clusters, df_channels, df_probes = \
+        load_voltage_features(local_data_path.joinpath(label), mapping=mapping)
 
-    df_sessions = lateralize_features(df_sessions)
+    df_voltage['atlas_id'] = df_channels['atlas_id'].astype(np.int32)
+    df_voltage['atlas_idx'] = np.array(
+        [_[0] for _ in br.id2index(df_voltage.atlas_id)[1]], dtype=np.int32)
 
-    df_grouped = df_sessions.groupby('atlas_idx')
+    df_voltage = lateralize_features(df_voltage)
+
+    df_voltage.drop(
+        df_voltage[df_voltage[mapping + "_acronym"].isin(["void", "root"])].index, inplace=True)
+
+    fnames = voltage_features_set()
+    print(fnames)
+    df_grouped = df_voltage[fnames + ['atlas_id', 'atlas_idx']].groupby('atlas_idx')
+
     # NOTE: right now, the bin edges of the histograms are computed on the *aggregated* values,
     # and they are *also* used for the full histogram.
     agg, bin_edges = get_aggregates(df_grouped)
@@ -218,7 +224,7 @@ def make_ephys_data(pqt_path, channels_path, output_dir=None, short_desc=None, k
         bins = bin_edges[fname]
 
         # Compute the histogram of all values (before region aggregation).
-        histogram = compute_histogram(df_sessions[fname], bins=bins)
+        histogram = compute_histogram(df_voltage[fname], bins=bins)
 
         data = remap(key, values)
 
@@ -234,25 +240,25 @@ def make_ephys_data(pqt_path, channels_path, output_dir=None, short_desc=None, k
         api.save_payload(output_dir, fname, payload)
 
     # Parallel version.
-    Parallel(n_jobs=n_jobs)(delayed(process_fname)(fname) for fname in feature_names)
-    # for fname in tqdm.tqdm(("alpha_std",)):
+    Parallel(n_jobs=n_jobs)(delayed(process_fname)(fname) for fname in fnames)
+    # for fname in tqdm.tqdm(("psd_delta",)):
     #     process_fname(fname)
 
 
 def plot_distributions(pqt_path, channels_path):
-    df_sessions = pd.read_parquet(pqt_path)
+    df_voltage = pd.read_parquet(pqt_path)
 
     br = BrainRegions()
     df_channels = pd.read_parquet(channels_path)
 
-    df_sessions['atlas_id'] = df_channels['atlas_id'].astype(np.int32)
-    df_sessions['atlas_idx'] = np.array(
-        [_[0] for _ in br.id2index(df_sessions.atlas_id)[1]], dtype=np.int32)
-    df_sessions = lateralize_features(df_sessions)
+    df_voltage['atlas_id'] = df_channels['atlas_id'].astype(np.int32)
+    df_voltage['atlas_idx'] = np.array(
+        [_[0] for _ in br.id2index(df_voltage.atlas_id)[1]], dtype=np.int32)
+    df_voltage = lateralize_features(df_voltage)
 
     q = .00001
     for fname in ("alpha_std",):  # XLIMS.keys():
-        values = df_sessions[fname]
+        values = df_voltage[fname]
         # vmin = values.min()  # np.quantile(values, q)
         # vmax = values.max()  # np.quantile(values, 1-q)
         vmin, vmax = XLIMS.get(fname)
@@ -266,9 +272,9 @@ if __name__ == '__main__':
     DATA_DIR = ROOT_DIR / "data"
 
     bucket_uuid = 'add0d5a4-f10a-4b81'
-    pqt_path = DATA_DIR / 'raw_ephys_features_denoised.pqt'
-    channels_path = DATA_DIR / 'channels.pqt'
     output_dir = DATA_DIR / f'features/ephys_{bucket_uuid}/'
 
+    local_data_path = Path('/home/cyrille/GIT/IBL/paper-ephys-atlas/data')
+
     # plot_distributions(pqt_path, channels_path)
-    make_ephys_data(pqt_path, channels_path, output_dir=output_dir, n_jobs=12)
+    make_ephys_data(local_data_path, output_dir=output_dir, n_jobs=12)
