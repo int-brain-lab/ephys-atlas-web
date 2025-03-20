@@ -252,6 +252,23 @@ class Model {
 
                     this.splash.add(1);
                 }
+
+                // HACK: remove void/root
+                else {
+                    for (const mappingKey in out) {
+                        const mapping = out[mappingKey];
+                        if (mapping && typeof mapping === 'object') {
+                            ['beryl', 'cosmos'].forEach(key => {
+                                if (mapping[key] &&
+                                    typeof mapping[key] === 'object' &&
+                                    mapping[key].data) {
+                                    delete mapping[key].data["0"];
+                                    delete mapping[key].data["1"];
+                                }
+                            });
+                        }
+                    }
+                }
             }
 
             this.splash.end();
