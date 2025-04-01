@@ -15,6 +15,7 @@ export { Maximizer };
 class Maximizer {
     constructor(state, model, dispatcher) {
         this.state = state;
+        this.dispatcher = dispatcher;
 
         this.maxCoronal = document.getElementById('maximizer-coronal');
         this.maxSagittal = document.getElementById('maximizer-sagittal');
@@ -22,6 +23,7 @@ class Maximizer {
         this.maxSwanson = document.getElementById('maximizer-swanson');
         this.maxUnity = document.getElementById('maximizer-unity');
         this.maxTop = document.getElementById('maximizer-top');
+        this.maxStat = document.getElementById('maximizer-stat');
         this.maximizers = [
             this.maxCoronal,
             this.maxSagittal,
@@ -41,6 +43,10 @@ class Maximizer {
                 this.maximize(e.target.parentElement);
             });
         }
+
+        this.maxStat.addEventListener("click", (e) => {
+            this.dispatcher.toggleStatToolbox(this);
+        });
 
         document.body.addEventListener('keydown', (e) => {
             if (e.key == "Escape") {

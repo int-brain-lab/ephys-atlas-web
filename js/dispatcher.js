@@ -61,6 +61,10 @@ class Dispatcher {
         this.emit("toggle", source, { "idx": idx });
     }
 
+    toggleStatToolbox(source) {
+        this.emit("toggleStatToolbox", source, {});
+    }
+
     clear(source,) {
         // when all regions are deselected
         this.emit("clear", source, {});

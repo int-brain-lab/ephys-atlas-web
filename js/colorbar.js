@@ -85,6 +85,7 @@ class Colorbar {
 
         this.cbar = document.querySelectorAll('#bar-scale .colorbar')[0];
         this.cbar2 = document.querySelectorAll('#bar-scale .colorbar')[1];
+        this.statToolbox = document.getElementById('stat-toolbox');
 
         this.featureMin = document.querySelector('#bar-scale .min');
         this.featureMax = document.querySelector('#bar-scale .max');
@@ -119,6 +120,7 @@ class Colorbar {
         this.dispatcher.on('stat', (e) => { this.setColorbar(); this.setFeatureRange(); });
 
         this.dispatcher.on('toggle', (e) => { this.setColorbarSelected(); });
+        this.dispatcher.on('toggleStatToolbox', (e) => { this.toggleStatToolbox(); });
         this.dispatcher.on('clear', (e) => { this.setColorbarSelected(); });
     }
 
@@ -260,5 +262,10 @@ class Colorbar {
 
             this.countSelected.innerHTML = `n<sub>selected</sub>=${selectedCount.toLocaleString()}`;
         }
+    }
+
+    toggleStatToolbox() {
+        console.log("toggle stat toolbox");
+        this.statToolbox.classList.toggle("visible");
     }
 };

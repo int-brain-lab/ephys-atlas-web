@@ -903,6 +903,14 @@ div#container .maximizer:hover {
 }
 
 
+div#container #maximizer-stat.maximizer {
+    position: absolute;
+    top: -22px;
+    right: 4px;
+    background-color: transparent;
+}
+
+
 
 div#container .maximized {
     position: absolute;
@@ -998,6 +1006,32 @@ line {
     /* height: 100%; */
     /* aspect-ratio: 1; */
 }
+
+
+
+
+/*************************************************************************************************/
+/*  Stat toolbox                                                                                 */
+/*************************************************************************************************/
+
+#stat-toolbox {
+    overflow: hidden;
+    display: none;
+    grid-column: 2 / 6;
+    grid-row: 3 / 4;
+    background-color: white;
+    z-index: 10;
+}
+
+#stat-toolbox.visible {
+    display: block;
+}
+
+#stat-toolbox h2 {
+    margin-top: 0;
+}
+
+
 
 
 
