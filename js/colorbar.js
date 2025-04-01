@@ -36,9 +36,10 @@ function computeHistogram(n, cmin, cmax, values) {
 }
 
 
-function drawHistogram(container, counts, cmin, cmax, colors) {
+function drawHistogram(container, counts, cmin, cmax, cmap) {
     if (!container) return;
     if (!counts) return;
+    console.assert(cmap);
 
     // container: div
     // counts: values of the histogram
@@ -47,7 +48,7 @@ function drawHistogram(container, counts, cmin, cmax, colors) {
     // colorCount: number of colors in the colormap
     let n = counts.length;
     let countMax = Math.max(...counts);
-    let colorCount = colors.length;
+    let colorCount = cmap.length;
 
     // Generate the histogram DOM elements.
     let child = null;
@@ -65,12 +66,152 @@ function drawHistogram(container, counts, cmin, cmax, colors) {
         x = i * 100.0 / n;
         x = (x - cmin) / (cmax - cmin);
         x = clamp(x, 0, .9999);
-        child.style.backgroundColor = colors[Math.floor(x * colorCount)];
+        child.style.backgroundColor = cmap[Math.floor(x * colorCount)];
 
         // Histogram height.
         child.style.height = `calc(10px + ${counts[i] * 100.0 / countMax}%)`;
     }
 }
+
+
+// Add the histograms of all selected regions.
+function getFeatureHistogram(features, selected, n_bins) {
+    if (!selected) return;
+
+    let histogram = new Array(n_bins).fill(0);
+    let selectedCount = 0;
+
+    selected.forEach(regionIdx => {
+        let f = features["data"][regionIdx];
+        if (!f) return;
+        selectedCount += f["count"];
+
+        Object.keys(f).forEach(key => {
+            let match = key.match(/^h_(\d+)$/);
+            if (match) {
+                let index = parseInt(match[1], 10);
+                if (index >= 0 && index < n_bins) {
+                    histogram[index] += f[key];
+                }
+            }
+        });
+    });
+
+    return [histogram, selectedCount];
+}
+
+
+/*************************************************************************************************/
+/* Histogram component                                                                           */
+/*************************************************************************************************/
+
+class Histogram {
+    constructor(parentDiv, state, model) {
+        console.assert(parentDiv);
+
+        this.state = state;
+        this.model = model;
+
+        this.cmap = null;
+        this.cmin = null;
+        this.cmax = null;
+
+        // Clear all children of the parentDiv
+        parentDiv.innerHTML = "";
+
+        // === Create colorbar wrapper ===
+        const colorbarWrapper = document.createElement("div");
+        colorbarWrapper.className = "colorbar-wrapper";
+
+        this.cbar = document.createElement("div");
+        this.cbar.className = "colorbar";
+        colorbarWrapper.appendChild(this.cbar);
+
+        this.cbar2 = document.createElement("div");
+        this.cbar2.className = "colorbar";
+        colorbarWrapper.appendChild(this.cbar2);
+
+        parentDiv.appendChild(colorbarWrapper);
+
+        // === Separator ===
+        const hr = document.createElement("hr");
+        parentDiv.appendChild(hr);
+
+        // === Min/Max wrapper ===
+        const rangeWrapper = document.createElement("div");
+        rangeWrapper.className = "wrapper";
+
+        this.featureMin = document.createElement("div");
+        this.featureMin.className = "min";
+        rangeWrapper.appendChild(this.featureMin);
+
+        this.featureMax = document.createElement("div");
+        this.featureMax.className = "max";
+        rangeWrapper.appendChild(this.featureMax);
+
+        parentDiv.appendChild(rangeWrapper);
+
+        // === Mini stats ===
+        const miniStats = document.createElement("div");
+        miniStats.className = "mini-stats";
+
+        this.countTotal = document.createElement("div");
+        this.countTotal.className = "count-total";
+        miniStats.appendChild(this.countTotal);
+
+        this.countSelected = document.createElement("div");
+        this.countSelected.className = "count-selected";
+        miniStats.appendChild(this.countSelected);
+
+        parentDiv.appendChild(miniStats);
+
+        // Initialize bars
+        this.clear();
+    }
+
+    clear() {
+        this.cbar.innerHTML = '';
+        this.featureMin.innerHTML = '';
+        this.featureMax.innerHTML = '';
+        this.countTotal.innerHTML = '';
+
+        this.clearLocal();
+    }
+
+    clearLocal() {
+        this.cbar2.style.opacity = 0;
+        this.countSelected.innerHTML = '';
+    }
+
+    setFeatureRange(vmin, vmax) {
+        this.featureMin.innerHTML = displayNumber(vmin);
+        this.featureMax.innerHTML = displayNumber(vmax);
+    }
+
+    setGlobalCount(count) {
+        this.countTotal.innerHTML = count > 0 ? `n<sub>total</sub>=${count.toLocaleString()}` : '';
+    }
+
+    setLocalCount(count) {
+        this.countSelected.innerHTML = count > 0 ? `n<sub>selected</sub>=${count.toLocaleString()}` : "";
+    }
+
+    setColormap(cmap, cmapmin, cmapmax) {
+        this.cmap = cmap;
+        this.cmapmin = cmapmin;
+        this.cmapmax = cmapmax;
+    }
+
+    setGlobalHistogram(counts) {
+        drawHistogram(this.cbar, counts, this.cmapmin, this.cmapmax, this.cmap);
+    }
+
+    setLocalHistogram(counts) {
+        this.cbar2.style.opacity = 1;
+        drawHistogram(this.cbar2, counts, this.cmapmin, this.cmapmax, this.cmap);
+    }
+}
+
 
 
 /*************************************************************************************************/
@@ -83,15 +224,9 @@ class Colorbar {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.cbar = document.querySelectorAll('#bar-scale .colorbar')[0];
-        this.cbar2 = document.querySelectorAll('#bar-scale .colorbar')[1];
         this.statToolbox = document.getElementById('stat-toolbox');
 
-        this.featureMin = document.querySelector('#bar-scale .min');
-        this.featureMax = document.querySelector('#bar-scale .max');
-
-        this.countTotal = document.querySelector('#bar-scale .count-total');
-        this.countSelected = document.querySelector('#bar-scale .count-selected');
+        this.miniHistogram = new Histogram(document.getElementById("mini-histogram"), state, model);
 
         this.setupDispatcher();
     }
@@ -101,8 +236,8 @@ class Colorbar {
     }
 
     setState(state) {
-        this.setColorbar();
-        this.setColorbarSelected();
+        this.setGlobalHistogram();
+        this.setLocalHistogram();
     }
 
     /* Setup functions                                                                           */
@@ -112,55 +247,44 @@ class Colorbar {
         this.dispatcher.on('reset', (ev) => { this.init(); });
         this.dispatcher.on('bucket', (ev) => { this.clear(); });
         this.dispatcher.on('feature', (e) => {
-            this.setColorbar(); this.setColorbarSelected(); this.setFeatureRange();
+            this.setColormap();
+            this.setGlobalHistogram();
+            this.setLocalHistogram();
         });
-        this.dispatcher.on('cmap', (e) => { this.setColorbar(); this.setColorbarSelected(); });
-        this.dispatcher.on('cmapRange', (e) => { this.setColorbar(); this.setColorbarSelected(); });
-        this.dispatcher.on('mapping', (e) => { this.setColorbar(); this.setColorbarSelected(); });
-        this.dispatcher.on('stat', (e) => { this.setColorbar(); this.setFeatureRange(); });
+        this.dispatcher.on('cmap', (e) => {
+            this.setColormap();
+            this.setGlobalHistogram();
+            this.setLocalHistogram();
+        });
+        this.dispatcher.on('cmapRange', (e) => {
+            this.setColormap();
+            this.setGlobalHistogram();
+            this.setLocalHistogram();
+        });
+        this.dispatcher.on('mapping', (e) => {
+            this.setGlobalHistogram();
+            this.setLocalHistogram();
+        });
+        this.dispatcher.on('stat', (e) => {
+            this.setGlobalHistogram();
 
-        this.dispatcher.on('toggle', (e) => { this.setColorbarSelected(); });
-        this.dispatcher.on('toggleStatToolbox', (e) => { this.toggleStatToolbox(); });
-        this.dispatcher.on('clear', (e) => { this.setColorbarSelected(); });
+        });
+        this.dispatcher.on('toggle', (e) => {
+            this.setLocalHistogram();
+
+        });
+        this.dispatcher.on('toggleStatToolbox', (e) => {
+            this.toggleStatToolbox();
+
+        });
+        this.dispatcher.on('clear', (e) => {
+            this.setLocalHistogram();
+
+        });
     }
 
     /* Internal functions                                                                        */
     /*********************************************************************************************/
-
-    clear() {
-        this.cbar.innerHTML = '';
-        this.featureMin.innerHTML = '';
-        this.featureMax.innerHTML = '';
-        this.countTotal.innerHTML = '';
-        this.countSelected.innerHTML = '';
-    }
-
-    setFeatureRange() {
-        // Display vmin and vmax.
-        const state = this.state;
-        if (!state.isVolume) {
-            let histogram = this.model.getHistogram(state.bucket, state.fname);
-            if (histogram) {
-                let vmin = histogram['vmin'];
-                let vmax = histogram['vmax'];
-                let count = histogram['total_count'];
-
-                this.featureMin.innerHTML = displayNumber(vmin);
-                this.featureMax.innerHTML = displayNumber(vmax);
-
-                this.countTotal.innerHTML = `n<sub>total</sub>=${count.toLocaleString()}`;
-                // this.countSelected.innerHTML = ;
-            }
-        } else {
-            const volume = this.model.getFeatures(state.bucket, state.fname);
-            if (volume) {
-                let vmin = volume['bounds'][0];
-                let vmax = volume['bounds'][1];
-                this.featureMin.innerHTML = displayNumber(vmin);
-                this.featureMax.innerHTML = displayNumber(vmax);
-            }
-        }
-    }
 
     getFeatureValues() {
         // Load the region and features data.
@@ -186,45 +310,7 @@ class Colorbar {
         return [values, vmin, vmax];
     }
 
-    // Intra-region histogram, found in the feature file.
-    getFeatureHistogram(n) {
-        let selected = this.state.selected;
-        if (!selected) return;
-
-        // Load the region and features data.
-        // let regions = this.model.getRegions(this.state.mapping);
-        let features = this.state.isVolume ? null : this.model.getFeatures(
-            this.state.bucket, this.state.fname, this.state.mapping);
-
-        let histogram = new Array(n).fill(0);
-        let selectedCount = 0;
-
-        // NOTE: only take the first selected region for now.
-        selected.forEach(regionIdx => {
-            let f = features["data"][regionIdx];
-            if (!f) return;
-            selectedCount += f["count"];
-
-            Object.keys(f).forEach(key => {
-                let match = key.match(/^h_(\d+)$/);
-                if (match) {
-                    let index = parseInt(match[1], 10);
-                    if (index >= 0 && index < n) {
-                        histogram[index] += f[key];
-                    }
-                }
-            });
-        });
-
-        return [histogram, selectedCount];
-    }
-
-    drawHistogram(container, counts) {
-        let colors = this.model.getColormap(this.state.cmap);
-        drawHistogram(container, counts, this.state.cmapmin, this.state.cmapmax, colors);
-    }
-
-    setColorbar() {
+    getGlobalHistogram() {
         if (!this.state.fname) {
             this.clear();
             return;
@@ -244,28 +330,72 @@ class Colorbar {
             let [values, vmin, vmax] = this.getFeatureValues();
             counts = computeHistogram(BIN_COUNT, vmin, vmax, values);
         }
-
-        // Draw the global histogram.
-        this.drawHistogram(this.cbar, counts);
+        return counts;
     }
 
-    setColorbarSelected() {
+    /* Public functions                                                                          */
+    /*********************************************************************************************/
+
+    clear() {
+        this.miniHistogram.clear();
+    }
+
+    setFeatureRange() {
+        // Display vmin and vmax.
+        const state = this.state;
+        if (!state.isVolume) {
+            let histogram = this.model.getHistogram(state.bucket, state.fname);
+            if (histogram) {
+                let vmin = histogram['vmin'];
+                let vmax = histogram['vmax'];
+                let count = histogram['total_count'];
+                this.miniHistogram.setFeatureRange(vmin, vmax);
+                this.miniHistogram.setGlobalCount(count);
+            }
+        } else {
+            const volume = this.model.getFeatures(state.bucket, state.fname);
+            if (volume) {
+                let vmin = volume['bounds'][0];
+                let vmax = volume['bounds'][1];
+                this.miniHistogram.setFeatureRange(vmin, vmax, 0);
+            }
+        }
+    }
+
+    setColormap() {
+        let cmap = this.model.getColormap(this.state.cmap);
+        this.miniHistogram.setColormap(cmap, this.state.cmapmin, this.state.cmapmax);
+    }
+
+    setGlobalHistogram() {
+        this.setFeatureRange();
+        let counts = this.getGlobalHistogram();
+        this.miniHistogram.setGlobalHistogram(counts);
+    }
+
+    setLocalHistogram() {
         if (this.state.selected.size == 0) {
-            this.cbar2.style.opacity = 0;
-            this.countSelected.innerHTML = '';
+            this.miniHistogram.clearLocal();
         }
         else {
-            this.cbar2.style.opacity = 1;
-            // Now, draw the histogram of the selected region(s), if any.
-            let [counts2, selectedCount] = this.getFeatureHistogram(BIN_COUNT);
-            this.drawHistogram(this.cbar2, counts2);
+            let selected = this.state.selected;
+            if (!selected) return;
 
-            this.countSelected.innerHTML = `n<sub>selected</sub>=${selectedCount.toLocaleString()}`;
+            // Load the region and features data.
+            // let regions = this.model.getRegions(this.state.mapping);
+            let features = this.state.isVolume ? null : this.model.getFeatures(
+                this.state.bucket, this.state.fname, this.state.mapping);
+
+            // Now, draw the histogram of the selected region(s), if any.
+            let [counts, selectedCount] = getFeatureHistogram(features, selected, BIN_COUNT);
+
+            this.miniHistogram.setLocalCount(selectedCount);
+            this.miniHistogram.setLocalHistogram(counts);
         }
     }
 
     toggleStatToolbox() {
-        console.log("toggle stat toolbox");
+        // console.log("toggle stat toolbox");
         this.statToolbox.classList.toggle("visible");
     }
 };
