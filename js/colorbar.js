@@ -36,7 +36,7 @@ function computeHistogram(n, cmin, cmax, values) {
 }
 
 
-function drawHistogram(container, counts, cmin, cmax, cmap) {
+function drawHistogram(container, counts, cmin, cmax, cmap, denominator) {
     if (!container) return;
     if (!counts) return;
     console.assert(cmap);
@@ -47,8 +47,8 @@ function drawHistogram(container, counts, cmin, cmax, cmap) {
     // cmax: maximal colormap value
     // colorCount: number of colors in the colormap
     let n = counts.length;
-    let countMax = Math.max(...counts);
     let colorCount = cmap.length;
+    denominator = denominator > 0 ? denominator : Math.max(...counts);
 
     // Generate the histogram DOM elements.
     let child = null;
@@ -69,7 +69,7 @@ function drawHistogram(container, counts, cmin, cmax, cmap) {
         child.style.backgroundColor = cmap[Math.floor(x * colorCount)];
 
         // Histogram height.
-        child.style.height = `calc(10px + ${counts[i] * 100.0 / countMax}%)`;
+        child.style.height = `calc(10px + ${counts[i] * 100.0 / denominator}%)`;
     }
 }
 
@@ -202,13 +202,13 @@ class Histogram {
         this.cmapmax = cmapmax;
     }
 
-    setGlobalHistogram(counts) {
-        drawHistogram(this.cbar, counts, this.cmapmin, this.cmapmax, this.cmap);
+    setGlobalHistogram(counts, denominator) {
+        drawHistogram(this.cbar, counts, this.cmapmin, this.cmapmax, this.cmap, denominator);
     }
 
-    setLocalHistogram(counts) {
+    setLocalHistogram(counts, denominator) {
         this.cbar2.style.opacity = 1;
-        drawHistogram(this.cbar2, counts, this.cmapmin, this.cmapmax, this.cmap);
+        drawHistogram(this.cbar2, counts, this.cmapmin, this.cmapmax, this.cmap, denominator);
     }
 }
 
@@ -227,6 +227,7 @@ class Colorbar {
         this.statToolbox = document.getElementById('stat-toolbox');
 
         this.miniHistogram = new Histogram(document.getElementById("mini-histogram"), state, model);
+        this.normalization = 'local';
 
         this.setupDispatcher();
     }
@@ -267,19 +268,18 @@ class Colorbar {
         });
         this.dispatcher.on('stat', (e) => {
             this.setGlobalHistogram();
-
         });
         this.dispatcher.on('toggle', (e) => {
             this.setLocalHistogram();
-
         });
         this.dispatcher.on('toggleStatToolbox', (e) => {
             this.toggleStatToolbox();
-
+        });
+        this.dispatcher.on('toggleNormalization', (e) => {
+            this.toggleNormalization();
         });
         this.dispatcher.on('clear', (e) => {
             this.setLocalHistogram();
-
         });
     }
 
@@ -370,7 +370,9 @@ class Colorbar {
     setGlobalHistogram() {
         this.setFeatureRange();
         let counts = this.getGlobalHistogram();
-        this.miniHistogram.setGlobalHistogram(counts);
+        let countMax = Math.max(...counts);
+        // let countSum = counts.reduce((acc, val) => acc + val, 0);
+        this.miniHistogram.setGlobalHistogram(counts, countMax);
     }
 
     setLocalHistogram() {
@@ -386,16 +388,24 @@ class Colorbar {
             let features = this.state.isVolume ? null : this.model.getFeatures(
                 this.state.bucket, this.state.fname, this.state.mapping);
 
+            let countsGlobal = this.getGlobalHistogram();
+            let countMax = this.normalization == 'global' ? Math.max(...countsGlobal) : 0;
+
             // Now, draw the histogram of the selected region(s), if any.
             let [counts, selectedCount] = getFeatureHistogram(features, selected, BIN_COUNT);
 
             this.miniHistogram.setLocalCount(selectedCount);
-            this.miniHistogram.setLocalHistogram(counts);
+            this.miniHistogram.setLocalHistogram(counts, countMax);
         }
     }
 
     toggleStatToolbox() {
         // console.log("toggle stat toolbox");
         this.statToolbox.classList.toggle("visible");
+    }
+
+    toggleNormalization() {
+        this.normalization = this.normalization == 'global' ? 'local' : 'global';
+        this.setLocalHistogram();
     }
 };

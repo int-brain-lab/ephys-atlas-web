@@ -65,6 +65,10 @@ class Dispatcher {
         this.emit("toggleStatToolbox", source, {});
     }
 
+    toggleNormalization(source) {
+        this.emit("toggleNormalization", source, {});
+    }
+
     clear(source,) {
         // when all regions are deselected
         this.emit("clear", source, {});
