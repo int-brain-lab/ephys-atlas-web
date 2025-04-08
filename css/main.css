@@ -297,6 +297,10 @@ body.waiting * {
     margin-right: 6px;
 }
 
+#control-panel #histogram-normalization {
+    margin-right: 6px;
+}
+
 #reset-view-button {
     background-color: #FF5C00aa;
 }

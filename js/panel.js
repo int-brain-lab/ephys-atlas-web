@@ -89,6 +89,7 @@ class Panel {
         this.icmapminInput = document.getElementById('colormap-min-input');
         this.icmapmaxInput = document.getElementById('colormap-max-input');
         this.iclog = document.getElementById('log-scale');
+        this.ichn = document.getElementById('histogram-normalization');
         this.ibreset = document.getElementById('reset-view-button');
         this.ibclear = document.getElementById('clear-cache-button');
         this.ibconnect = document.getElementById('connect-button');
@@ -102,6 +103,7 @@ class Panel {
         this.setupColormap();
         this.setupColormapRange();
         this.setupLogScale();
+        this.setupHistogramNormalization();
 
         this.setupClearButton();
         this.setupConnectButton();
@@ -132,6 +134,9 @@ class Panel {
 
         // Log scale.
         this.setLogScale(state.logScale);
+
+        // Histogram normalization.
+        this.setHistogramNormalization(state.histogramNormalization);
 
         // Panel open.
         this.setOpen(state.panelOpen);
@@ -190,6 +195,11 @@ class Panel {
     setLogScale(logScale) {
         console.log("pseudo log scale", logScale);
         this.iclog.checked = logScale;
+    }
+
+    setHistogramNormalization(normalized) {
+        console.log("histogram normalized", normalized);
+        this.ichn.checked = normalized;
     }
 
     share() {
@@ -281,6 +291,14 @@ class Panel {
             'change', (e) => {
                 this.state.logScale = e.target.checked;
                 this.dispatcher.logScale(this, this.state.logScale);
+            });
+    }
+
+    setupHistogramNormalization() {
+        this.ichn.addEventListener(
+            'change', (e) => {
+                this.state.histogramNormalization = e.target.checked;
+                this.dispatcher.toggleNormalization(this, this.state.histogramNormalization);
             });
     }
 

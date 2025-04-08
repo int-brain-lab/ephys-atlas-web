@@ -13,6 +13,7 @@ const DEFAULT_COLORMAP = "magma";
 const DEFAULT_COLORMAP_MIN = 0;
 const DEFAULT_COLORMAP_MAX = 100;
 const DEFAULT_LOG_SCALE = false;
+const DEFAULT_HISTOGRAM_NORMALIZATION = false;
 
 const DEFAULT_BUCKET = "ephys";
 const DEFAULT_BUCKETS = ["ephys", "bwm", "local"];
@@ -184,6 +185,7 @@ class State {
         this.cmapmin = state.cmapmin || DEFAULT_COLORMAP_MIN;
         this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
         this.logScale = state.logScale || DEFAULT_LOG_SCALE;
+        this.histogramNormalization = state.histogramNormalization || DEFAULT_HISTOGRAM_NORMALIZATION;
 
         // Features.
         this.bucket = state.bucket || DEFAULT_BUCKET;
