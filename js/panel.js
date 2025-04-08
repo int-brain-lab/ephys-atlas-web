@@ -188,7 +188,7 @@ class Panel {
     }
 
     setLogScale(logScale) {
-        console.log("log scale", logScale);
+        console.log("pseudo log scale", logScale);
         this.iclog.checked = logScale;
     }
 

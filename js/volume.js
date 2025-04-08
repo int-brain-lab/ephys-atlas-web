@@ -257,7 +257,7 @@ class Volume {
         console.log("redraw volume bitmaps");
 
         if (this.state.logScale) {
-            console.warn("log scale not yet implemented on volumes");
+            console.warn("pseudo log scale not yet implemented on volumes");
         }
 
         this.drawSlice('coronal', this.state.coronal);

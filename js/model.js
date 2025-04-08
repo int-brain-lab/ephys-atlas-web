@@ -537,28 +537,18 @@ class Model {
                 continue;
             }
 
-            // If we make it till here, it means there is a valid value and we can compute the
-            // color with the colormap.
-
-            if (state.logScale) {
-                if (vmin <= 0) {
-                    console.error("unable to activate the log scale, all values should be >0");
-                }
-                else {
-                    console.assert(vmin > 0);
-                    console.assert(vmax > vmin);
-
-                    value = Math.log(value) / LOG_10;
-                    vmin = Math.log(vmin) / LOG_10;
-                    vmax = Math.log(vmax) / LOG_10;
-                }
-            }
-
             let vdiff = vmax - vmin;
-
             let vminMod = vmin + vdiff * cmin / 100.0;
             let vmaxMod = vmin + vdiff * cmax / 100.0;
             let normalized = normalizeValue(value, vminMod, vmaxMod);
+
+            // Pseudo-log scale (actually gamma correction, better for colormap visualization).
+            if (state.logScale) {
+                console.log(normalized);
+                normalized = Math.round(100.0 * Math.pow(normalized / 100.0, 0.25));
+                console.log(normalized);
+            }
+
             console.assert(normalized != null && normalized != undefined);
 
             // Compute the color.
