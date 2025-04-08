@@ -375,7 +375,7 @@ class Colorbar {
         hist = hist || this.miniHistogram;
         this.setFeatureRange();
         let counts = this.getGlobalHistogram();
-        if (!counts.length) return;
+        if (!counts || !counts.length) return;
         let countMax = Math.max(...counts);
         // let countSum = counts.reduce((acc, val) => acc + val, 0);
         hist.setGlobalHistogram(counts, countMax);

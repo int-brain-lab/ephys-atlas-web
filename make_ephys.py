@@ -118,10 +118,13 @@ def get_histogram_groupby(df, n_bins=N_BINS):
 def get_uncertainty(df):
     q5 = df.quantile(.05)
     q95 = df.quantile(.95)
+    median = df.median()
+    mean = df.mean()
 
     ci_width = q95 - q5
-    uncertainty = 1 - (ci_width / df.mean().abs())
-    uncertainty = np.clip(uncertainty, 0, 1)
+    # uncertainty = 1 - (ci_width / df.mean().abs())
+    uncertainty = (median - mean) / ci_width
+    # uncertainty = np.clip(uncertainty, 0, 1)
     uncertainty[np.isnan(uncertainty)] = 0
     return uncertainty
 
@@ -200,7 +203,8 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
         df_voltage[df_voltage[mapping + "_acronym"].isin(["void", "root"])].index, inplace=True)
 
     fnames = voltage_features_set()
-    print(fnames)
+    print("Feature names:", ", ".join(fnames))
+
     df_grouped = df_voltage[fnames + ['atlas_id', 'atlas_idx']].groupby('atlas_idx')
 
     # NOTE: right now, the bin edges of the histograms are computed on the *aggregated* values,
@@ -241,6 +245,7 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
 
     # Parallel version.
     Parallel(n_jobs=n_jobs)(delayed(process_fname)(fname) for fname in fnames)
+
     # for fname in tqdm.tqdm(("psd_delta",)):
     #     process_fname(fname)
 

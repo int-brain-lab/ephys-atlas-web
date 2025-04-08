@@ -544,9 +544,7 @@ class Model {
 
             // Pseudo-log scale (actually gamma correction, better for colormap visualization).
             if (state.logScale) {
-                console.log(normalized);
                 normalized = Math.round(100.0 * Math.pow(normalized / 100.0, 0.25));
-                console.log(normalized);
             }
 
             console.assert(normalized != null && normalized != undefined);
