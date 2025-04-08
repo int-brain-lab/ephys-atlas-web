@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from ephys_atlas.encoding import voltage_features_set
+from ephys_atlas.features import voltage_features_set
 from ephys_atlas.data import load_voltage_features
 from iblatlas.regions import BrainRegions
 from iblbrainviewer import api
