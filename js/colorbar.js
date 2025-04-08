@@ -225,6 +225,7 @@ class Colorbar {
         this.dispatcher = dispatcher;
 
         this.statToolbox = document.getElementById('stat-toolbox');
+        this.statToolboxWrapper = document.getElementById('stat-toolbox-wrapper');
 
         this.miniHistogram = new Histogram(document.getElementById("mini-histogram"), state, model);
         this.normalization = 'local';
@@ -336,11 +337,13 @@ class Colorbar {
     /* Public functions                                                                          */
     /*********************************************************************************************/
 
-    clear() {
-        this.miniHistogram.clear();
+    clear(hist) {
+        hist = hist || this.miniHistogram;
+        hist.clear();
     }
 
-    setFeatureRange() {
+    setFeatureRange(hist) {
+        hist = hist || this.miniHistogram;
         // Display vmin and vmax.
         const state = this.state;
         if (!state.isVolume) {
@@ -349,39 +352,45 @@ class Colorbar {
                 let vmin = histogram['vmin'];
                 let vmax = histogram['vmax'];
                 let count = histogram['total_count'];
-                this.miniHistogram.setFeatureRange(vmin, vmax);
-                this.miniHistogram.setGlobalCount(count);
+                hist.setFeatureRange(vmin, vmax);
+                hist.setGlobalCount(count);
             }
         } else {
             const volume = this.model.getFeatures(state.bucket, state.fname);
             if (volume) {
                 let vmin = volume['bounds'][0];
                 let vmax = volume['bounds'][1];
-                this.miniHistogram.setFeatureRange(vmin, vmax, 0);
+                hist.setFeatureRange(vmin, vmax, 0);
             }
         }
     }
 
-    setColormap() {
+    setColormap(hist) {
+        hist = hist || this.miniHistogram;
         let cmap = this.model.getColormap(this.state.cmap);
-        this.miniHistogram.setColormap(cmap, this.state.cmapmin, this.state.cmapmax);
+        hist.setColormap(cmap, this.state.cmapmin, this.state.cmapmax);
     }
 
-    setGlobalHistogram() {
+    setGlobalHistogram(hist) {
+        hist = hist || this.miniHistogram;
         this.setFeatureRange();
         let counts = this.getGlobalHistogram();
+        if (!counts.length) return;
         let countMax = Math.max(...counts);
         // let countSum = counts.reduce((acc, val) => acc + val, 0);
-        this.miniHistogram.setGlobalHistogram(counts, countMax);
+        hist.setGlobalHistogram(counts, countMax);
     }
 
-    setLocalHistogram() {
+    setLocalHistogram(hist, selected) {
+        hist = hist || this.miniHistogram;
         if (this.state.selected.size == 0) {
-            this.miniHistogram.clearLocal();
+            hist.clearLocal();
         }
         else {
-            let selected = this.state.selected;
+            selected = selected || this.state.selected;
             if (!selected) return;
+
+            let cmap = this.model.getColormap(this.state.cmap);
 
             // Load the region and features data.
             // let regions = this.model.getRegions(this.state.mapping);
@@ -391,11 +400,23 @@ class Colorbar {
             let countsGlobal = this.getGlobalHistogram();
             let countMax = this.normalization == 'global' ? Math.max(...countsGlobal) : 0;
 
-            // Now, draw the histogram of the selected region(s), if any.
+            // Now, draw the cumulated histogram of the selected region(s), if any.
             let [counts, selectedCount] = getFeatureHistogram(features, selected, BIN_COUNT);
 
-            this.miniHistogram.setLocalCount(selectedCount);
-            this.miniHistogram.setLocalHistogram(counts, countMax);
+            hist.setLocalCount(selectedCount);
+            hist.setLocalHistogram(counts, countMax);
+
+            // Stat toolbox.
+            // for (let value of selected) {
+            //     let histToolbox = new Histogram(this.statToolboxWrapper, this.state, this.model);
+            //     let s = new Set();
+            //     s.add(value);
+            //     let [countsToolbox, selectedCountToolbox] = getFeatureHistogram(features, s, BIN_COUNT);
+
+            //     this.setColormap(histToolbox);
+            //     histToolbox.setLocalCount(selectedCountToolbox);
+            //     histToolbox.setLocalHistogram(countsToolbox, countMax);
+            // }
         }
     }
 
