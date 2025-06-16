@@ -1071,6 +1071,37 @@ line {
     justify-content: flex-start;
 }
 
+#stat-toolbox-wrapper {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 10px;
+}
+
+#histogram-chart {
+  /* border: 1px solid #ccc; */
+  background: #fff;
+}
+
+#stat-table {
+  border-collapse: collapse;
+}
+
+#stat-table th, #stat-table td {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+#stat-table th {
+  color: white;
+}
+
+#stat-table .stat-key-cell {
+  font-weight: bold;
+}
+
+
 
 
 /*************************************************************************************************/

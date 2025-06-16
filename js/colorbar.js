@@ -9,9 +9,13 @@ import { clamp, displayNumber } from "./utils.js";
 /*************************************************************************************************/
 
 const BIN_COUNT = 50;
+const MAX_SELECTED = 5;
+const COLORS = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00'];
 
 
 function computeHistogram(n, cmin, cmax, values) {
+    console.log(`compute histogram for ${values.length} values`);
+
     // Initialize an array to store the histogram bins
     const histogram = new Array(n).fill(0);
 
@@ -99,6 +103,150 @@ function getFeatureHistogram(features, selected, n_bins) {
 
     return [histogram, selectedCount];
 }
+
+
+function getNiceTicks(maxValue, tickCount) {
+    const niceSteps = [1, 2, 5, 10];
+    const exponent = Math.floor(Math.log10(maxValue));
+    const base = Math.pow(10, exponent);
+    let step = base;
+
+    for (let factor of niceSteps) {
+        const s = base * factor;
+        if (maxValue / s <= tickCount) {
+            step = s;
+            break;
+        }
+    }
+
+    const ticks = [];
+    for (let i = 0; i * step <= maxValue; i++) {
+        ticks.push(i * step);
+    }
+    return ticks;
+}
+
+
+function updateStatToolbox(features, regions, selected) {
+    const canvas = document.getElementById('histogram-chart');
+    const ctx = canvas.getContext('2d');
+    const table = document.getElementById('stat-table');
+
+    // Clear if empty selection
+    if (!selected || selected.size === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        table.innerHTML = '';
+        return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    table.innerHTML = '';
+
+    const data = [];
+    const allKeys = new Set();
+
+    Array.from(selected).slice(0, MAX_SELECTED).forEach((value, index) => {
+        const s = new Set([value]);
+        const [countsToolbox, selectedCountToolbox] = getFeatureHistogram(features, s, 50);
+        data.push({ id: value, counts: countsToolbox });
+
+        Object.keys(features["data"][value]).forEach(k => {
+            if (!k.startsWith('h_')) allKeys.add(k);
+        });
+    });
+
+    // === Draw chart ===
+    const W = canvas.width, H = canvas.height;
+    const PAD_LEFT = 30, PAD_BOTTOM = 20, PAD_TOP = 10, PAD_RIGHT = 10;
+    const chartWidth = W - PAD_LEFT - PAD_RIGHT;
+    const chartHeight = H - PAD_TOP - PAD_BOTTOM;
+
+    const maxY = Math.max(...data.flatMap(d => d.counts));
+    const binWidth = chartWidth / 50;
+
+    // Axes
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+
+    // Y-axis
+    ctx.beginPath();
+    ctx.moveTo(PAD_LEFT, PAD_TOP);
+    ctx.lineTo(PAD_LEFT, H - PAD_BOTTOM);
+    ctx.stroke();
+
+    // X-axis
+    ctx.beginPath();
+    ctx.moveTo(PAD_LEFT, H - PAD_BOTTOM);
+    ctx.lineTo(W - PAD_RIGHT, H - PAD_BOTTOM);
+    ctx.stroke();
+
+    // Y-axis labels
+    ctx.fillStyle = '#000';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    // Y-axis ticks using nice numbers
+    const yTicks = getNiceTicks(maxY, 5);
+
+    yTicks.forEach(yVal => {
+        const yPos = H - PAD_BOTTOM - (yVal / maxY) * chartHeight;
+        ctx.fillText(yVal.toString(), PAD_LEFT - 5, yPos);
+    });
+
+    // X-axis labels
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    const xTicks = 5;
+    for (let i = 0; i <= xTicks; i++) {
+        const xVal = Math.round((50 / xTicks) * i);
+        const xPos = PAD_LEFT + (i / xTicks) * chartWidth;
+        ctx.fillText(xVal, xPos, H - PAD_BOTTOM + 2);
+    }
+
+    // Plot lines
+    data.forEach((d, i) => {
+        ctx.beginPath();
+        ctx.strokeStyle = COLORS[i];
+        d.counts.forEach((y, j) => {
+            const x = PAD_LEFT + j * binWidth;
+            const yNorm = H - PAD_BOTTOM - (y / maxY) * chartHeight;
+            if (j === 0) ctx.moveTo(x, yNorm);
+            else ctx.lineTo(x, yNorm);
+        });
+        ctx.stroke();
+    });
+
+    // === Build table ===
+    const keys = Array.from(allKeys).sort();
+
+    const thead = table.createTHead();
+    const headRow = thead.insertRow();
+    const th0 = document.createElement('th');
+    th0.textContent = 'Feature';
+    headRow.appendChild(th0);
+
+    data.forEach((d, i) => {
+        const th = document.createElement('th');
+        th.textContent = regions[d.id]["acronym"];
+        th.style.backgroundColor = COLORS[i];
+        th.style.color = 'white';
+        headRow.appendChild(th);
+    });
+
+    const tbody = table.createTBody();
+    keys.forEach(key => {
+        const row = tbody.insertRow();
+        const tdKey = row.insertCell();
+        tdKey.innerHTML = `<strong>${key}</strong>`;
+        data.forEach(d => {
+            const td = row.insertCell();
+            td.textContent = features["data"][d.id][key] ?? '';
+        });
+    });
+}
+
 
 
 /*************************************************************************************************/
@@ -317,6 +465,16 @@ class Colorbar {
             return;
         }
 
+        if (this.state.isVolume) {
+            const volume = this.model.getFeatures(this.state.bucket, this.state.fname);
+            if (volume) {
+                let vmin = volume['bounds'][0];
+                let vmax = volume['bounds'][1];
+                let values = volume['data'];
+                return computeHistogram(BIN_COUNT, vmin, vmax, values);
+            }
+        }
+
         let counts = null;
 
         // Try retrieving the global histogram for the current feature.
@@ -372,6 +530,7 @@ class Colorbar {
     }
 
     setGlobalHistogram(hist) {
+        console.log("set global histogram");
         hist = hist || this.miniHistogram;
         this.setFeatureRange();
         let counts = this.getGlobalHistogram();
@@ -385,15 +544,25 @@ class Colorbar {
         hist = hist || this.miniHistogram;
         if (this.state.selected.size == 0) {
             hist.clearLocal();
+
+            // Clear stat toolbox.
+            const canvas = document.getElementById('histogram-chart');
+            const ctx = canvas.getContext('2d');
+            const table = document.getElementById('stat-table');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            table.innerHTML = '';
         }
         else {
             selected = selected || this.state.selected;
-            if (!selected) return;
+            if (!selected) {
+                return;
+            }
 
             let cmap = this.model.getColormap(this.state.cmap);
 
             // Load the region and features data.
-            // let regions = this.model.getRegions(this.state.mapping);
+            let regions = this.model.getRegions(this.state.mapping);
             let features = this.state.isVolume ? null : this.model.getFeatures(
                 this.state.bucket, this.state.fname, this.state.mapping);
 
@@ -407,15 +576,13 @@ class Colorbar {
             hist.setLocalHistogram(counts, countMax);
 
             // Stat toolbox.
+            updateStatToolbox(features, regions, selected);
             // for (let value of selected) {
-            //     let histToolbox = new Histogram(this.statToolboxWrapper, this.state, this.model);
             //     let s = new Set();
             //     s.add(value);
+            //     features["data"][value]
             //     let [countsToolbox, selectedCountToolbox] = getFeatureHistogram(features, s, BIN_COUNT);
-
-            //     this.setColormap(histToolbox);
-            //     histToolbox.setLocalCount(selectedCountToolbox);
-            //     histToolbox.setLocalHistogram(countsToolbox, countMax);
+            //     console.log(countsToolbox, selectedCountToolbox);
             // }
         }
     }
