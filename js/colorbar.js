@@ -127,7 +127,7 @@ function getNiceTicks(maxValue, tickCount) {
 }
 
 
-function updateStatToolbox(features, regions, selected, maxY = 0) {
+function updateStatToolbox(global, features, regions, selected, maxY = 0) {
     const canvas = document.getElementById('histogram-chart');
     const ctx = canvas.getContext('2d');
     const table = document.getElementById('stat-table');
@@ -161,8 +161,8 @@ function updateStatToolbox(features, regions, selected, maxY = 0) {
     const chartWidth = W - PAD_LEFT - PAD_RIGHT;
     const chartHeight = H - PAD_TOP - PAD_BOTTOM;
 
-    const global = maxY > 0;
-    maxY = maxY > 0 ? maxY : Math.max(...data.flatMap(d => d.counts));
+    const normalization = maxY > 0;
+    maxY = maxY > 0 ? maxY : Math.max(...global);
     const binWidth = chartWidth / 50;
 
     // Axes
@@ -210,8 +210,7 @@ function updateStatToolbox(features, regions, selected, maxY = 0) {
     data.forEach((d, i) => {
         ctx.beginPath();
         ctx.strokeStyle = COLORS[i];
-        const ymax = global ? maxY : Math.max(...d.counts);
-        console.log(ymax);
+        const ymax = normalization ? maxY : Math.max(...d.counts);
         d.counts.forEach((y, j) => {
             const x = PAD_LEFT + j * binWidth;
             const yNorm = H - PAD_BOTTOM - (y / ymax) * chartHeight;
@@ -220,6 +219,20 @@ function updateStatToolbox(features, regions, selected, maxY = 0) {
         });
         ctx.stroke();
     });
+
+    // Global histogram.
+    {
+        ctx.beginPath();
+        ctx.strokeStyle = '#333333';
+        const ymax = normalization ? maxY : Math.max(...global);
+        global.forEach((y, j) => {
+            const x = PAD_LEFT + j * binWidth;
+            const yNorm = H - PAD_BOTTOM - (y / ymax) * chartHeight;
+            if (j === 0) ctx.moveTo(x, yNorm);
+            else ctx.lineTo(x, yNorm);
+        });
+        ctx.stroke();
+    }
 
     // === Build table ===
     const keys = Array.from(allKeys).sort();
@@ -579,7 +592,7 @@ class Colorbar {
             hist.setLocalHistogram(counts, countMax);
 
             // Stat toolbox.
-            updateStatToolbox(features, regions, selected, countMax);
+            updateStatToolbox(countsGlobal, features, regions, selected, countMax);
             // for (let value of selected) {
             //     let s = new Set();
             //     s.add(value);
