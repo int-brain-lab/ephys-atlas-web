@@ -127,7 +127,7 @@ function getNiceTicks(maxValue, tickCount) {
 }
 
 
-function updateStatToolbox(features, regions, selected) {
+function updateStatToolbox(features, regions, selected, maxY = 0) {
     const canvas = document.getElementById('histogram-chart');
     const ctx = canvas.getContext('2d');
     const table = document.getElementById('stat-table');
@@ -161,7 +161,7 @@ function updateStatToolbox(features, regions, selected) {
     const chartWidth = W - PAD_LEFT - PAD_RIGHT;
     const chartHeight = H - PAD_TOP - PAD_BOTTOM;
 
-    const maxY = Math.max(...data.flatMap(d => d.counts));
+    maxY = maxY > 0 ? maxY : Math.max(...data.flatMap(d => d.counts));
     const binWidth = chartWidth / 50;
 
     // Axes
@@ -576,7 +576,7 @@ class Colorbar {
             hist.setLocalHistogram(counts, countMax);
 
             // Stat toolbox.
-            updateStatToolbox(features, regions, selected);
+            updateStatToolbox(features, regions, selected, countMax);
             // for (let value of selected) {
             //     let s = new Set();
             //     s.add(value);
