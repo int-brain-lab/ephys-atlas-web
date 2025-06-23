@@ -1027,6 +1027,10 @@ line {
     z-index: 10;
 }
 
+#stat-toolbox p {
+    margin: 20px;
+}
+
 #stat-toolbox.visible {
     display: block;
 }
