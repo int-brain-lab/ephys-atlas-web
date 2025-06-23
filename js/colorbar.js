@@ -161,6 +161,7 @@ function updateStatToolbox(features, regions, selected, maxY = 0) {
     const chartWidth = W - PAD_LEFT - PAD_RIGHT;
     const chartHeight = H - PAD_TOP - PAD_BOTTOM;
 
+    const global = maxY > 0;
     maxY = maxY > 0 ? maxY : Math.max(...data.flatMap(d => d.counts));
     const binWidth = chartWidth / 50;
 
@@ -209,9 +210,11 @@ function updateStatToolbox(features, regions, selected, maxY = 0) {
     data.forEach((d, i) => {
         ctx.beginPath();
         ctx.strokeStyle = COLORS[i];
+        const ymax = global ? maxY : Math.max(...d.counts);
+        console.log(ymax);
         d.counts.forEach((y, j) => {
             const x = PAD_LEFT + j * binWidth;
-            const yNorm = H - PAD_BOTTOM - (y / maxY) * chartHeight;
+            const yNorm = H - PAD_BOTTOM - (y / ymax) * chartHeight;
             if (j === 0) ctx.moveTo(x, yNorm);
             else ctx.lineTo(x, yNorm);
         });
