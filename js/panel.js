@@ -243,12 +243,10 @@ class Panel {
     }
 
     _toMinMaxValues(cmin, cmax) {
-        let stat = this.state.stat;
-        let features = this.state.isVolume ? null : this.model.getFeatures(
-            this.state.bucket, this.state.fname, this.state.mapping);
-        if (!features) return [0, 0];
-        let vmin = features['statistics'][stat]['min'];
-        let vmax = features['statistics'][stat]['max'];
+        let hist = this.state.isVolume ? null : this.model.getHistogram(this.state.bucket, this.state.fname);
+        if (!hist) return [0, 0];
+        let vmin = hist['vmin'];
+        let vmax = hist['vmax'];
         let vdiff = vmax - vmin;
         let vminMod = vmin + vdiff * cmin / 100.0;
         let vmaxMod = vmin + vdiff * cmax / 100.0;
@@ -256,11 +254,10 @@ class Panel {
     }
 
     _fromMinMaxValues(vminMod, vmaxMod) {
-        let stat = this.state.stat;
-        let features = this.state.isVolume ? null : this.model.getFeatures(
-            this.state.bucket, this.state.fname, this.state.mapping);
-        let vmin = features['statistics'][stat]['min'];
-        let vmax = features['statistics'][stat]['max'];
+        let hist = this.state.isVolume ? null : this.model.getHistogram(this.state.bucket, this.state.fname);
+        if (!hist) return [0, 0];
+        let vmin = hist['vmin'];
+        let vmax = hist['vmax'];
         let vdiff = vmax - vmin;
         let cmin = (vminMod - vmin) * 100.0 / vdiff;
         let cmax = (vmaxMod - vmin) * 100.0 / vdiff;
@@ -277,6 +274,7 @@ class Panel {
 
             // Update the input number fields.
             let [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
+
             this.icmapminInput.value = displayNumber(vminMod);
             this.icmapmaxInput.value = displayNumber(vmaxMod);
 
