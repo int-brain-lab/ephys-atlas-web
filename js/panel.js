@@ -153,6 +153,13 @@ class Panel {
             let [vminMod, vmaxMod] = this._toMinMaxValues(this.state.cmapmin, this.state.cmapmax);
             this.icmapminInput.value = displayNumber(vminMod);
             this.icmapmaxInput.value = displayNumber(vmaxMod);
+
+            let cmap = this.model.getCmap(this.state.bucket, this.state.fname);
+            if (cmap) {
+                this.icmap.value = cmap;
+                this.state.cmap = cmap;
+                this.dispatcher.cmap(cmap);
+            }
         });
     }
 

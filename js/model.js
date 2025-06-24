@@ -401,6 +401,15 @@ class Model {
         return mappings;
     }
 
+    getCmap(bucket, fname) {
+        if (!fname)
+            return null;
+        let g = this.features.get(bucket, fname);
+        if (!g) return null;
+        if (!g["cmap"]) return null;
+        return g["cmap"];
+    }
+
     getFeatures(bucket, fname, mapping) {
         console.assert(bucket);
 
