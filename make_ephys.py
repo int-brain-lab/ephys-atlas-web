@@ -90,7 +90,7 @@ def get_histogram_groupby(df, n_bins=N_BINS):
     for fname in feature_names:
         values = df.obj[fname].dropna()
         vmin, vmax = XLIMS.get(fname, (values.quantile(q), values.quantile(1 - q)))
-        bin_edges[fname] =  np.histogram_bin_edges(values, range=(vmin, vmax), bins=n_bins)
+        bin_edges[fname] = np.histogram_bin_edges(values, range=(vmin, vmax), bins=n_bins)
 
     # Prepare a dictionary to store group-wise histograms
     group_hist_data = {bin_idx: {} for bin_idx in range(n_bins)}
@@ -148,20 +148,6 @@ def get_aggregates(df):
     return out, bin_edges
 
 
-def compute_histogram(data, bins=None):
-    assert bins is not None
-    n = len(data)
-    vmin = bins[0]
-    vmax = bins[-1]
-    counts, _ = np.histogram(data, bins=bins)
-    return {
-        'total_count': int(n),
-        'vmin': float(vmin),
-        'vmax': float(vmax),
-        'counts': counts,
-    }
-
-
 def clean(payload):
     if not isinstance(payload, dict):
         return payload
@@ -173,7 +159,7 @@ def clean(payload):
             value = int(value)
         if isinstance(key, str) and key.startswith("h_") and value == 0:
             continue
-        if isinstance(value, list):
+        if isinstance(value, (list, np.ndarray)):
             value = [clean(v) for v in value]
         cleaned[key] = value
     return cleaned
@@ -225,10 +211,7 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
         print(f'Processing {fname}...')
         short_desc = f'Ephys atlas feature: {fname}'
         values = df_values[fname]
-        bins = bin_edges[fname]
-
-        # Compute the histogram of all values (before region aggregation).
-        histogram = compute_histogram(df_voltage[fname], bins=bins)
+        vmin, vmax = XLIMS.get(fname, None)
 
         data = remap(key, values)
 
@@ -239,7 +222,11 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
 
         payload = api.make_features_payload(
             fname, data, short_desc=short_desc, key=key,
-            extra_values=extra_values, histogram=histogram)
+            extra_values=extra_values)
+
+        # Compute the histogram of all values (before region aggregation).
+        api.add_payload_histogram(payload, df_voltage[fname], vmin, vmax)
+
         payload = clean(payload)
         api.save_payload(output_dir, fname, payload)
 
