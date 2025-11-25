@@ -69,3 +69,5 @@ StreamingAssets/
 **/Unity/Assets/AddressableAssets/AllenCCF/*
 *.pyc
 __pycache__
+
+data
