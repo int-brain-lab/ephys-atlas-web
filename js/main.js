@@ -11,30 +11,39 @@ window.mobileCheck = function () {
 // Entry-point.
 window.addEventListener('load', () => {
 
-    // service worker
+    // Remove the service worker.
     if ('serviceWorker' in navigator) {
-
-        // Needed or not??
-        // // Unregister the existing service worker.
-        // navigator.serviceWorker.getRegistrations().then((registrations) => {
-        //     registrations.forEach((registration) => {
-        //         registration.unregister();
-        //     });
-        // });
-
-        // // Register the service worker.
-        // navigator.serviceWorker.register('/sw.js')
-        //     .then((registration) => {
-
-        //         // DEBUG: force refresh
-        //         registration.update();
-
-        //         console.debug('service worker registered');
-        //     })
-        //     .catch((error) => {
-        //         console.error('service worker registration failed:', error);
-        //     });
+        navigator.serviceWorker.getRegistrations()
+            .then(regs => {
+                for (const reg of regs) reg.unregister();
+            })
+            .catch(() => { });
     }
+
+    // // service worker
+    // if ('serviceWorker' in navigator) {
+
+    //     // Needed or not??
+    //     // Unregister the existing service worker.
+    //     navigator.serviceWorker.getRegistrations().then((registrations) => {
+    //         registrations.forEach((registration) => {
+    //             registration.unregister();
+    //         });
+    //     });
+
+    //     // Register the service worker.
+    //     navigator.serviceWorker.register('/sw.js')
+    //         .then((registration) => {
+
+    //             // DEBUG: force refresh
+    //             registration.update();
+
+    //             console.debug('service worker registered');
+    //         })
+    //         .catch((error) => {
+    //             console.error('service worker registration failed:', error);
+    //         });
+    // }
 
     // Create the app.
     window.app = new App();
