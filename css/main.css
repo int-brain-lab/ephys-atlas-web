@@ -1012,6 +1012,27 @@ line {
     color: #333;
 }
 
+#stat-toolbox .stat-toolbox-head {
+    /* display: flex;
+    justify-content: space-between;
+    align-items: center; */
+}
+
+#stat-toolbox-close {
+    border: none;
+    background: transparent;
+    margin-left: 50px;
+    color: #333;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+#stat-toolbox-close:hover {
+    color: #e41a1c;
+}
+
 
 #stat-toolbox-wrapper {
     display: flex;

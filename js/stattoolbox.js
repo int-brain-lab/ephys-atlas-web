@@ -1,6 +1,18 @@
 export { StatToolbox };
 
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { displayNumber } from "./utils.js";
+
+// Format numeric stats so small/large magnitudes get scientific notation automatically.
+function formatTableValue(value) {
+    if (typeof value === 'number') {
+        return displayNumber(value, 4);
+    }
+    if (value === undefined || value === null) {
+        return '';
+    }
+    return String(value);
+}
 
 const BIN_COUNT = 50;
 const MAX_SELECTED = 5;
@@ -56,8 +68,15 @@ class StatToolbox {
         this.wrapper = document.getElementById('stat-toolbox-wrapper');
         this.svg = d3.select('#stat-violin');
         this.table = document.getElementById('stat-table');
+        this.closeButton = document.getElementById('stat-toolbox-close');
 
         this.setupDispatcher();
+
+        if (this.closeButton) {
+            this.closeButton.addEventListener('click', () => {
+                this.dispatcher.toggleStatToolbox(this);
+            });
+        }
     }
 
     setupDispatcher() {
@@ -248,7 +267,7 @@ class StatToolbox {
             series.forEach(s => {
                 const td = row.insertCell();
                 const value = features["data"]?.[s.id]?.[key];
-                td.textContent = value ?? '';
+                td.textContent = formatTableValue(value);
             });
         });
     }

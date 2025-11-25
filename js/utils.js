@@ -12,12 +12,12 @@ export function clamp(x, min, max) {
 
 
 
-export function displayNumber(x) {
+export function displayNumber(x, precision = DISPLAY_NUMBER_PRECISION) {
     if (x == 0) return '0';
     else if (!x) return 'not significant';
     else return (Math.abs(x) < .001 ?
-        x.toExponential(DISPLAY_NUMBER_PRECISION) :
-        x.toPrecision(DISPLAY_NUMBER_PRECISION));
+        x.toExponential(precision) :
+        x.toPrecision(precision));
 }
 
 
