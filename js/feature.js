@@ -2,88 +2,83 @@ export { Feature };
 
 import { DEFAULT_BUCKET } from "./state.js";
 import { URLS } from "./model.js";
-import { downloadBinaryFile, removeFromArray, removeClassChildren } from "./utils.js";
-
-
-
-/*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-function openTree(element) {
-    let currentElement = element.parentElement;
-
-    while (currentElement) {
-        if (currentElement.tagName === 'DETAILS') {
-            currentElement.open = true;
-        }
-
-        currentElement = currentElement.parentElement;
-    }
-}
-
+import { downloadBinaryFile, removeFromArray } from "./utils.js";
 
 
 /*************************************************************************************************/
-/* Feature tree                                                                                  */
+/* Feature dropdown                                                                             */
 /*************************************************************************************************/
 
-class FeatureTree {
+class FeatureDropdown {
     constructor(el) {
         this.el = el;
     }
 
     setFeatures(features, tree, volumes) {
+        features = features || {};
+        volumes = volumes || [];
         if (!tree || tree.length == 0) {
-            // Convert a flat array into a flat tree.
             tree = Object.keys(features).reduce((obj, key) => { obj[key] = key; return obj; }, {});
         }
-        console.assert(tree);
-        volumes = volumes || [];
-        const generateTree = (obj) => {
-            let html = '';
-            for (const key in obj) {
-                let fname = obj[key];
-                let displayName = key;
-                let desc = features[fname] ? features[fname]['short_desc'] : '';
 
-                if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    let children = generateTree(obj[key]);
-                    if (!children) continue;
-                    html += `<details><summary>${key}</summary><ul>`;
-                    html += children;
-                    html += `</ul></details>`;
-                } else {
-                    html += `<li data-fname="${fname}" data-desc="${desc}">${displayName}</li>`;
-                }
+        const entries = this._flattenTree(tree);
+        this.el.innerHTML = '';
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a feature';
+        this.el.appendChild(placeholder);
+
+        for (const { fname, label } of entries) {
+            const option = document.createElement('option');
+            option.value = fname;
+            option.textContent = label;
+            const desc = features[fname] ? features[fname]['short_desc'] : '';
+            if (desc) {
+                option.title = desc;
             }
-            return html;
-        };
-        this.el.innerHTML = `<ul>${generateTree(tree)}</ul>`;
-    }
+            this.el.appendChild(option);
+        }
 
-    clear() {
-        removeClassChildren(this.el, 'LI', 'selected');
-    }
-
-    get(fname) {
-        return this.el.querySelector(`[data-fname=${fname}]`);
+        this.el.disabled = entries.length === 0;
     }
 
     select(fname) {
-        this.clear();
-        if (fname) {
-            let el = this.get(fname);
-            if (el) {
-                el.classList.add('selected');
-                // Open all DETAILS tags above in the hierarchy.
-                openTree(el);
-            }
+        if (!fname || !this._hasOption(fname)) {
+            this.el.value = '';
+        } else {
+            this.el.value = fname;
         }
     }
 
+    clear() {
+        this.el.value = '';
+    }
+
     selected(fname) {
-        return this.get(fname).classList.contains('selected');
+        return this.el.value === fname;
+    }
+
+    _flattenTree(node, prefix = []) {
+        if (!node) return [];
+
+        const entries = [];
+        for (const key in node) {
+            if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+            const value = node[key];
+            if (value && typeof value === 'object') {
+                entries.push(...this._flattenTree(value, prefix.concat(key)));
+            } else {
+                const labelParts = prefix.concat(key);
+                const label = labelParts.filter(Boolean).join(' / ');
+                entries.push({ fname: value, label });
+            }
+        }
+        return entries;
+    }
+
+    _hasOption(fname) {
+        return Array.from(this.el.options).some((option) => option.value === fname);
     }
 }
 
@@ -99,9 +94,9 @@ class Feature {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById('feature-tree');
+        this.el = document.getElementById('feature-dropdown');
 
-        this.tree = new FeatureTree(this.el);
+        this.dropdown = new FeatureDropdown(this.el);
 
         this.setupDispatcher();
         this.setupFeature();
@@ -150,45 +145,23 @@ class Feature {
     }
 
     setupFeature() {
-        this.el.addEventListener('click', async (e) => {
-            if (e.target.tagName == 'LI') {
-                let fname = e.target.dataset.fname;
-                const state = this.state;
+        this.el.addEventListener('change', async () => {
+            const fname = this.el.value;
+            const state = this.state;
 
-                // Deselect.
-                if (this.tree.selected(fname)) {
-                    this.selectFeature('');
-                }
-
-                else {
-                    // Download the features.
-                    if (!this.model.hasFeatures(state.bucket, fname)) {
-                        // TODO: splash
-                        await this.model.downloadFeatures(state.bucket, fname);
-                    }
-
-                    // Determine whether this feature is a volume or not.
-                    let fet = this.model.getFeatures(state.bucket, fname, this.state.mapping);
-                    let isVol = fet ? "shape" in fet : false;
-
-                    // Dispatch the feature selected event.
-                    this.selectFeature(fname, isVol);
-                }
+            if (!fname) {
+                this.selectFeature('');
+                return;
             }
-        });
 
-        this.el.addEventListener('mouseover', (e) => {
-            if (e.target.tagName == 'LI') {
-                let fname = e.target.dataset.fname;
-                let desc = e.target.dataset.desc;
-                this.dispatcher.featureHover(this, fname, desc, e);
+            if (!this.model.hasFeatures(state.bucket, fname)) {
+                await this.model.downloadFeatures(state.bucket, fname);
             }
-        });
 
-        this.el.addEventListener('mouseout', (e) => {
-            if (e.target.tagName == 'LI') {
-                this.dispatcher.featureHover(this, null, null, null);
-            }
+            const fet = this.model.getFeatures(state.bucket, fname, this.state.mapping);
+            const isVol = fet ? "shape" in fet : false;
+
+            this.selectFeature(fname, isVol);
         });
     }
 
@@ -220,7 +193,7 @@ class Feature {
             window.alert(msg);
         }
         else {
-            this.tree.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
+            this.dropdown.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
         }
     }
 
@@ -231,11 +204,11 @@ class Feature {
         await this.model.downloadBucket(this.state.bucket, { refresh: true });
         let bucket = this.model.getBucket(this.state.bucket);
         console.assert(bucket);
-        this.tree.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
+        this.dropdown.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
 
         if (this.state.fname) {
             await this.model.downloadFeatures(this.state.bucket, this.state.fname, { refresh: true });
-            this.tree.select(this.state.fname);
+            this.dropdown.select(this.state.fname);
         }
 
         this.dispatcher.spinning(this, false);
@@ -245,7 +218,7 @@ class Feature {
         console.log(`select feature ${fname}, volume=${isVolume}`);
         this.state.fname = fname;
         this.state.isVolume = isVolume;
-        this.tree.select(fname);
+        this.dropdown.select(fname);
         this.dispatcher.feature(this, fname, isVolume);
     }
 

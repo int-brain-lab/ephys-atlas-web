@@ -52,7 +52,6 @@
     --bar-select-color: #e8e8e8;
 
     --left-panel-width: 200px;
-    --tree-margin: 12px;
     --colorbar-margin: 0px;
 }
 
@@ -570,52 +569,15 @@ body.waiting * {
 }
 
 
-
 /*************************************************************************************************/
-/*  Feature tree                                                                                 */
+/*  Feature dropdown                                                                             */
 /*************************************************************************************************/
 
-#feature-tree {
-    margin: var(--tree-margin) 0 !important;
-    overflow-x: hidden;
-    overflow-y: scroll;
-
-    flex: 1 1 auto;
+#feature-dropdown {
+    border: 0;
+    background-color: #fafafa;
+    width: 100%;
 }
-
-#feature-tree * {
-    cursor: pointer;
-}
-
-#feature-tree details {
-    margin-left: var(--tree-margin);
-}
-
-#feature-tree summary {
-    color: #888;
-}
-
-#feature-tree summary:hover {
-    background-color: var(--bar-highlight-color);
-}
-
-#feature-tree>ul>details {
-    margin-left: 0;
-}
-
-#feature-tree ul {
-    list-style: none;
-}
-
-#feature-tree ul li {
-    margin-left: var(--tree-margin);
-}
-
-#feature-tree ul li.selected {
-    color: var(--bar-highlight-color);
-    background-color: var(--main-accent-color);
-}
-
 
 
 /*************************************************************************************************/
@@ -624,7 +586,7 @@ body.waiting * {
 
 #bar-scale {
     display: inline-block;
-    margin: 16px 0 0 var(--colorbar-margin);
+    margin: 36px 0 0 var(--colorbar-margin);
     width: calc(100% - var(--colorbar-margin));
     flex: 0 0 auto;
     position: relative;
@@ -1076,33 +1038,34 @@ line {
 }
 
 #stat-toolbox-wrapper {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  padding: 10px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 10px;
 }
 
 #histogram-chart {
-  /* border: 1px solid #ccc; */
-  background: #fff;
+    /* border: 1px solid #ccc; */
+    background: #fff;
 }
 
 #stat-table {
-  border-collapse: collapse;
+    border-collapse: collapse;
 }
 
-#stat-table th, #stat-table td {
-  border: 1px solid #ccc;
-  padding: 4px 8px;
-  text-align: center;
+#stat-table th,
+#stat-table td {
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    text-align: center;
 }
 
 #stat-table th {
-  color: white;
+    color: white;
 }
 
 #stat-table .stat-key-cell {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 

@@ -80,7 +80,7 @@ class Panel {
 
         this.el = document.querySelector('#control-panel details');
         this.imapping = document.getElementById('mapping-dropdown');
-        this.ifname = document.getElementById('feature-tree');
+        this.ifname = document.getElementById('feature-dropdown');
         this.ibucket = document.getElementById('bucket-dropdown');
         this.icmap = document.getElementById('colormap-dropdown');
         this.istat = document.getElementById('stat-dropdown');
