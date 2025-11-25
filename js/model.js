@@ -489,6 +489,21 @@ class Model {
         let vmin = features ? features['statistics'][stat]['min'] : 0;
         let vmax = features ? features['statistics'][stat]['max'] : 1;
 
+        // NOTE: use the vmin/vmax from the global histogram for those statistics
+        // BUG FIX: This notably avoids a bug with alpha_mean where the selected histogram range is
+        // very different from the data range, because of large outliers.
+        const histogramStats = new Set(["mean", "count", "max", "median", "min"]);
+        if (features && histogramStats.has(stat)) {
+            let g = this.features.get(state.bucket, state.fname);
+            let histogram = g ? g['histogram'] : null;
+            if (histogram) {
+                if (histogram["vmin"] != null)
+                    vmin = histogram["vmin"];
+                if (histogram["vmax"] != null)
+                    vmax = histogram["vmax"];
+            }
+        }
+
         let idx_lr = 1327; // Below idx_lr: right hemisphere. Above: left hemisphere.
         let hasLeft = true; // whether there is at least a left hemisphere region with a value
         let hasRight = true; // whether there is at least a left hemisphere region with a value
