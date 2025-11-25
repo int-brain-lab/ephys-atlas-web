@@ -16,6 +16,7 @@ import { Selection } from "./selection.js";
 import { Selector } from "./selector.js";
 import { Share } from "./share.js";
 import { Slice } from "./slice.js";
+import { StatToolbox } from "./stattoolbox.js";
 import { Spinner } from "./spinner.js";
 import { Splash } from "./splash.js";
 import { State } from "./state.js";
@@ -61,6 +62,7 @@ class App {
         this.tooltip = new Tooltip(this.state, this.model, this.dispatcher);
         this.unity = new Unity(this.state, this.model, this.dispatcher);
         this.volume = new Volume(this.state, this.model, this.dispatcher);
+        this.stattoolbox = new StatToolbox(this.state, this.model, this.dispatcher);
     }
 
     init() {

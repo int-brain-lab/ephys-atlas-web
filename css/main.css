@@ -296,10 +296,6 @@ body.waiting * {
     margin-right: 6px;
 }
 
-#control-panel #histogram-normalization {
-    margin-right: 6px;
-}
-
 #reset-view-button {
     background-color: #FF5C00aa;
 }
@@ -1017,38 +1013,6 @@ line {
 }
 
 
-#stat-toolbox .colorbar-wrapper {
-    position: relative;
-    height: 80%;
-}
-
-#stat-toolbox .colorbar {
-    position: absolute;
-    height: 80%;
-    width: 100%;
-
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: flex-end;
-    justify-content: flex-start;
-
-}
-
-#stat-toolbox .colorbar div {
-    flex-grow: 1;
-    height: 100%;
-    border-top: 2px solid #0007;
-}
-
-#stat-toolbox-wrapper {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: flex-end;
-    justify-content: flex-start;
-}
-
 #stat-toolbox-wrapper {
     display: flex;
     gap: 20px;
@@ -1056,9 +1020,11 @@ line {
     padding: 10px;
 }
 
-#histogram-chart {
-    /* border: 1px solid #ccc; */
+#stat-violin {
+    flex: 1 1 60%;
     background: #fff;
+    width: 100%;
+    height: 260px;
 }
 
 #stat-table {

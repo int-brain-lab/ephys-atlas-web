@@ -136,13 +136,6 @@
                 </label>
             </div>
 
-            <!-- HISTOGRAM NORMALIZATION -->
-            <div class="control">
-                <label>
-                    <input type="checkbox" id="histogram-normalization">histogram normalization
-                </label>
-            </div>
-
             <!-- BUTTONS -->
             <div class="controls">
                 <div id="connect-status" class="status disconnected">
@@ -415,7 +408,7 @@
             <h2>Stat Toolbox</h2>
             <p>Select at least one region to enable the stat toolbox.</p>
             <div id="stat-toolbox-wrapper">
-                <canvas id="histogram-chart" width="400" height="200"></canvas>
+                <svg id="stat-violin" width="400" height="260"></svg>
                 <table id="stat-table"></table>
             </div>
         </div>
