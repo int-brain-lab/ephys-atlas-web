@@ -57,6 +57,15 @@ class Volume {
         this.canvas_horizontal = document.getElementById("canvas-horizontal");
         this.canvas_sagittal = document.getElementById("canvas-sagittal");
 
+        this.baseViewBox = {};
+        for (const axis of VOLUME_AXES) {
+            const svg = document.getElementById(`svg-${axis}`);
+            if (svg) {
+                this.baseViewBox[axis] = svg.getAttribute("viewBox");
+                svg.setAttribute("preserveAspectRatio", "none");
+            }
+        }
+
         this.imageData_coronal = makeImageData(this.canvas_coronal);
         this.imageData_horizontal = makeImageData(this.canvas_horizontal);
         this.imageData_sagittal = makeImageData(this.canvas_sagittal);
@@ -245,6 +254,7 @@ class Volume {
         }
         for (const axis of VOLUME_AXES) {
             const canvas = this[`canvas_${axis}`];
+            const svg = document.getElementById(`svg-${axis}`);
             if (!canvas) continue;
             const widthAxis = VOLUME_XY_AXES[axis][0];
             const heightAxis = VOLUME_XY_AXES[axis][1];
@@ -254,6 +264,12 @@ class Volume {
                 canvas.width = width;
                 canvas.height = height;
                 this[`imageData_${axis}`] = makeImageData(canvas);
+            }
+            if (svg) {
+                const base = this.baseViewBox[axis];
+                if (base) {
+                    svg.setAttribute("viewBox", base);
+                }
             }
         }
     }
