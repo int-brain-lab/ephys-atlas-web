@@ -434,8 +434,10 @@ body.waiting * {
 
 .svg-canvas-container {
     position: relative;
-    flex: 1 1 0;
+    width: 100%;
+    height: auto;
     overflow: hidden;
+    display: inline-block;
 }
 
 .maximized .svg-canvas-container {
@@ -804,7 +806,7 @@ body.waiting * {
 div#container>.svg-wrapper {
     overflow: hidden;
     align-items: center;
-    justify-content: stretch;
+    justify-content: center;
     text-align: center;
 
     display: flex;

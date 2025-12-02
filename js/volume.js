@@ -255,6 +255,7 @@ class Volume {
         for (const axis of VOLUME_AXES) {
             const canvas = this[`canvas_${axis}`];
             const svg = document.getElementById(`svg-${axis}`);
+            const container = document.getElementById(`svg-${axis}-container-inner`);
             if (!canvas) continue;
             const widthAxis = VOLUME_XY_AXES[axis][0];
             const heightAxis = VOLUME_XY_AXES[axis][1];
@@ -269,6 +270,17 @@ class Volume {
                 const base = this.baseViewBox[axis];
                 if (base) {
                     svg.setAttribute("viewBox", base);
+                }
+            }
+            if (container) {
+                container.style.aspectRatio = `${width} / ${height}`;
+                container.style.width = "100%";
+                container.style.height = "auto";
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+                if (svg) {
+                    svg.style.width = "100%";
+                    svg.style.height = "100%";
                 }
             }
         }
