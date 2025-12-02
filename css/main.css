@@ -440,12 +440,24 @@ body.waiting * {
     display: inline-block;
 }
 
+.svg-canvas-container#svg-coronal-container-inner {
+    aspect-ratio: 356 / 250;
+}
+
+.svg-canvas-container#svg-sagittal-container-inner {
+    aspect-ratio: 358 / 217;
+}
+
+.svg-canvas-container#svg-horizontal-container-inner {
+    aspect-ratio: 230 / 266;
+}
+
 .maximized .svg-canvas-container {
     width: 50%;
 }
 
 .svg-canvas-container>canvas {
-    width: 100%;
+    /* width: 100%; */
     height: 100%;
     image-rendering: pixelated;
     image-rendering: crisp-edges;

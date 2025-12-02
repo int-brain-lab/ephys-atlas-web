@@ -58,10 +58,19 @@ class Volume {
         this.canvas_sagittal = document.getElementById("canvas-sagittal");
 
         this.baseViewBox = {};
+        this.baseViewBoxSize = {};
         for (const axis of VOLUME_AXES) {
             const svg = document.getElementById(`svg-${axis}`);
             if (svg) {
-                this.baseViewBox[axis] = svg.getAttribute("viewBox");
+                const vb = svg.getAttribute("viewBox");
+                this.baseViewBox[axis] = vb;
+                if (vb) {
+                    const parts = vb.split(/\s+/).map(Number);
+                    if (parts.length === 4 && parts.every(isFinite)) {
+                        const [, , w, h] = parts;
+                        this.baseViewBoxSize[axis] = { w, h };
+                    }
+                }
             }
         }
 
@@ -272,7 +281,9 @@ class Volume {
                 }
             }
             if (container) {
-                container.style.aspectRatio = `${width} / ${height}`;
+                const vb = this.baseViewBoxSize[axis];
+                const ratio = vb ? `${vb.w} / ${vb.h}` : `${width} / ${height}`;
+                container.style.aspectRatio = ratio;
             }
         }
     }
