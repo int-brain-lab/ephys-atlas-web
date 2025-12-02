@@ -101,7 +101,10 @@ class Volume {
                 this.showVolume();
 
                 const state = this.state;
-                const volume = this.model.getFeatures(state.bucket, state.fname);
+                let volume = this.model.getFeatures(state.bucket, state.fname);
+
+                // HACK TODO: choose the volume.
+                volume = volume["mean"]["volume"];
 
                 this.setArray(volume);
                 this.draw();
@@ -168,7 +171,7 @@ class Volume {
         // coronal: 528, x
         // horizontal: 320, HEIGHT y
         // sagittal: 456, WIDTH z
-        const [dimX, dimY, dimZ] = this.shape;
+        let [dimX, dimY, dimZ] = this.shape;
 
         // NOTE: the array values are always in [0, 255] as they were downsampled from the original
         // array. We can retrieve the min and max values of the original array in this.bounds
@@ -205,9 +208,11 @@ class Volume {
                     value = (value - cmin) / (cmax - cmin);
                     value = clamp(value, 0, .9999);
                     rgb = this.colors[Math.floor(value * nTotal)];
-                    data[i + 0] = rgb[0];
-                    data[i + 1] = rgb[1];
-                    data[i + 2] = rgb[2];
+                    if (rgb != undefined) {
+                        data[i + 0] = rgb[0];
+                        data[i + 1] = rgb[1];
+                        data[i + 2] = rgb[2];
+                    }
                     data[i + 3] = 255;
                     i = i + 4;
                 }
@@ -223,9 +228,11 @@ class Volume {
                     value = (value - cmin) / (cmax - cmin);
                     value = clamp(value, 0, .9999);
                     rgb = this.colors[Math.floor(value * nTotal)];
-                    data[i + 0] = rgb[0];
-                    data[i + 1] = rgb[1];
-                    data[i + 2] = rgb[2];
+                    if (rgb != undefined) {
+                        data[i + 0] = rgb[0];
+                        data[i + 1] = rgb[1];
+                        data[i + 2] = rgb[2];
+                    }
                     data[i + 3] = 255;
                     i = i + 4;
                 }
@@ -240,10 +247,12 @@ class Volume {
 
                     value = (value - cmin) / (cmax - cmin);
                     value = clamp(value, 0, .9999);
-                    rgb = this.colors[Math.floor(value * nTotal)];
-                    data[i + 0] = rgb[0];
-                    data[i + 1] = rgb[1];
-                    data[i + 2] = rgb[2];
+                    if (rgb != undefined) {
+                        rgb = this.colors[Math.floor(value * nTotal)];
+                        data[i + 0] = rgb[0];
+                        data[i + 1] = rgb[1];
+                        data[i + 2] = rgb[2];
+                    }
                     data[i + 3] = 255;
                     i = i + 4;
                 }

@@ -449,6 +449,7 @@ body.waiting * {
 .svg-canvas-container>canvas {
     max-width: 100%;
     max-height: 100%;
+    transform: scale(8);
     z-index: 0;
 }
 

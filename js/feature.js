@@ -159,7 +159,7 @@ class Feature {
             }
 
             const fet = this.model.getFeatures(state.bucket, fname, this.state.mapping);
-            const isVol = fet ? "shape" in fet : false;
+            const isVol = fet ? "is_volume" in fet : false;
 
             this.selectFeature(fname, isVol);
         });

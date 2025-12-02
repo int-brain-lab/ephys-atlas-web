@@ -314,9 +314,10 @@ class Colorbar {
         if (this.state.isVolume) {
             const volume = this.model.getFeatures(this.state.bucket, this.state.fname);
             if (volume) {
-                let vmin = volume['bounds'][0];
-                let vmax = volume['bounds'][1];
-                let values = volume['data'];
+                console.log(volume);
+                let vmin = volume["mean"]['bounds'][0];
+                let vmax = volume["mean"]['bounds'][1];
+                let values = volume["mean"]['volume']["data"];
                 return computeHistogram(BIN_COUNT, vmin, vmax, values);
             }
         }
@@ -362,8 +363,8 @@ class Colorbar {
         } else {
             const volume = this.model.getFeatures(state.bucket, state.fname);
             if (volume) {
-                let vmin = volume['bounds'][0];
-                let vmax = volume['bounds'][1];
+                let vmin = volume["mean"]['bounds'][0];
+                let vmax = volume["mean"]['bounds'][1];
                 hist.setFeatureRange(vmin, vmax, 0);
             }
         }

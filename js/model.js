@@ -233,9 +233,13 @@ class Model {
                 out = f["feature_data"];
 
                 // Special handling of volumes.
-                if ("volume" in f["feature_data"]) {
+                if ("volumes" in f["feature_data"]) {
+
                     // Load the base64 string into a decompressed array buffer.
-                    f["feature_data"]["volume"] = loadCompressedBase64(f["feature_data"]["volume"]);
+                    for (const name in f.feature_data.volumes) {
+                        const vol = f.feature_data.volumes[name].volume;
+                        f.feature_data.volumes[name].volume = loadCompressedBase64(vol);
+                    }
 
                     // Load optional data:
                     // - xyz positions of the dots
@@ -421,8 +425,9 @@ class Model {
             return null;
         }
 
-        if ("volume" in g) {
-            return g["volume"];
+        if ("volumes" in g) {
+            g["volumes"]["is_volume"] = true;
+            return g["volumes"];
         }
         else if ("mappings" in g) {
             console.assert(mapping);
@@ -457,7 +462,7 @@ class Model {
         if (!g) {
             return null;
         }
-        if ("volume" in g) {
+        if ("volumes" in g) {
             return g;
         }
         return null;
@@ -482,12 +487,18 @@ class Model {
             state.bucket, state.fname, state.mapping, refresh);
 
         // Figure out what hemisphere values we have
-        let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
-        let feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
+        if (!state.isVolume) {
+            let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
+            let feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
+        }
+        else {
+            let feature_max = null;
+            let feature_min = null;
+        }
 
         // Compute the color as a function of the cmin/cmax slider values.
-        let vmin = features ? features['statistics'][stat]['min'] : 0;
-        let vmax = features ? features['statistics'][stat]['max'] : 1;
+        let vmin = features && features['statistics'] ? features['statistics'][stat]['min'] : 0;
+        let vmax = features && features['statistics'] ? features['statistics'][stat]['max'] : 1;
 
         // NOTE: use the vmin/vmax from the global histogram for those statistics
         // BUG FIX: This notably avoids a bug with alpha_mean where the selected histogram range is
