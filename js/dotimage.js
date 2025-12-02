@@ -1,7 +1,7 @@
 export { DotImage };
 
 import { clamp } from "./utils.js";
-import { VOLUME_SIZE, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
+import { getVolumeSize, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
 
 
 
@@ -10,6 +10,7 @@ import { VOLUME_SIZE, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
 /*************************************************************************************************/
 
 function mouseXYZ(container, axis, sliceIdx, ev) {
+    const VOLUME_SIZE = getVolumeSize();
     let rect = container.getBoundingClientRect();
 
     // Calculate relative coordinates
@@ -28,6 +29,7 @@ function mouseXYZ(container, axis, sliceIdx, ev) {
 }
 
 function xyz2px(container, axis, sliceIdx, xyz) {
+    const VOLUME_SIZE = getVolumeSize();
     let canvasWidth = container.clientWidth;
     let canvasHeight = container.clientHeight;
 

@@ -28,6 +28,15 @@ export const VOLUME_SIZE = {
     sagittal: 456,
 };
 
+// Allow overriding the volume voxel counts when the incoming data is transposed or downsampled.
+let VOLUME_SIZE_DYNAMIC = null;
+export function setVolumeSizeDynamic(size) {
+    VOLUME_SIZE_DYNAMIC = size;
+}
+export function getVolumeSize() {
+    return VOLUME_SIZE_DYNAMIC || VOLUME_SIZE;
+}
+
 export const VOLUME_XY_AXES = {
     coronal: ["sagittal", "horizontal"],
     horizontal: ["sagittal", "coronal"],
