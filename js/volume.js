@@ -62,7 +62,6 @@ class Volume {
             const svg = document.getElementById(`svg-${axis}`);
             if (svg) {
                 this.baseViewBox[axis] = svg.getAttribute("viewBox");
-                svg.setAttribute("preserveAspectRatio", "none");
             }
         }
 
@@ -274,14 +273,6 @@ class Volume {
             }
             if (container) {
                 container.style.aspectRatio = `${width} / ${height}`;
-                container.style.width = "100%";
-                container.style.height = "auto";
-                canvas.style.width = "100%";
-                canvas.style.height = "100%";
-                if (svg) {
-                    svg.style.width = "100%";
-                    svg.style.height = "100%";
-                }
             }
         }
     }
