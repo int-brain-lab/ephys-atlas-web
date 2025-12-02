@@ -259,14 +259,32 @@ def plot_distributions(pqt_path, channels_path):
         plt.show()
 
 
+def make_volumes(mean_path, std_path, output_dir):
+    # Generate volume features.
+    up = api.FeatureUploader()
+    means = np.load(mean_path, mmap_mode='r')
+    stds = np.load(std_path, mmap_mode='r')
+
+    n = means.shape[-1]
+    for i in tqdm.tqdm(range(n)):
+        mean = means[..., i]
+        std = stds[..., i]
+        # data = np.transpose(data, (0, 2, 1))
+        data = {'mean': mean, 'std': std}
+        up.local_volume(f'yanliang_volume_{i:04d}', data, output_dir=output_dir)
+
+
 if __name__ == '__main__':
     ROOT_DIR = Path(__file__).parent
     DATA_DIR = ROOT_DIR / "data"
 
-    bucket_uuid = 'add0d5a4-f10a-4b81'
-    output_dir = DATA_DIR / f'features/ephys_{bucket_uuid}/'
+    mean_path = DATA_DIR / 'ephys_feature_atlas_based_on_gene.npy'
+    std_path = DATA_DIR / 'std_ephys_feature_atlas_based_on_gene.npy'
+    output_dir = DATA_DIR / 'yanliang/'
 
-    local_data_path = Path('/home/cyrille/GIT/IBL/paper-ephys-atlas/data')
-
+    # bucket_uuid = 'add0d5a4-f10a-4b81'
+    # local_data_path = Path(ROOT_DIR / '../paper-ephys-atlas/data').resolve()
     # plot_distributions(pqt_path, channels_path)
-    make_ephys_data(local_data_path, output_dir=output_dir, n_jobs=12)
+    # make_ephys_data(local_data_path, output_dir=output_dir, n_jobs=12)
+
+    make_volumes(mean_path, std_path, output_dir)
