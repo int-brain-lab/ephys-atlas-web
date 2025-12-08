@@ -50,6 +50,12 @@ class Volume {
         this.axisToRaw = null;
         this.rawToAxis = null;
         this.downsample = { coronal: 1, horizontal: 1, sagittal: 1 };
+        this.volumeContainers = {};
+        for (const axis of VOLUME_AXES) {
+            this.volumeContainers[axis] = document.getElementById(`svg-${axis}-container-inner`);
+        }
+        this.volumeArrays = {};
+        this.activeVolumeName = null;
 
         this.style = document.getElementById('style-volume').sheet;
 
@@ -124,11 +130,38 @@ class Volume {
                 const state = this.state;
                 let volume = this.model.getVolumeData(state.bucket, state.fname);
 
-                // HACK TODO: choose the volume.
-                volume = volume["volumes"]["mean"]["volume"];
+                if (!volume || !volume["volumes"]) {
+                    this.setArray(null);
+                    return;
+                }
 
-                this.setArray(volume);
+                this.volumeArrays = {};
+
+                for (const [name, entry] of Object.entries(volume["volumes"])) {
+                    if (entry && entry.volume) {
+                        this.volumeArrays[name] = entry.volume;
+                    }
+                }
+
+                const preferred = this.volumeArrays["mean"] ?
+                    "mean" :
+                    Object.keys(this.volumeArrays)[0];
+
+                if (preferred) {
+                    this.activeVolumeName = preferred;
+                    this.setArray(this.volumeArrays[preferred], preferred);
+                }
+                else {
+                    this.setArray(null);
+                }
+
                 this.draw();
+            }
+        });
+
+        this.dispatcher.on('volumeHover', async (ev) => {
+            if (this.state.isVolume) {
+                this.handleVolumeHover(ev.axis, ev.e);
             }
         });
 
@@ -306,7 +339,7 @@ class Volume {
         }
     }
 
-    setArray(arr) {
+    setArray(arr, volumeName = null) {
         if (!arr) {
             this.shape = null;
             this.volume = null;
@@ -315,6 +348,8 @@ class Volume {
             this.axisToRaw = null;
             this.rawToAxis = null;
             this.downsample = { coronal: 1, horizontal: 1, sagittal: 1 };
+            this.activeVolumeName = null;
+            this.volumeArrays = {};
             setVolumeSizeDynamic(null);
             return;
         }
@@ -323,6 +358,7 @@ class Volume {
         this.volume = arr.data;
         this.fortran_order = arr.fortran_order;
         this.bounds = arr.bounds;
+        this.activeVolumeName = volumeName;
         console.log(
             "array is loaded, shape is", this.shape,
             "bounds are:", this.bounds[0], this.bounds[1],
@@ -406,6 +442,88 @@ class Volume {
         }
 
         canvas.getContext('2d').putImageData(imageData, 0, 0);
+    }
+
+    sliceIndexFromState(axis) {
+        if (!this.axisSizes || !this.axisSizes[axis]) {
+            return 0;
+        }
+        const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
+        const sliceCount = this.axisSizes[axis];
+        if (!isFinite(sliceCount) || sliceCount <= 0) {
+            return 0;
+        }
+        const sliderValue = this.state[axis] || 0;
+        const sliceIdx = Math.floor(sliderValue / (2.5 * ds));
+        return clamp(sliceIdx, 0, sliceCount - 1);
+    }
+
+    handleVolumeHover(axis, e) {
+        if (!this.state.isVolume || !axis || !e || !this.axisSizes) {
+            return;
+        }
+
+        if (!this.volumeArrays || Object.keys(this.volumeArrays).length === 0) {
+            return;
+        }
+
+        const container = this.volumeContainers[axis];
+        if (!container) {
+            return;
+        }
+
+        const rect = container.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+            return;
+        }
+
+        const widthAxis = VOLUME_XY_AXES[axis][0];
+        const heightAxis = VOLUME_XY_AXES[axis][1];
+        const widthCount = this.axisSizes[widthAxis];
+        const heightCount = this.axisSizes[heightAxis];
+        if (!widthCount || !heightCount) {
+            return;
+        }
+
+        const relativeX = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+        const relativeY = clamp((e.clientY - rect.top) / rect.height, 0, 1);
+        const widthCoord = clamp(Math.floor(relativeX * widthCount), 0, widthCount - 1);
+        const heightCoord = clamp(Math.floor(relativeY * heightCount), 0, heightCount - 1);
+
+        const axisCoords = [0, 0, 0];
+        axisCoords[VOLUME_AXES.indexOf(axis)] = this.sliceIndexFromState(axis);
+        axisCoords[VOLUME_AXES.indexOf(widthAxis)] = widthCoord;
+        axisCoords[VOLUME_AXES.indexOf(heightAxis)] = heightCoord;
+
+        const dataIndex = this.indexFromAxisCoords(axisCoords);
+        if (dataIndex == null || dataIndex < 0) {
+            return;
+        }
+
+        const values = {};
+        for (const [name, arr] of Object.entries(this.volumeArrays)) {
+            if (!arr || !arr.data || dataIndex >= arr.data.length) {
+                continue;
+            }
+            let rawValue = arr.data[dataIndex];
+            if (rawValue == null) {
+                continue;
+            }
+            if (arr.bounds && arr.bounds.length >= 2) {
+                const min = arr.bounds[0];
+                const max = arr.bounds[1];
+                if (isFinite(min) && isFinite(max) && max > min) {
+                    rawValue = min + (rawValue / 255) * (max - min);
+                }
+            }
+            values[name] = rawValue;
+        }
+
+        if (Object.keys(values).length === 0) {
+            return;
+        }
+
+        this.dispatcher.volumeValues(this, axis, values, e);
     }
 
     draw() {

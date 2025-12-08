@@ -168,9 +168,21 @@ class Slice {
 
                 // When handling Control while hovering over a brain region, disable highlighting.
                 if (!e.ctrlKey) {
+                    if (this.state.isVolume) {
+                        this.dispatcher.volumeHover(this, axis, e);
+                    }
                     let idx = e2idx(this.state.mapping, e);
                     this.dispatcher.highlight(this, idx, e);
                 }
+            }
+        });
+
+        svg.addEventListener('mousemove', (e) => {
+            if (!this.state.isVolume) {
+                return;
+            }
+            if (e.target.tagName == 'path' && !isRoot(e) && !e.ctrlKey) {
+                this.dispatcher.volumeHover(this, axis, e);
             }
         });
 

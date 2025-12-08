@@ -16,6 +16,9 @@ class Tooltip {
         this.dispatcher = dispatcher;
 
         this.info = document.getElementById('region-info');
+        this.lastRegionText = '';
+        this.lastVolumeText = '';
+        this.lastPointerEvent = null;
 
         this.setupDispatcher();
     }
@@ -28,12 +31,16 @@ class Tooltip {
 
         this.dispatcher.on('highlight', async (ev) => {
             if (!ev.idx) {
+                this.lastRegionText = '';
+                this.lastVolumeText = '';
+                this.lastPointerEvent = null;
                 this.hide();
             }
             else {
-                let text = await this.getRegionText(ev.idx);
+                this.lastRegionText = await this.getRegionText(ev.idx);
+                this.lastPointerEvent = ev.e;
+                this.updateTooltipText();
                 this.setPosition(ev.e);
-                this.setText(text);
             }
         });
 
@@ -45,6 +52,20 @@ class Tooltip {
                 this.setPosition(ev.e);
                 this.setText(ev.desc);
             }
+        });
+
+        this.dispatcher.on('volumeValues', async (ev) => {
+            if (!ev.values) {
+                this.lastVolumeText = '';
+                this.updateTooltipText();
+                return;
+            }
+            this.lastVolumeText = this.formatVolumeValues(ev.values);
+            if (ev.e) {
+                this.lastPointerEvent = ev.e;
+                this.setPosition(ev.e);
+            }
+            this.updateTooltipText();
         });
     }
 
@@ -99,6 +120,28 @@ class Tooltip {
 
             return `<strong>${acronym}, ${name}</strong><br>${valueDisplay}${countDisplay}`;
         }
+    }
+
+    formatVolumeValues(values) {
+        const lines = [];
+        const keys = Object.keys(values).sort();
+        for (const name of keys) {
+            const value = values[name];
+            lines.push(`${name}: ${displayNumber(value)}`);
+        }
+        return lines.join("<br>");
+    }
+
+    updateTooltipText() {
+        const parts = [];
+        if (this.lastRegionText) {
+            parts.push(this.lastRegionText);
+        }
+        if (this.lastVolumeText) {
+            parts.push(this.lastVolumeText);
+        }
+        const combined = parts.join("<br>");
+        this.setText(combined);
     }
 
     async setText(text) {

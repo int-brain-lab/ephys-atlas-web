@@ -51,6 +51,14 @@ class Dispatcher {
         this.emit("highlight", source, { "idx": idx, "e": e });
     }
 
+    volumeHover(source, axis, e) {
+        this.emit("volumeHover", source, { "axis": axis, "e": e });
+    }
+
+    volumeValues(source, axis, values, e) {
+        this.emit("volumeValues", source, { "axis": axis, "values": values, "e": e });
+    }
+
     highlightDot(source, axis, sliceIdx, e) {
         // when a dot is highlighted (when pressing Control)
         this.emit("highlightDot", source, { "axis": axis, "sliceIdx": sliceIdx, "e": e });
