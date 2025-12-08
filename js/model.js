@@ -487,13 +487,11 @@ class Model {
             state.bucket, state.fname, state.mapping, refresh);
 
         // Figure out what hemisphere values we have
+        let feature_max = null;
+        let feature_min = null;
         if (!state.isVolume) {
-            let feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
-            let feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
-        }
-        else {
-            let feature_max = null;
-            let feature_min = null;
+            feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
+            feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
         }
 
         // Compute the color as a function of the cmin/cmax slider values.

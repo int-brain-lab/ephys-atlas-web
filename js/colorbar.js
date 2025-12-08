@@ -311,16 +311,16 @@ class Colorbar {
             return;
         }
 
-        if (this.state.isVolume) {
-            const volume = this.model.getFeatures(this.state.bucket, this.state.fname);
-            if (volume) {
-                console.log(volume);
-                let vmin = volume["mean"]['bounds'][0];
-                let vmax = volume["mean"]['bounds'][1];
-                let values = volume["mean"]['volume']["data"];
-                return computeHistogram(BIN_COUNT, vmin, vmax, values);
-            }
-        }
+        // if (this.state.isVolume) {
+        //     const volume = this.model.getFeatures(this.state.bucket, this.state.fname);
+        //     if (volume) {
+        //         console.log(volume);
+        //         let vmin = volume["mean"]['bounds'][0];
+        //         let vmax = volume["mean"]['bounds'][1];
+        //         let values = volume["mean"]['volume']["data"];
+        //         return computeHistogram(BIN_COUNT, vmin, vmax, values);
+        //     }
+        // }
 
         let counts = null;
 
@@ -330,7 +330,7 @@ class Colorbar {
             console.log("taking the histogram from the features file");
             counts = histogram["counts"];
         }
-        else {
+        else if (!this.state.isVolume) {
             // Compute the histogram across all regions (1 value per region).
             console.log("histogram not found in the features file, recomputing it");
             let [values, vmin, vmax] = this.getFeatureValues();
