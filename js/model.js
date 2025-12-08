@@ -425,11 +425,7 @@ class Model {
             return null;
         }
 
-        if ("volumes" in g) {
-            g["volumes"]["is_volume"] = true;
-            return g["volumes"];
-        }
-        else if ("mappings" in g) {
+        if ("mappings" in g) {
             console.assert(mapping);
             return g["mappings"][mapping];
         }
@@ -463,6 +459,7 @@ class Model {
             return null;
         }
         if ("volumes" in g) {
+            g["volumes"]["is_volume"] = true;
             return g;
         }
         return null;

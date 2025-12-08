@@ -361,7 +361,8 @@ class Colorbar {
                 hist.setGlobalCount(count);
             }
         } else {
-            const volume = this.model.getFeatures(state.bucket, state.fname);
+            let volume = this.model.getVolumeData(state.bucket, state.fname);
+            volume = volume["volumes"];
             if (volume) {
                 let vmin = volume["mean"]['bounds'][0];
                 let vmax = volume["mean"]['bounds'][1];

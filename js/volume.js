@@ -122,10 +122,10 @@ class Volume {
                 this.showVolume();
 
                 const state = this.state;
-                let volume = this.model.getFeatures(state.bucket, state.fname);
+                let volume = this.model.getVolumeData(state.bucket, state.fname);
 
                 // HACK TODO: choose the volume.
-                volume = volume["mean"]["volume"];
+                volume = volume["volumes"]["mean"]["volume"];
 
                 this.setArray(volume);
                 this.draw();

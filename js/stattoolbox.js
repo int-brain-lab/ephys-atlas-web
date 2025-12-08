@@ -119,7 +119,7 @@ class StatToolbox {
         if (!this.container) return;
 
         const selected = Array.from(this.state.selected || []).slice(0, MAX_SELECTED);
-        if (!this.state.fname || this.state.isVolume || selected.length === 0) {
+        if (!this.state.fname || selected.length === 0) {
             this.clear();
             return;
         }
