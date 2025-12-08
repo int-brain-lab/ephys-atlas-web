@@ -159,7 +159,8 @@ class Feature {
             }
 
             const fet = this.model.getFeatures(state.bucket, fname, this.state.mapping);
-            const isVol = fet ? "is_volume" in fet : false;
+            const vol = this.model.getVolumeData(state.bucket, fname, this.state.mapping);
+            const isVol = vol != undefined;
 
             this.selectFeature(fname, isVol);
         });
