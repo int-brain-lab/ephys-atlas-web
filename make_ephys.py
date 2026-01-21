@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from ephys_atlas.features import voltage_features_set
-from ephys_atlas.data import load_voltage_features
+from ephysatlas.features import voltage_features_set
+from ephysatlas.data import read_features_from_disk
 from iblatlas.regions import BrainRegions
 from iblbrainviewer import api
 
@@ -51,10 +51,10 @@ XLIMS = {
     "recovery_slope": (-6e+3, 2e3),
     "recovery_time_secs": (4e-4, 8e-4),
     "repolarisation_slope": (-1e+4, 4e4),
-    "rms_ap": (.5e-5, 4e-5),
-    "rms_lf": (0.5e-4, 1.5e-4),
+    # "rms_ap": (.5e-5, 4e-5),
+    # "rms_lf": (0.5e-4, 1.5e-4),
     "rms_lf_csd": (0.1e-8, 1e-8),
-    "spike_count": (0, 200),
+    # "spike_count": (0, 20),
     "tip_time_secs": (-6e-4, -2e-4),
     "tip_val": (-.5, 1),
     "trough_time_secs": (2.5e-4, 6e-4),
@@ -172,21 +172,18 @@ def clean(payload):
 def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean', n_jobs=1):
 
     br = BrainRegions()
-    mapping = 'Allen'
-    label = 'latest'
     hemisphere = 'left'
 
-    df_voltage, df_clusters, df_channels, df_probes = \
-        load_voltage_features(local_data_path.joinpath(label), mapping=mapping)
+    df_voltage = read_features_from_disk(local_data_path)
 
-    df_voltage['atlas_id'] = df_channels['atlas_id'].astype(np.int32)
+    df_voltage['atlas_id'] = df_voltage['atlas_id'].astype(np.int32)
     df_voltage['atlas_idx'] = np.array(
         [_[0] for _ in br.id2index(df_voltage.atlas_id)[1]], dtype=np.int32)
 
     df_voltage = lateralize_features(df_voltage)
 
     df_voltage.drop(
-        df_voltage[df_voltage[mapping + "_acronym"].isin(["void", "root"])].index, inplace=True)
+        df_voltage[df_voltage["acronym"].isin(["void", "root"])].index, inplace=True)
 
     fnames = voltage_features_set()
     print("Feature names:", ", ".join(fnames))
@@ -211,7 +208,9 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
         print(f'Processing {fname}...')
         short_desc = f'Ephys atlas feature: {fname}'
         values = df_values[fname]
-        vmin, vmax = XLIMS.get(fname, None)
+
+        q = HISTOGRAM_QUANTILE
+        vmin, vmax = XLIMS.get(fname, (values.quantile(q), values.quantile(1 - q)))
 
         data = remap(key, values)
 
@@ -231,6 +230,10 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
         api.save_payload(output_dir, fname, payload)
 
     # Parallel version.
+
+    # # DEBUG
+    # fnames = ('rms_ap', 'rms_lf', 'spike_count')
+
     Parallel(n_jobs=n_jobs)(delayed(process_fname)(fname) for fname in fnames)
 
     # for fname in tqdm.tqdm(("psd_delta",)):
@@ -278,13 +281,14 @@ if __name__ == '__main__':
     ROOT_DIR = Path(__file__).parent
     DATA_DIR = ROOT_DIR / "data"
 
-    mean_path = DATA_DIR / 'ephys_feature_atlas_based_on_gene.npy'
-    std_path = DATA_DIR / 'std_ephys_feature_atlas_based_on_gene.npy'
-    output_dir = DATA_DIR / 'yanliang/'
-
-    # bucket_uuid = 'add0d5a4-f10a-4b81'
-    # local_data_path = Path(ROOT_DIR / '../paper-ephys-atlas/data').resolve()
     # plot_distributions(pqt_path, channels_path)
-    # make_ephys_data(local_data_path, output_dir=output_dir, n_jobs=12)
+    # mean_path = DATA_DIR / 'ephys_feature_atlas_based_on_gene.npy'
+    # std_path = DATA_DIR / 'std_ephys_feature_atlas_based_on_gene.npy'
+    # output_dir = DATA_DIR / 'yanliang/'
+    # make_volumes(mean_path, std_path, output_dir)
 
-    make_volumes(mean_path, std_path, output_dir)
+    bucket_uuid = 'add0d5a4-f10a-4b81'  # ephys bucket uuid
+    output_dir = DATA_DIR / 'ephys/'
+    output_dir = DATA_DIR / f'features/ephys_{bucket_uuid}/'
+    local_data_path = Path(ROOT_DIR / '../ibleatools/temp/ea_active/2025_W52/agg_full/').resolve()
+    make_ephys_data(local_data_path, output_dir=output_dir, n_jobs=12)
