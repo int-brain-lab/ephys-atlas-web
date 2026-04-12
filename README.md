@@ -369,8 +369,10 @@ The `docs/` directory contains maintainer/user guidance in notebook form, includ
 - understanding mappings
 - using the upload/API workflow
 - using the website itself
+- `docs/frontend-architecture.md` — frontend structure, state/model/dispatcher pattern, and key JS modules
+- `docs/backend-architecture.md` — Flask API, file-backed bucket/feature storage, and maintainer generation scripts
 
-These notebooks are helpful background, but the repository’s active implementation should still be treated as the source of truth.
+These docs are helpful background, but the repository’s active implementation should still be treated as the source of truth.
 
 ---
 

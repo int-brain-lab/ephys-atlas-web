@@ -13,6 +13,9 @@ Agents working in this repo will usually be doing one of four things:
 
 For ephys data regeneration work, be aware that some upstream scientific/data-generation logic lives outside this repository. In particular, `iblbrainviewer` is an important external dependency in the ephys feature-generation workflow, even though this repository itself is the web app rather than that upstream Python package.
 
+For non-trivial frontend work, read `docs/frontend-architecture.md` early; it explains the state/model/dispatcher pattern and the main JS module groups.
+For non-trivial backend or data-generation work, read `docs/backend-architecture.md`; it explains the Flask API, on-disk storage model, and generation-script responsibilities.
+
 ## 1. Repository orientation
 
 ### Active areas
