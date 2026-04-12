@@ -79,9 +79,10 @@ Only lightly tested on Ubuntu/Linux.
 
 Install:
 
-- Python and a virtual environment
+- Python and `uv`
 - Node/npm
 - `http-server`
+- `just`
 - `svgo`
 - `inkscape`
 - local HTTPS certificate tooling (`mkcert`) if you need to regenerate certs
@@ -91,6 +92,12 @@ Example:
 ```bash
 sudo apt-get install npm
 sudo npm install --global http-server
+```
+
+Install `just` using your preferred package manager, for example on Ubuntu:
+
+```bash
+sudo apt install just
 ```
 
 If local HTTPS certs are missing and you want to recreate them:
@@ -108,25 +115,35 @@ This should create local certificate files similar to:
 
 ### Python environment
 
-Create/activate a virtual environment and install dependencies:
+The backend workflow uses `uv` to manage the local virtual environment and install Python dependencies.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+just backend-install
 ```
 
-> `pyproject.toml` exists, but today `requirements.txt` and the existing scripts are the more practical source of truth for runtime setup.
+This command is idempotent and can be re-run when backend dependencies change.
+
+This will create `.venv` if needed and install the backend requirements into it.
+
+> `pyproject.toml` exists, but today `requirements.txt` and the existing commands are the more practical source of truth for runtime setup.
 
 ### Run the backend
 
 In one terminal:
 
 ```bash
-./backend.sh
+just backend
 ```
 
-This activates `.venv`, installs requirements if needed, and starts the Flask backend from `server.py`.
+This starts the Flask backend from `server.py` using the local virtual environment.
+
+If you also want it to install/update Python dependencies first:
+
+```bash
+just backend-install
+```
+
+This command is idempotent and can be re-run when backend dependencies change.
 
 By default in local debug mode, the frontend expects the backend at:
 
@@ -137,7 +154,7 @@ By default in local debug mode, the frontend expects the backend at:
 In a second terminal:
 
 ```bash
-./frontend.sh
+just frontend
 ```
 
 This serves the static frontend over HTTPS using the local certificate files.
@@ -145,6 +162,26 @@ This serves the static frontend over HTTPS using the local certificate files.
 By default, this runs at:
 
 - `https://localhost:8456`
+
+### Run both together
+
+For the standard local workflow, you can launch both processes together:
+
+```bash
+just dev
+```
+
+Or, if you prefer npm scripts for local frontend tooling:
+
+```bash
+npm run dev
+```
+
+You can also validate the local prerequisites without starting servers:
+
+```bash
+just check
+```
 
 ### Open the app
 
