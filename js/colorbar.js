@@ -1,7 +1,8 @@
 export { Colorbar };
 
-import { clamp, displayNumber } from "./utils.js";
+import { displayNumber } from "./utils.js";
 import { BIN_COUNT, computeHistogram, getFeatureHistogram } from "./core/histogram-helpers.js";
+import { drawHistogram } from "./core/histogram-dom.js";
 
 
 
