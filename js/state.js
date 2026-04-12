@@ -1,7 +1,7 @@
 export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
 import { DEBUG, SLICE_DEFAULT } from "./constants.js";
-import { encode, decode } from "./utils.js";
+import { parseUrlState, serializeStateToUrl } from "./core/state-url.js";
 /** @import { AppStateShape } from "./core/types.js" */
 
 
@@ -77,94 +77,20 @@ const ALIAS_STATES = {
 };
 
 function url2state() {
-    let query = new Proxy(new URLSearchParams(window.location.search), {
-        get: (searchParams, prop) => searchParams.get(prop),
+    return parseUrlState(window.location.search, {
+        aliasStates: ALIAS_STATES,
+        defaultBucket: DEFAULT_BUCKET,
+        defaultBuckets: DEFAULT_BUCKETS,
+        debug: DEBUG,
     });
-    let state = {};
-
-    // Determine the list of buckets to show in the buckets dropdown.
-    // NOTE: make a copy to avoid modifying the default buckets.
-    let buckets = new Array(...DEFAULT_BUCKETS);
-
-    // Alias states.
-    if (query.alias) {
-        const s = ALIAS_STATES[query.alias];
-        const decodedState = decode(s.state);
-        if (DEBUG)
-            console.log("decoded state", decodedState);
-        state = decodedState;
-
-        // NOTE: special handling for bucket and buckets, as these are NOT part of the state,
-        // in order to keep them human readable in the URL.
-        state.bucket = s.bucket || DEFAULT_BUCKET;
-        state.buckets = s.buckets || DEFAULT_BUCKETS;
-    }
-    else if (query.state) {
-        state = decode(query.state);
-    }
-
-    // Add buckets passed in the query string.
-    if (query.buckets) {
-        let newBuckets = query.buckets.split(",");
-        buckets.push(...newBuckets);
-    }
-
-    // Remove duplicate buckets.
-    state.buckets = buckets.filter((value, index, self) => {
-        return self.indexOf(value) === index;
-    });
-
-    console.log(`buckets are: `, state.buckets.join(','));
-
-    // Take the bucket from the URL query string.
-    state.bucket = state.bucket || query.bucket;
-
-    // If the state's bucket does not belong to the buckets, clear the bucket and fname.
-    if (!DEFAULT_BUCKETS.includes(state.bucket) && !state.buckets.includes(state.bucket)) {
-        state.bucket = null;
-        state.fname = null;
-        state.isVolume = null;
-    }
-
-    return state;
 }
 
 
 function state2url(state_) {
-    // Perform a copy of the state.
-    let state = { ...state_ };
-
-    // Extract the list of buckets from the state and put them separately in the URL.
-    let buckets = state.buckets || DEFAULT_BUCKETS;
-
-    // Remove default buckets.
-    buckets = buckets.filter(item => !DEFAULT_BUCKETS.includes(item));
-
-    // Remove the buckets from the state before computing its hash.
-    delete state.buckets;
-    // console.log(`buckets are: `, buckets);
-
-    // Generate the URL.
-    let url = new URL(window.location);
-    let params = url.searchParams;
-
-    // Remove the alias from the URL.
-    params.delete('alias');
-
-    // Add the buckets separately in the URL query string.
-    if (buckets.length > 0)
-        params.set('buckets', buckets.join(','));
-    else
-        params.delete('buckets');
-
-    // Remove state.bucket from the encoded state, put it separately.
-    params.set('bucket', state.bucket);
-    delete state.bucket;
-
-    // Add the state to the query string
-    params.set('state', encode(state));
-
-    return url.toString();
+    return serializeStateToUrl(state_, {
+        currentUrl: window.location.toString(),
+        defaultBuckets: DEFAULT_BUCKETS,
+    });
 }
 
 
