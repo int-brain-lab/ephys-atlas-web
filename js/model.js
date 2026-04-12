@@ -3,7 +3,8 @@ export { Model, URLS };
 import { BASE_URL } from "./constants.js";
 import { Loader } from "./loader.js";
 import { Cache } from "./cache.js";
-import { downloadJSON, memoize, normalizeValue, clamp } from "./utils.js";
+import { downloadJSON, memoize } from "./utils.js";
+import { buildRegionColors } from "./core/color-helpers.js";
 
 
 /*************************************************************************************************/
@@ -470,119 +471,27 @@ class Model {
 
     _getColors(state, refresh = false) {
 
-        // Get the state information.
-        let stat = state.stat;
-        let cmin = state.cmapmin;
-        let cmax = state.cmapmax;
-
-        // Load the colormap.
         let colors = this.getColormap(state.cmap);
-
-        // Load the region and features data.
         let regions = this.getRegions(state.mapping);
         let features = state.isVolume ? null : this.getFeatures(
             state.bucket, state.fname, state.mapping, refresh);
+        let featurePayload = this.features.get(state.bucket, state.fname);
+        let histogram = featurePayload ? featurePayload['histogram'] : null;
 
-        // Figure out what hemisphere values we have
-        let feature_max = null;
-        let feature_min = null;
-        if (!state.isVolume) {
-            feature_max = features ? Math.max.apply(null, Object.keys(features['data'])) : null;
-            feature_min = features ? Math.min.apply(null, Object.keys(features['data'])) : null;
-        }
+        let regionColors = buildRegionColors({
+            regions,
+            features,
+            stat: state.stat,
+            cmin: state.cmapmin,
+            cmax: state.cmapmax,
+            logScale: state.logScale,
+            colors,
+            histogram,
+        });
 
-        // Compute the color as a function of the cmin/cmax slider values.
-        let vmin = features && features['statistics'] ? features['statistics'][stat]['min'] : 0;
-        let vmax = features && features['statistics'] ? features['statistics'][stat]['max'] : 1;
-
-        // NOTE: use the vmin/vmax from the global histogram for those statistics
-        // BUG FIX: This notably avoids a bug with alpha_mean where the selected histogram range is
-        // very different from the data range, because of large outliers.
-        const histogramStats = new Set(["mean", "count", "max", "median", "min"]);
-        if (features && histogramStats.has(stat)) {
-            let g = this.features.get(state.bucket, state.fname);
-            let histogram = g ? g['histogram'] : null;
-            if (histogram) {
-                if (histogram["vmin"] != null)
-                    vmin = histogram["vmin"];
-                if (histogram["vmax"] != null)
-                    vmax = histogram["vmax"];
-            }
-        }
-
-        let idx_lr = 1327; // Below idx_lr: right hemisphere. Above: left hemisphere.
-        let hasLeft = true; // whether there is at least a left hemisphere region with a value
-        let hasRight = true; // whether there is at least a left hemisphere region with a value
-
-        if (feature_max == null || feature_min == null) {
+        if (!regionColors) {
             console.warn("there is no data! skipping region coloring");
             return;
-        }
-        console.assert(feature_min >= 0);
-        console.assert(feature_max > 0);
-
-        if (feature_max <= idx_lr) {
-            hasLeft = false;
-        }
-        if (feature_min > idx_lr) {
-            hasRight = false;
-        }
-        // Here the hasLeft and hasRight values should be set. At least one of them is true.
-        console.assert(hasLeft || hasRight);
-
-        let regionColors = {};
-
-        // Go through all regions.
-        for (let regionIdx in regions) {
-            let region = regions[regionIdx];
-            console.assert(region);
-
-            // Region name and acronym.
-            let name = region['name'];
-            // let acronym = region['acronym'];
-
-            // Which hemisphere this region is in.
-            let isLeft = name.includes('left'); // false => isRight :)
-
-            // True iff there is at least another region in that hemisphere with data.
-            let dataInHemisphere = (isLeft && hasLeft) || (!isLeft && hasRight);
-
-            // Retrieve the region value.
-            let value = features ? features['data'][regionIdx] : null;
-
-            // Region that does not appear in the features? White if there is data in its
-            // hemisphere, default allen color otherwise.
-            if (!value) {
-                if (dataInHemisphere) {
-                    regionColors[regionIdx] = '#ffffff'; // white
-                }
-                // else, do nothing = default allen color.
-                continue;
-            }
-            value = value[stat];
-
-            // Region that appears in the features but with a null value? Grey.
-            if (!value) {
-                regionColors[regionIdx] = '#d3d3d3'; // grey
-                continue;
-            }
-
-            let vdiff = vmax - vmin;
-            let vminMod = vmin + vdiff * cmin / 100.0;
-            let vmaxMod = vmin + vdiff * cmax / 100.0;
-            let normalized = normalizeValue(value, vminMod, vmaxMod);
-
-            // Pseudo-log scale (actually gamma correction, better for colormap visualization).
-            if (state.logScale) {
-                normalized = Math.round(100.0 * Math.pow(normalized / 100.0, 0.25));
-            }
-
-            console.assert(normalized != null && normalized != undefined);
-
-            // Compute the color.
-            let hex = colors[clamp(normalized, 0, 99)];
-
-            regionColors[regionIdx] = hex;
         }
 
         return regionColors;

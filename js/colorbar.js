@@ -1,109 +1,13 @@
 export { Colorbar };
 
 import { clamp, displayNumber } from "./utils.js";
+import { BIN_COUNT, computeHistogram, getFeatureHistogram } from "./core/histogram-helpers.js";
 
 
 
 /*************************************************************************************************/
 /* Utils                                                                                         */
 /*************************************************************************************************/
-
-const BIN_COUNT = 50;
-
-
-function computeHistogram(n, cmin, cmax, values) {
-    console.log(`compute histogram for ${values.length} values`);
-
-    // Initialize an array to store the histogram bins
-    const histogram = new Array(n).fill(0);
-
-    // Calculate the bin width
-    const binWidth = (cmax - cmin) / n;
-
-    // Iterate through each value and increment the corresponding bin
-    values.forEach(value => {
-        // Skip values outside the specified range
-        if (value < cmin || value >= cmax) {
-            return;
-        }
-
-        // Determine the bin index for the current value
-        const binIndex = Math.floor((value - cmin) / binWidth);
-
-        // Increment the corresponding bin
-        histogram[binIndex]++;
-    });
-
-    return histogram;
-}
-
-
-function drawHistogram(container, counts, cmin, cmax, cmap, denominator) {
-    if (!container) return;
-    if (!counts) return;
-    console.assert(cmap);
-
-    // container: div
-    // counts: values of the histogram
-    // cmin: minimal colormap value, from 0 to 100
-    // cmax: maximal colormap value
-    // colorCount: number of colors in the colormap
-    let n = counts.length;
-    let colorCount = cmap.length;
-    const safeDenominator = denominator > 0 ? denominator : Math.max(1, ...counts);
-
-    // Generate the histogram DOM elements.
-    let child = null;
-    if (container.children.length == 0) {
-        for (let i = 0; i < n; i++) {
-            child = document.createElement('div');
-            child.classList.add(`bar-${i}`);
-            container.appendChild(child);
-        }
-    }
-
-    let x = 0;
-    for (let i = 0; i < n; i++) {
-        child = container.children[i];
-        x = i * 100.0 / n;
-        x = (x - cmin) / (cmax - cmin);
-        x = clamp(x, 0, .9999);
-        child.style.backgroundColor = cmap[Math.floor(x * colorCount)];
-
-        // Histogram height.
-        child.style.height = `calc(10px + ${counts[i] * 100.0 / safeDenominator}%)`;
-    }
-}
-
-
-// Add the histograms of all selected regions.
-function getFeatureHistogram(features, selected, n_bins) {
-    if (!selected) return;
-
-    let histogram = new Array(n_bins).fill(0);
-    let selectedCount = 0;
-
-    selected.forEach(regionIdx => {
-        let f = features["data"][regionIdx];
-        if (!f) return;
-        selectedCount += f["count"];
-
-        Object.keys(f).forEach(key => {
-            let match = key.match(/^h_(\d+)$/);
-            if (match) {
-                let index = parseInt(match[1], 10);
-                if (index >= 0 && index < n_bins) {
-                    histogram[index] += f[key];
-                }
-            }
-        });
-    });
-
-    return [histogram, selectedCount];
-}
-
-
-
 
 /*************************************************************************************************/
 /* Histogram component                                                                           */
