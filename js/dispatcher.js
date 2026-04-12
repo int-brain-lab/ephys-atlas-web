@@ -1,5 +1,7 @@
 export { Dispatcher };
 
+import { EVENTS } from "./core/events.js";
+
 // import { downloadJSON } from "./utils.js";
 
 
@@ -33,129 +35,129 @@ class Dispatcher {
 
     connect(source) {
         // Request a WebSocket connection.
-        this.emit("connect", source);
+        this.emit(EVENTS.CONNECT, source);
     }
 
     data(source, name, key, data) {
         // when data has to be sent to the websocket server
-        this.emit("data", source, { "name": name, "key": key, "data": data });
+        this.emit(EVENTS.DATA, source, { "name": name, "key": key, "data": data });
     }
 
     slice(source, axis, idx) {
         // when a slice changes
-        this.emit("slice", source, { "axis": axis, "idx": idx });
+        this.emit(EVENTS.SLICE, source, { "axis": axis, "idx": idx });
     }
 
     highlight(source, idx, e) {
         // when a region is highlighted
-        this.emit("highlight", source, { "idx": idx, "e": e });
+        this.emit(EVENTS.HIGHLIGHT, source, { "idx": idx, "e": e });
     }
 
     volumeHover(source, axis, e) {
-        this.emit("volumeHover", source, { "axis": axis, "e": e });
+        this.emit(EVENTS.VOLUME_HOVER, source, { "axis": axis, "e": e });
     }
 
     volumeValues(source, axis, values, e) {
-        this.emit("volumeValues", source, { "axis": axis, "values": values, "e": e });
+        this.emit(EVENTS.VOLUME_VALUES, source, { "axis": axis, "values": values, "e": e });
     }
 
     highlightDot(source, axis, sliceIdx, e) {
         // when a dot is highlighted (when pressing Control)
-        this.emit("highlightDot", source, { "axis": axis, "sliceIdx": sliceIdx, "e": e });
+        this.emit(EVENTS.HIGHLIGHT_DOT, source, { "axis": axis, "sliceIdx": sliceIdx, "e": e });
     }
 
     toggle(source, idx) {
         // when a region is added or removed from the selection
-        this.emit("toggle", source, { "idx": idx });
+        this.emit(EVENTS.TOGGLE, source, { "idx": idx });
     }
 
     toggleStatToolbox(source) {
-        this.emit("toggleStatToolbox", source, {});
+        this.emit(EVENTS.TOGGLE_STAT_TOOLBOX, source, {});
     }
 
     clear(source,) {
         // when all regions are deselected
-        this.emit("clear", source, {});
+        this.emit(EVENTS.CLEAR, source, {});
     }
 
     reset(source,) {
         // when all regions are deselected
-        this.emit("reset", source, {});
+        this.emit(EVENTS.RESET, source, {});
     }
 
     bucket(source, uuid_or_alias) {
         // when a bucket is selected
-        this.emit("bucket", source, { "uuid_or_alias": uuid_or_alias });
+        this.emit(EVENTS.BUCKET, source, { "uuid_or_alias": uuid_or_alias });
     }
 
     refresh(source, uuid_or_alias) {
         // when a bucket is refreshed
-        this.emit("refresh", source, { "uuid_or_alias": uuid_or_alias });
+        this.emit(EVENTS.REFRESH, source, { "uuid_or_alias": uuid_or_alias });
     }
 
     bucketRemove(source, uuid_or_alias) {
         // when a bucket is removed
-        this.emit("bucketRemove", source, { "uuid_or_alias": uuid_or_alias });
+        this.emit(EVENTS.BUCKET_REMOVE, source, { "uuid_or_alias": uuid_or_alias });
     }
 
     search(source, text) {
         // when search text is changed
-        this.emit("search", source, { "text": text });
+        this.emit(EVENTS.SEARCH, source, { "text": text });
     }
 
     spinning(source, isSpinning) {
-        this.emit("spinning", source, { "isSpinning": isSpinning });
+        this.emit(EVENTS.SPINNING, source, { "isSpinning": isSpinning });
     }
 
     feature(source, fname, isVolume) {
         // when a feature is selected
-        this.emit("feature", source, { "fname": fname, "isVolume": isVolume });
+        this.emit(EVENTS.FEATURE, source, { "fname": fname, "isVolume": isVolume });
     }
 
     featureHover(source, fname, desc, e) {
         // when the mouse hovers over a feature
-        this.emit("featureHover", source, { "fname": fname, "desc": desc, "e": e });
+        this.emit(EVENTS.FEATURE_HOVER, source, { "fname": fname, "desc": desc, "e": e });
     }
 
     featureRemove(source, uuid_or_alias, fname) {
         // when a local feature is removed
-        this.emit("featureRemove", source, { "uuid_or_alias": uuid_or_alias, "fname": fname });
+        this.emit(EVENTS.FEATURE_REMOVE, source, { "uuid_or_alias": uuid_or_alias, "fname": fname });
     }
 
     stat(source, name) {
         // when the stat is changed
-        this.emit("stat", source, { "name": name });
+        this.emit(EVENTS.STAT, source, { "name": name });
     }
 
     unityLoaded(source, instance) {
-        this.emit("unityLoaded", source, { "instance": instance });
+        this.emit(EVENTS.UNITY_LOADED, source, { "instance": instance });
     }
 
     cmap(source, name) {
         // when the colormap is changed
-        this.emit("cmap", source, { "name": name });
+        this.emit(EVENTS.CMAP, source, { "name": name });
     }
 
     logScale(source, checked) {
-        this.emit("logScale", source, { "checked": checked });
+        this.emit(EVENTS.LOG_SCALE, source, { "checked": checked });
     }
 
     panel(source, open) {
-        this.emit("panel", source, { "open": open });
+        this.emit(EVENTS.PANEL, source, { "open": open });
     }
 
     mapping(source, name) {
         // when the mapping is changed
-        this.emit("mapping", source, { "name": name });
+        this.emit(EVENTS.MAPPING, source, { "name": name });
     }
 
     cmapRange(source, cmin, cmax) {
         // when the colormap range changes
-        this.emit("cmapRange", source, { "cmin": cmin, "cmax": cmax });
+        this.emit(EVENTS.CMAP_RANGE, source, { "cmin": cmin, "cmax": cmax });
     }
 
     share(source) {
-        this.emit("share", source);
+        this.emit(EVENTS.SHARE, source);
     }
 
 };

@@ -2,6 +2,7 @@ export { Slice };
 
 import { throttle, clamp, getOS, e2idx } from "./utils.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -93,7 +94,7 @@ class Slice {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
     }
 
     setupSlices() {
@@ -231,7 +232,7 @@ class Slice {
             document.getElementById(`figure-${axis}`).innerHTML = svg;
 
             // Update the global state.
-            this.state[axis] = idx;
+            this.state.setSliceIndex(axis, idx);
         }
         else {
             // console.debug(`${idx} not in ${axis} slice`);

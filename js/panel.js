@@ -1,6 +1,7 @@
 export { Panel };
 
 import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -138,13 +139,13 @@ class Panel {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('mapping', (ev, source) => {
+        this.dispatcher.on(EVENTS.MAPPING, (ev, source) => {
             if (source != this && ev.name)
                 this.imapping.value = ev.name;
         });
 
         // Display the cmap range once the features are loaded.
-        this.dispatcher.on('feature', (ev, source, fname) => {
+        this.dispatcher.on(EVENTS.FEATURE, (ev, source, fname) => {
             let [vminMod, vmaxMod] = this._toMinMaxValues(this.state.cmapmin, this.state.cmapmax);
             this.icmapminInput.value = displayNumber(vminMod);
             this.icmapmaxInput.value = displayNumber(vmaxMod);
@@ -168,7 +169,7 @@ class Panel {
             this.el.removeAttribute("open");
 
         this.el.addEventListener('toggle', (ev) => {
-            this.state.panelOpen = this.el.open;
+            this.state.setPanelOpen(this.el.open);
             this.dispatcher.panel(this, { 'open': this.state.panelOpen });
         })
     }
@@ -212,29 +213,28 @@ class Panel {
 
     setupMapping() {
         this.imapping.addEventListener('change', (e) => {
-            this.state.mapping = this.imapping.value;
+            this.state.setMapping(this.imapping.value);
             this.dispatcher.mapping(this, this.state.mapping);
         });
     }
 
     setupStat() {
         this.istat.addEventListener('change', (e) => {
-            this.state.stat = this.istat.value;
+            this.state.setStat(this.istat.value);
             this.dispatcher.stat(this, this.state.stat);
         });
     }
 
     setupColormap() {
         this.icmap.addEventListener('change', async (e) => {
-            this.state.cmap = this.icmap.value;
+            this.state.setCmap(this.icmap.value);
             this.dispatcher.cmap(this, this.state.cmap);
         });
     }
 
     _updateColormapRange(cmin, cmax) {
 
-        this.state.cmapmin = cmin;
-        this.state.cmapmax = cmax;
+        this.state.setCmapRange(cmin, cmax);
 
         this.dispatcher.cmapRange(this, cmin, cmax);
     }

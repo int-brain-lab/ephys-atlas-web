@@ -2,6 +2,7 @@ export { Bucket };
 
 import { setOptions, addOption, removeOption, removeFromArray } from "./utils.js";
 import { DEFAULT_BUCKET, DEFAULT_BUCKETS } from "./state.js";
+import { EVENTS } from "./core/events.js";
 
 
 /*************************************************************************************************/
@@ -45,11 +46,11 @@ class Bucket {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('clear', (ev) => {
+        this.dispatcher.on(EVENTS.CLEAR, (ev) => {
             // this.init();
         });
-        this.dispatcher.on('bucket', (ev) => { this.select(ev.uuid_or_alias); });
-        this.dispatcher.on('bucketRemove', (ev) => { this.remove(ev.uuid_or_alias); });
+        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.select(ev.uuid_or_alias); });
+        this.dispatcher.on(EVENTS.BUCKET_REMOVE, (ev) => { this.remove(ev.uuid_or_alias); });
     }
 
     setupBucket() {
@@ -57,7 +58,7 @@ class Bucket {
             let bucket = e.target.value;
 
             // Clear the selected feature when changing bucket.
-            this.state.fname = '';
+            this.state.clearFeature();
 
             // Download the bucket before dispatching the bucket selection event.
             // this.splash.setDescription(`Loading bucket ${bucket}...`);
@@ -148,15 +149,14 @@ class Bucket {
 
     add(bucket, selected) {
         if (DEFAULT_BUCKETS.includes(bucket)) return;
-        if (!this.state.buckets.includes(bucket))
-            this.state.buckets.push(bucket);
+        this.state.addBucket(bucket);
         addOption(this.el, bucket, bucket, selected);
     }
 
     remove(bucket) {
-        this.state.bucket = DEFAULT_BUCKET;
+        this.state.setBucket(DEFAULT_BUCKET);
         if (this.state.buckets.includes(bucket))
-            this.state.buckets = removeFromArray(this.state.buckets, bucket);
+            this.state.setBuckets(removeFromArray(this.state.buckets, bucket));
         removeOption(this.el, bucket);
     }
 
@@ -167,7 +167,7 @@ class Bucket {
 
         this.el.value = bucket;
 
-        this.state.bucket = bucket;
+        this.state.setBucket(bucket);
         // this.state.fname = '';
     }
 

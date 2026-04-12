@@ -2,6 +2,7 @@ export { Feature };
 
 import { DEFAULT_BUCKET } from "./state.js";
 import { URLS } from "./model.js";
+import { EVENTS } from "./core/events.js";
 import { downloadBinaryFile, removeFromArray } from "./utils.js";
 
 
@@ -119,8 +120,8 @@ class Feature {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); this.selectFeature(); });
-        this.dispatcher.on('bucket', async (ev) => {
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); this.selectFeature(); });
+        this.dispatcher.on(EVENTS.BUCKET, async (ev) => {
             this.setBucket(ev.uuid_or_alias);
 
             if (this.state.fname) {
@@ -135,9 +136,9 @@ class Feature {
                 this.selectFeature(state.fname, state.isVolume);
             }
         });
-        this.dispatcher.on('refresh', (ev) => { this.refreshBucket(); });
-        this.dispatcher.on('bucketRemove', (ev) => { this.setBucket(DEFAULT_BUCKET); });
-        this.dispatcher.on('featureRemove', (ev) => {
+        this.dispatcher.on(EVENTS.REFRESH, (ev) => { this.refreshBucket(); });
+        this.dispatcher.on(EVENTS.BUCKET_REMOVE, (ev) => { this.setBucket(DEFAULT_BUCKET); });
+        this.dispatcher.on(EVENTS.FEATURE_REMOVE, (ev) => {
             this.selectFeature(''); // deselect
             this.model.localCache.delete(`${ev.fname}.json`);
             this.refreshBucket();
@@ -179,9 +180,9 @@ class Feature {
         if (!bucket.metadata) {
             // Error message if the bucket does not exist.
 
-            this.state.bucket = DEFAULT_BUCKET;
-            this.state.buckets = removeFromArray(this.state.buckets, uuid_or_alias);
-            this.state.fname = '';
+            this.state.setBucket(DEFAULT_BUCKET);
+            this.state.setBuckets(removeFromArray(this.state.buckets, uuid_or_alias));
+            this.state.clearFeature();
 
             if (uuid_or_alias != DEFAULT_BUCKET) {
                 this.dispatcher.bucketRemove(this, uuid_or_alias);
@@ -217,8 +218,7 @@ class Feature {
 
     selectFeature(fname, isVolume) {
         console.log(`select feature ${fname}, volume=${isVolume}`);
-        this.state.fname = fname;
-        this.state.isVolume = isVolume;
+        this.state.setFeature(fname, isVolume);
         this.dropdown.select(fname);
         this.dispatcher.feature(this, fname, isVolume);
     }
