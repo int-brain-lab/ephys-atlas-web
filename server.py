@@ -42,7 +42,7 @@ FEATURES_BASE_URL = "https://atlas.internationalbrainlab.org/"
 FEATURES_API_BASE_URL = "https://features.internationalbrainlab.org/api/"
 
 # DEBUG
-DEBUG = False
+DEBUG = True
 if DEBUG:
     FEATURES_BASE_URL = 'https://localhost:8456/'
     FEATURES_API_BASE_URL = 'https://localhost:5000/api/'
