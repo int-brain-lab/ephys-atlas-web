@@ -2,6 +2,7 @@ export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
 import { DEBUG, SLICE_DEFAULT } from "./constants.js";
 import { encode, decode } from "./utils.js";
+/** @import { AppStateShape } from "./core/types.js" */
 
 
 
@@ -215,6 +216,72 @@ class State {
 
     reset() {
         this.init({ 'bucket': this.bucket, 'buckets': this.buckets });
+    }
+
+    /** @returns {AppStateShape} */
+    snapshot() {
+        return /** @type {AppStateShape} */ ({ ...this, selected: new Set(this.selected) });
+    }
+
+    setBucket(bucket) {
+        this.bucket = bucket;
+    }
+
+    setBuckets(buckets) {
+        this.buckets = buckets;
+    }
+
+    addBucket(bucket) {
+        if (!this.buckets.includes(bucket)) {
+            this.buckets = [...this.buckets, bucket];
+        }
+    }
+
+    removeBucket(bucket) {
+        this.buckets = this.buckets.filter((value) => value !== bucket);
+    }
+
+    setFeature(fname, isVolume = this.isVolume) {
+        this.fname = fname;
+        this.isVolume = isVolume;
+    }
+
+    clearFeature() {
+        this.fname = '';
+        this.isVolume = null;
+    }
+
+    setMapping(mapping) {
+        this.mapping = mapping;
+    }
+
+    setStat(stat) {
+        this.stat = stat;
+    }
+
+    setCmap(cmap) {
+        this.cmap = cmap;
+    }
+
+    setCmapRange(cmapmin, cmapmax) {
+        this.cmapmin = cmapmin;
+        this.cmapmax = cmapmax;
+    }
+
+    setLogScale(logScale) {
+        this.logScale = logScale;
+    }
+
+    setSliceIndex(axis, idx) {
+        this[axis] = idx;
+    }
+
+    setHighlighted(idx) {
+        this.highlighted = idx;
+    }
+
+    setPanelOpen(open) {
+        this.panelOpen = open;
     }
 
     toggleUpdate(toggle) {
