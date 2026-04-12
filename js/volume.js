@@ -2,6 +2,8 @@ export { Volume };
 
 import { e2idx, clamp, rgb2hex, clearStyle } from "./utils.js";
 import { VOLUME_AXES, VOLUME_SIZE, VOLUME_XY_AXES, getVolumeSize, setVolumeSizeDynamic } from "./constants.js";
+import { computeAxisMapping } from "./core/volume-helpers.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -116,7 +118,7 @@ class Volume {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('feature', async (ev) => {
+        this.dispatcher.on(EVENTS.FEATURE, async (ev) => {
             if (!ev.isVolume) {
                 this.hideVolume();
 
@@ -159,24 +161,24 @@ class Volume {
             }
         });
 
-        this.dispatcher.on('volumeHover', async (ev) => {
+        this.dispatcher.on(EVENTS.VOLUME_HOVER, async (ev) => {
             if (this.state.isVolume) {
                 this.handleVolumeHover(ev.axis, ev.e);
             }
         });
 
-        this.dispatcher.on('slice', async (ev) => {
+        this.dispatcher.on(EVENTS.SLICE, async (ev) => {
             this.drawSlice(ev.axis, ev.idx);
         });
 
         /* Update the canvases when the colormap changes. */
-        this.dispatcher.on('cmap', async (ev) => {
+        this.dispatcher.on(EVENTS.CMAP, async (ev) => {
             if (this.state.isVolume) {
                 this.setCmap();
                 this.draw();
             }
         });
-        this.dispatcher.on('cmapRange', async (ev) => {
+        this.dispatcher.on(EVENTS.CMAP_RANGE, async (ev) => {
             if (this.state.isVolume) {
                 this.draw();
             }
@@ -196,81 +198,9 @@ class Volume {
     }
 
     computeAxisMapping(shape) {
-        const baseSize = VOLUME_SIZE;
-        const canonical = [baseSize.coronal, baseSize.horizontal, baseSize.sagittal];
-        const axes = VOLUME_AXES;
-        const permutations = [
-            [0, 1, 2],
-            [0, 2, 1],
-            [1, 0, 2],
-            [1, 2, 0],
-            [2, 0, 1],
-            [2, 1, 0],
-        ];
-
-        let best = null;
-        for (const perm of permutations) {
-            const dims = perm.map(idx => shape[idx]);
-            if (dims.some(d => !isFinite(d) || d <= 0)) {
-                continue;
-            }
-            const ratios = dims.map((d, idx) => canonical[idx] / d);
-            if (ratios.some(r => !isFinite(r) || r <= 0)) {
-                continue;
-            }
-            const errors = ratios.map(r => Math.abs(Math.round(r) - r));
-            const totalError = errors.reduce((a, b) => a + b, 0);
-            const maxError = Math.max(...errors);
-            if (best === null || totalError < best.totalError || (totalError === best.totalError && maxError < best.maxError)) {
-                best = { perm, dims, ratios, totalError, maxError };
-            }
-        }
-
-        if (!best) {
-            console.warn("cannot infer axis mapping, fallback to identity");
-            const axisToRaw = { coronal: 0, horizontal: 1, sagittal: 2 };
-            return {
-                axisToRaw,
-                rawToAxis: { 0: "coronal", 1: "horizontal", 2: "sagittal" },
-                axisSizes: {
-                    coronal: shape[0],
-                    horizontal: shape[1],
-                    sagittal: shape[2],
-                },
-                downsample: { coronal: 1, horizontal: 1, sagittal: 1 },
-            };
-        }
-
-        const axisToRaw = {
-            coronal: best.perm[0],
-            horizontal: best.perm[1],
-            sagittal: best.perm[2],
-        };
-        const rawToAxis = {};
-        for (const [axis, rawIdx] of Object.entries(axisToRaw)) {
-            rawToAxis[rawIdx] = axis;
-        }
-
-        const axisSizes = {
-            coronal: shape[axisToRaw.coronal],
-            horizontal: shape[axisToRaw.horizontal],
-            sagittal: shape[axisToRaw.sagittal],
-        };
-
-        const downsample = {
-            coronal: canonical[0] / axisSizes.coronal,
-            horizontal: canonical[1] / axisSizes.horizontal,
-            sagittal: canonical[2] / axisSizes.sagittal,
-        };
-
-        console.log("volume axis mapping", axisToRaw, "axis sizes", axisSizes, "downsample", downsample);
-
-        return {
-            axisToRaw,
-            rawToAxis,
-            axisSizes,
-            downsample,
-        };
+        const mapping = computeAxisMapping(shape, VOLUME_SIZE, VOLUME_AXES);
+        console.log("volume axis mapping", mapping.axisToRaw, "axis sizes", mapping.axisSizes, "downsample", mapping.downsample);
+        return mapping;
     }
 
     indexFromAxisCoords(axisCoords) {

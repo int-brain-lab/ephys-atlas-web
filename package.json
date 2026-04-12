@@ -1,0 +1,12 @@
+{
+  "name": "atlas-frontend-dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:frontend": "node --test tests/frontend/*.test.js",
+    "dev:frontend": "just frontend",
+    "dev:backend": "just backend",
+    "dev": "just dev",
+    "check": "just check"
+  }
+}

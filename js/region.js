@@ -1,6 +1,8 @@
 export { Region };
 
 import { normalizeValue, throttle, e2idx } from "./utils.js";
+import { compareRegionItems, nextSortState, searchFilter } from "./core/region-helpers.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -8,56 +10,33 @@ import { normalizeValue, throttle, e2idx } from "./utils.js";
 /* Constants                                                                                     */
 /*************************************************************************************************/
 
-const SEARCH_ACRONYM_STRING = "acronym=";
-
-
-
 /*************************************************************************************************/
 /* Region utils                                                                                  */
 /*************************************************************************************************/
 
-function searchFilter(search, acronym, name) {
-    search = search.toLowerCase();
-
-    // Implement search.
-    let do_show = true;
-    if (search) {
-        if (search.includes(SEARCH_ACRONYM_STRING)) {
-            do_show = acronym.toLowerCase() == search.replace(SEARCH_ACRONYM_STRING, '');
-        }
-        else {
-            do_show = (
-                name.toLowerCase().includes(search) ||
-                acronym.toLowerCase().includes(search));
-        }
-    }
-    return do_show;
-}
-
-
-
 function updateSort(list, icon, state) {
-    let items = Array.from(list.children);
+    let items = Array.from(list.children).map((item) => ({
+        element: item,
+        idx: item.getAttribute("data-idx"),
+        value: item.getAttribute("data-value"),
+    }));
 
     if (state === 0) {
         icon.textContent = "↕️"; // Unsorted state
-        items.sort((a, b) => parseInt(a.getAttribute("data-idx")) - parseInt(b.getAttribute("data-idx")));
     } else if (state === 1) {
         icon.textContent = "⬇️"; // Descending state
-        items.sort((a, b) => parseInt(b.getAttribute("data-value")) - parseInt(a.getAttribute("data-value")));
     } else {
         icon.textContent = "⬆️"; // Ascending state
-        items.sort((a, b) => parseInt(a.getAttribute("data-value")) - parseInt(b.getAttribute("data-value")));
     }
 
-    items.forEach(item => list.appendChild(item)); // Reorder elements
+    items.sort((a, b) => compareRegionItems(state, a, b));
+    items.forEach(item => list.appendChild(item.element)); // Reorder elements
 }
 
 
 
 function cycleSort(list, icon) {
-    let state = parseInt(list.getAttribute("data-sort-state")) || 0;
-    state = (state + 1) % 3; // Cycle through 0 (unsorted), 1 (ascending), 2 (descending)
+    let state = nextSortState(list.getAttribute("data-sort-state"));
     list.setAttribute("data-sort-state", state);
     updateSort(list, icon, state);
 }
@@ -202,26 +181,26 @@ class Region {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
 
-        this.dispatcher.on('feature', (ev) => {
+        this.dispatcher.on(EVENTS.FEATURE, (ev) => {
             if (!this.state.isVolume && ev.fname) {
                 // If the selected feature has no data for the current mapping, change the mapping.
                 const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
                 if (mappings && !mappings.includes(this.state.mapping)) {
                     const mapping = mappings[0];
                     console.warn(`automatically switching to mapping ${mapping} as the selected features do not contain any data with the current mapping`);
-                    this.state.mapping = mapping;
+                    this.state.setMapping(mapping);
                     this.dispatcher.mapping(this, mapping);
                     return;
                 }
             }
             this.setRegions();
         });
-        this.dispatcher.on('mapping', (ev) => { this.setRegions(); });
-        this.dispatcher.on('stat', (ev) => { this.setRegions(); });
-        this.dispatcher.on('search', (ev) => { this.setRegions(); });
-        this.dispatcher.on('bucket', (ev) => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.MAPPING, (ev) => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.STAT, (ev) => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.SEARCH, (ev) => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.setRegions(); });
     }
 
     setupSortButton() {
