@@ -11,7 +11,7 @@
 
 /**
  * @typedef {Object} BucketResponse
- * @property {Object.<string, {short_desc: string}>} features
+ * @property {Object.<string, {short_desc: string, unit?: (string | null | undefined)}>} features
  * @property {BucketMetadata} metadata
  */
 
