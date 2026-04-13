@@ -231,7 +231,13 @@ Important notes:
 
 Before documenting a regeneration process for colleagues, prefer checking the current local paths and package environment used by your team.
 
-### 3. Regenerating website-facing data artifacts
+### 3. Generating a local bucket from a volumetric NPZ
+
+If you have a 4D NPZ volume (for example brain-wide ephys predictions) and want a local website-loadable bucket under `data/features/`, see:
+
+- `docs/ephys-volume-dataset.md`
+
+### 4. Regenerating website-facing data artifacts
 
 Use `generate.py` and helpers in `tools/` when updating derived website assets such as:
 
@@ -240,7 +246,7 @@ Use `generate.py` and helpers in `tools/` when updating derived website assets s
 - CSS derived from region colors
 - feature payload structures used by the frontend
 
-### 4. Data-editing expectations
+### 5. Data-editing expectations
 
 In normal maintenance, do **not** directly edit generated files under `data/` unless the task is specifically about fixing or replacing a generated artifact.
 

@@ -4,6 +4,7 @@ import { e2idx, clamp, rgb2hex, clearStyle } from "./utils.js";
 import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
 import { VOLUME_AXES, VOLUME_SIZE, VOLUME_XY_AXES, getVolumeSize, setVolumeSizeDynamic } from "./constants.js";
 import { computeAxisMapping } from "./core/volume-helpers.js";
+import { buildVolumeVisibilityRules, getVolumeSliderMax, getVolumeSliceIndex } from "./core/volume-ui-helpers.js";
 import { EVENTS } from "./core/events.js";
 
 
@@ -95,24 +96,16 @@ class Volume {
 
     showVolume() {
         clearStyle(this.style);
-        let s = 'fill-opacity: 0%; stroke: #ccc;';
-
-        this.style.insertRule(`#svg-coronal-container svg path { ${s} }\n`);
-        this.style.insertRule(`#svg-horizontal-container svg path { ${s} }\n`);
-        this.style.insertRule(`#svg-sagittal-container svg path { ${s} }\n`);
+        for (const rule of buildVolumeVisibilityRules(true)) {
+            this.style.insertRule(rule);
+        }
     }
 
     hideVolume() {
         clearStyle(this.style);
-        let s = 'fill-opacity: 100%; stroke: #0;';
-
-        this.style.insertRule(`#svg-coronal-container svg path { ${s} }\n`);
-        this.style.insertRule(`#svg-horizontal-container svg path { ${s} }\n`);
-        this.style.insertRule(`#svg-sagittal-container svg path { ${s} }\n`);
-
-        this.style.insertRule(`#canvas-coronal { visibility: hidden; }\n`);
-        this.style.insertRule(`#canvas-horizontal { visibility: hidden; }\n`);
-        this.style.insertRule(`#canvas-sagittal { visibility: hidden; }\n`);
+        for (const rule of buildVolumeVisibilityRules(false)) {
+            this.style.insertRule(rule);
+        }
     }
 
     /* Setup functions                                                                           */
@@ -261,7 +254,7 @@ class Volume {
             if (!slider) continue;
             const voxels = this.axisSizes[axis];
             const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
-            const max = Math.round(voxels * 2.5 * ds);
+            const max = getVolumeSliderMax(voxels, ds);
             slider.max = max;
             const value = parseInt(slider.value);
             if (value > max) {
@@ -344,7 +337,7 @@ class Volume {
         }
 
         const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
-        const sliceIdx = clamp(Math.floor(idx / (2.5 * ds)), 0, sliceCount - 1);
+        const sliceIdx = getVolumeSliceIndex(idx, ds, sliceCount);
 
         let i = 0;
         const axisCoords = [0, 0, 0];
@@ -381,12 +374,8 @@ class Volume {
         }
         const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
         const sliceCount = this.axisSizes[axis];
-        if (!isFinite(sliceCount) || sliceCount <= 0) {
-            return 0;
-        }
         const sliderValue = this.state[axis] || 0;
-        const sliceIdx = Math.floor(sliderValue / (2.5 * ds));
-        return clamp(sliceIdx, 0, sliceCount - 1);
+        return getVolumeSliceIndex(sliderValue, ds, sliceCount);
     }
 
     handleVolumeHover(axis, e) {
