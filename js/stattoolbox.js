@@ -1,6 +1,7 @@
 export { StatToolbox };
 
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { EVENTS } from "./core/events.js";
 import { displayNumber } from "./utils.js";
 
 // Format numeric stats so small/large magnitudes get scientific notation automatically.
@@ -82,16 +83,16 @@ class StatToolbox {
     setupDispatcher() {
         const rerender = () => this.update();
 
-        this.dispatcher.on('reset', () => this.clear());
-        this.dispatcher.on('bucket', rerender);
-        this.dispatcher.on('bucketRemove', rerender);
-        this.dispatcher.on('refresh', rerender);
-        this.dispatcher.on('feature', rerender);
-        this.dispatcher.on('stat', rerender);
-        this.dispatcher.on('mapping', rerender);
-        this.dispatcher.on('toggle', rerender);
-        this.dispatcher.on('clear', () => this.clear());
-        this.dispatcher.on('toggleStatToolbox', () => this.toggle());
+        this.dispatcher.on(EVENTS.RESET, () => this.clear());
+        this.dispatcher.on(EVENTS.BUCKET, rerender);
+        this.dispatcher.on(EVENTS.BUCKET_REMOVE, rerender);
+        this.dispatcher.on(EVENTS.REFRESH, rerender);
+        this.dispatcher.on(EVENTS.FEATURE, rerender);
+        this.dispatcher.on(EVENTS.STAT, rerender);
+        this.dispatcher.on(EVENTS.MAPPING, rerender);
+        this.dispatcher.on(EVENTS.TOGGLE, rerender);
+        this.dispatcher.on(EVENTS.CLEAR, () => this.clear());
+        this.dispatcher.on(EVENTS.TOGGLE_STAT_TOOLBOX, () => this.toggle());
     }
 
     toggle() {

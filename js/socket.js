@@ -1,5 +1,7 @@
 export { LocalSocket };
 
+import { EVENTS } from "./core/events.js";
+
 
 /*************************************************************************************************/
 /* LocalSocket                                                                                   */
@@ -52,15 +54,15 @@ class LocalSocket {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('connect', (ev) => {
+        this.dispatcher.on(EVENTS.CONNECT, (ev) => {
             this.createSocket();
         });
 
-        this.dispatcher.on('data', (ev) => {
+        this.dispatcher.on(EVENTS.DATA, (ev) => {
             this.send({ event: 'data', ev: ev });
         });
 
-        this.dispatcher.on('feature', (ev) => {
+        this.dispatcher.on(EVENTS.FEATURE, (ev) => {
             this.send({ event: 'feature', ev: ev });
         });
     }

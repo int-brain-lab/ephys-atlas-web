@@ -1,6 +1,7 @@
 export { Tooltip };
 
 import { e2idx, displayNumber, } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -27,9 +28,9 @@ class Tooltip {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.hide(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.hide(); });
 
-        this.dispatcher.on('highlight', async (ev) => {
+        this.dispatcher.on(EVENTS.HIGHLIGHT, async (ev) => {
             if (!ev.idx) {
                 this.lastRegionText = '';
                 this.lastVolumeText = '';
@@ -44,7 +45,7 @@ class Tooltip {
             }
         });
 
-        this.dispatcher.on('featureHover', async (ev) => {
+        this.dispatcher.on(EVENTS.FEATURE_HOVER, async (ev) => {
             if (!ev.desc) {
                 this.hide();
             }
@@ -54,7 +55,7 @@ class Tooltip {
             }
         });
 
-        this.dispatcher.on('volumeValues', async (ev) => {
+        this.dispatcher.on(EVENTS.VOLUME_VALUES, async (ev) => {
             if (!ev.values) {
                 this.lastVolumeText = '';
                 this.updateTooltipText();

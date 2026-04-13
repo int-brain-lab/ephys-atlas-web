@@ -1,6 +1,7 @@
 export { Coloring };
 
 import { normalizeValue, clamp, clearStyle } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -40,18 +41,18 @@ class Coloring {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); this.buildColors(); });
-        this.dispatcher.on('bucket', (ev) => { this.clear(); });
-        this.dispatcher.on('cmap', (ev) => { this.buildColors(); });
-        this.dispatcher.on('cmapRange', (ev) => { this.buildColors(); });
-        this.dispatcher.on('logScale', (ev) => { this.buildColors(); });
-        this.dispatcher.on('feature', (ev) => { if (!ev.isVolume) this.buildColors(); });
-        this.dispatcher.on('refresh', (ev) => { this.buildColors({ 'cache': 'reload' }); });
-        this.dispatcher.on('mapping', (ev) => { this.updateDefaultColors(); this.buildColors(); });
-        this.dispatcher.on('stat', (ev) => { this.buildColors(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); this.buildColors(); });
+        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.clear(); });
+        this.dispatcher.on(EVENTS.CMAP, (ev) => { this.buildColors(); });
+        this.dispatcher.on(EVENTS.CMAP_RANGE, (ev) => { this.buildColors(); });
+        this.dispatcher.on(EVENTS.LOG_SCALE, (ev) => { this.buildColors(); });
+        this.dispatcher.on(EVENTS.FEATURE, (ev) => { if (!ev.isVolume) this.buildColors(); });
+        this.dispatcher.on(EVENTS.REFRESH, (ev) => { this.buildColors({ 'cache': 'reload' }); });
+        this.dispatcher.on(EVENTS.MAPPING, (ev) => { this.updateDefaultColors(); this.buildColors(); });
+        this.dispatcher.on(EVENTS.STAT, (ev) => { this.buildColors(); });
 
         // NOTE: when Unity is loaded, send the colors.
-        // this.dispatcher.on('unityLoaded', (ev) => {
+        // this.dispatcher.on(EVENTS.UNITY_LOADED, (ev) => {
         //     this.dispatcher.data(this, this.getColors());
         // });
     }

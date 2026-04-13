@@ -1,5 +1,7 @@
 export { Unity };
 
+import { EVENTS } from "./core/events.js";
+
 
 
 /*************************************************************************************************/
@@ -59,12 +61,12 @@ class Unity {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('mapping', (e) => { this.setRegions(); });
-        this.dispatcher.on('feature', (e) => { this.setRegions(false); });
-        this.dispatcher.on('cmap', (e) => { this.setRegions(false); });
-        this.dispatcher.on('cmapRange', (e) => { this.setRegions(false); });
-        this.dispatcher.on('logScale', (e) => { this.setRegions(false); });
-        this.dispatcher.on('clear', (e) => { this.setVisibility(); });
+        this.dispatcher.on(EVENTS.MAPPING, (e) => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.FEATURE, (e) => { this.setRegions(false); });
+        this.dispatcher.on(EVENTS.CMAP, (e) => { this.setRegions(false); });
+        this.dispatcher.on(EVENTS.CMAP_RANGE, (e) => { this.setRegions(false); });
+        this.dispatcher.on(EVENTS.LOG_SCALE, (e) => { this.setRegions(false); });
+        this.dispatcher.on(EVENTS.CLEAR, (e) => { this.setVisibility(); });
     }
 
     setupSlider() {

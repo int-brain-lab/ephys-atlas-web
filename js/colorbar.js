@@ -1,6 +1,7 @@
 export { Colorbar };
 
 import { displayNumber } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 import { BIN_COUNT, computeHistogram, getFeatureHistogram } from "./core/histogram-helpers.js";
 import { drawHistogram } from "./core/histogram-dom.js";
 
@@ -151,34 +152,34 @@ class Colorbar {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
-        this.dispatcher.on('bucket', (ev) => { this.clear(); });
-        this.dispatcher.on('feature', (e) => {
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
+        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.clear(); });
+        this.dispatcher.on(EVENTS.FEATURE, (e) => {
             this.setColormap();
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on('cmap', (e) => {
+        this.dispatcher.on(EVENTS.CMAP, (e) => {
             this.setColormap();
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on('cmapRange', (e) => {
+        this.dispatcher.on(EVENTS.CMAP_RANGE, (e) => {
             this.setColormap();
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on('mapping', (e) => {
+        this.dispatcher.on(EVENTS.MAPPING, (e) => {
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on('stat', (e) => {
+        this.dispatcher.on(EVENTS.STAT, (e) => {
             this.setGlobalHistogram();
         });
-        this.dispatcher.on('toggle', (e) => {
+        this.dispatcher.on(EVENTS.TOGGLE, (e) => {
             this.setLocalHistogram();
         });
-        this.dispatcher.on('clear', (e) => {
+        this.dispatcher.on(EVENTS.CLEAR, (e) => {
             this.setLocalHistogram();
         });
     }

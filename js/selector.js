@@ -1,6 +1,7 @@
 export { Selector };
 
 import { e2idx, clearStyle } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -40,19 +41,19 @@ class Selector {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.init(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
 
-        this.dispatcher.on('toggle', (e) => {
+        this.dispatcher.on(EVENTS.TOGGLE, (e) => {
             this.toggle(e.idx);
             this.makeCSS();
         });
 
-        this.dispatcher.on('clear', (e) => { this.clear(); });
+        this.dispatcher.on(EVENTS.CLEAR, (e) => { this.clear(); });
 
-        this.dispatcher.on('feature', (e) => { this.makeCSS(); });
+        this.dispatcher.on(EVENTS.FEATURE, (e) => { this.makeCSS(); });
 
         // NOTE: clear the selection when the mapping changes.
-        this.dispatcher.on('mapping', (e) => { this.clear(); });
+        this.dispatcher.on(EVENTS.MAPPING, (e) => { this.clear(); });
     }
 
     /* Public functions                                                                          */

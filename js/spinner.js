@@ -1,5 +1,7 @@
 export { Spinner };
 
+import { EVENTS } from "./core/events.js";
+
 
 /*************************************************************************************************/
 /* Spinner                                                                                       */
@@ -24,6 +26,6 @@ class Spinner {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('spinning', (ev) => { this.setSpinning(ev.isSpinning); });
+        this.dispatcher.on(EVENTS.SPINNING, (ev) => { this.setSpinning(ev.isSpinning); });
     }
 };

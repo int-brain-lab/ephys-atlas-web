@@ -1,6 +1,7 @@
 export { Highlighter };
 
 import { e2idx, clearStyle } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -50,11 +51,11 @@ class Highlighter {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.clear(); });
-        this.dispatcher.on('highlight', (ev) => { this.highlight(ev.idx); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.clear(); });
+        this.dispatcher.on(EVENTS.HIGHLIGHT, (ev) => { this.highlight(ev.idx); });
 
         // NOTE: clear the selection when the mapping changes.
-        this.dispatcher.on('mapping', (e) => { this.clear(); });
+        this.dispatcher.on(EVENTS.MAPPING, (e) => { this.clear(); });
     }
 
     /* Main functions                                                                            */

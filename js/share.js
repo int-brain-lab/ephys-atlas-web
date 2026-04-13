@@ -1,5 +1,7 @@
 export { Share };
 
+import { EVENTS } from "./core/events.js";
+
 
 
 /*************************************************************************************************/
@@ -39,7 +41,7 @@ class Share {
             });
         }
 
-        this.dispatcher.on('share', (ev) => {
+        this.dispatcher.on(EVENTS.SHARE, (ev) => {
             let url = this.state.updateURL();
 
             // Copy the URL to the clipboard.

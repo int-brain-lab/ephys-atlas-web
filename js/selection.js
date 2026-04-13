@@ -1,6 +1,7 @@
 export { Selection };
 
 import { e2idx } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 
 
 
@@ -39,7 +40,7 @@ class Selection {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.clear(); this.init(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.clear(); this.init(); });
 
         this.el.addEventListener('click', (e) => {
             if (e.target.tagName == 'LI') {
@@ -47,7 +48,7 @@ class Selection {
             }
         });
 
-        this.dispatcher.on('toggle', (e) => {
+        this.dispatcher.on(EVENTS.TOGGLE, (e) => {
             let idx = e.idx;
             let item = this.getFromIdx(idx);
             if (!item) return;
@@ -55,10 +56,10 @@ class Selection {
             this.toggle(item);
         });
 
-        this.dispatcher.on('clear', (e) => { this.clear(); });
+        this.dispatcher.on(EVENTS.CLEAR, (e) => { this.clear(); });
 
         // NOTE: clear the selection when the mapping changes.
-        this.dispatcher.on('mapping', (e) => { this.clear(); });
+        this.dispatcher.on(EVENTS.MAPPING, (e) => { this.clear(); });
     }
 
     /* Public functions                                                                          */

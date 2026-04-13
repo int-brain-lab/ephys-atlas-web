@@ -1,5 +1,7 @@
 export { Search };
 
+import { EVENTS } from "./core/events.js";
+
 
 
 /*************************************************************************************************/
@@ -31,7 +33,7 @@ class Search {
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.clear(); });
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.clear(); });
 
         this.el.addEventListener("input", (e) => {
             this.state.search = e.target.value;
@@ -39,7 +41,7 @@ class Search {
         });
 
         // NOTE: clear the selection when the mapping changes.
-        this.dispatcher.on('mapping', (e) => { this.clear(); });
+        this.dispatcher.on(EVENTS.MAPPING, (e) => { this.clear(); });
     }
 
     /* Public functions                                                                          */

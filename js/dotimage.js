@@ -1,6 +1,7 @@
 export { DotImage };
 
 import { clamp } from "./utils.js";
+import { EVENTS } from "./core/events.js";
 import { getVolumeSize, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
 
 
@@ -154,7 +155,7 @@ class DotImage {
     /*********************************************************************************************/
 
     setupDotHover() {
-        this.dispatcher.on('feature', async (ev) => {
+        this.dispatcher.on(EVENTS.FEATURE, async (ev) => {
             if (ev.isVolume) {
                 this.displayDots();
             }
@@ -202,8 +203,8 @@ class DotImage {
     }
 
     setupDispatcher() {
-        this.dispatcher.on('reset', (ev) => { this.hide(); });
-        this.dispatcher.on('slice', (ev) => {
+        this.dispatcher.on(EVENTS.RESET, (ev) => { this.hide(); });
+        this.dispatcher.on(EVENTS.SLICE, (ev) => {
             if (this.state.isVolume) {
                 this.displayDots();
             }
