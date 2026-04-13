@@ -3,6 +3,7 @@ export { Panel };
 import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
+import { toHistogramValueRange, fromHistogramValueRange } from "./core/panel-helpers.js";
 
 
 
@@ -242,24 +243,12 @@ class Panel {
 
     _toMinMaxValues(cmin, cmax) {
         let hist = this.state.isVolume ? null : this.model.getHistogram(this.state.bucket, this.state.fname);
-        if (!hist) return [0, 0];
-        let vmin = hist['vmin'];
-        let vmax = hist['vmax'];
-        let vdiff = vmax - vmin;
-        let vminMod = vmin + vdiff * cmin / 100.0;
-        let vmaxMod = vmin + vdiff * cmax / 100.0;
-        return [vminMod, vmaxMod];
+        return toHistogramValueRange(cmin, cmax, hist);
     }
 
     _fromMinMaxValues(vminMod, vmaxMod) {
         let hist = this.state.isVolume ? null : this.model.getHistogram(this.state.bucket, this.state.fname);
-        if (!hist) return [0, 0];
-        let vmin = hist['vmin'];
-        let vmax = hist['vmax'];
-        let vdiff = vmax - vmin;
-        let cmin = (vminMod - vmin) * 100.0 / vdiff;
-        let cmax = (vmaxMod - vmin) * 100.0 / vdiff;
-        return [cmin, cmax];
+        return fromHistogramValueRange(vminMod, vmaxMod, hist);
     }
 
     setupColormapRange() {
