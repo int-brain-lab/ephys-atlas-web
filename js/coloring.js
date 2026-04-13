@@ -1,16 +1,9 @@
 export { Coloring };
 
-import { normalizeValue, clamp, clearStyle } from "./utils.js";
+import { clearStyle } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
-
-
-
-/*************************************************************************************************/
-/* Constants                                                                                     */
-/*************************************************************************************************/
-
-const LOG_10 = Math.log(10.0);
+import { buildRegionColorRules, getDefaultRegionColorsHref } from "./core/coloring-helpers.js";
 
 
 
@@ -70,7 +63,7 @@ class Coloring {
     }
 
     updateDefaultColors() {
-        this.styleDefault.href = `data/css/default_region_colors_${this.state.mapping}.css`;
+        this.styleDefault.href = getDefaultRegionColorsHref(this.state.mapping);
     }
 
     buildColors(refresh = false) {
@@ -94,13 +87,8 @@ class Coloring {
         // Clear the styles.
         this.clear();
 
-        // Go through all regions.
-        for (let regionIdx in regionColors) {
-
-            let hex = regionColors[regionIdx];
-
-            // Insert the SVG CSS style with the color.
-            this.style.insertRule(`svg path.${mapping}_region_${regionIdx} { fill: ${hex}; }\n`);
+        for (const rule of buildRegionColorRules(mapping, regionColors)) {
+            this.style.insertRule(rule);
         }
 
         // Register the data to WebSocket.
