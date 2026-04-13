@@ -1,6 +1,7 @@
 export { Share };
 
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 
 
@@ -14,7 +15,7 @@ class Share {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.ishare = document.getElementById('share-button');
+        this.ishare = getRequiredElement('share-button');
 
         this.setupDispatcher();
     }

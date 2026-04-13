@@ -2,6 +2,7 @@ export { Coloring };
 
 import { normalizeValue, clamp, clearStyle } from "./utils.js";
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
 
 
 
@@ -23,8 +24,8 @@ class Coloring {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.style = document.getElementById('style-regions').sheet;
-        this.styleDefault = document.getElementById('style-default-regions');
+        this.style = getRequiredSheet('style-regions');
+        this.styleDefault = getRequiredElement('style-default-regions');
 
         this.setupDispatcher();
     }
