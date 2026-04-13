@@ -1,6 +1,7 @@
 export { Search };
 
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 
 
@@ -13,7 +14,7 @@ class Search {
         this.state = state;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById("search-input");
+        this.el = getRequiredElement("search-input");
 
         this.setupDispatcher();
     }

@@ -1,5 +1,7 @@
 export { Maximizer };
 
+import { getRequiredElement } from "./core/dom.js";
+
 
 
 /*************************************************************************************************/
@@ -17,13 +19,13 @@ class Maximizer {
         this.state = state;
         this.dispatcher = dispatcher;
 
-        this.maxCoronal = document.getElementById('maximizer-coronal');
-        this.maxSagittal = document.getElementById('maximizer-sagittal');
-        this.maxHorizontal = document.getElementById('maximizer-horizontal');
-        this.maxSwanson = document.getElementById('maximizer-swanson');
-        this.maxUnity = document.getElementById('maximizer-unity');
-        this.maxTop = document.getElementById('maximizer-top');
-        this.maxStat = document.getElementById('maximizer-stat');
+        this.maxCoronal = getRequiredElement('maximizer-coronal');
+        this.maxSagittal = getRequiredElement('maximizer-sagittal');
+        this.maxHorizontal = getRequiredElement('maximizer-horizontal');
+        this.maxSwanson = getRequiredElement('maximizer-swanson');
+        this.maxUnity = getRequiredElement('maximizer-unity');
+        this.maxTop = getRequiredElement('maximizer-top');
+        this.maxStat = getRequiredElement('maximizer-stat');
         this.maximizers = [
             this.maxCoronal,
             this.maxSagittal,

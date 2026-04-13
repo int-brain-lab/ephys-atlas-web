@@ -1,6 +1,7 @@
 export { StatToolbox };
 
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 import { displayNumber } from "./utils.js";
 
@@ -65,11 +66,11 @@ class StatToolbox {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.container = document.getElementById('stat-toolbox');
-        this.wrapper = document.getElementById('stat-toolbox-wrapper');
+        this.container = getRequiredElement('stat-toolbox');
+        this.wrapper = getRequiredElement('stat-toolbox-wrapper');
         this.svg = d3.select('#stat-violin');
-        this.table = document.getElementById('stat-table');
-        this.closeButton = document.getElementById('stat-toolbox-close');
+        this.table = getRequiredElement('stat-table');
+        this.closeButton = getRequiredElement('stat-toolbox-close');
 
         this.setupDispatcher();
 

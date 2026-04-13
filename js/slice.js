@@ -1,6 +1,7 @@
 export { Slice };
 
 import { throttle, clamp, getOS, e2idx } from "./utils.js";
+import { getRequiredElement } from "./core/dom.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 import { EVENTS } from "./core/events.js";
 
@@ -40,19 +41,19 @@ class Slice {
             this._setSlice, SLICE_THROTTLE, { leading: true, trailing: true });
 
         // Slice lines.
-        this.tv = document.getElementById('top-vline');
-        this.th = document.getElementById('top-hline');
-        this.cv = document.getElementById('coronal-vline');
-        this.ch = document.getElementById('coronal-hline');
-        this.hv = document.getElementById('horizontal-vline');
-        this.hh = document.getElementById('horizontal-hline');
-        this.sv = document.getElementById('sagittal-vline');
-        this.sh = document.getElementById('sagittal-hline');
+        this.tv = getRequiredElement('top-vline');
+        this.th = getRequiredElement('top-hline');
+        this.cv = getRequiredElement('coronal-vline');
+        this.ch = getRequiredElement('coronal-hline');
+        this.hv = getRequiredElement('horizontal-vline');
+        this.hh = getRequiredElement('horizontal-hline');
+        this.sv = getRequiredElement('sagittal-vline');
+        this.sh = getRequiredElement('sagittal-hline');
 
         // Coordinate labels.
-        this.ml = document.getElementById('coord-ml');
-        this.ap = document.getElementById('coord-ap');
-        this.dv = document.getElementById('coord-dv');
+        this.ml = getRequiredElement('coord-ml');
+        this.ap = getRequiredElement('coord-ap');
+        this.dv = getRequiredElement('coord-dv');
 
         this.setupDispatcher();
         this.setupSlices();
@@ -100,8 +101,8 @@ class Slice {
     setupSlices() {
         // coronal, sagittal, horizontal
         for (let axis of SLICE_AXES) {
-            this[`svg_${axis}`] = document.getElementById(`figure-${axis}`);
-            this[`slider_${axis}`] = document.getElementById(`slider-${axis}`);
+            this[`svg_${axis}`] = getRequiredElement(`figure-${axis}`);
+            this[`slider_${axis}`] = getRequiredElement(`slider-${axis}`);
 
             this.setupSlice(axis);
             this.setupHighlighting(axis);
@@ -111,7 +112,7 @@ class Slice {
 
         // top swanson
         for (let axis of SLICE_STATIC_AXES) {
-            this[`svg_${axis}`] = document.getElementById(`figure-${axis}`);
+            this[`svg_${axis}`] = getRequiredElement(`figure-${axis}`);
 
             this.setupHighlighting(axis);
             this.setupSelection(axis);
@@ -229,7 +230,7 @@ class Slice {
     _setSlice(axis, idx) {
         let svg = this.model.getSlice(axis, idx);
         if (svg) {
-            document.getElementById(`figure-${axis}`).innerHTML = svg;
+            getRequiredElement(`figure-${axis}`).innerHTML = svg;
 
             // Update the global state.
             this.state.setSliceIndex(axis, idx);

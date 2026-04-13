@@ -1,6 +1,7 @@
 export { DotImage };
 
 import { clamp } from "./utils.js";
+import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 import { getVolumeSize, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
 
@@ -122,14 +123,14 @@ class DotImage {
 
         // Bitmaps.
         this.bitmaps = {
-            'coronal': document.getElementById(`svg-coronal-container-inner`),
-            'horizontal': document.getElementById(`svg-horizontal-container-inner`),
-            'sagittal': document.getElementById(`svg-sagittal-container-inner`),
+            'coronal': getRequiredElement(`svg-coronal-container-inner`),
+            'horizontal': getRequiredElement(`svg-horizontal-container-inner`),
+            'sagittal': getRequiredElement(`svg-sagittal-container-inner`),
         };
 
-        this.el = document.getElementById("dot-image-container");
-        this.img = document.getElementById("dot-image");
-        this.closeButton = document.getElementById("close-button");
+        this.el = getRequiredElement("dot-image-container");
+        this.img = getRequiredElement("dot-image");
+        this.closeButton = getRequiredElement("close-button");
 
         this.setupDotHover();
         this.setupCloseButton();

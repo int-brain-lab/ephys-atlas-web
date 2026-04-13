@@ -1,6 +1,7 @@
 export { Selector };
 
 import { e2idx, clearStyle } from "./utils.js";
+import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 
 
@@ -15,8 +16,8 @@ class Selector {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.clearEl = document.getElementById('clear-selection');
-        this.style = document.getElementById('style-selector').sheet;
+        this.clearEl = getRequiredElement('clear-selection');
+        this.style = getRequiredSheet('style-selector');
 
         this.setupClear();
         this.setupDispatcher();

@@ -1,6 +1,7 @@
 export { Unity };
 
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 
 
@@ -35,7 +36,7 @@ class Unity {
 
     init() {
         let that = this;
-        createUnityInstance(document.getElementById("unity-canvas"), {
+        createUnityInstance(getRequiredElement("unity-canvas"), {
             dataUrl: "Build/webgl.data.gz",
             frameworkUrl: "Build/webgl.framework.js.gz",
             codeUrl: "Build/webgl.wasm.gz",
@@ -70,7 +71,7 @@ class Unity {
     }
 
     setupSlider() {
-        this.slider = document.getElementById('slider-unity');
+        this.slider = getRequiredElement('slider-unity');
         this.slider.value = this.state.exploded;
 
         this.slider.oninput = (e) => {

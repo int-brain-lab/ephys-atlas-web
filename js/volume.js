@@ -1,6 +1,7 @@
 export { Volume };
 
 import { e2idx, clamp, rgb2hex, clearStyle } from "./utils.js";
+import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
 import { VOLUME_AXES, VOLUME_SIZE, VOLUME_XY_AXES, getVolumeSize, setVolumeSizeDynamic } from "./constants.js";
 import { computeAxisMapping } from "./core/volume-helpers.js";
 import { EVENTS } from "./core/events.js";
@@ -54,21 +55,21 @@ class Volume {
         this.downsample = { coronal: 1, horizontal: 1, sagittal: 1 };
         this.volumeContainers = {};
         for (const axis of VOLUME_AXES) {
-            this.volumeContainers[axis] = document.getElementById(`svg-${axis}-container-inner`);
+            this.volumeContainers[axis] = getRequiredElement(`svg-${axis}-container-inner`);
         }
         this.volumeArrays = {};
         this.activeVolumeName = null;
 
-        this.style = document.getElementById('style-volume').sheet;
+        this.style = getRequiredSheet('style-volume');
 
-        this.canvas_coronal = document.getElementById("canvas-coronal");
-        this.canvas_horizontal = document.getElementById("canvas-horizontal");
-        this.canvas_sagittal = document.getElementById("canvas-sagittal");
+        this.canvas_coronal = getRequiredElement("canvas-coronal");
+        this.canvas_horizontal = getRequiredElement("canvas-horizontal");
+        this.canvas_sagittal = getRequiredElement("canvas-sagittal");
 
         this.baseViewBox = {};
         this.baseViewBoxSize = {};
         for (const axis of VOLUME_AXES) {
-            const svg = document.getElementById(`svg-${axis}`);
+            const svg = getRequiredElement(`svg-${axis}`);
             if (svg) {
                 const vb = svg.getAttribute("viewBox");
                 this.baseViewBox[axis] = vb;
@@ -225,8 +226,8 @@ class Volume {
         }
         for (const axis of VOLUME_AXES) {
             const canvas = this[`canvas_${axis}`];
-            const svg = document.getElementById(`svg-${axis}`);
-            const container = document.getElementById(`svg-${axis}-container-inner`);
+            const svg = getRequiredElement(`svg-${axis}`);
+            const container = getRequiredElement(`svg-${axis}-container-inner`);
             if (!canvas) continue;
             const widthAxis = VOLUME_XY_AXES[axis][0];
             const heightAxis = VOLUME_XY_AXES[axis][1];
@@ -256,7 +257,7 @@ class Volume {
             return;
         }
         for (const axis of VOLUME_AXES) {
-            const slider = document.getElementById(`slider-${axis}`);
+            const slider = getRequiredElement(`slider-${axis}`);
             if (!slider) continue;
             const voxels = this.axisSizes[axis];
             const ds = this.downsample ? (this.downsample[axis] || 1) : 1;

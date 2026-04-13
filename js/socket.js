@@ -1,6 +1,7 @@
 export { LocalSocket };
 
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 
 /*************************************************************************************************/
@@ -12,7 +13,7 @@ class LocalSocket {
         this.state = state;
         this.model = model;
         this.dispatcher = dispatcher;
-        this.el = document.getElementById('connect-status');
+        this.el = getRequiredElement('connect-status');
 
         this.createSocket();
         this.setupDispatcher();

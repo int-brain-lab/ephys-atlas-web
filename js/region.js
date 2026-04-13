@@ -1,6 +1,7 @@
 export { Region };
 
 import { normalizeValue, throttle, e2idx } from "./utils.js";
+import { getRequiredElement } from "./core/dom.js";
 import { compareRegionItems, nextSortState, searchFilter } from "./core/region-helpers.js";
 import { EVENTS } from "./core/events.js";
 
@@ -159,9 +160,9 @@ class Region {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById('bar-plot-list');
-        this.sortButton = document.getElementById('bar-plot-sort');
-        this.regionTitle = document.getElementById('bar-plot-title');
+        this.el = getRequiredElement('bar-plot-list');
+        this.sortButton = getRequiredElement('bar-plot-sort');
+        this.regionTitle = getRequiredElement('bar-plot-title');
 
         this.regionList = new RegionList(this.state, this.model, this.dispatcher, this.el);
 

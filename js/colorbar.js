@@ -1,6 +1,7 @@
 export { Colorbar };
 
 import { displayNumber } from "./utils.js";
+import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 import { BIN_COUNT, computeHistogram, getFeatureHistogram } from "./core/histogram-helpers.js";
 import { drawHistogram } from "./core/histogram-dom.js";
@@ -134,7 +135,7 @@ class Colorbar {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.miniHistogram = new Histogram(document.getElementById("mini-histogram"), state, model);
+        this.miniHistogram = new Histogram(getRequiredElement("mini-histogram"), state, model);
 
         this.setupDispatcher();
     }

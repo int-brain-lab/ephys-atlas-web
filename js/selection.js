@@ -1,6 +1,7 @@
 export { Selection };
 
 import { e2idx } from "./utils.js";
+import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 
 
@@ -15,8 +16,8 @@ class Selection {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById('bar-selected-list');
-        this.barPlot = document.getElementById('bar-plot-list');
+        this.el = getRequiredElement('bar-selected-list');
+        this.barPlot = getRequiredElement('bar-plot-list');
 
         this.setupDispatcher();
     }

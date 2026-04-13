@@ -1,6 +1,7 @@
 export { Highlighter };
 
 import { e2idx, clearStyle } from "./utils.js";
+import { getRequiredSheet } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 
 
@@ -17,7 +18,7 @@ class Highlighter {
         this.state = state;
         this.dispatcher = dispatcher;
 
-        this.style = document.getElementById('style-highlighter').sheet;
+        this.style = getRequiredSheet('style-highlighter');
 
         this.setupDispatcher();
     }
