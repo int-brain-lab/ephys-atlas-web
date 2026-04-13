@@ -2,6 +2,7 @@ export { Tooltip };
 
 import { e2idx, displayNumber, } from "./utils.js";
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 
 
@@ -16,7 +17,7 @@ class Tooltip {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.info = document.getElementById('region-info');
+        this.info = getRequiredElement('region-info');
         this.lastRegionText = '';
         this.lastVolumeText = '';
         this.lastPointerEvent = null;

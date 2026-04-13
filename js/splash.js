@@ -1,5 +1,7 @@
 export { Splash };
 
+import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
+
 
 
 /*************************************************************************************************/
@@ -10,9 +12,9 @@ class Splash {
     constructor(description) {
         this.progress = 0;
         this.total = 0;
-        this.splash = document.getElementById('splash');
-        this.loading = document.querySelector('#splash-loading span.progress');
-        this.elDescription = document.getElementById('splash-description');
+        this.splash = getRequiredElement('splash');
+        this.loading = getRequiredSelector('#splash-loading span.progress');
+        this.elDescription = getRequiredElement('splash-description');
         this.description = description;
     }
 

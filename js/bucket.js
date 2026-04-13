@@ -3,6 +3,7 @@ export { Bucket };
 import { setOptions, addOption, removeOption, removeFromArray } from "./utils.js";
 import { DEFAULT_BUCKET, DEFAULT_BUCKETS } from "./state.js";
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 
 /*************************************************************************************************/
@@ -16,11 +17,11 @@ class Bucket {
         this.splash = model.splash;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById('bucket-dropdown');
-        this.buttonAdd = document.getElementById('button-new-bucket');
-        this.buttonRefresh = document.getElementById('button-refresh-bucket');
-        this.buttonRemove = document.getElementById('button-remove-bucket');
-        this.buttonUpload = document.getElementById('button-upload');
+        this.el = getRequiredElement('bucket-dropdown');
+        this.buttonAdd = getRequiredElement('button-new-bucket');
+        this.buttonRefresh = getRequiredElement('button-refresh-bucket');
+        this.buttonRemove = getRequiredElement('button-remove-bucket');
+        this.buttonUpload = getRequiredElement('button-upload');
 
         this.setupBucket();
         this.setupDispatcher();

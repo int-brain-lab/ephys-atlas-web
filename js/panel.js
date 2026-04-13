@@ -2,6 +2,7 @@ export { Panel };
 
 import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
 
 
 
@@ -79,22 +80,22 @@ class Panel {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.el = document.querySelector('#control-panel details');
-        this.imapping = document.getElementById('mapping-dropdown');
-        this.ifname = document.getElementById('feature-dropdown');
-        this.ibucket = document.getElementById('bucket-dropdown');
-        this.icmap = document.getElementById('colormap-dropdown');
-        this.istat = document.getElementById('stat-dropdown');
-        this.icmapmin = document.getElementById('colormap-min');
-        this.icmapmax = document.getElementById('colormap-max');
-        this.icmapminInput = document.getElementById('colormap-min-input');
-        this.icmapmaxInput = document.getElementById('colormap-max-input');
-        this.iclog = document.getElementById('log-scale');
-        this.ibreset = document.getElementById('reset-view-button');
-        this.ibclear = document.getElementById('clear-cache-button');
-        this.ibconnect = document.getElementById('connect-button');
-        this.ibexport = document.getElementById('export-button');
-        this.ishare = document.getElementById('share-button');
+        this.el = getRequiredSelector('#control-panel details');
+        this.imapping = getRequiredElement('mapping-dropdown');
+        this.ifname = getRequiredElement('feature-dropdown');
+        this.ibucket = getRequiredElement('bucket-dropdown');
+        this.icmap = getRequiredElement('colormap-dropdown');
+        this.istat = getRequiredElement('stat-dropdown');
+        this.icmapmin = getRequiredElement('colormap-min');
+        this.icmapmax = getRequiredElement('colormap-max');
+        this.icmapminInput = getRequiredElement('colormap-min-input');
+        this.icmapmaxInput = getRequiredElement('colormap-max-input');
+        this.iclog = getRequiredElement('log-scale');
+        this.ibreset = getRequiredElement('reset-view-button');
+        this.ibclear = getRequiredElement('clear-cache-button');
+        this.ibconnect = getRequiredElement('connect-button');
+        this.ibexport = getRequiredElement('export-button');
+        this.ishare = getRequiredElement('share-button');
 
         // Setup the event callbacks that change the global state and update the components.
         this.setupDispatcher();

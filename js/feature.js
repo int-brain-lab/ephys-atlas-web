@@ -3,6 +3,7 @@ export { Feature };
 import { DEFAULT_BUCKET } from "./state.js";
 import { URLS } from "./model.js";
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 import { downloadBinaryFile, removeFromArray } from "./utils.js";
 
 
@@ -95,7 +96,7 @@ class Feature {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.el = document.getElementById('feature-dropdown');
+        this.el = getRequiredElement('feature-dropdown');
 
         this.dropdown = new FeatureDropdown(this.el);
 

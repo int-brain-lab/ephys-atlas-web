@@ -1,6 +1,7 @@
 export { Dispatcher };
 
 import { EVENTS } from "./core/events.js";
+import { getRequiredElement } from "./core/dom.js";
 
 // import { downloadJSON } from "./utils.js";
 
@@ -12,7 +13,7 @@ import { EVENTS } from "./core/events.js";
 
 class Dispatcher {
     constructor() {
-        this.el = document.getElementById('dispatcher');
+        this.el = getRequiredElement('dispatcher');
     }
 
     emit(name, source, data) {
