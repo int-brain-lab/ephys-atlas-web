@@ -47,6 +47,24 @@ BWM_EXTRA_FNAMES = (
 )
 
 
+EPHYS_FEATURE_UNITS = {
+    'rms_lf': 'V',
+    'rms_ap': 'V',
+    'psd_theta': 'dB',
+    'psd_delta': 'dB',
+    'psd_alpha': 'dB',
+    'psd_beta': 'dB',
+    'psd_gamma': 'dB',
+    'spike_rate': 'Hz',
+}
+
+
+def get_feature_unit(bucket_alias, fname):
+    if bucket_alias == 'ephys':
+        return EPHYS_FEATURE_UNITS.get(fname, None)
+    return None
+
+
 # -------------------------------------------------------------------------------------------------
 # Utils processing
 # -------------------------------------------------------------------------------------------------
@@ -379,7 +397,8 @@ def create_ephys_features(patch=False, dry_run=False):
         print(f'/api/buckets/{alias}/{fname}')
         json_data = {'mappings': {mapping: d for _, mapping, d in mappings}}
         if not dry_run:
-            print(create_features(bucket_uuid, fname, json_data, patch=patch))
+            unit = get_feature_unit(alias, fname)
+            print(create_features(bucket_uuid, fname, json_data, unit=unit, patch=patch))
 
 
 def create_bwm_features(patch=False, dry_run=False):
@@ -412,8 +431,9 @@ def create_bwm_features(patch=False, dry_run=False):
             if not dry_run:
                 feature_data = {'mappings': {
                     mapping: d for _, mapping, d in mappings}}
+                unit = get_feature_unit(alias, fname)
                 print(create_features(bucket_uuid,
-                      fname, feature_data, patch=patch))
+                      fname, feature_data, unit=unit, patch=patch))
 
     # Generate the BWM tree.
     tree = {

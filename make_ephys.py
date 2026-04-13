@@ -62,6 +62,22 @@ XLIMS = {
 }
 
 
+EPHYS_FEATURE_UNITS = {
+    'rms_lf': 'V',
+    'rms_ap': 'V',
+    'psd_theta': 'dB',
+    'psd_delta': 'dB',
+    'psd_alpha': 'dB',
+    'psd_beta': 'dB',
+    'psd_gamma': 'dB',
+    'spike_rate': 'Hz',
+}
+
+
+def get_feature_unit(fname):
+    return EPHYS_FEATURE_UNITS.get(fname, None)
+
+
 # ---------------------------------------------------------------------------------------------
 # Utils
 # ---------------------------------------------------------------------------------------------
@@ -222,6 +238,7 @@ def make_ephys_data(local_data_path, output_dir=None, short_desc=None, key='mean
         payload = api.make_features_payload(
             fname, data, short_desc=short_desc, key=key,
             extra_values=extra_values)
+        payload['unit'] = get_feature_unit(fname)
 
         # Compute the histogram of all values (before region aggregation).
         api.add_payload_histogram(payload, df_voltage[fname], vmin, vmax)

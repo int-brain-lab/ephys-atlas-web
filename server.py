@@ -300,7 +300,10 @@ def get_feature_metadata(uuid, fname):
         print(features_path)
         metadata = json.load(f)
 
-    return {'short_desc': metadata.get('short_desc', '') or ''}
+    return {
+        'short_desc': metadata.get('short_desc', '') or '',
+        'unit': metadata.get('unit', None),
+    }
 
 
 # def return_volume(uuid, fname):
@@ -376,7 +379,7 @@ def delete_bucket(uuid):
         return f"Unable to delete bucket {uuid}", 500
 
 
-def create_features(uuid, fname, feature_data, short_desc=None, patch=False):
+def create_features(uuid, fname, feature_data, short_desc=None, unit=None, patch=False):
     assert uuid
     assert fname
     assert feature_data
@@ -395,10 +398,22 @@ def create_features(uuid, fname, feature_data, short_desc=None, patch=False):
     if patch and not features_path.exists():
         return f'Feature {fname} does not exist in bucket {uuid}, you need to create it first.', 404
 
+    existing = {}
+    if patch and features_path.exists():
+        with open(features_path, 'r') as f:
+            existing = json.load(f)
+
+    # Preserve existing metadata on patch if it is omitted.
+    if short_desc is None:
+        short_desc = existing.get('short_desc', None)
+    if unit is None:
+        unit = existing.get('unit', None)
+
     # Save the features.
     data = {
         'feature_data': feature_data,
         'short_desc': short_desc,
+        'unit': unit,
     }
     save_features(features_path, data)
 
@@ -525,9 +540,10 @@ def api_post_features(uuid):
         return 'Bucket does not exist.', 404
     fname = request.json['fname']
     short_desc = request.json.get('short_desc', None)
+    unit = request.json.get('unit', None)
     feature_data = request.json['feature_data']
     assert 'mappings' in feature_data or 'volume' in feature_data
-    return create_features(uuid, fname, feature_data, short_desc=short_desc)
+    return create_features(uuid, fname, feature_data, short_desc=short_desc, unit=unit)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -582,10 +598,11 @@ def api_patch_features(uuid, fname):
     elif auth is None:
         return 'Bucket does not exist.', 404
     short_desc = request.json.get('short_desc', None)
+    unit = request.json.get('unit', None)
     feature_data = request.json['feature_data']
     assert 'mappings' in feature_data or 'volume' in feature_data
     return create_features(
-        uuid, fname, feature_data, short_desc=short_desc, patch=True)
+        uuid, fname, feature_data, short_desc=short_desc, unit=unit, patch=True)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -699,7 +716,8 @@ class TestApp(unittest.TestCase):
             },
         }
         short_desc = 'my short description'
-        payload = {'fname': fname, 'feature_data': data, 'short_desc': short_desc}
+        unit = 'Hz'
+        payload = {'fname': fname, 'feature_data': data, 'short_desc': short_desc, 'unit': unit}
         # NOTE: fail if no authorization header.
         response = self.client.post(f'/api/buckets/{uuid}', json=payload)
         self.assertEqual(response.status_code, 401)
@@ -710,7 +728,7 @@ class TestApp(unittest.TestCase):
         response = self.client.get(f'/api/buckets/{uuid}')
         self.ok(response)
         self.assertEqual(response.json['features'],
-                         {'fet1': {'short_desc': 'my short description'}})
+                         {'fet1': {'short_desc': 'my short description', 'unit': 'Hz'}})
 
         # Retrieve features.
         response = self.client.get(f'/api/buckets/{uuid}/{fname}')
@@ -719,6 +737,7 @@ class TestApp(unittest.TestCase):
                          ['beryl']['data']['0']['mean'], 42)
         self.assertEqual(response.json['feature_data']['mappings']
                          ['beryl']['data']['1']['mean'], 420)
+        self.assertEqual(response.json['unit'], 'Hz')
 
         # Patch features.
         data = {'mappings': {'beryl': {'data': {0: {'mean': 84}}, 'statistics': {'mean': 48}}}}
