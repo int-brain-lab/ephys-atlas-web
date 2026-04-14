@@ -117,7 +117,7 @@ So `State` is the session state of the current atlas view.
 
 This is the data/model layer.
 
-It is responsible for loading, caching, and exposing:
+It is responsible for orchestrating and exposing:
 
 - colormaps
 - regions metadata
@@ -129,12 +129,20 @@ It is responsible for loading, caching, and exposing:
 Important features of `Model`:
 
 - wraps remote/static loads behind a stable API
-- caches downloads in memory
-- persists remote bucket metadata and non-volume feature payloads in IndexedDB for 24 hours
-- supports local uploaded features via browser cache storage
-- includes custom `.npy` parsing and compressed volume loading logic
+- delegates bucket/feature transport to `DataClient`
+- delegates bucket/feature cache and persistence policy to `FeatureStore`
+- delegates background feature prefetch scheduling to `PrefetchController`
+- delegates feature payload decoding to `feature-decoder`
 
 Modules should generally ask the `model` for data instead of fetching directly.
+
+The current split is:
+
+- `js/model.js` — facade/orchestration layer used by the UI
+- `js/data-client.js` — raw HTTP access for buckets/features
+- `js/feature-store.js` — in-memory + persistent cache policy and local bucket handling
+- `js/prefetch-controller.js` — prefetch queueing, idle scheduling, and cancellation
+- `js/feature-decoder.js` — feature payload normalization and volume decoding
 
 ### `js/dispatcher.js`
 
@@ -209,7 +217,11 @@ The JS code is easiest to navigate in groups.
 - `js/main.js` — browser entrypoint
 - `js/app.js` — app wiring/composition root
 - `js/state.js` — shared app state
-- `js/model.js` — data/model layer
+- `js/model.js` — facade/orchestration layer for data access
+- `js/data-client.js` — raw bucket/feature transport
+- `js/feature-store.js` — bucket/feature cache and persistence layer
+- `js/prefetch-controller.js` — background prefetch queue and cancellation
+- `js/feature-decoder.js` — feature payload decoding/normalization
 - `js/dispatcher.js` — event bus
 - `js/cache.js` — async cache wrapper
 - `js/loader.js` — loader for static JSON resources
@@ -417,9 +429,9 @@ Many modules depend on specific element IDs, class names, and static `<style>` t
 
 Because styling often comes from injected rules, visual bugs may be caused by runtime CSS rather than the static stylesheet.
 
-### `model.js` has broad responsibility
+### `model.js` is now a facade, but remains central
 
-`Model` currently handles a lot: data loading, caching, feature access, volume decoding, and local uploaded features.
+`Model` is thinner than before, but it is still the main frontend integration surface. It coordinates the store, decoder, and prefetch layers, so changes to data flow should still start there.
 
 ### Slice geometry is partly modernized, partly legacy
 
