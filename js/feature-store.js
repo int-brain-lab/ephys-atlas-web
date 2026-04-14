@@ -5,7 +5,7 @@ import { decodeFeaturePayload, decodeFeatureResponseText } from "./feature-decod
 import { PersistentCache } from "./persistent-cache.js";
 
 const PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const PERSISTENT_CACHE_SCHEMA_VERSION = 1;
+const PERSISTENT_CACHE_SCHEMA_VERSION = 2;
 
 async function loadCacheFiles(cache) {
     const requests = await cache.keys();
