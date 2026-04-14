@@ -43,31 +43,6 @@ function cloneSvgAndSetFillColors(svgElement) {
 
 
 /*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-async function unityScreenshot(webglCanvas) {
-    const width = webglCanvas.width;
-    const height = webglCanvas.height;
-    const canvas2D = document.createElement('canvas');
-    canvas2D.width = width;
-    canvas2D.height = height;
-    const ctx2D = canvas2D.getContext('2d');
-
-    ctx2D.drawImage(webglCanvas, 0, 0, width, height);
-
-    const pngBlob = await new Promise((resolve) => {
-        canvas2D.toBlob((blob) => {
-            resolve(blob);
-        }, 'image/png');
-    });
-
-    return pngBlob;
-}
-
-
-
-/*************************************************************************************************/
 /* Panel                                                                                         */
 /*************************************************************************************************/
 
@@ -79,8 +54,6 @@ class Panel {
 
         this.el = getRequiredSelector('#control-panel details');
         this.imapping = getRequiredElement('mapping-dropdown');
-        this.ifname = getRequiredElement('feature-dropdown');
-        this.ibucket = getRequiredElement('bucket-dropdown');
         this.icmap = getRequiredElement('colormap-dropdown');
         this.istat = getRequiredElement('stat-dropdown');
         this.icmapmin = getRequiredElement('colormap-min');
@@ -106,7 +79,6 @@ class Panel {
         this.setupExportButton();
         this.setupShareButton();
         this.setupResetButton();
-        this.setupKeyboardShortcuts();
     }
 
     init() {
@@ -297,10 +269,6 @@ class Panel {
                 zip.file(`${id}.png`, pngBlob);
             }
 
-            // NOTE: not working yet
-            // const pngBlob = unityScreenshot(document.getElementById("unity-canvas"));
-            // zip.file(`3D-view.png`, pngBlob);
-
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             saveAs(zipBlob, 'svgs.zip');
         });
@@ -332,18 +300,5 @@ class Panel {
         this.ishare.addEventListener('click', () => {
             this.share();
         });
-    }
-
-    /* Keyboard functions                                                                        */
-    /*********************************************************************************************/
-
-    setupKeyboardShortcuts() {
-        // window.addEventListener('keypress', (e) => {
-        //     if (e.target.id != "search-input") {
-        //         if (e.key == "f" || e.key == "d") {
-        //             let dir = e.key == "f" ? +1 : -1;
-        //         }
-        //     }
-        // });
     }
 };

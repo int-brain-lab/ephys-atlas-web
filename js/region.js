@@ -1,51 +1,37 @@
 export { Region };
 
-import { throttle, e2idx } from "./utils.js";
+import { e2idx } from "./utils.js";
 import { getRequiredElement } from "./core/dom.js";
 import { buildVisibleRegions, compareRegionItems, getRegionTitle, nextSortState } from "./core/region-helpers.js";
 import { EVENTS } from "./core/events.js";
 
-
-
-/*************************************************************************************************/
-/* Constants                                                                                     */
-/*************************************************************************************************/
-
-/*************************************************************************************************/
-/* Region utils                                                                                  */
-/*************************************************************************************************/
-
 function updateSort(list, icon, state) {
-    let items = Array.from(list.children).map((item) => ({
+    const items = Array.from(list.children).map((item) => ({
         element: item,
         idx: item.getAttribute("data-idx"),
         value: item.getAttribute("data-value"),
     }));
 
     if (state === 0) {
-        icon.textContent = "↕️"; // Unsorted state
+        icon.textContent = "↕️";
     } else if (state === 1) {
-        icon.textContent = "⬇️"; // Descending state
+        icon.textContent = "⬇️";
     } else {
-        icon.textContent = "⬆️"; // Ascending state
+        icon.textContent = "⬆️";
     }
 
     items.sort((a, b) => compareRegionItems(state, a, b));
-    items.forEach(item => list.appendChild(item.element)); // Reorder elements
+    items.forEach((item) => list.appendChild(item.element));
 }
 
-
-
 function cycleSort(list, icon) {
-    let state = nextSortState(list.getAttribute("data-sort-state"));
+    const state = nextSortState(list.getAttribute("data-sort-state"));
     list.setAttribute("data-sort-state", state);
     updateSort(list, icon, state);
 }
 
-
-
 function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
-    let hemisphere = name.includes("(left") ? "left" : "right";
+    const hemisphere = name.includes("(left") ? "left" : "right";
     return `
     <li class="${mapping}_region_${idx}"
             data-acronym="${acronym}"
@@ -57,45 +43,11 @@ function makeRegionItem(mapping, idx, acronym, name, normalized = 0) {
         <div class="bar_wrapper"><div class="bar" style="width: ${normalized}%;"></div></div>
     </li>
     `;
-
-    // // Create the <li> element
-    // const listItem = document.createElement('li');
-    // listItem.className = `${mapping}_region_${idx}`;
-    // listItem.setAttribute('data-acronym', acronym);
-    // listItem.setAttribute('data-idx', idx);
-    // listItem.setAttribute('data-name', name);
-    // listItem.setAttribute('data-hemisphere', hemisphere);
-
-    // // Create the <div> element for acronym
-    // const acronymDiv = document.createElement('div');
-    // acronymDiv.className = 'acronym';
-    // acronymDiv.textContent = acronym;
-
-    // // Create the <div> elements for the bar
-    // const barWrapperDiv = document.createElement('div');
-    // barWrapperDiv.className = 'bar_wrapper';
-    // const barDiv = document.createElement('div');
-    // barDiv.className = 'bar';
-    // barDiv.style.width = `${normalized}%`;
-
-    // // Append the div elements to the <li> element
-    // barWrapperDiv.appendChild(barDiv);
-    // listItem.appendChild(acronymDiv);
-    // listItem.appendChild(barWrapperDiv);
-
-    // return listItem;
 }
 
-
-
-/*************************************************************************************************/
-/* Region list                                                                                   */
-/*************************************************************************************************/
-
 class RegionList {
-    constructor(state, model, dispatcher, el) {
+    constructor(state, dispatcher, el) {
         this.state = state;
-        this.model = model;
         this.dispatcher = dispatcher;
         this.el = el;
 
@@ -105,14 +57,14 @@ class RegionList {
 
     setupHighlight() {
         this.el.addEventListener('mouseover', (e) => {
-            if (e.target.tagName == 'LI') {
-                let idx = e2idx(this.state.mapping, e);
+            if (e.target.tagName === 'LI') {
+                const idx = e2idx(this.state.mapping, e);
                 this.dispatcher.highlight(this, idx, e);
             }
         });
 
         this.el.addEventListener('mouseout', (e) => {
-            if (e.target.tagName == 'LI') {
+            if (e.target.tagName === 'LI') {
                 this.dispatcher.highlight(this, null, null);
             }
         });
@@ -120,8 +72,8 @@ class RegionList {
 
     setupToggle() {
         this.el.addEventListener('click', (e) => {
-            if (e.target.tagName == 'LI') {
-                let idx = e2idx(this.state.mapping, e);
+            if (e.target.tagName === 'LI') {
+                const idx = e2idx(this.state.mapping, e);
                 this.dispatcher.toggle(this, idx);
             }
         });
@@ -131,28 +83,18 @@ class RegionList {
         this.el.innerHTML = '';
     }
 
-    setRegions(mapping, regions) { // idx, name, acronym, normalized
-        let s = '';
-        // let items = [];
-        for (let idx in regions) {
-            let region = regions[idx];
-
-            // NOTE: skip void region
-            if (region['acronym'] == 'void') continue;
-            // items.push(makeRegionItem(
-            s += makeRegionItem(
-                mapping, idx, region['acronym'], region['name'], region['normalized']);
+    setRegions(mapping, regions) {
+        let html = '';
+        for (const idx in regions) {
+            const region = regions[idx];
+            if (region.acronym === 'void') {
+                continue;
+            }
+            html += makeRegionItem(mapping, idx, region.acronym, region.name, region.normalized);
         }
-        // this.el.replaceChildren(...items);
-        this.el.innerHTML = s;
+        this.el.innerHTML = html;
     }
 }
-
-
-
-/*************************************************************************************************/
-/* Region                                                                                        */
-/*************************************************************************************************/
 
 class Region {
     constructor(state, model, dispatcher) {
@@ -164,29 +106,25 @@ class Region {
         this.sortButton = getRequiredElement('bar-plot-sort');
         this.regionTitle = getRequiredElement('bar-plot-title');
 
-        this.regionList = new RegionList(this.state, this.model, this.dispatcher, this.el);
+        this.regionList = new RegionList(this.state, this.dispatcher, this.el);
 
         this.setupDispatcher();
         this.setupSortButton();
     }
 
     async init() {
-        await this.setState(this.state);
+        await this.setState();
     }
 
-    async setState(state) {
+    async setState() {
         await this.setRegions();
     }
 
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
-
     setupDispatcher() {
-        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
+        this.dispatcher.on(EVENTS.RESET, () => { this.init(); });
 
         this.dispatcher.on(EVENTS.FEATURE, (ev) => {
             if (!this.state.isVolume && ev.fname) {
-                // If the selected feature has no data for the current mapping, change the mapping.
                 const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
                 if (mappings && !mappings.includes(this.state.mapping)) {
                     const mapping = mappings[0];
@@ -198,26 +136,26 @@ class Region {
             }
             this.setRegions();
         });
-        this.dispatcher.on(EVENTS.MAPPING, (ev) => { this.setRegions(); });
-        this.dispatcher.on(EVENTS.STAT, (ev) => { this.setRegions(); });
-        this.dispatcher.on(EVENTS.SEARCH, (ev) => { this.setRegions(); });
-        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.MAPPING, () => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.STAT, () => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.SEARCH, () => { this.setRegions(); });
+        this.dispatcher.on(EVENTS.BUCKET, () => { this.setRegions(); });
     }
 
     setupSortButton() {
-        this.sortButton.onclick = (ev) => {
-            cycleSort(this.el, this.sortButton)
+        this.sortButton.onclick = () => {
+            cycleSort(this.el, this.sortButton);
         };
     }
-
-    /* Set functions                                                                             */
-    /*********************************************************************************************/
 
     async setRegions() {
         console.assert(this.state.mapping);
         const regions = this.model.getRegions(this.state.mapping);
         const features = this.state.isVolume ? null : this.model.getFeatures(
-            this.state.bucket, this.state.fname, this.state.mapping);
+            this.state.bucket,
+            this.state.fname,
+            this.state.mapping,
+        );
         const keptRegions = buildVisibleRegions(regions, features, this.state.stat, this.state.search);
 
         this.dispatcher.data(this, 'regionValues', this.state.fname, keptRegions);

@@ -8,12 +8,6 @@ import {
     getDefaultRegionColorsHref,
 } from "./core/coloring-helpers.js";
 
-
-
-/*************************************************************************************************/
-/* Coloring                                                                                      */
-/*************************************************************************************************/
-
 class Coloring {
     constructor(state, model, dispatcher) {
         this.state = state;
@@ -33,9 +27,6 @@ class Coloring {
     setState() {
         this.refreshColors();
     }
-
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
 
     setupDispatcher() {
         this.dispatcher.on(EVENTS.RESET, () => {
@@ -57,15 +48,7 @@ class Coloring {
             this.refreshColors();
         });
         this.dispatcher.on(EVENTS.STAT, () => { this.refreshColors(); });
-
-        // NOTE: when Unity is loaded, send the colors.
-        // this.dispatcher.on(EVENTS.UNITY_LOADED, () => {
-        //     this.dispatcher.data(this, this.getColors());
-        // });
     }
-
-    /* Internal functions                                                                        */
-    /*********************************************************************************************/
 
     applyDefaultColors() {
         this.styleDefault.href = getDefaultRegionColorsHref(this.state.mapping);
@@ -94,7 +77,6 @@ class Coloring {
         if (!regionColors) {
             return null;
         }
-
         return buildRegionColoringView(this.state.mapping, this.state.fname, regionColors);
     }
 

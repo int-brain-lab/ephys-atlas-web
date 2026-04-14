@@ -11,11 +11,8 @@ import {
 } from "./core/colorbar-helpers.js";
 
 class Histogram {
-    constructor(parentDiv, state, model) {
+    constructor(parentDiv) {
         console.assert(parentDiv);
-
-        this.state = state;
-        this.model = model;
 
         this.cmap = null;
         this.cmin = null;
@@ -73,7 +70,6 @@ class Histogram {
         this.featureMin.innerHTML = '';
         this.featureMax.innerHTML = '';
         this.countTotal.innerHTML = '';
-
         this.clearLocal();
     }
 
@@ -117,13 +113,13 @@ class Colorbar {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.miniHistogram = new Histogram(getRequiredElement("mini-histogram"), state, model);
+        this.miniHistogram = new Histogram(getRequiredElement("mini-histogram"));
 
         this.setupDispatcher();
     }
 
     init() {
-        this.setState(this.state);
+        this.setState();
     }
 
     setState() {
@@ -188,13 +184,11 @@ class Colorbar {
         );
     }
 
-    clear(hist) {
-        hist = hist || this.miniHistogram;
+    clear(hist = this.miniHistogram) {
         hist.clear();
     }
 
-    setFeatureRange(hist) {
-        hist = hist || this.miniHistogram;
+    setFeatureRange(hist = this.miniHistogram) {
         const range = resolveColorbarRange(
             this.model.getHistogram(this.state.bucket, this.state.fname),
             this.model.getVolumeData(this.state.bucket, this.state.fname),
@@ -208,25 +202,23 @@ class Colorbar {
         }
     }
 
-    setColormap(hist) {
-        hist = hist || this.miniHistogram;
+    setColormap(hist = this.miniHistogram) {
         const cmap = this.model.getColormap(this.state.cmap);
         hist.setColormap(cmap, this.state.cmapmin, this.state.cmapmax);
     }
 
-    setGlobalHistogram(hist) {
-        hist = hist || this.miniHistogram;
+    setGlobalHistogram(hist = this.miniHistogram) {
         this.setFeatureRange(hist);
         const counts = this.getGlobalHistogram();
-        if (!counts || !counts.length) return;
+        if (!counts || !counts.length) {
+            return;
+        }
         const countMax = Math.max(...counts);
         hist.setGlobalHistogram(counts, countMax);
     }
 
-    setLocalHistogram(hist, selected) {
-        hist = hist || this.miniHistogram;
-        const selection = selected || this.state.selected;
-        if (!selection || selection.size == 0) {
+    setLocalHistogram(hist = this.miniHistogram, selected = this.state.selected) {
+        if (!selected || selected.size === 0) {
             hist.clearLocal();
             return;
         }
@@ -236,13 +228,12 @@ class Colorbar {
             this.state.fname,
             this.state.mapping,
         );
-
         if (!features) {
             hist.clearLocal();
             return;
         }
 
-        const [counts, selectedCount] = getFeatureHistogram(features, selection, BIN_COUNT);
+        const [counts, selectedCount] = getFeatureHistogram(features, selected, BIN_COUNT);
         hist.setLocalCount(selectedCount);
         const countMax = Math.max(...counts);
         hist.setLocalHistogram(counts, countMax);
