@@ -3,7 +3,6 @@ export { FeatureStore };
 import { Cache } from "./cache.js";
 import { decodeFeaturePayload } from "./feature-decoder.js";
 import { PersistentCache } from "./persistent-cache.js";
-import { downloadJSON } from "./utils.js";
 
 const PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const PERSISTENT_CACHE_SCHEMA_VERSION = 1;
@@ -34,9 +33,9 @@ async function loadCacheFiles(cache) {
 }
 
 class FeatureStore {
-    constructor({ splash, urls }) {
+    constructor({ splash, dataClient }) {
         this.splash = splash;
-        this.urls = urls;
+        this.dataClient = dataClient;
         this.persistentCache = new PersistentCache();
         this.localCache = null;
         this.localCachePromise = caches.open('localCache').then((cache) => {
@@ -108,7 +107,7 @@ class FeatureStore {
             return cached;
         }
 
-        const data = await downloadJSON(this.urls.bucket(bucket), refresh);
+        const data = await this.dataClient.fetchBucket(bucket, { refresh });
         if (data) {
             await this._setPersistentCacheEntry(cacheKey, data);
         }
@@ -146,7 +145,7 @@ class FeatureStore {
                 response = cached;
             }
             else {
-                response = await downloadJSON(this.urls.features(bucket, fname), refresh, { signal });
+                response = await this.dataClient.fetchFeature(bucket, fname, { refresh, signal });
                 if (response) {
                     if ("volumes" in (response.feature_data || {})) {
                         await this.persistentCache.delete(cacheKey);

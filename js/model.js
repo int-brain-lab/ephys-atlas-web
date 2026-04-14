@@ -1,6 +1,7 @@
 export { Model, URLS };
 
 import { BASE_URL } from "./constants.js";
+import { DataClient } from "./data-client.js";
 import { FeatureStore } from "./feature-store.js";
 import { Loader } from "./loader.js";
 import { PrefetchController } from "./prefetch-controller.js";
@@ -23,7 +24,8 @@ const URLS = {
 class Model {
     constructor(splash) {
         this.splash = splash;
-        this.featureStore = new FeatureStore({ splash, urls: URLS });
+        this.dataClient = new DataClient({ urls: URLS });
+        this.featureStore = new FeatureStore({ splash, dataClient: this.dataClient });
         this.persistentCache = this.featureStore.persistentCache;
         this.localCache = null;
         this.featureStore.localCachePromise.then((cache) => {
