@@ -1,34 +1,18 @@
 export { Slice };
 
-import { throttle, clamp, getOS, e2idx } from "./utils.js";
+import { throttle, getOS, e2idx } from "./utils.js";
 import { getRequiredElement } from "./core/dom.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 import { EVENTS } from "./core/events.js";
-
-
-
-/*************************************************************************************************/
-/* Constants                                                                                     */
-/*************************************************************************************************/
+import {
+    getCoronalGuideState,
+    getHorizontalGuideState,
+    getNextSliceSliderValue,
+    getSagittalGuideState,
+    isRootTarget,
+} from "./core/slice-helpers.js";
 
 const SLICE_THROTTLE = 40;
-
-
-
-/*************************************************************************************************/
-/* Util functions                                                                                */
-/*************************************************************************************************/
-
-function isRoot(e) {
-    /* Return if an event is on the root region. */
-    return e.target.classList.contains("beryl_region_1");
-}
-
-
-
-/*************************************************************************************************/
-/* Slice                                                                                         */
-/*************************************************************************************************/
 
 class Slice {
     constructor(state, model, dispatcher) {
@@ -40,7 +24,6 @@ class Slice {
         this.setSlice = throttle(
             this._setSlice, SLICE_THROTTLE, { leading: true, trailing: true });
 
-        // Slice lines.
         this.tv = getRequiredElement('top-vline');
         this.th = getRequiredElement('top-hline');
         this.cv = getRequiredElement('coronal-vline');
@@ -50,7 +33,6 @@ class Slice {
         this.sv = getRequiredElement('sagittal-vline');
         this.sh = getRequiredElement('sagittal-hline');
 
-        // Coordinate labels.
         this.ml = getRequiredElement('coord-ml');
         this.ap = getRequiredElement('coord-ap');
         this.dv = getRequiredElement('coord-dv');
@@ -60,12 +42,10 @@ class Slice {
     }
 
     init() {
-        // coronal, sagittal, horizontal
         for (let axis of SLICE_AXES) {
             this._setSlice(axis, this.state[axis]);
         }
 
-        // top swanson
         for (let axis of SLICE_STATIC_AXES) {
             this._setSlice(axis, 0);
         }
@@ -74,7 +54,6 @@ class Slice {
     }
 
     setState(state) {
-        // Set the sliders.
         for (let axis of SLICE_AXES) {
             this[`slider_${axis}`].value = state[axis];
             this[`set_${axis}`](state[axis]);
@@ -82,24 +61,18 @@ class Slice {
 
         }
 
-        // Set the bars.
         this.set_coronal(state.coronal);
         this.set_horizontal(state.horizontal);
 
-        // Set the SVGs.
         this._setSlice('coronal', state.coronal);
         this._setSlice('horizontal', state.horizontal);
     }
 
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
-
     setupDispatcher() {
-        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
+        this.dispatcher.on(EVENTS.RESET, () => { this.init(); });
     }
 
     setupSlices() {
-        // coronal, sagittal, horizontal
         for (let axis of SLICE_AXES) {
             this[`svg_${axis}`] = getRequiredElement(`figure-${axis}`);
             this[`slider_${axis}`] = getRequiredElement(`slider-${axis}`);
@@ -110,7 +83,6 @@ class Slice {
             this.setupTooltip(axis);
         }
 
-        // top swanson
         for (let axis of SLICE_STATIC_AXES) {
             this[`svg_${axis}`] = getRequiredElement(`figure-${axis}`);
 
@@ -127,13 +99,13 @@ class Slice {
     }
 
     setupSlice(axis) {
-        let max = SLICE_MAX[axis];
+        const max = SLICE_MAX[axis];
 
-        let slider = this[`slider_${axis}`];
-        let svg = this[`svg_${axis}`];
+        const slider = this[`slider_${axis}`];
+        const svg = this[`svg_${axis}`];
 
         slider.oninput = (e) => {
-            let idx = Math.floor(e.target.value);
+            const idx = Math.floor(e.target.value);
             this._updateLines(axis, idx);
             this.setSlice(axis, idx);
         };
@@ -141,18 +113,8 @@ class Slice {
         svg.parentNode.addEventListener('wheel', (e) => {
             e.preventDefault();
 
-            // Update the slider.
-            let x = e.deltaY;
-
-            // HACK: handle scrolling with touchpad on mac
-            let k = getOS() == "macOS" ? 4 : 24;
-
-            if (x == 0) { return; }
-            else if (x < 0) { slider.valueAsNumber += k; }
-            else if (x > 0) { slider.valueAsNumber -= k; }
-
-            slider.valueAsNumber = clamp(slider.valueAsNumber, 0, max);
-            let idx = slider.valueAsNumber;
+            slider.valueAsNumber = getNextSliceSliderValue(slider.valueAsNumber, e.deltaY, max, getOS());
+            const idx = slider.valueAsNumber;
 
             this._updateLines(axis, idx);
             this.setSlice(axis, idx);
@@ -164,16 +126,13 @@ class Slice {
 
         svg.addEventListener('mouseover', (e) => {
             if (e.target.tagName == 'path') {
+                if (isRootTarget(e.target)) return;
 
-                // HACK: disable root
-                if (isRoot(e)) return;
-
-                // When handling Control while hovering over a brain region, disable highlighting.
                 if (!e.ctrlKey) {
                     if (this.state.isVolume) {
                         this.dispatcher.volumeHover(this, axis, e);
                     }
-                    let idx = e2idx(this.state.mapping, e);
+                    const idx = e2idx(this.state.mapping, e);
                     this.dispatcher.highlight(this, idx, e);
                 }
             }
@@ -183,7 +142,7 @@ class Slice {
             if (!this.state.isVolume) {
                 return;
             }
-            if (e.target.tagName == 'path' && !isRoot(e) && !e.ctrlKey) {
+            if (e.target.tagName == 'path' && !isRootTarget(e.target) && !e.ctrlKey) {
                 this.dispatcher.volumeHover(this, axis, e);
             }
         });
@@ -200,14 +159,10 @@ class Slice {
 
         svg.addEventListener('click', (e) => {
             if (e.target.tagName == 'path') {
+                if (isRootTarget(e.target)) return;
 
-                // HACK: disable root
-                if (isRoot(e)) return;
-
-                // When handling Control while hovering over a brain region, do not select
-                // regions, but display dot images instead.
                 if (!e.ctrlKey) {
-                    let idx = e2idx(this.state.mapping, e);
+                    const idx = e2idx(this.state.mapping, e);
                     this.dispatcher.toggle(this, idx);
                 }
             }
@@ -224,83 +179,47 @@ class Slice {
         });
     };
 
-    /* Slicing functions                                                                         */
-    /*********************************************************************************************/
-
     _setSlice(axis, idx) {
-        let svg = this.model.getSlice(axis, idx);
+        const svg = this.model.getSlice(axis, idx);
         if (svg) {
             getRequiredElement(`figure-${axis}`).innerHTML = svg;
-
-            // Update the global state.
             this.state.setSliceIndex(axis, idx);
         }
         else {
-            // console.debug(`${idx} not in ${axis} slice`);
             return;
         }
 
-        // Emit the slice event.
         this.dispatcher.slice(this, axis, idx);
     }
 
     set_sagittal(idx) {
-        const m = SLICE_MAX['sagittal'];
-        idx = clamp(idx, 10, m - 10);
-        let x = idx / m;
-
-        let v = 236 + 225 * (x - .5);
-        this.tv.setAttribute("x1", v);
-        this.tv.setAttribute("x2", v);
-
-        let w = 237 + 354 * (x - .5);
-        this.cv.setAttribute("x1", w);
-        this.cv.setAttribute("x2", w);
-
-        let t = 237 + 230 * (x - .5);
-        this.hv.setAttribute("x1", t);
-        this.hv.setAttribute("x2", t);
-
-        // ML coordinate.
-        let ml = (-5739 + 10 * idx);
-        this.ml.innerHTML = `ML: ${ml}`;
+        const state = getSagittalGuideState(idx, SLICE_MAX.sagittal);
+        this.tv.setAttribute("x1", state.topX);
+        this.tv.setAttribute("x2", state.topX);
+        this.cv.setAttribute("x1", state.coronalX);
+        this.cv.setAttribute("x2", state.coronalX);
+        this.hv.setAttribute("x1", state.horizontalX);
+        this.hv.setAttribute("x2", state.horizontalX);
+        this.ml.innerHTML = `ML: ${state.ml}`;
     }
 
     set_coronal(idx) {
-        const m = SLICE_MAX['coronal'];
-        idx = clamp(idx, 10, m - 10);
-        let y = idx / m;
-
-        let v = 174 + 268 * (y - .5);
-        this.th.setAttribute("y1", v);
-        this.th.setAttribute("y2", v);
-
-        let w = 236 + 354 * (y - .5);
-        this.sv.setAttribute("x1", w);
-        this.sv.setAttribute("x2", w);
-
-        let t = 174 + 264 * (y - .5);
-        this.hh.setAttribute("y1", t);
-        this.hh.setAttribute("y2", t);
-
-        // AP coordinate.
-        let ap = (5400 - 10 * idx);
-        this.ap.innerHTML = `AP: ${ap}`;
+        const state = getCoronalGuideState(idx, SLICE_MAX.coronal);
+        this.th.setAttribute("y1", state.topY);
+        this.th.setAttribute("y2", state.topY);
+        this.sv.setAttribute("x1", state.sagittalX);
+        this.sv.setAttribute("x2", state.sagittalX);
+        this.hh.setAttribute("y1", state.horizontalY);
+        this.hh.setAttribute("y2", state.horizontalY);
+        this.ap.innerHTML = `AP: ${state.ap}`;
     }
 
     set_horizontal(idx) {
-        let y = idx / SLICE_MAX['horizontal'];
-
-        let v = 174 + 242 * (y - .5);
-        this.ch.setAttribute("y1", v);
-        this.ch.setAttribute("y2", v);
-
-        let w = 174 + 210 * (y - .5);
-        this.sh.setAttribute("y1", w);
-        this.sh.setAttribute("y2", w);
-
-        // DV coordinate.
-        let dv = (332 - 10 * idx);
-        this.dv.innerHTML = `DV: ${dv}`;
+        const state = getHorizontalGuideState(idx, SLICE_MAX.horizontal);
+        this.ch.setAttribute("y1", state.coronalY);
+        this.ch.setAttribute("y2", state.coronalY);
+        this.sh.setAttribute("y1", state.sagittalY);
+        this.sh.setAttribute("y2", state.sagittalY);
+        this.dv.innerHTML = `DV: ${state.dv}`;
     }
 };
