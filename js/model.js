@@ -286,7 +286,7 @@ class Model {
                 return !candidateIsVolume;
             });
 
-        const limitedCandidates = selectedIsVolume ? candidates.slice(0, 1) : candidates;
+        const limitedCandidates = selectedIsVolume ? candidates.slice(0, 2) : candidates;
 
         const tasks = limitedCandidates.map((candidate) => ({
             bucket,
