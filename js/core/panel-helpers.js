@@ -1,3 +1,5 @@
+import { displayNumber } from "../utils.js";
+
 export function toHistogramValueRange(cmin, cmax, histogram) {
     if (!histogram) {
         return [0, 0];
@@ -26,6 +28,16 @@ export function fromHistogramValueRange(vminMod, vmaxMod, histogram) {
 
 export function getOrderedColormapRange(cmin, cmax) {
     return [Math.min(cmin, cmax), Math.max(cmin, cmax)];
+}
+
+export function buildPanelColormapRangeView(cmin, cmax, histogram) {
+    const [valueMin, valueMax] = toHistogramValueRange(cmin, cmax, histogram);
+    return {
+        sliderMin: cmin,
+        sliderMax: cmax,
+        displayMin: displayNumber(valueMin),
+        displayMax: displayNumber(valueMax),
+    };
 }
 
 export function buildClearedStateUrl(href) {

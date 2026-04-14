@@ -1,9 +1,13 @@
 export { Panel };
 
-import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
+import { throttle } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
-import { buildClearedStateUrl, fromHistogramValueRange, getOrderedColormapRange, toHistogramValueRange } from "./core/panel-helpers.js";
+import {
+    buildClearedStateUrl,
+    buildPanelColormapRangeView,
+    getOrderedColormapRange,
+} from "./core/panel-helpers.js";
 
 
 
@@ -16,21 +20,17 @@ const CMAP_RANGE_THROTTLE = 250; // number of milliseconds between updates
 
 
 function cloneSvgAndSetFillColors(svgElement) {
-    // Get all path elements in the original SVG
     const originalPathElements = svgElement.querySelectorAll('path');
     const fillColors = new Map();
 
-    // Loop over each path element to get the computed fill color
     originalPathElements.forEach(pathElement => {
         const fillColor = window.getComputedStyle(pathElement).fill;
         fillColors.set(pathElement, fillColor);
     });
 
-    // Clone the SVG element
     const clonedSvg = svgElement.cloneNode(true);
     const clonedPathElements = clonedSvg.querySelectorAll('path');
 
-    // Loop over each path element in the cloned SVG and set the fill color
     clonedPathElements.forEach((clonedPathElement, index) => {
         const originalPathElement = originalPathElements[index];
         const fillColor = fillColors.get(originalPathElement);
@@ -47,8 +47,6 @@ function cloneSvgAndSetFillColors(svgElement) {
 /*************************************************************************************************/
 
 async function unityScreenshot(webglCanvas) {
-
-    // Create a new 2D canvas
     const width = webglCanvas.width;
     const height = webglCanvas.height;
     const canvas2D = document.createElement('canvas');
@@ -56,10 +54,8 @@ async function unityScreenshot(webglCanvas) {
     canvas2D.height = height;
     const ctx2D = canvas2D.getContext('2d');
 
-    // Draw the WebGL canvas content onto the 2D canvas
     ctx2D.drawImage(webglCanvas, 0, 0, width, height);
 
-    // Use the toBlob method to get the PNG blob from the 2D canvas
     const pngBlob = await new Promise((resolve) => {
         canvas2D.toBlob((blob) => {
             resolve(blob);
@@ -98,66 +94,43 @@ class Panel {
         this.ibexport = getRequiredElement('export-button');
         this.ishare = getRequiredElement('share-button');
 
-        // Setup the event callbacks that change the global state and update the components.
         this.setupDispatcher();
+        this.setupPanelToggle();
         this.setupMapping();
         this.setupStat();
         this.setupColormap();
         this.setupColormapRange();
         this.setupLogScale();
-
         this.setupClearButton();
         this.setupConnectButton();
         this.setupExportButton();
         this.setupShareButton();
         this.setupResetButton();
-
         this.setupKeyboardShortcuts();
     }
 
     init() {
-        // Use the state to select the initial values of the DOM elements.
         this.setState(this.state);
     }
 
     setState(state) {
-        // Mapping.
         this.setMapping(state.mapping);
-
-        // Stat.
         this.setStat(state.stat);
-
-        // Colormap.
         this.setCmap(state.cmap);
-
-        // Colormap range.
-        this.setCmapRange(state.cmapmin, state.cmapmax);
-
-        // Log scale.
+        this.renderColormapRange(this.buildColormapRangeView(state.cmapmin, state.cmapmax));
         this.setLogScale(state.logScale);
-
-        // Panel open.
         this.setOpen(state.panelOpen);
     }
 
     setupDispatcher() {
         this.dispatcher.on(EVENTS.MAPPING, (ev, source) => {
-            if (source != this && ev.name)
+            if (source !== this && ev.name) {
                 this.imapping.value = ev.name;
+            }
         });
 
-        // Display the cmap range once the features are loaded.
-        this.dispatcher.on(EVENTS.FEATURE, (ev, source, fname) => {
-            const [vminMod, vmaxMod] = this._toMinMaxValues(this.state.cmapmin, this.state.cmapmax);
-            this.icmapminInput.value = displayNumber(vminMod);
-            this.icmapmaxInput.value = displayNumber(vmaxMod);
-
-            let cmap = this.model.getCmap(this.state.bucket, this.state.fname);
-            if (cmap) {
-                this.icmap.value = cmap;
-                this.state.cmap = cmap;
-                this.dispatcher.cmap(cmap);
-            }
+        this.dispatcher.on(EVENTS.FEATURE, () => {
+            this.syncFeatureControls();
         });
     }
 
@@ -165,15 +138,11 @@ class Panel {
     /*********************************************************************************************/
 
     setOpen(open) {
-        if (open)
+        if (open) {
             this.el.open = true;
-        else
-            this.el.removeAttribute("open");
-
-        this.el.addEventListener('toggle', (ev) => {
-            this.state.setPanelOpen(this.el.open);
-            this.dispatcher.panel(this, { 'open': this.state.panelOpen });
-        })
+        } else {
+            this.el.removeAttribute('open');
+        }
     }
 
     setMapping(mapping) {
@@ -188,17 +157,7 @@ class Panel {
         this.icmap.value = cmap;
     }
 
-    async setCmapRange(cmin, cmax) {
-        this.icmapmin.value = cmin;
-        this.icmapmax.value = cmax;
-
-        // let [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
-        // this.icmapminInput.value = vminMod;
-        // this.icmapmaxInput.value = vmaxMod;
-    }
-
     setLogScale(logScale) {
-        console.log("pseudo log scale", logScale);
         this.iclog.checked = logScale;
     }
 
@@ -206,62 +165,80 @@ class Panel {
         this.dispatcher.share(this);
     }
 
-    // if (this.unity)
-    //     this.unity.update();
-    // }
+    getHistogram() {
+        return this.model.getHistogram(this.state.bucket, this.state.fname);
+    }
+
+    buildColormapRangeView(cmin, cmax) {
+        return buildPanelColormapRangeView(cmin, cmax, this.getHistogram());
+    }
+
+    renderColormapRange(view) {
+        this.icmapmin.value = view.sliderMin;
+        this.icmapmax.value = view.sliderMax;
+        this.icmapminInput.value = view.displayMin;
+        this.icmapmaxInput.value = view.displayMax;
+    }
+
+    updateColormapRange(cmin, cmax) {
+        this.state.setCmapRange(cmin, cmax);
+        this.dispatcher.cmapRange(this, cmin, cmax);
+    }
+
+    syncFeatureControls() {
+        this.renderColormapRange(this.buildColormapRangeView(this.state.cmapmin, this.state.cmapmax));
+
+        const cmap = this.model.getCmap(this.state.bucket, this.state.fname);
+        if (cmap) {
+            this.icmap.value = cmap;
+            this.state.cmap = cmap;
+            this.dispatcher.cmap(this, cmap);
+        }
+    }
+
+    resetView() {
+        this.state.reset();
+        this.dispatcher.reset(this);
+        this.init();
+        window.history.pushState(null, '', buildClearedStateUrl(window.location.href));
+    }
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
+    setupPanelToggle() {
+        this.el.addEventListener('toggle', () => {
+            this.state.setPanelOpen(this.el.open);
+            this.dispatcher.panel(this, { open: this.state.panelOpen });
+        });
+    }
+
     setupMapping() {
-        this.imapping.addEventListener('change', (e) => {
+        this.imapping.addEventListener('change', () => {
             this.state.setMapping(this.imapping.value);
             this.dispatcher.mapping(this, this.state.mapping);
         });
     }
 
     setupStat() {
-        this.istat.addEventListener('change', (e) => {
+        this.istat.addEventListener('change', () => {
             this.state.setStat(this.istat.value);
             this.dispatcher.stat(this, this.state.stat);
         });
     }
 
     setupColormap() {
-        this.icmap.addEventListener('change', async (e) => {
+        this.icmap.addEventListener('change', () => {
             this.state.setCmap(this.icmap.value);
             this.dispatcher.cmap(this, this.state.cmap);
         });
     }
 
-    _updateColormapRange(cmin, cmax) {
-
-        this.state.setCmapRange(cmin, cmax);
-
-        this.dispatcher.cmapRange(this, cmin, cmax);
-    }
-
-    _toMinMaxValues(cmin, cmax) {
-        const hist = this.model.getHistogram(this.state.bucket, this.state.fname);
-        return toHistogramValueRange(cmin, cmax, hist);
-    }
-
-    _fromMinMaxValues(vminMod, vmaxMod) {
-        const hist = this.model.getHistogram(this.state.bucket, this.state.fname);
-        return fromHistogramValueRange(vminMod, vmaxMod, hist);
-    }
-
     setupColormapRange() {
-
-        // Slider.
-        let onSlider = throttle(() => {
+        const onSlider = throttle(() => {
             const [cmin, cmax] = getOrderedColormapRange(this.icmapmin.value, this.icmapmax.value);
-            this._updateColormapRange(cmin, cmax);
-
-            const [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
-            this.icmapminInput.value = displayNumber(vminMod);
-            this.icmapmaxInput.value = displayNumber(vmaxMod);
-
+            this.updateColormapRange(cmin, cmax);
+            this.renderColormapRange(this.buildColormapRangeView(cmin, cmax));
         }, CMAP_RANGE_THROTTLE);
 
         this.icmapmin.addEventListener('input', onSlider);
@@ -269,29 +246,27 @@ class Panel {
     }
 
     setupLogScale() {
-        this.iclog.addEventListener(
-            'change', (e) => {
-                this.state.logScale = e.target.checked;
-                this.dispatcher.logScale(this, this.state.logScale);
-            });
+        this.iclog.addEventListener('change', (e) => {
+            this.state.logScale = e.target.checked;
+            this.dispatcher.logScale(this, this.state.logScale);
+        });
     }
 
     /* Buttons                                                                                   */
     /*********************************************************************************************/
 
     setupConnectButton() {
-        this.ibconnect.addEventListener('click', (e) => {
+        this.ibconnect.addEventListener('click', () => {
             this.dispatcher.connect(this);
         });
     }
 
     setupExportButton() {
-        this.ibexport.addEventListener('click', async (e) => {
-
-            const svgs = document.getElementsByTagName("svg");
+        this.ibexport.addEventListener('click', async () => {
+            const svgs = document.getElementsByTagName('svg');
             const zip = new JSZip();
 
-            for (let svg of svgs) {
+            for (const svg of svgs) {
                 const svgClone = cloneSvgAndSetFillColors(svg);
                 const svgData = new XMLSerializer().serializeToString(svgClone);
                 const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
@@ -323,7 +298,6 @@ class Panel {
             }
 
             // NOTE: not working yet
-            // Unity canvas.
             // const pngBlob = unityScreenshot(document.getElementById("unity-canvas"));
             // zip.file(`3D-view.png`, pngBlob);
 
@@ -333,9 +307,8 @@ class Panel {
     }
 
     setupClearButton() {
-        this.ibclear.addEventListener('click', (e) => {
-            if (window.confirm("Are you sure you want to clear the cache and re-download the data?")) {
-
+        this.ibclear.addEventListener('click', () => {
+            if (window.confirm('Are you sure you want to clear the cache and re-download the data?')) {
                 if ('caches' in window) {
                     caches.keys().then(cacheNames => {
                         cacheNames.forEach(cacheName => {
@@ -350,22 +323,13 @@ class Panel {
     }
 
     setupResetButton() {
-        this.ibreset.addEventListener('click', (e) => {
-            // if (window.confirm("Are you sure you want to reset the view?")) {
-            this.state.reset(); // NOTE: this keeps the list of buckets intact
-            this.dispatcher.reset(this);
-
-            // Update the panel controls.
-            this.init();
-
-            // Reset the browser URL.
-            window.history.pushState(null, '', buildClearedStateUrl(window.location.href));
-            // }
+        this.ibreset.addEventListener('click', () => {
+            this.resetView();
         });
     }
 
     setupShareButton() {
-        this.ishare.addEventListener('click', (e) => {
+        this.ishare.addEventListener('click', () => {
             this.share();
         });
     }
@@ -375,14 +339,9 @@ class Panel {
 
     setupKeyboardShortcuts() {
         // window.addEventListener('keypress', (e) => {
-        //     // NOTE: do not trigger the event when filling in the search bar
         //     if (e.target.id != "search-input") {
-
-        //         // Cycle through the feature names.
         //         if (e.key == "f" || e.key == "d") {
         //             let dir = e.key == "f" ? +1 : -1;
-        //             // this.ifname.selectedIndex = clamp(this.ifname.selectedIndex + dir, 0, this.ifname.length - 1);
-        //             // this.setFname(this.ifname.value);
         //         }
         //     }
         // });
