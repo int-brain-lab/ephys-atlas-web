@@ -1,8 +1,8 @@
 export { Region };
 
-import { normalizeValue, throttle, e2idx } from "./utils.js";
+import { throttle, e2idx } from "./utils.js";
 import { getRequiredElement } from "./core/dom.js";
-import { compareRegionItems, nextSortState, searchFilter } from "./core/region-helpers.js";
+import { buildVisibleRegions, compareRegionItems, getRegionTitle, nextSortState } from "./core/region-helpers.js";
 import { EVENTS } from "./core/events.js";
 
 
@@ -215,63 +215,14 @@ class Region {
 
     async setRegions() {
         console.assert(this.state.mapping);
-        let regions = this.model.getRegions(this.state.mapping);
-
-        let features = this.state.isVolume ? null : this.model.getFeatures(
+        const regions = this.model.getRegions(this.state.mapping);
+        const features = this.state.isVolume ? null : this.model.getFeatures(
             this.state.bucket, this.state.fname, this.state.mapping);
-        let stats = features ? features["statistics"] : undefined;
-        let stat = this.state.stat;
-        let search = this.state.search;
+        const keptRegions = buildVisibleRegions(regions, features, this.state.stat, this.state.search);
 
-        // Initial vmin-vmax cmap range.
-        let vmin = 0;
-        let vmax = 0;
-        if (stats) {
-            vmin = stats[stat]["min"];
-            vmax = stats[stat]["max"];
-        }
-
-        let keptRegions = {};
-        for (let relIdx in regions) {
-            // WARNING: relIdx is NOT the region index
-
-            // NOTE: important, need to make a copy, otherwise the values will be propagated into
-            // the object stored in the model.
-            let region = { ...regions[relIdx] };
-            let regionIdx = region["idx"];
-
-            // Compute the bar width as a function of the feature value.
-            // If there is no feature, show the region but without a bar.
-            if (stats) {
-                let value = features['data'][regionIdx];
-                if (!value)
-                    continue;
-                value = value[stat];
-                // if (!value)
-                //     continue;
-                region['normalized'] = normalizeValue(value, vmin, vmax);
-            }
-
-            // Implement search.
-            if (search) {
-                let acronym = region['acronym'];
-                let name = region['name'];
-                let match = searchFilter(search, acronym, name);
-                if (!match) continue;
-            }
-
-            keptRegions[regionIdx] = region;
-        }
-
-        // Register the data to WebSocket.
         this.dispatcher.data(this, 'regionValues', this.state.fname, keptRegions);
-
         this.regionList.setRegions(this.state.mapping, keptRegions);
-
-        if (this.state.fname)
-            this.regionTitle.innerHTML = `${this.state.fname}: ${this.state.stat}`;
-        else
-            this.regionTitle.innerHTML = '';
+        this.regionTitle.innerHTML = getRegionTitle(this.state.fname, this.state.stat);
         this.sortButton.innerHTML = '↕️';
     }
 };
