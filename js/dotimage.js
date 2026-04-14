@@ -1,86 +1,35 @@
 export { DotImage };
 
-import { clamp } from "./utils.js";
 import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
 import { getVolumeSize, VOLUME_XY_AXES, ij2xyz, xyz2ij } from "./constants.js";
-
-
-
-/*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
+import {
+    findClosestPointIndex,
+    getMouseVolumeCoords,
+    getPointTriplet,
+    projectVolumeCoordsToPixels,
+} from "./core/dotimage-helpers.js";
 
 function mouseXYZ(container, axis, sliceIdx, ev) {
-    const VOLUME_SIZE = getVolumeSize();
-    let rect = container.getBoundingClientRect();
-
-    // Calculate relative coordinates
-    let relativeX = (ev.clientX - rect.left) / rect.width;
-    let relativeY = (ev.clientY - rect.top) / rect.height;
-
-    // Ensure relative coordinates are within [0, 1] range
-    relativeX = clamp(relativeX, 0, 1);
-    relativeY = clamp(relativeY, 0, 1);
-
-    let i = VOLUME_SIZE[VOLUME_XY_AXES[axis][0]] * relativeX;
-    let j = VOLUME_SIZE[VOLUME_XY_AXES[axis][1]] * relativeY;
-
-    let xyz = ij2xyz(axis, sliceIdx, i, j);
-    return xyz;
+    return getMouseVolumeCoords(
+        axis,
+        sliceIdx,
+        ev,
+        container.getBoundingClientRect(),
+        getVolumeSize(),
+        VOLUME_XY_AXES,
+        ij2xyz,
+    );
 }
 
 function xyz2px(container, axis, sliceIdx, xyz) {
-    const VOLUME_SIZE = getVolumeSize();
-    let canvasWidth = container.clientWidth;
-    let canvasHeight = container.clientHeight;
-
-    // Calculate the relative position of the XYZ point within the volume
-    let [i, j] = xyz2ij(axis, sliceIdx, xyz);
-
-    // Calculate the pixel coordinates based on the slice and projection
-    let x, y;
-    if (axis === "coronal") {
-        x = (i / VOLUME_SIZE.sagittal) * canvasWidth;
-        y = (j / VOLUME_SIZE.horizontal) * canvasHeight;
-    } else if (axis === "horizontal") {
-        x = (i / VOLUME_SIZE.sagittal) * canvasWidth;
-        y = (j / VOLUME_SIZE.coronal) * canvasHeight;
-    } else if (axis === "sagittal") {
-        x = (i / VOLUME_SIZE.coronal) * canvasWidth;
-        y = (j / VOLUME_SIZE.horizontal) * canvasHeight;
-    }
-
-    return [x, y];
-}
-
-function findClosest(points, point) {
-    // NOTE: one-dimensional 3*N array with the xyz values interleaved
-    if (points.length % 3 !== 0) {
-        throw new Error('Invalid input: points array length must be a multiple of 3.');
-    }
-
-    if (point.length !== 3) {
-        throw new Error('Invalid input: point must contain three coordinates (x, y, z).');
-    }
-
-    let closestIndex = -1;
-    let closestDistance = Infinity;
-
-    for (let i = 0; i < points.length; i += 3) {
-        const xDiff = points[i] - point[0];
-        const yDiff = points[i + 1] - point[1];
-        const zDiff = points[i + 2] - point[2];
-
-        const distance = xDiff * xDiff + yDiff * yDiff + zDiff * zDiff;
-
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = i / 3; // Adjust index to represent the index of the point in the array
-        }
-    }
-
-    return closestIndex;
+    return projectVolumeCoordsToPixels(
+        axis,
+        xyz,
+        { width: container.clientWidth, height: container.clientHeight },
+        getVolumeSize(),
+        (axisName, _sliceIdx, point) => xyz2ij(axisName, sliceIdx, point),
+    );
 }
 
 function addDot(container, ij) {
@@ -100,19 +49,11 @@ function addDot(container, ij) {
 function displayPoints(container, axis, sliceIdx, points) {
     const n = points.length / 3;
     for (let idx = 0; idx < n; idx++) {
-        let x = points[3 * idx + 0];
-        let y = points[3 * idx + 1];
-        let z = points[3 * idx + 2];
-        let xyz = [x, y, z];
-        let ij = xyz2px(container, axis, sliceIdx, xyz);
+        const xyz = getPointTriplet(points, idx);
+        const ij = xyz2px(container, axis, sliceIdx, xyz);
         addDot(container, ij);
     }
 }
-
-
-/*************************************************************************************************/
-/* DotImage                                                                                       */
-/*************************************************************************************************/
 
 class DotImage {
     constructor(state, model, dispatcher) {
@@ -121,7 +62,6 @@ class DotImage {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        // Bitmaps.
         this.bitmaps = {
             'coronal': getRequiredElement(`svg-coronal-container-inner`),
             'horizontal': getRequiredElement(`svg-horizontal-container-inner`),
@@ -138,7 +78,6 @@ class DotImage {
     }
 
     displayDots() {
-        // DEBUG
         return false;
 
         let volume = this.model.getVolumeData(this.state.bucket, this.state.fname);
@@ -151,9 +90,6 @@ class DotImage {
             }
         }
     }
-
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
 
     setupDotHover() {
         this.dispatcher.on(EVENTS.FEATURE, async (ev) => {
@@ -168,7 +104,6 @@ class DotImage {
                     let sliceIdx = this.state[axis];
                     let container = this.bitmaps[axis];
 
-                    // Find the xyz volume coordinates of the clicked point.
                     let xyz = mouseXYZ(container, axis, sliceIdx, ev);
                     console.log(
                         `clicked on axis ${axis}, slice #${sliceIdx}, ` +
@@ -178,11 +113,9 @@ class DotImage {
                     if (!volume) return;
 
                     let points = volume["xyz"].data;
-                    let pointIdx = findClosest(points, xyz);
-                    let xClosest = points[pointIdx + 0].toFixed(5);
-                    let yClosest = points[pointIdx + 1].toFixed(5);
-                    let zClosest = points[pointIdx + 2].toFixed(5);
-                    console.log(`closest point was #${pointIdx} at ${[xClosest, yClosest, zClosest]}`);
+                    let pointIdx = findClosestPointIndex(points, xyz);
+                    let closestPoint = getPointTriplet(points, pointIdx);
+                    console.log(`closest point was #${pointIdx} at ${closestPoint.map(v => v.toFixed(5))}`);
 
                     let url = volume["urls"].data[pointIdx];
                     if (url) {
@@ -190,7 +123,6 @@ class DotImage {
                         this.el.classList.add("shown");
                     }
 
-                    // Emit the event.
                     this.dispatcher.highlightDot(this, axis, sliceIdx, xyz, ev);
                 }
             });
@@ -198,17 +130,21 @@ class DotImage {
     }
 
     setupCloseButton() {
-        this.closeButton.addEventListener("click", (ev) => {
+        this.closeButton.addEventListener("click", () => {
             this.el.classList.remove("shown");
         });
     }
 
     setupDispatcher() {
-        this.dispatcher.on(EVENTS.RESET, (ev) => { this.hide(); });
-        this.dispatcher.on(EVENTS.SLICE, (ev) => {
+        this.dispatcher.on(EVENTS.RESET, () => { this.hide(); });
+        this.dispatcher.on(EVENTS.SLICE, () => {
             if (this.state.isVolume) {
                 this.displayDots();
             }
         });
+    }
+
+    hide() {
+        this.el.classList.remove("shown");
     }
 };
