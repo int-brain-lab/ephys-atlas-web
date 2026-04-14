@@ -1,12 +1,12 @@
 # Frontend Refactor Plan
 
-This document tracks the current frontend refactor sequence in the active app code under `js/`.
+This document tracks the current frontend refactor state in the active app code under `js/`.
 
-It is based on the current branch history plus a scan of the active codebase. If code and this plan diverge, trust the code.
+It is based on the current branch plus a scan of the active codebase. If code and this plan diverge, trust the code.
 
 ## Completed refactor work
 
-Recent landed refactor sequence:
+The first refactor phase is complete. The main helper-extraction sequence that has already landed includes:
 
 - `3218e97` `refactor(frontend): centralize event names and add JSDoc type scaffolding`
 - `31c0ca9` `refactor(state): add explicit state mutation helpers for low-risk flows`
@@ -22,99 +22,134 @@ Recent landed refactor sequence:
 - `8af57bc` `WIP: refactor volume handling in frontend`
 - `8be3824` `WIP: refactor slice`
 - `89d76a1` `Refactor dots`
-- `2c67633` `WIP: colormap refactor`
 
-Related bug-fix commits that validated the refactor lane in real usage:
+The next, broader module pass has also already started and is no longer just a proposal:
+
+- `2c67633` `WIP: colormap refactor`
+- `8731f5f` `Update frontend refactor plan`
+- `a0e7432` `WIP: refactoring histogram`
+- `fb53e4f` `Refactor regions`
+
+Related bug-fix commits that came out of real usage during the refactor:
 
 - `e74e226` `Fix colormap range with negative values in sidebar`
 - `61c9adf` `Fix bug with displayed value with mouse hovering in volume`
 
-Main direction so far:
-
-- move stringly-typed app events into `js/core/events.js`
-- move reusable pure logic into `js/core/*`
-- make DOM contracts explicit with required-element helpers in `js/core/dom.js`
-- reduce hidden coupling before broader structural cleanup
-
 ## Current status
 
-The low-risk helper-extraction pass is now largely complete for the main volume/slice interaction lane.
+The low-risk helper-extraction phase is done for the main volume and slice interaction path.
 
 The active frontend now has extracted helper modules for:
 
-- colors and region-color rule generation
-- histogram logic and DOM rendering
-- panel range and URL-reset helpers
-- slice geometry and wheel-step logic
-- dot-image coordinate and nearest-point logic
-- volume axis mapping, voxel indexing, hover coordinate mapping, and UI rules
-- state URL handling and event constants
+- events and DOM contract helpers
+- state URL serialization
+- color conversion and region color rule generation
+- histogram computation and histogram DOM rendering
+- volume axis mapping, voxel indexing, hover coordinate mapping, and volume UI rules
+- slice geometry, guide-line state, and wheel-step logic
+- dot-image coordinate mapping and nearest-point lookup
+- panel colormap-range ordering and reset URL building
+- colorbar range and histogram-source resolution
+- region filtering, title generation, and sort helpers
 
-The frontend node test suite is green via `npm run test:frontend`, and the recent volume/slice/panel changes have also been manually validated in the browser.
+The current frontend node test suite is green via `npm run test:frontend` with `13/13` passing.
 
-## What this means
+Manual browser validation has also already happened on the recently touched paths, including volume rendering, colormap range behavior, and hover-value behavior.
 
-The repo is no longer in the “finish obvious helper extraction” stage.
+## What changed since the previous plan
 
-That stage is effectively done for the safest modules. The remaining refactor work is now broader and more coupled, meaning the next tasks should be chosen more deliberately instead of continuing to extract tiny helpers everywhere.
+The previous version of this document still treated `colorbar.js` and `region.js` as future targets.
 
-## Remaining higher-coupling areas
+That is now stale.
 
-The main frontend modules that still mix DOM access, dispatcher wiring, state interpretation, and rendering decisions are now things like:
+Those modules have already been partially decomposed:
 
-- `js/colorbar.js`
+- `js/colorbar.js` now delegates range selection and histogram-source resolution to `js/core/colorbar-helpers.js`
+- `js/region.js` now delegates visible-region derivation and title text to `js/core/region-helpers.js`
+
+This means the frontend has moved out of the initial helper-extraction phase and into a second phase where the remaining gains will come from cleaner module boundaries, not just pulling out more isolated pure functions.
+
+## Current architecture picture
+
+The frontend is in a better state than when this plan started:
+
+- repeated pure logic has mostly been moved into `js/core/*`
+- event names and required DOM access are centralized
+- the volume, slice, dot-image, histogram, panel, colorbar, and region paths have basic focused node tests
+
+The remaining complexity is now concentrated in modules that still combine several responsibilities at once:
+
+- dispatcher subscriptions
+- state interpretation
+- model queries
+- DOM rendering and UI-specific side effects
+
+The main remaining modules in that category are:
+
 - `js/coloring.js`
-- `js/region.js`
-- parts of `js/panel.js` tied to export/reset/share UI
+- the still-heavy DOM/event portions of `js/panel.js`
+- some coordination logic spread across `js/app.js`, `js/model.js`, and `js/dispatcher.js`
 
-These are still valid refactor targets, but they are less “free win” territory than `volume.js`, `slice.js`, or `dotimage.js` were.
+## Recommended next phase
 
-## Recommended next steps
+The next phase should not be “extract more tiny helpers everywhere”.
 
-### 1. Keep the current refactor lane stable
+It should be a boundary-cleanup and integration phase with three goals:
 
-Do not immediately stack a large new cleanup on top of the recent volume/slice/dot/panel work unless there is a concrete payoff.
+### 1. Stabilize module responsibilities
 
-The current frontend path has already been improved materially and manually validated.
+Focus on reducing mixed responsibilities inside the heaviest UI modules instead of chasing isolated utility extraction.
 
-### 2. If continuing, pick one broader module only
+Best candidates:
 
-Recommended next target order:
-
-- `js/colorbar.js`
 - `js/coloring.js`
-- `js/region.js`
+- the export/share/reset portions of `js/panel.js`
+- selected coordination seams between `js/model.js`, `js/state.js`, and `js/dispatcher.js`
 
-Why `colorbar.js` first:
+### 2. Add integration-level frontend coverage
 
-- it is adjacent to the recent histogram and colormap-range fixes
-- it is more bounded than `coloring.js`
-- it still has a reasonable amount of state/histogram/display coupling that could be separated cleanly
+The current tests are good for extracted helpers, but they do not cover module interaction very much.
 
-### 3. Keep the same extraction rules
+The next confidence gain should come from small integration-style tests around things like:
 
-For any further frontend refactor work:
+- histogram range resolution for region vs volume features
+- region list derivation from search, stat, and mapping changes
+- volume hover value denormalization using loaded bounds
+- color rule generation flowing into CSS rule construction
 
-- extract pure computations first
-- keep constructor and public API stable
-- avoid intentional behavior changes inside refactor commits
-- add or extend `tests/frontend/*.test.js` in the same series
-- manually verify the directly affected browser flow before moving on
+### 3. Improve consistency of module APIs
 
-### 4. Prefer pausing over refactoring for its own sake
+Several modules still expose broad methods like `setState()` while also reacting directly to many dispatcher events.
 
-At this point, it is reasonable to stop the refactor pass and return to feature or bug work on a cleaner base.
+The next cleanup should aim for clearer internal conventions:
 
-The current codebase is in a meaningfully better state than the one this plan started from.
+- consistent naming for `init`, `setState`, `clear`, and render/update methods
+- fewer modules doing both state derivation and DOM mutation in the same long method
+- explicit seams for “derive view data” vs “render DOM”
 
-## Proposed immediate task order
+## Suggested task order
 
-1. Keep the current refactor commits as the boundary of the low-risk frontend cleanup phase.
-2. Update this plan whenever a broader module refactor actually begins.
-3. If a next frontend refactor is desired, start with `js/colorbar.js` and keep the scope narrow.
+Recommended order for the next phase:
+
+1. Update and simplify `js/coloring.js`
+2. Split remaining UI-heavy logic in `js/panel.js` into smaller rendering and state-derivation seams
+3. Add a small integration-style frontend test layer for the refactored flows
+4. Reassess whether deeper coordination cleanup in `js/app.js` / `js/model.js` / `js/dispatcher.js` is worth the risk
+
+## Suggested stopping point
+
+Do not keep refactoring indefinitely at the same granularity.
+
+A reasonable boundary for the current frontend refactor effort is:
+
+- `js/coloring.js` cleaned up
+- `js/panel.js` trimmed further where there is obvious mixed responsibility
+- one thin layer of integration coverage added on top of the helper tests
+
+After that, the codebase should be re-evaluated before attempting a broader architectural rewrite.
 
 ## Notes
 
 - This plan is for the active frontend only, not legacy directories.
 - Avoid hand-editing generated assets under `data/` as part of this refactor unless a task explicitly requires it.
-- Keep commits narrow and reversible.
+- Keep commits narrow and behavior-preserving where possible.
