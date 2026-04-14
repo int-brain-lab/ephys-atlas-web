@@ -417,6 +417,16 @@ class Model {
         return Object.keys(bucket.features);
     }
 
+    _getVolumeFeatureSet(bucketName) {
+        if (!bucketName || !this.hasBucket(bucketName)) {
+            return new Set();
+        }
+
+        const bucket = this.getBucket(bucketName);
+        const volumeFeatures = bucket?.metadata?.volumes || [];
+        return new Set(volumeFeatures);
+    }
+
     _buildPrefetchList(bucket, fname) {
         const orderedFeatures = this._getOrderedBucketFeatures(bucket);
         if (!orderedFeatures.length) {
@@ -575,7 +585,6 @@ class Model {
 
     downloadBucket(bucket, options) {
         console.assert(bucket);
-        console.log(`download bucket ${bucket}`);
         return this.buckets.download(bucket, options);
     }
 
@@ -616,7 +625,6 @@ class Model {
         console.assert(bucket);
         console.assert(fname);
 
-        console.log(`download features ${fname}`);
         return this.features.download(bucket, fname, options);
     }
 
@@ -632,8 +640,18 @@ class Model {
             return;
         }
 
+        const volumeFeatures = this._getVolumeFeatureSet(bucket);
+        if (volumeFeatures.has(fname)) {
+            this.clearFeaturePrefetch();
+            return;
+        }
+
         const candidates = this._buildPrefetchList(bucket, fname)
-            .filter((candidate) => candidate && candidate !== fname && !this.hasFeatures(bucket, candidate));
+            .filter((candidate) =>
+                candidate &&
+                candidate !== fname &&
+                !volumeFeatures.has(candidate) &&
+                !this.hasFeatures(bucket, candidate));
 
         this.prefetchGeneration += 1;
         const generation = this.prefetchGeneration;

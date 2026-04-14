@@ -77,6 +77,7 @@ class Bucket {
         // Add bucket.
         this.buttonAdd.addEventListener('click', async (e) => {
             let bucket = window.prompt("write a new bucket UUID or alias", "");
+            bucket = bucket ? bucket.trim() : "";
             if (bucket) {
                 this.add(bucket, true);
                 this.select(bucket);
@@ -150,6 +151,12 @@ class Bucket {
 
     add(bucket, selected) {
         if (DEFAULT_BUCKETS.includes(bucket)) return;
+        if (this.state.buckets.includes(bucket)) {
+            if (selected) {
+                this.el.value = bucket;
+            }
+            return;
+        }
         this.state.addBucket(bucket);
         addOption(this.el, bucket, bucket, selected);
     }

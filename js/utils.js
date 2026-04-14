@@ -308,7 +308,7 @@ export function getOS() {
 
 
 export async function downloadJSON(url, refresh = false, options = {}) {
-    console.debug(`downloading ${url}... (refresh is ${refresh})`);
+    console.log(`download ${url}${refresh ? ' [refresh]' : ''}`);
     let params = {
         headers: {
             'Content-Encoding': 'gzip',
