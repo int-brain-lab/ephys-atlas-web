@@ -657,3 +657,66 @@ test('volume hover publishes denormalized bounds-based values to the tooltip', a
         restore();
     }
 });
+
+test('colorbar shows selected-region local histogram overlay and selected count', () => {
+    const { document, restore } = installTestDom();
+    const windowEnv = installTestWindow();
+    try {
+        const state = {
+            bucket: 'tmp',
+            fname: 'firing_rate',
+            isVolume: false,
+            mapping: 'allen',
+            stat: 'mean',
+            cmap: 'magma',
+            cmapmin: 0,
+            cmapmax: 100,
+            logScale: false,
+            panelOpen: false,
+            selected: new Set([10]),
+        };
+        const model = {
+            getHistogram() {
+                return {
+                    vmin: 0,
+                    vmax: 100,
+                    total_count: 25,
+                    counts: [5, 0, 3, 1],
+                };
+            },
+            getVolumeData() {
+                return null;
+            },
+            getFeatures() {
+                return {
+                    data: {
+                        10: { count: 7, h_0: 2, h_1: 0, h_2: 4, h_3: 1 },
+                        20: { count: 9, h_0: 1, h_1: 3, h_2: 0, h_3: 2 },
+                    },
+                };
+            },
+            getRegions() {
+                return { 10: {}, 20: {} };
+            },
+            getColormap() {
+                return Array.from({ length: 100 }, (_, idx) => `#${idx.toString(16).padStart(6, '0')}`);
+            },
+        };
+        const dispatcher = new FakeDispatcher();
+
+        const colorbar = new Colorbar(state, model, dispatcher);
+        colorbar.setColormap();
+        colorbar.setGlobalHistogram();
+        dispatcher.emit(EVENTS.TOGGLE, { idx: 10 });
+
+        assert.equal(colorbar.miniHistogram.countSelected.innerHTML, 'n<sub>selected</sub>=7');
+        assert.equal(colorbar.miniHistogram.cbar2.style.opacity, 1);
+        assert.equal(colorbar.miniHistogram.cbar2.children.length, 50);
+        assert.equal(colorbar.miniHistogram.cbar2.children[0].style.height, 'calc(10px + 50%)');
+        assert.equal(colorbar.miniHistogram.cbar2.children[2].style.height, 'calc(10px + 100%)');
+        assert.equal(colorbar.miniHistogram.cbar2.children[3].style.height, 'calc(10px + 25%)');
+    } finally {
+        windowEnv.restore();
+        restore();
+    }
+});
