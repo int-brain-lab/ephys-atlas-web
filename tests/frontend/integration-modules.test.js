@@ -23,6 +23,9 @@ class FakeElement {
         this.href = '';
         this.onclick = null;
         this.sheet = null;
+        this.width = 0;
+        this.height = 0;
+        this.innerHTML = '';
         this.parentNode = null;
         this.classList = {
             add: (...names) => {
@@ -85,6 +88,21 @@ class FakeElement {
         };
         visit(this);
         return matches;
+    }
+
+    getContext(kind) {
+        if (kind !== '2d') {
+            return null;
+        }
+        return {
+            createImageData: (width, height) => ({ width, height, data: new Uint8ClampedArray(width * height * 4) }),
+            putImageData() {},
+            drawImage() {},
+        };
+    }
+
+    getBoundingClientRect() {
+        return this.boundingRect || { left: 0, top: 0, width: 100, height: 100 };
     }
 
     cloneNode(deep = false) {
@@ -240,6 +258,10 @@ class FakeDispatcher {
         this.logScaleEvents.push({ source, checked });
     }
 
+    volumeValues(source, axis, values, e) {
+        this.emit(EVENTS.VOLUME_VALUES, { axis, values, e }, source);
+    }
+
     highlight() {}
     toggle() {}
 }
@@ -248,6 +270,7 @@ function installTestDom() {
     const document = new FakeDocument();
 
     document.registerId('mini-histogram', new FakeElement('div'));
+    document.registerId('region-info', new FakeElement('div'));
     document.registerId('style-default-regions', new FakeElement('link'));
     const styleElement = new FakeElement('style');
     styleElement.sheet = new FakeStyleSheet();
@@ -268,6 +291,21 @@ function installTestDom() {
     document.registerId('connect-button', new FakeElement('button'));
     document.registerId('export-button', new FakeElement('button'));
     document.registerId('share-button', new FakeElement('button'));
+
+    document.registerId('style-volume', Object.assign(new FakeElement('style'), { sheet: new FakeStyleSheet() }));
+
+    for (const axis of ['coronal', 'horizontal', 'sagittal']) {
+        const container = new FakeElement('div');
+        container.boundingRect = { left: 0, top: 0, width: 100, height: 100 };
+        document.registerId(`svg-${axis}-container-inner`, container);
+
+        const svg = new FakeElement('svg');
+        svg.setAttribute('viewBox', '0 0 2 2');
+        document.registerId(`svg-${axis}`, svg);
+
+        document.registerId(`canvas-${axis}`, new FakeElement('canvas'));
+        document.registerId(`slider-${axis}`, new FakeElement('input'));
+    }
 
     document.registerId('bar-plot-list', new FakeElement('ul'));
     document.registerId('bar-plot-sort', new FakeElement('button'));
@@ -548,6 +586,72 @@ test('panel reset and share update URL state consistently', () => {
         assert.equal(state.updateURLCalls, 1);
         assert.equal(windowEnv.clipboardWrites.at(-1), 'https://localhost:8456/?bucket=tmp&state=serialized');
         assert.equal(document.getElementById('share-button').innerHTML, 'share');
+    } finally {
+        windowEnv.restore();
+        restore();
+    }
+});
+
+test('volume hover publishes denormalized bounds-based values to the tooltip', async () => {
+    const { document, restore } = installTestDom();
+    const windowEnv = installTestWindow();
+    try {
+        const state = {
+            bucket: 'tmp',
+            fname: 'rms_lf',
+            isVolume: true,
+            mapping: 'allen',
+            stat: 'mean',
+            cmap: 'magma',
+            cmapmin: 0,
+            cmapmax: 100,
+            logScale: false,
+            panelOpen: false,
+            selected: new Set(),
+            coronal: 0,
+            horizontal: 0,
+            sagittal: 0,
+        };
+        const model = {
+            getVolumeData() {
+                return {
+                    volumes: {
+                        mean: {
+                            bounds: [-96.0625, 0],
+                            volume: {
+                                shape: [2, 2, 2],
+                                fortran_order: false,
+                                data: new Uint8Array([0, 0, 255, 0, 0, 0, 0, 0]),
+                                bounds: new Float32Array([0, 0]),
+                            },
+                        },
+                    },
+                };
+            },
+            getColormap() {
+                return Array.from({ length: 100 }, () => '#111111');
+            },
+            getRegions() {
+                return {};
+            },
+        };
+        const dispatcher = new FakeDispatcher();
+
+        const { Volume } = await import('../../js/volume.js');
+        const { Tooltip } = await import('../../js/tooltip.js');
+        new Volume(state, model, dispatcher);
+        new Tooltip(state, model, dispatcher);
+
+        dispatcher.emit(EVENTS.FEATURE, { fname: 'rms_lf', isVolume: true });
+        dispatcher.emit(EVENTS.VOLUME_HOVER, {
+            axis: 'coronal',
+            e: { clientX: 25, clientY: 75 },
+        });
+
+        assert.equal(document.getElementById('region-info').innerHTML, 'mean: 0');
+        assert.equal(document.getElementById('region-info').style.visibility, 'visible');
+        assert.equal(document.getElementById('region-info').style.left, '35px');
+        assert.equal(document.getElementById('region-info').style.top, '85px');
     } finally {
         windowEnv.restore();
         restore();
