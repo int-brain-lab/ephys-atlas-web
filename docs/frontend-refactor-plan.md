@@ -23,7 +23,7 @@ The first refactor phase is complete. The main helper-extraction sequence that h
 - `8be3824` `WIP: refactor slice`
 - `89d76a1` `Refactor dots`
 
-The next, broader module pass has also already started and is no longer just a proposal:
+The broader module-boundary pass has also already happened in the active codebase:
 
 - `2c67633` `WIP: colormap refactor`
 - `8731f5f` `Update frontend refactor plan`
@@ -48,34 +48,39 @@ The active frontend now has extracted helper modules for:
 - volume axis mapping, voxel indexing, hover coordinate mapping, and volume UI rules
 - slice geometry, guide-line state, and wheel-step logic
 - dot-image coordinate mapping and nearest-point lookup
-- panel colormap-range ordering and reset URL building
+- panel colormap-range ordering, display derivation, and reset URL building
 - colorbar range and histogram-source resolution
 - region filtering, title generation, and sort helpers
+- coloring view derivation for CSS-rule rendering and websocket publication
 
-The current frontend node test suite is green via `npm run test:frontend` with `13/13` passing.
+The current frontend node test suite is green via `npm run test:frontend` with integration coverage now included.
 
-Manual browser validation has also already happened on the recently touched paths, including volume rendering, colormap range behavior, and hover-value behavior.
+Manual browser validation has already happened on the recently touched paths, including volume rendering, colormap range behavior, hover-value behavior, and panel/coloring changes.
 
 ## What changed since the previous plan
 
-The previous version of this document still treated `colorbar.js` and `region.js` as future targets.
+The previous version of this document still described integration-style tests as a future step.
 
 That is now stale.
 
-Those modules have already been partially decomposed:
+A thin integration test layer has started in `tests/frontend/integration-modules.test.js`.
 
-- `js/colorbar.js` now delegates range selection and histogram-source resolution to `js/core/colorbar-helpers.js`
-- `js/region.js` now delegates visible-region derivation and title text to `js/core/region-helpers.js`
+It currently covers real cross-module flows for:
 
-This means the frontend has moved out of the initial helper-extraction phase and into a second phase where the remaining gains will come from cleaner module boundaries, not just pulling out more isolated pure functions.
+- volume feature selection keeping `Panel` and `Colorbar` aligned on histogram bounds and colormap choice
+- non-volume feature selection updating `Coloring` CSS rules and `Region` list/title together
+- reset/share state flows updating the URL and clipboard path consistently
+
+This means the frontend is now in a third phase: stabilization through interaction coverage, not just helper extraction.
 
 ## Current architecture picture
 
-The frontend is in a better state than when this plan started:
+The frontend is in a materially better state than when this plan started:
 
 - repeated pure logic has mostly been moved into `js/core/*`
 - event names and required DOM access are centralized
-- the volume, slice, dot-image, histogram, panel, colorbar, and region paths have basic focused node tests
+- `volume.js`, `slice.js`, `dotimage.js`, `panel.js`, `colorbar.js`, `coloring.js`, and `region.js` all have clearer seams than before
+- helper-level tests exist for the main extracted logic, and interaction-level tests have started for module coordination
 
 The remaining complexity is now concentrated in modules that still combine several responsibilities at once:
 
@@ -84,69 +89,63 @@ The remaining complexity is now concentrated in modules that still combine sever
 - model queries
 - DOM rendering and UI-specific side effects
 
-The main remaining modules in that category are:
+The main remaining areas in that category are:
 
-- `js/coloring.js`
-- the still-heavy DOM/event portions of `js/panel.js`
+- the export path in `js/panel.js`
+- parts of `js/share.js` / URL update coordination
 - some coordination logic spread across `js/app.js`, `js/model.js`, and `js/dispatcher.js`
 
 ## Recommended next phase
 
-The next phase should not be “extract more tiny helpers everywhere”.
+The next phase should be short and deliberate.
 
-It should be a boundary-cleanup and integration phase with three goals:
+It should focus on stabilization and only then decide whether a deeper architecture pass is justified.
 
-### 1. Stabilize module responsibilities
+### 1. Extend integration coverage around the remaining risky flows
 
-Focus on reducing mixed responsibilities inside the heaviest UI modules instead of chasing isolated utility extraction.
+Best next cases:
 
-Best candidates:
-
-- `js/coloring.js`
-- the export/share/reset portions of `js/panel.js`
-- selected coordination seams between `js/model.js`, `js/state.js`, and `js/dispatcher.js`
-
-### 2. Add integration-level frontend coverage
-
-The current tests are good for extracted helpers, but they do not cover module interaction very much.
-
-The next confidence gain should come from small integration-style tests around things like:
-
-- histogram range resolution for region vs volume features
-- region list derivation from search, stat, and mapping changes
 - volume hover value denormalization using loaded bounds
-- color rule generation flowing into CSS rule construction
+- local histogram rendering for selected regions
+- panel toggle and URL-update coordination
+- feature-to-coloring-to-unity data publication if that path is still important
 
-### 3. Improve consistency of module APIs
+### 2. Normalize API conventions in the modules already touched
 
-Several modules still expose broad methods like `setState()` while also reacting directly to many dispatcher events.
+Do a light consistency pass, not a redesign.
 
-The next cleanup should aim for clearer internal conventions:
+Target things like:
 
-- consistent naming for `init`, `setState`, `clear`, and render/update methods
-- fewer modules doing both state derivation and DOM mutation in the same long method
-- explicit seams for “derive view data” vs “render DOM”
+- consistent use of `init`, `setState`, `clear`, `render*`, and `sync*`
+- avoiding duplicated dispatcher side effects where one method can own the flow
+- trimming stale comments and unused parameters left behind by the refactor
+
+### 3. Reassess before touching the core coordination layer
+
+Only move into `js/app.js`, `js/model.js`, or `js/dispatcher.js` if there is a specific concrete payoff such as:
+
+- a bug caused by event fan-out ordering
+- repeated state/model orchestration patterns that are now blocking changes
+- difficulty adding tests because core coordination is too implicit
 
 ## Suggested task order
 
-Recommended order for the next phase:
+Recommended order from here:
 
-1. Update and simplify `js/coloring.js`
-2. Split remaining UI-heavy logic in `js/panel.js` into smaller rendering and state-derivation seams
-3. Add a small integration-style frontend test layer for the refactored flows
-4. Reassess whether deeper coordination cleanup in `js/app.js` / `js/model.js` / `js/dispatcher.js` is worth the risk
+1. Add one more integration test for volume hover / bounds behavior
+2. Add one more integration test for selection-driven local histogram behavior
+3. Do a small naming/comment cleanup pass in the modules already refactored
+4. Re-evaluate whether a deeper coordination refactor is worth the risk
 
 ## Suggested stopping point
 
-Do not keep refactoring indefinitely at the same granularity.
+A reasonable stopping point for the current frontend refactor effort is:
 
-A reasonable boundary for the current frontend refactor effort is:
+- helper extraction complete on the main interaction modules
+- `coloring.js` and `panel.js` cleaned up to acceptable boundaries
+- a thin but real integration-test layer covering the highest-risk cross-module flows
 
-- `js/coloring.js` cleaned up
-- `js/panel.js` trimmed further where there is obvious mixed responsibility
-- one thin layer of integration coverage added on top of the helper tests
-
-After that, the codebase should be re-evaluated before attempting a broader architectural rewrite.
+After that, stop and let feature or bug work drive any deeper architecture change.
 
 ## Notes
 
