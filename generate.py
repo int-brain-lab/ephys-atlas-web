@@ -17,6 +17,7 @@ import pandas as pd
 from pandas.core.groupby import DataFrameGroupBy
 
 from tools.process import MAPPINGS, DATA_DIR, ROOT_ID, ROOT_DIR, save_json, write_text
+from tools.ephys_units import get_ephys_feature_unit
 from server import new_uuid, create_bucket_metadata, create_bucket, create_features, get_bucket
 
 
@@ -47,21 +48,9 @@ BWM_EXTRA_FNAMES = (
 )
 
 
-EPHYS_FEATURE_UNITS = {
-    'rms_lf': 'V',
-    'rms_ap': 'V',
-    'psd_theta': 'dB',
-    'psd_delta': 'dB',
-    'psd_alpha': 'dB',
-    'psd_beta': 'dB',
-    'psd_gamma': 'dB',
-    'spike_rate': 'Hz',
-}
-
-
 def get_feature_unit(bucket_alias, fname):
     if bucket_alias == 'ephys':
-        return EPHYS_FEATURE_UNITS.get(fname, None)
+        return get_ephys_feature_unit(fname)
     return None
 
 

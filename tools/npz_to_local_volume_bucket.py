@@ -33,6 +33,7 @@ from pathlib import Path
 import numpy as np
 from iblatlas.atlas import AllenAtlas
 from iblbrainviewer import api
+from tools.ephys_units import get_ephys_feature_unit
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -212,6 +213,7 @@ def main() -> None:
                             feature_name=feature_name
                         ),
                     )
+                payload["unit"] = get_ephys_feature_unit(feature_name)
                 api.save_payload(output_dir, feature_name, payload)
         finally:
             api._default_histogrammer = old_histogrammer

@@ -25,6 +25,39 @@ That writes:
 - `data/features/my_ephys_volume/_bucket.json`
 - one JSON feature payload per feature under `data/features/my_ephys_volume/`
 
+For features with known ephys units, the generated payloads also carry a
+`unit` field so the website can show those units in tooltips and stats.
+
+## Unit source of truth
+
+The authoritative source is the `ibleatools` ephys feature schema at this
+exact commit:
+
+- https://github.com/int-brain-lab/ibleatools/blob/27839bdc55ae684d19e1c6a54dc2a683c30b61cf/src/ephysatlas/features.py
+
+That file stores units in Pandera field metadata such as `raw_unit` and, for a
+few transformed features, `transformed_unit`.
+
+For the atlas website, we use display units derived from that schema:
+
+- RMS features: `dB rel. V`
+- PSD / residual / CSD PSD features: `dB rel. V**2/Hz`
+- `spike_count`: `log2 count`
+- `cor_ratio`, `polarity`, `decay_fit_r_squared`: `dimensionless`
+- `decay_n_peaks`: `count`
+- `alpha_mean`, `alpha_std`: `N/A`
+- `*_time_secs`: `s`
+
+The following waveform fields do not currently expose explicit unit metadata in
+that schema, so this repo leaves them unset rather than guessing:
+
+- `depolarisation_slope`
+- `recovery_slope`
+- `repolarisation_slope`
+- `peak_val`
+- `tip_val`
+- `trough_val`
+
 ## Why this script exists
 
 There is volume support in `../iblbrainviewer`, but the current `iblbrainviewer.api.make_volume_payload()` path uses a default **50 µm** atlas histogrammer. A raw call to `FeatureUploader.local_volume()` is therefore not reliable for a **25 µm** volume like this one.

@@ -20,6 +20,7 @@ from ephysatlas.features import voltage_features_set
 from ephysatlas.data import read_features_from_disk
 from iblatlas.regions import BrainRegions
 from iblbrainviewer import api
+from tools.ephys_units import get_ephys_feature_unit
 
 
 # ---------------------------------------------------------------------------------------------
@@ -62,20 +63,8 @@ XLIMS = {
 }
 
 
-EPHYS_FEATURE_UNITS = {
-    'rms_lf': 'V',
-    'rms_ap': 'V',
-    'psd_theta': 'dB',
-    'psd_delta': 'dB',
-    'psd_alpha': 'dB',
-    'psd_beta': 'dB',
-    'psd_gamma': 'dB',
-    'spike_rate': 'Hz',
-}
-
-
 def get_feature_unit(fname):
-    return EPHYS_FEATURE_UNITS.get(fname, None)
+    return get_ephys_feature_unit(fname)
 
 
 # ---------------------------------------------------------------------------------------------
