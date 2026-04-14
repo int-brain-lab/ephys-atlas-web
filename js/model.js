@@ -171,6 +171,8 @@ class Model {
         this.prefetchGeneration = 0;
         this.prefetchQueue = [];
         this.prefetchRunning = false;
+        this.activePrefetchController = null;
+        this.activePrefetchKey = null;
         this.prefetchDelayMs = 150;
 
         this.loaders = {
@@ -207,6 +209,7 @@ class Model {
         this.features = new Cache(async (bucket, fname, options) => {
             const refresh = options ? options.refresh : false;
             const isPrefetch = options ? options.prefetch === true : false;
+            const signal = options ? options.signal : undefined;
             if (!fname) return null;
             const url = URLS['features'](bucket, fname);
 
@@ -230,7 +233,7 @@ class Model {
                 }
             }
             else {
-                f = await downloadJSON(url, refresh);
+                f = await downloadJSON(url, refresh, { signal });
             }
 
             if (!isPrefetch) {
@@ -385,6 +388,14 @@ class Model {
         });
     }
 
+    _abortActivePrefetch() {
+        if (this.activePrefetchController) {
+            this.activePrefetchController.abort();
+        }
+        this.activePrefetchController = null;
+        this.activePrefetchKey = null;
+    }
+
     async _drainPrefetchQueue(generation) {
         if (this.prefetchRunning) return;
         this.prefetchRunning = true;
@@ -400,11 +411,26 @@ class Model {
                 await this._awaitPrefetchTurn();
                 if (task.generation !== this.prefetchGeneration) continue;
 
+                const controller = new AbortController();
+                this.activePrefetchController = controller;
+                this.activePrefetchKey = `${task.bucket}/${task.fname}`;
+
                 try {
-                    await this.downloadFeatures(task.bucket, task.fname, { prefetch: true });
+                    await this.downloadFeatures(task.bucket, task.fname, {
+                        prefetch: true,
+                        signal: controller.signal,
+                    });
                 }
                 catch (error) {
-                    console.warn(`prefetch failed for ${task.bucket}/${task.fname}`, error);
+                    if (error?.name !== 'AbortError') {
+                        console.warn(`prefetch failed for ${task.bucket}/${task.fname}`, error);
+                    }
+                }
+                finally {
+                    if (this.activePrefetchController === controller) {
+                        this.activePrefetchController = null;
+                        this.activePrefetchKey = null;
+                    }
                 }
             }
         }
@@ -507,6 +533,7 @@ class Model {
     clearFeaturePrefetch() {
         this.prefetchGeneration += 1;
         this.prefetchQueue = [];
+        this._abortActivePrefetch();
     }
 
     scheduleFeaturePrefetch(bucket, fname) {

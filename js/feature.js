@@ -129,10 +129,8 @@ class Feature {
             if (this.state.fname) {
                 const state = this.state;
 
-                // Download the features.
-                if (!this.model.hasFeatures(state.bucket, state.fname)) {
-                    await this.model.downloadFeatures(state.bucket, state.fname);
-                }
+                // Download the features, including the case where a prefetch is already in flight.
+                await this.model.downloadFeatures(state.bucket, state.fname);
 
                 // Select the features.
                 this.selectFeature(state.fname, state.isVolume);
@@ -160,9 +158,7 @@ class Feature {
                 return;
             }
 
-            if (!this.model.hasFeatures(state.bucket, fname)) {
-                await this.model.downloadFeatures(state.bucket, fname);
-            }
+            await this.model.downloadFeatures(state.bucket, fname);
 
             const fet = this.model.getFeatures(state.bucket, fname, this.state.mapping);
             const vol = this.model.getVolumeData(state.bucket, fname, this.state.mapping);

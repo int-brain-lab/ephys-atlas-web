@@ -289,7 +289,7 @@ export function getOS() {
 
 
 
-export async function downloadJSON(url, refresh = false) {
+export async function downloadJSON(url, refresh = false, options = {}) {
     console.debug(`downloading ${url}... (refresh is ${refresh})`);
     let params = {
         headers: {
@@ -299,6 +299,8 @@ export async function downloadJSON(url, refresh = false) {
     };
     if (refresh)
         params['cache'] = 'reload';
+    if (options.signal)
+        params['signal'] = options.signal;
     var r = await fetch(url, params);
     if (!r.ok) {
         console.error(`could not load ${url}:`);

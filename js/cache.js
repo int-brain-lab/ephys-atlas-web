@@ -54,11 +54,16 @@ class Cache {
             return this._cache.get(idString);
         }
 
-        const downloadPromise = this._downloadFunction(...id).then((result) => {
-            console.log(`finish downloading ${idString}`);
-            this._cache.set(idString, result);
-            return result;
-        });
+        const downloadPromise = this._downloadFunction(...id)
+            .then((result) => {
+                console.log(`finish downloading ${idString}`);
+                this._cache.set(idString, result);
+                return result;
+            })
+            .catch((error) => {
+                this._cache.delete(idString);
+                throw error;
+            });
 
         // console.log(`save ${id} in cache`);
         this._cache.set(idString, downloadPromise);
