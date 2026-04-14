@@ -1,11 +1,9 @@
 export { Model, URLS };
 
 import { BASE_URL } from "./constants.js";
+import { FeatureStore } from "./feature-store.js";
 import { Loader } from "./loader.js";
-import { Cache } from "./cache.js";
-import { decodeFeaturePayload } from "./feature-decoder.js";
-import { PersistentCache } from "./persistent-cache.js";
-import { downloadJSON, memoize } from "./utils.js";
+import { memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
 
 
@@ -21,53 +19,15 @@ const URLS = {
     'features': (bucket, fname) => `${BASE_URL}/api/buckets/${bucket}/${fname}`,
 }
 
-const PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const PERSISTENT_CACHE_SCHEMA_VERSION = 1;
-
-
-
-/*************************************************************************************************/
-/* Model class                                                                                      */
-/*************************************************************************************************/
-
-async function loadCacheFiles(cache) {
-    const requests = await cache.keys();
-
-    const dictionary = {
-        "features": {},
-        "metadata": {
-            "alias": "local",
-            "short_desc": "local bucket",
-        }
-    };
-
-    for (const request of requests) {
-        // Extract the filename from the URL
-        const fileName = request.url.split('/').pop();
-        const name = fileName.replace(/\.json$/, '');
-
-        if (fileName.endsWith('.json')) {
-            // const response = await cache.match(request);
-            // if (response) {
-            //     const jsonContent = await response.json();
-            //     if (jsonContent.short_desc) {
-
-            dictionary.features[name] = {
-                "short_desc": ""//name //jsonContent.short_desc
-            };
-
-            //     }
-            // }
-        }
-    }
-
-    return dictionary;
-}
-
 class Model {
     constructor(splash) {
         this.splash = splash;
-        this.persistentCache = new PersistentCache();
+        this.featureStore = new FeatureStore({ splash, urls: URLS });
+        this.persistentCache = this.featureStore.persistentCache;
+        this.localCache = null;
+        this.featureStore.localCachePromise.then((cache) => {
+            this.localCache = cache;
+        });
         this.prefetchGeneration = 0;
         this.prefetchQueue = [];
         this.prefetchRunning = false;
@@ -86,101 +46,6 @@ class Model {
             'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
         };
 
-        // Caches.
-
-        // Open the local cache.
-        caches.open('localCache').then((c) => {
-            this.localCache = c;
-        });
-
-        // Buckets.
-        this.buckets = new Cache(async (bucket, options) => {
-
-            // NOTE: special handling of local bucket
-            if (bucket == "local") {
-                return loadCacheFiles(this.localCache);
-            }
-
-            const refresh = options ? options.refresh : false;
-            const cacheKey = this._getPersistentBucketKey(bucket);
-            const cached = refresh ? null : await this._getPersistentCacheEntry(cacheKey);
-            if (cached) {
-                return cached;
-            }
-
-            const data = await downloadJSON(URLS['bucket'](bucket), refresh);
-            if (data) {
-                await this._setPersistentCacheEntry(cacheKey, data);
-            }
-            return data;
-        });
-
-        // Features.
-        this.features = new Cache(async (bucket, fname, options) => {
-            const refresh = options ? options.refresh : false;
-            const isPrefetch = options ? options.prefetch === true : false;
-            const signal = options ? options.signal : undefined;
-            if (!fname) return null;
-            const url = URLS['features'](bucket, fname);
-
-            if (!isPrefetch) {
-                this.splash.setTotal(2);
-                this.splash.setDescription(`Downloading feature "${fname}"`);
-                this.splash.start();
-            }
-
-            let f = null;
-
-            // NOTE: special handling of local features.
-            if (bucket == "local") {
-                console.log(`looking for ${fname}.json in cache...`);
-                const response = await this.localCache.match(`${fname}.json`);
-                if (response) {
-                    f = await response.json();
-                }
-                else {
-                    console.error('File not found in cache.');
-                }
-            }
-            else {
-                const cacheKey = this._getPersistentFeatureKey(bucket, fname);
-                const cached = refresh ? null : await this._getPersistentCacheEntry(cacheKey);
-                if (cached) {
-                    f = cached;
-                }
-                else {
-                    f = await downloadJSON(url, refresh, { signal });
-                    if (f) {
-                        if ("volumes" in (f.feature_data || {})) {
-                            await this.persistentCache.delete(cacheKey);
-                        }
-                        else {
-                            await this._setPersistentCacheEntry(cacheKey, f);
-                        }
-                    }
-                }
-            }
-
-            if (!isPrefetch) {
-                this.splash.add(1);
-            }
-
-            let out = null;
-
-            if (f) {
-                out = decodeFeaturePayload(f);
-
-                if (out && "volumes" in out && !isPrefetch) {
-                    this.splash.add(1);
-                }
-            }
-
-            if (!isPrefetch) {
-                this.splash.end();
-            }
-            return out;
-        });
-
         this.getColors = memoize(this._getColors.bind(this));
     }
 
@@ -195,46 +60,6 @@ class Model {
             p.push(this.loaders[loader].start());
         }
         await Promise.all(p);
-    }
-
-    _getPersistentBucketKey(bucket) {
-        return `bucket:${bucket}`;
-    }
-
-    _getPersistentFeatureKey(bucket, fname) {
-        return `feature:${bucket}:${fname}`;
-    }
-
-    _isPersistentCacheEntryFresh(entry) {
-        if (!entry) {
-            return false;
-        }
-
-        if (entry.schemaVersion !== PERSISTENT_CACHE_SCHEMA_VERSION) {
-            return false;
-        }
-
-        const age = Date.now() - (entry.storedAt || 0);
-        return age >= 0 && age <= PERSISTENT_CACHE_TTL_MS;
-    }
-
-    async _getPersistentCacheEntry(key) {
-        const entry = await this.persistentCache.get(key);
-        if (!this._isPersistentCacheEntryFresh(entry)) {
-            if (entry) {
-                await this.persistentCache.delete(key);
-            }
-            return null;
-        }
-        return entry.payload || null;
-    }
-
-    async _setPersistentCacheEntry(key, payload) {
-        await this.persistentCache.set(key, {
-            payload,
-            storedAt: Date.now(),
-            schemaVersion: PERSISTENT_CACHE_SCHEMA_VERSION,
-        });
     }
 
     _flattenFeatureTree(node) {
@@ -440,17 +265,17 @@ class Model {
 
     downloadBucket(bucket, options) {
         console.assert(bucket);
-        return this.buckets.download(bucket, options);
+        return this.featureStore.downloadBucket(bucket, options);
     }
 
     hasBucket(bucket) {
         console.assert(bucket);
-        return this.buckets.has(bucket);
+        return this.featureStore.hasBucket(bucket);
     }
 
     getBucket(bucket) {
         console.assert(bucket);
-        return this.buckets.get(bucket);
+        return this.featureStore.getBucket(bucket);
     }
 
     /* Features                                                                                  */
@@ -480,7 +305,7 @@ class Model {
         console.assert(bucket);
         console.assert(fname);
 
-        return this.features.download(bucket, fname, options);
+        return this.featureStore.downloadFeature(bucket, fname, options);
     }
 
     clearFeaturePrefetch() {
@@ -527,14 +352,14 @@ class Model {
         console.assert(bucket);
         console.assert(fname);
 
-        return this.features.has(bucket, fname);
+        return this.featureStore.hasFeature(bucket, fname);
     }
 
     getFeaturesMappings(bucket, fname) {
         // Return the non-empty mappings of a feature.
         if (!fname)
             return null;
-        let g = this.features.get(bucket, fname);
+        let g = this.featureStore.getFeature(bucket, fname);
         if (!g) return null;
         if (!g["mappings"]) return null;
         let mappings = [];
@@ -549,7 +374,7 @@ class Model {
     getCmap(bucket, fname) {
         if (!fname)
             return null;
-        let g = this.features.get(bucket, fname);
+        let g = this.featureStore.getFeature(bucket, fname);
         if (!g) return null;
         if (!g["cmap"]) return null;
         return g["cmap"];
@@ -561,7 +386,7 @@ class Model {
         if (!fname) {
             return null;
         }
-        let g = this.features.get(bucket, fname);
+        let g = this.featureStore.getFeature(bucket, fname);
         if (!g) {
             return null;
         }
@@ -579,7 +404,7 @@ class Model {
         if (!fname) {
             return null;
         }
-        let g = this.features.get(bucket, fname);
+        let g = this.featureStore.getFeature(bucket, fname);
         if (!g) {
             return null;
         }
@@ -595,7 +420,7 @@ class Model {
         if (!fname) {
             return null;
         }
-        let g = this.features.get(bucket, fname);
+        let g = this.featureStore.getFeature(bucket, fname);
         if (!g) {
             return null;
         }
@@ -615,7 +440,7 @@ class Model {
         let regions = this.getRegions(state.mapping);
         let features = state.isVolume ? null : this.getFeatures(
             state.bucket, state.fname, state.mapping, refresh);
-        let featurePayload = this.features.get(state.bucket, state.fname);
+        let featurePayload = this.featureStore.getFeature(state.bucket, state.fname);
         let histogram = featurePayload ? featurePayload['histogram'] : null;
 
         let regionColors = buildRegionColors({
