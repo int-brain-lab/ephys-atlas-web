@@ -21,6 +21,24 @@ export function displayNumber(x, precision = DISPLAY_NUMBER_PRECISION) {
 }
 
 
+export function statUsesFeatureUnit(statKey, unit) {
+    return !!(unit && statKey && statKey !== 'count' && !statKey.startsWith('h_'));
+}
+
+
+export function formatStatLabel(statKey, unit) {
+    return statUsesFeatureUnit(statKey, unit) ? `${statKey} (${unit})` : statKey;
+}
+
+
+export function formatStatValue(value, statKey, unit, precision = DISPLAY_NUMBER_PRECISION) {
+    const formatted = displayNumber(value, precision);
+    if (typeof value !== 'number') {
+        return formatted;
+    }
+    return statUsesFeatureUnit(statKey, unit) ? `${formatted} ${unit}` : formatted;
+}
+
 
 export function rgb2hex(s) {
     // var a = s.split("(")[1].split(")")[0];

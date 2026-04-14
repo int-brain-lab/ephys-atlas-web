@@ -1,6 +1,6 @@
 export { Tooltip };
 
-import { e2idx, displayNumber, } from "./utils.js";
+import { formatStatValue } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement } from "./core/dom.js";
 
@@ -96,6 +96,7 @@ class Tooltip {
             let valueDisplay = '';
             let count = null;
             let countDisplay = '';
+            const unit = this.model.getFeatureUnit(this.state.bucket, this.state.fname);
 
             if (!fet) {
                 valueDisplay = '';
@@ -110,8 +111,8 @@ class Tooltip {
                 else
                     countDisplay = '';
 
-                if (value)
-                    valueDisplay = `${displayNumber(value)}`;
+                if (value !== undefined && value !== null)
+                    valueDisplay = formatStatValue(value, this.state.stat, unit);
                 else
                     valueDisplay = "(not significant)";
 
@@ -127,9 +128,10 @@ class Tooltip {
     formatVolumeValues(values) {
         const lines = [];
         const keys = Object.keys(values).sort();
+        const unit = this.model.getFeatureUnit(this.state.bucket, this.state.fname);
         for (const name of keys) {
             const value = values[name];
-            lines.push(`${name}: ${displayNumber(value)}`);
+            lines.push(`${name}: ${formatStatValue(value, name, unit)}`);
         }
         return lines.join("<br>");
     }

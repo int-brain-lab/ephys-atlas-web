@@ -522,6 +522,26 @@ class Model {
     /* Features                                                                                  */
     /*********************************************************************************************/
 
+    getFeatureMetadata(bucket, fname) {
+        console.assert(bucket);
+
+        if (!fname) {
+            return null;
+        }
+
+        const bucketData = this.getBucket(bucket);
+        if (!bucketData?.features) {
+            return null;
+        }
+
+        return bucketData.features[fname] || null;
+    }
+
+    getFeatureUnit(bucket, fname) {
+        const metadata = this.getFeatureMetadata(bucket, fname);
+        return metadata?.unit || null;
+    }
+
     downloadFeatures(bucket, fname, options) {
         console.assert(bucket);
         console.assert(fname);

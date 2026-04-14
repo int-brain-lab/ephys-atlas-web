@@ -36,8 +36,12 @@ class FeatureDropdown {
             option.value = fname;
             option.textContent = label;
             const desc = features[fname] ? features[fname]['short_desc'] : '';
-            if (desc) {
-                option.title = desc;
+            const unit = features[fname] ? features[fname]['unit'] : '';
+            const titleParts = [];
+            if (desc) titleParts.push(desc);
+            if (unit) titleParts.push(`Unit: ${unit}`);
+            if (titleParts.length) {
+                option.title = titleParts.join('\n');
             }
             this.el.appendChild(option);
         }

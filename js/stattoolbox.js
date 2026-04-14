@@ -3,12 +3,12 @@ export { StatToolbox };
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
-import { displayNumber } from "./utils.js";
+import { formatStatLabel, formatStatValue } from "./utils.js";
 
 // Format numeric stats so small/large magnitudes get scientific notation automatically.
-function formatTableValue(value) {
+function formatTableValue(value, statKey, unit) {
     if (typeof value === 'number') {
-        return displayNumber(value, 4);
+        return formatStatValue(value, statKey, unit, 4);
     }
     if (value === undefined || value === null) {
         return '';
@@ -129,6 +129,7 @@ class StatToolbox {
         const histogram = this.model.getHistogram(this.state.bucket, this.state.fname);
         const features = this.model.getFeatures(this.state.bucket, this.state.fname, this.state.mapping);
         const regions = this.model.getRegions(this.state.mapping);
+        const unit = this.model.getFeatureUnit(this.state.bucket, this.state.fname);
 
         if (!histogram || !features || !regions) {
             this.clear();
@@ -165,11 +166,11 @@ class StatToolbox {
             return;
         }
 
-        this.drawViolin(series, binCenters, vmin, vmax);
-        this.buildTable(series, features, regions);
+        this.drawViolin(series, binCenters, vmin, vmax, unit);
+        this.buildTable(series, features, regions, unit);
     }
 
-    drawViolin(series, binCenters, vmin, vmax) {
+    drawViolin(series, binCenters, vmin, vmax, unit) {
         this.clearSvg();
 
         const node = this.svg.node();
@@ -179,7 +180,7 @@ class StatToolbox {
         const height = node.clientHeight || parseFloat(this.svg.attr('height')) || 260;
         this.svg.attr('viewBox', `0 0 ${width} ${height}`);
 
-        const margin = { top: 16, right: 16, bottom: 40, left: 50 };
+        const margin = { top: 16, right: 16, bottom: 40, left: 64 };
         const innerWidth = width - margin.left - margin.right;
         const innerHeight = height - margin.top - margin.bottom;
 
@@ -206,6 +207,14 @@ class StatToolbox {
         const yAxis = d3.axisLeft(y).ticks(5);
         g.append('g').call(yAxis);
 
+        g.append('text')
+            .attr('x', -innerHeight / 2)
+            .attr('y', -margin.left + 14)
+            .attr('transform', 'rotate(-90)')
+            .attr('fill', 'currentColor')
+            .attr('text-anchor', 'middle')
+            .text(formatStatLabel(this.state.stat, unit));
+
         const xAxis = d3.axisBottom(x).tickFormat((d) => labelMap.get(d) || d);
         g.append('g')
             .attr('transform', `translate(0,${innerHeight})`)
@@ -230,7 +239,7 @@ class StatToolbox {
         });
     }
 
-    buildTable(series, features, regions) {
+    buildTable(series, features, regions, unit) {
         if (!this.table) return;
         this.table.innerHTML = '';
 
@@ -264,12 +273,12 @@ class StatToolbox {
         keys.forEach(key => {
             const row = tbody.insertRow();
             const tdKey = row.insertCell();
-            tdKey.innerHTML = `<strong>${key}</strong>`;
+            tdKey.innerHTML = `<strong>${formatStatLabel(key, unit)}</strong>`;
 
             series.forEach(s => {
                 const td = row.insertCell();
                 const value = features["data"]?.[s.id]?.[key];
-                td.textContent = formatTableValue(value);
+                td.textContent = formatTableValue(value, key, unit);
             });
         });
     }
