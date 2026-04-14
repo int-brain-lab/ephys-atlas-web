@@ -12,3 +12,12 @@ export function buildRegionColorRules(mapping, regionColors) {
 
     return rules;
 }
+
+export function buildRegionColoringView(mapping, fname, regionColors) {
+    return {
+        defaultHref: getDefaultRegionColorsHref(mapping),
+        rules: buildRegionColorRules(mapping, regionColors),
+        websocketKey: fname,
+        websocketData: regionColors,
+    };
+}

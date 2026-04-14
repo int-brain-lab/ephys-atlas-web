@@ -3,7 +3,10 @@ export { Coloring };
 import { clearStyle } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
-import { buildRegionColorRules, getDefaultRegionColorsHref } from "./core/coloring-helpers.js";
+import {
+    buildRegionColoringView,
+    getDefaultRegionColorsHref,
+} from "./core/coloring-helpers.js";
 
 
 
@@ -24,29 +27,39 @@ class Coloring {
     }
 
     init() {
-        // this.setState(this.state);
+        this.applyDefaultColors();
     }
 
-    setState(state) {
-        this.buildColors();
+    setState() {
+        this.refreshColors();
     }
 
     /* Setup functions                                                                           */
     /*********************************************************************************************/
 
     setupDispatcher() {
-        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); this.buildColors(); });
-        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.clear(); });
-        this.dispatcher.on(EVENTS.CMAP, (ev) => { this.buildColors(); });
-        this.dispatcher.on(EVENTS.CMAP_RANGE, (ev) => { this.buildColors(); });
-        this.dispatcher.on(EVENTS.LOG_SCALE, (ev) => { this.buildColors(); });
-        this.dispatcher.on(EVENTS.FEATURE, (ev) => { if (!ev.isVolume) this.buildColors(); });
-        this.dispatcher.on(EVENTS.REFRESH, (ev) => { this.buildColors({ 'cache': 'reload' }); });
-        this.dispatcher.on(EVENTS.MAPPING, (ev) => { this.updateDefaultColors(); this.buildColors(); });
-        this.dispatcher.on(EVENTS.STAT, (ev) => { this.buildColors(); });
+        this.dispatcher.on(EVENTS.RESET, () => {
+            this.init();
+            this.refreshColors();
+        });
+        this.dispatcher.on(EVENTS.BUCKET, () => { this.clearFeatureColors(); });
+        this.dispatcher.on(EVENTS.CMAP, () => { this.refreshColors(); });
+        this.dispatcher.on(EVENTS.CMAP_RANGE, () => { this.refreshColors(); });
+        this.dispatcher.on(EVENTS.LOG_SCALE, () => { this.refreshColors(); });
+        this.dispatcher.on(EVENTS.FEATURE, (ev) => {
+            if (!ev.isVolume) {
+                this.refreshColors();
+            }
+        });
+        this.dispatcher.on(EVENTS.REFRESH, () => { this.refreshColors(); });
+        this.dispatcher.on(EVENTS.MAPPING, () => {
+            this.applyDefaultColors();
+            this.refreshColors();
+        });
+        this.dispatcher.on(EVENTS.STAT, () => { this.refreshColors(); });
 
         // NOTE: when Unity is loaded, send the colors.
-        // this.dispatcher.on(EVENTS.UNITY_LOADED, (ev) => {
+        // this.dispatcher.on(EVENTS.UNITY_LOADED, () => {
         //     this.dispatcher.data(this, this.getColors());
         // });
     }
@@ -54,47 +67,64 @@ class Coloring {
     /* Internal functions                                                                        */
     /*********************************************************************************************/
 
-    clear() {
-        clearStyle(this.style);
-        this.updateDefaultColors();
-
-        // Clear colors in WebSocket.
-        this.dispatcher.data(this, 'regionColors', '', {});
-    }
-
-    updateDefaultColors() {
+    applyDefaultColors() {
         this.styleDefault.href = getDefaultRegionColorsHref(this.state.mapping);
     }
 
-    buildColors(refresh = false) {
+    clearFeatureStyles() {
+        clearStyle(this.style);
+    }
 
-        // Remove the feature colors when deselecting a feature.
+    publishRegionColors(key, regionColors) {
+        this.dispatcher.data(this, 'regionColors', key, regionColors);
+    }
+
+    clearFeatureColors() {
+        this.clearFeatureStyles();
+        this.applyDefaultColors();
+        this.publishRegionColors('', {});
+    }
+
+    getRegionColors() {
+        return this.model.getColors(this.state);
+    }
+
+    getColoringView() {
+        const regionColors = this.getRegionColors();
+        if (!regionColors) {
+            return null;
+        }
+
+        return buildRegionColoringView(this.state.mapping, this.state.fname, regionColors);
+    }
+
+    renderColoringView(view) {
+        this.clearFeatureStyles();
+        this.applyDefaultColors();
+
+        for (const rule of view.rules) {
+            this.style.insertRule(rule);
+        }
+    }
+
+    refreshColors() {
         if (!this.state.fname) {
-
-            // Clear the styles.
-            this.clear();
-
+            this.clearFeatureColors();
             this.dispatcher.spinning(this, false);
             return;
         }
 
-        // Show the spinning mouse cursor.
         this.dispatcher.spinning(this, true);
 
-        let mapping = this.state.mapping;
-        let regionColors = this.model.getColors(this.state);
-
-        // Clear the styles.
-        this.clear();
-
-        for (const rule of buildRegionColorRules(mapping, regionColors)) {
-            this.style.insertRule(rule);
+        const view = this.getColoringView();
+        if (!view) {
+            this.clearFeatureColors();
+            this.dispatcher.spinning(this, false);
+            return;
         }
 
-        // Register the data to WebSocket.
-        this.dispatcher.data(this, 'regionColors', this.state.fname, regionColors);
-
-        // Hide the spinning mouse cursor.
+        this.renderColoringView(view);
+        this.publishRegionColors(view.websocketKey, view.websocketData);
         this.dispatcher.spinning(this, false);
     }
 };
