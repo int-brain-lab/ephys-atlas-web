@@ -26,11 +26,6 @@ class Model {
         this.splash = splash;
         this.dataClient = new DataClient({ urls: URLS });
         this.featureStore = new FeatureStore({ splash, dataClient: this.dataClient });
-        this.persistentCache = this.featureStore.persistentCache;
-        this.localCache = null;
-        this.featureStore.localCachePromise.then((cache) => {
-            this.localCache = cache;
-        });
         this.prefetchController = new PrefetchController({
             delayMs: 150,
             hasFeature: (bucket, fname) => this.hasFeatures(bucket, fname),
@@ -210,6 +205,14 @@ class Model {
         return this.featureStore.getBucket(bucket);
     }
 
+    async closePersistentCache() {
+        return this.featureStore.persistentCache.close();
+    }
+
+    async deleteLocalFeature(fname) {
+        return this.featureStore.deleteLocalFeature(fname);
+    }
+
     /* Features                                                                                  */
     /*********************************************************************************************/
 
@@ -282,11 +285,21 @@ class Model {
         return this.featureStore.hasFeature(bucket, fname);
     }
 
+    getFeaturePayload(bucket, fname) {
+        console.assert(bucket);
+
+        if (!fname) {
+            return null;
+        }
+
+        return this.featureStore.getFeature(bucket, fname);
+    }
+
     getFeaturesMappings(bucket, fname) {
         // Return the non-empty mappings of a feature.
         if (!fname)
             return null;
-        let g = this.featureStore.getFeature(bucket, fname);
+        let g = this.getFeaturePayload(bucket, fname);
         if (!g) return null;
         if (!g["mappings"]) return null;
         let mappings = [];
@@ -301,7 +314,7 @@ class Model {
     getCmap(bucket, fname) {
         if (!fname)
             return null;
-        let g = this.featureStore.getFeature(bucket, fname);
+        let g = this.getFeaturePayload(bucket, fname);
         if (!g) return null;
         if (!g["cmap"]) return null;
         return g["cmap"];
@@ -313,7 +326,7 @@ class Model {
         if (!fname) {
             return null;
         }
-        let g = this.featureStore.getFeature(bucket, fname);
+        let g = this.getFeaturePayload(bucket, fname);
         if (!g) {
             return null;
         }
@@ -331,7 +344,7 @@ class Model {
         if (!fname) {
             return null;
         }
-        let g = this.featureStore.getFeature(bucket, fname);
+        let g = this.getFeaturePayload(bucket, fname);
         if (!g) {
             return null;
         }
@@ -347,7 +360,7 @@ class Model {
         if (!fname) {
             return null;
         }
-        let g = this.featureStore.getFeature(bucket, fname);
+        let g = this.getFeaturePayload(bucket, fname);
         if (!g) {
             return null;
         }
@@ -367,7 +380,7 @@ class Model {
         let regions = this.getRegions(state.mapping);
         let features = state.isVolume ? null : this.getFeatures(
             state.bucket, state.fname, state.mapping, refresh);
-        let featurePayload = this.featureStore.getFeature(state.bucket, state.fname);
+        let featurePayload = this.getFeaturePayload(state.bucket, state.fname);
         let histogram = featurePayload ? featurePayload['histogram'] : null;
 
         let regionColors = buildRegionColors({

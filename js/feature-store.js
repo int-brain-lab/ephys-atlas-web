@@ -196,4 +196,9 @@ class FeatureStore {
     getFeature(bucket, fname) {
         return this.features.get(bucket, fname);
     }
+
+    async deleteLocalFeature(fname) {
+        const localCache = await this._getLocalCache();
+        await localCache.delete(`${fname}.json`);
+    }
 }

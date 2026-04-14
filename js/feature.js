@@ -147,7 +147,7 @@ class Feature {
         });
         this.dispatcher.on(EVENTS.FEATURE_REMOVE, (ev) => {
             this.selectFeature(''); // deselect
-            this.model.localCache.delete(`${ev.fname}.json`);
+            this.model.deleteLocalFeature(ev.fname);
             this.refreshBucket();
         });
     }

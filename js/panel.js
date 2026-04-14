@@ -283,7 +283,7 @@ class Panel {
                     await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
                 }
 
-                await this.model.persistentCache.close();
+                await this.model.closePersistentCache();
                 await PersistentCache.clearAll();
                 location.reload();
             }
