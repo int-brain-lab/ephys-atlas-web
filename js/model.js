@@ -3,6 +3,7 @@ export { Model, URLS };
 import { BASE_URL } from "./constants.js";
 import { FeatureStore } from "./feature-store.js";
 import { Loader } from "./loader.js";
+import { PrefetchController } from "./prefetch-controller.js";
 import { memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
 
@@ -28,12 +29,11 @@ class Model {
         this.featureStore.localCachePromise.then((cache) => {
             this.localCache = cache;
         });
-        this.prefetchGeneration = 0;
-        this.prefetchQueue = [];
-        this.prefetchRunning = false;
-        this.activePrefetchController = null;
-        this.activePrefetchKey = null;
-        this.prefetchDelayMs = 150;
+        this.prefetchController = new PrefetchController({
+            delayMs: 150,
+            hasFeature: (bucket, fname) => this.hasFeatures(bucket, fname),
+            downloadFeature: (bucket, fname, options) => this.downloadFeatures(bucket, fname, options),
+        });
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -131,76 +131,6 @@ class Model {
             }
         }
         return prefetch;
-    }
-
-    _awaitPrefetchTurn() {
-        return new Promise((resolve) => {
-            const callback = () => {
-                window.setTimeout(resolve, this.prefetchDelayMs);
-            };
-
-            if (typeof window.requestIdleCallback === 'function') {
-                window.requestIdleCallback(callback, { timeout: 1000 });
-                return;
-            }
-
-            callback();
-        });
-    }
-
-    _abortActivePrefetch() {
-        if (this.activePrefetchController) {
-            this.activePrefetchController.abort();
-        }
-        this.activePrefetchController = null;
-        this.activePrefetchKey = null;
-    }
-
-    async _drainPrefetchQueue(generation) {
-        if (this.prefetchRunning) return;
-        this.prefetchRunning = true;
-
-        try {
-            while (generation === this.prefetchGeneration && this.prefetchQueue.length > 0) {
-                const task = this.prefetchQueue.shift();
-                if (!task) continue;
-
-                if (task.generation !== this.prefetchGeneration) continue;
-                if (this.hasFeatures(task.bucket, task.fname)) continue;
-
-                await this._awaitPrefetchTurn();
-                if (task.generation !== this.prefetchGeneration) continue;
-
-                const controller = new AbortController();
-                this.activePrefetchController = controller;
-                this.activePrefetchKey = `${task.bucket}/${task.fname}`;
-
-                try {
-                    await this.downloadFeatures(task.bucket, task.fname, {
-                        prefetch: true,
-                        signal: controller.signal,
-                    });
-                }
-                catch (error) {
-                    if (error?.name !== 'AbortError') {
-                        console.warn(`prefetch failed for ${task.bucket}/${task.fname}`, error);
-                    }
-                }
-                finally {
-                    if (this.activePrefetchController === controller) {
-                        this.activePrefetchController = null;
-                        this.activePrefetchKey = null;
-                    }
-                }
-            }
-        }
-        finally {
-            this.prefetchRunning = false;
-
-            if (generation === this.prefetchGeneration && this.prefetchQueue.length > 0) {
-                this._drainPrefetchQueue(generation);
-            }
-        }
     }
 
     /* Colormaps                                                                                 */
@@ -309,9 +239,7 @@ class Model {
     }
 
     clearFeaturePrefetch() {
-        this.prefetchGeneration += 1;
-        this.prefetchQueue = [];
-        this._abortActivePrefetch();
+        this.prefetchController.clear();
     }
 
     scheduleFeaturePrefetch(bucket, fname) {
@@ -333,19 +261,16 @@ class Model {
                 !volumeFeatures.has(candidate) &&
                 !this.hasFeatures(bucket, candidate));
 
-        this.prefetchGeneration += 1;
-        const generation = this.prefetchGeneration;
-        this.prefetchQueue = candidates.map((candidate) => ({
+        const tasks = candidates.map((candidate) => ({
             bucket,
             fname: candidate,
-            generation,
         }));
 
-        if (this.prefetchQueue.length === 0) {
+        if (tasks.length === 0) {
             return;
         }
 
-        this._drainPrefetchQueue(generation);
+        this.prefetchController.schedule(tasks);
     }
 
     hasFeatures(bucket, fname) {
