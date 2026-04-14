@@ -3,18 +3,12 @@ export { Colorbar };
 import { displayNumber } from "./utils.js";
 import { getRequiredElement } from "./core/dom.js";
 import { EVENTS } from "./core/events.js";
-import { BIN_COUNT, computeHistogram, getFeatureHistogram } from "./core/histogram-helpers.js";
+import { BIN_COUNT, getFeatureHistogram } from "./core/histogram-helpers.js";
 import { drawHistogram } from "./core/histogram-dom.js";
-
-
-
-/*************************************************************************************************/
-/* Utils                                                                                         */
-/*************************************************************************************************/
-
-/*************************************************************************************************/
-/* Histogram component                                                                           */
-/*************************************************************************************************/
+import {
+    resolveColorbarRange,
+    resolveGlobalHistogramCounts,
+} from "./core/colorbar-helpers.js";
 
 class Histogram {
     constructor(parentDiv, state, model) {
@@ -27,10 +21,8 @@ class Histogram {
         this.cmin = null;
         this.cmax = null;
 
-        // Clear all children of the parentDiv
         parentDiv.innerHTML = "";
 
-        // === Create colorbar wrapper ===
         const colorbarWrapper = document.createElement("div");
         colorbarWrapper.className = "colorbar-wrapper";
 
@@ -44,11 +36,9 @@ class Histogram {
 
         parentDiv.appendChild(colorbarWrapper);
 
-        // === Separator ===
         const hr = document.createElement("hr");
         parentDiv.appendChild(hr);
 
-        // === Min/Max wrapper ===
         const rangeWrapper = document.createElement("div");
         rangeWrapper.className = "wrapper";
 
@@ -62,7 +52,6 @@ class Histogram {
 
         parentDiv.appendChild(rangeWrapper);
 
-        // === Mini stats ===
         const miniStats = document.createElement("div");
         miniStats.className = "mini-stats";
 
@@ -76,7 +65,6 @@ class Histogram {
 
         parentDiv.appendChild(miniStats);
 
-        // Initialize bars
         this.clear();
     }
 
@@ -123,12 +111,6 @@ class Histogram {
     }
 }
 
-
-
-/*************************************************************************************************/
-/* Colorbar                                                                                      */
-/*************************************************************************************************/
-
 class Colorbar {
     constructor(state, model, dispatcher) {
         this.state = state;
@@ -144,110 +126,67 @@ class Colorbar {
         this.setState(this.state);
     }
 
-    setState(state) {
+    setState() {
         this.setGlobalHistogram();
         this.setLocalHistogram();
     }
 
-    /* Setup functions                                                                           */
-    /*********************************************************************************************/
-
     setupDispatcher() {
-        this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); });
-        this.dispatcher.on(EVENTS.BUCKET, (ev) => { this.clear(); });
-        this.dispatcher.on(EVENTS.FEATURE, (e) => {
+        this.dispatcher.on(EVENTS.RESET, () => { this.init(); });
+        this.dispatcher.on(EVENTS.BUCKET, () => { this.clear(); });
+        this.dispatcher.on(EVENTS.FEATURE, () => {
             this.setColormap();
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on(EVENTS.CMAP, (e) => {
+        this.dispatcher.on(EVENTS.CMAP, () => {
             this.setColormap();
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on(EVENTS.CMAP_RANGE, (e) => {
+        this.dispatcher.on(EVENTS.CMAP_RANGE, () => {
             this.setColormap();
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on(EVENTS.MAPPING, (e) => {
+        this.dispatcher.on(EVENTS.MAPPING, () => {
             this.setGlobalHistogram();
             this.setLocalHistogram();
         });
-        this.dispatcher.on(EVENTS.STAT, (e) => {
+        this.dispatcher.on(EVENTS.STAT, () => {
             this.setGlobalHistogram();
         });
-        this.dispatcher.on(EVENTS.TOGGLE, (e) => {
+        this.dispatcher.on(EVENTS.TOGGLE, () => {
             this.setLocalHistogram();
         });
-        this.dispatcher.on(EVENTS.CLEAR, (e) => {
+        this.dispatcher.on(EVENTS.CLEAR, () => {
             this.setLocalHistogram();
         });
-    }
-
-    /* Internal functions                                                                        */
-    /*********************************************************************************************/
-
-    getFeatureValues() {
-        // Load the region and features data.
-        let regions = this.model.getRegions(this.state.mapping);
-        let features = this.state.isVolume ? null : this.model.getFeatures(
-            this.state.bucket, this.state.fname, this.state.mapping);
-        let vmin = +10e100, vmax = -10e100;
-
-        // Go through all regions.
-        let values = [];
-        for (let regionIdx in regions) {
-            let region = regions[regionIdx];
-            console.assert(region);
-            let value = features ? features['data'][regionIdx] : null;
-            if (!value) {
-                continue;
-            }
-            value = value[this.state.stat];
-            values.push(value);
-            vmin = value < vmin ? value : vmin;
-            vmax = value > vmax ? value : vmax;
-        }
-        return [values, vmin, vmax];
     }
 
     getGlobalHistogram() {
         if (!this.state.fname) {
             this.clear();
-            return;
+            return null;
         }
 
-        // if (this.state.isVolume) {
-        //     const volume = this.model.getFeatures(this.state.bucket, this.state.fname);
-        //     if (volume) {
-        //         console.log(volume);
-        //         let vmin = volume["mean"]['bounds'][0];
-        //         let vmax = volume["mean"]['bounds'][1];
-        //         let values = volume["mean"]['volume']["data"];
-        //         return computeHistogram(BIN_COUNT, vmin, vmax, values);
-        //     }
-        // }
+        const histogram = this.model.getHistogram(this.state.bucket, this.state.fname);
+        const features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket,
+            this.state.fname,
+            this.state.mapping,
+        );
+        const regions = this.model.getRegions(this.state.mapping);
 
-        let counts = null;
-
-        // Try retrieving the global histogram for the current feature.
-        let histogram = this.model.getHistogram(this.state.bucket, this.state.fname);
-        if (histogram) {
-            console.log("taking the histogram from the features file");
-            counts = histogram["counts"];
-        }
-        else if (!this.state.isVolume) {
-            // Compute the histogram across all regions (1 value per region).
-            console.log("histogram not found in the features file, recomputing it");
-            let [values, vmin, vmax] = this.getFeatureValues();
-            counts = computeHistogram(BIN_COUNT, vmin, vmax, values);
-        }
-        return counts;
+        return resolveGlobalHistogramCounts(
+            histogram,
+            this.state.isVolume,
+            regions,
+            features,
+            this.state.stat,
+            BIN_COUNT,
+        );
     }
-
-    /* Public functions                                                                          */
-    /*********************************************************************************************/
 
     clear(hist) {
         hist = hist || this.miniHistogram;
@@ -256,32 +195,29 @@ class Colorbar {
 
     setFeatureRange(hist) {
         hist = hist || this.miniHistogram;
-        const state = this.state;
-        const histogram = this.model.getHistogram(state.bucket, state.fname);
-        if (histogram) {
-            hist.setFeatureRange(histogram.vmin, histogram.vmax);
-            hist.setGlobalCount(histogram.total_count);
+        const range = resolveColorbarRange(
+            this.model.getHistogram(this.state.bucket, this.state.fname),
+            this.model.getVolumeData(this.state.bucket, this.state.fname),
+        );
+        if (!range) {
             return;
         }
-
-        const volume = this.model.getVolumeData(state.bucket, state.fname);
-        const bounds = volume && volume.volumes && volume.volumes.mean && volume.volumes.mean.volume ? volume.volumes.mean.volume.bounds : null;
-        if (bounds && bounds.length >= 2) {
-            hist.setFeatureRange(bounds[0], bounds[1]);
+        hist.setFeatureRange(range.vmin, range.vmax);
+        if (range.totalCount != null) {
+            hist.setGlobalCount(range.totalCount);
         }
     }
 
     setColormap(hist) {
         hist = hist || this.miniHistogram;
-        let cmap = this.model.getColormap(this.state.cmap);
+        const cmap = this.model.getColormap(this.state.cmap);
         hist.setColormap(cmap, this.state.cmapmin, this.state.cmapmax);
     }
 
     setGlobalHistogram(hist) {
-        console.log("set global histogram");
         hist = hist || this.miniHistogram;
-        this.setFeatureRange();
-        let counts = this.getGlobalHistogram();
+        this.setFeatureRange(hist);
+        const counts = this.getGlobalHistogram();
         if (!counts || !counts.length) return;
         const countMax = Math.max(...counts);
         hist.setGlobalHistogram(counts, countMax);
@@ -294,24 +230,21 @@ class Colorbar {
             hist.clearLocal();
             return;
         }
-        else {
-            selected = selection;
 
-            // Load the region and features data.
-            let features = this.state.isVolume ? null : this.model.getFeatures(
-                this.state.bucket, this.state.fname, this.state.mapping);
+        const features = this.state.isVolume ? null : this.model.getFeatures(
+            this.state.bucket,
+            this.state.fname,
+            this.state.mapping,
+        );
 
-            if (!features) {
-                hist.clearLocal();
-                return;
-            }
-
-            // Now, draw the cumulated histogram of the selected region(s), if any.
-            let [counts, selectedCount] = getFeatureHistogram(features, selected, BIN_COUNT);
-
-            hist.setLocalCount(selectedCount);
-            const countMax = Math.max(...counts);
-            hist.setLocalHistogram(counts, countMax);
+        if (!features) {
+            hist.clearLocal();
+            return;
         }
+
+        const [counts, selectedCount] = getFeatureHistogram(features, selection, BIN_COUNT);
+        hist.setLocalCount(selectedCount);
+        const countMax = Math.max(...counts);
+        hist.setLocalHistogram(counts, countMax);
     }
 };
