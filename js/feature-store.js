@@ -1,7 +1,7 @@
 export { FeatureStore };
 
 import { Cache } from "./cache.js";
-import { decodeFeaturePayload } from "./feature-decoder.js";
+import { decodeFeaturePayload, decodeFeatureResponseText } from "./feature-decoder.js";
 import { PersistentCache } from "./persistent-cache.js";
 
 const PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -127,6 +127,8 @@ class FeatureStore {
         }
 
         let response = null;
+        let featureText = null;
+        let usedRawVolumeText = false;
 
         if (bucket == "local") {
             const localCache = await this._getLocalCache();
@@ -145,12 +147,13 @@ class FeatureStore {
                 response = cached;
             }
             else {
-                response = await this.dataClient.fetchFeature(bucket, fname, { refresh, signal });
-                if (response) {
-                    if ("volumes" in (response.feature_data || {})) {
-                        await this.persistentCache.delete(cacheKey);
-                    }
-                    else {
+                if (this._isVolumeFeature(bucket, fname)) {
+                    featureText = await this.dataClient.fetchFeatureText(bucket, fname, { refresh, signal });
+                    usedRawVolumeText = featureText != null;
+                }
+                else {
+                    response = await this.dataClient.fetchFeature(bucket, fname, { refresh, signal });
+                    if (response) {
                         await this._setPersistentCacheEntry(cacheKey, response);
                     }
                 }
@@ -161,7 +164,9 @@ class FeatureStore {
             this.splash.add(1);
         }
 
-        const featureData = await decodeFeaturePayload(response);
+        const featureData = usedRawVolumeText
+            ? await decodeFeatureResponseText(featureText)
+            : await decodeFeaturePayload(response);
         if (featureData && "volumes" in featureData && !isPrefetch) {
             this.splash.add(1);
         }
@@ -195,6 +200,16 @@ class FeatureStore {
 
     getFeature(bucket, fname) {
         return this.features.get(bucket, fname);
+    }
+
+    _isVolumeFeature(bucket, fname) {
+        if (!bucket || !fname || !this.hasBucket(bucket)) {
+            return false;
+        }
+
+        const bucketData = this.getBucket(bucket);
+        const volumes = bucketData?.metadata?.volumes || [];
+        return volumes.includes(fname);
     }
 
     async deleteLocalFeature(fname) {

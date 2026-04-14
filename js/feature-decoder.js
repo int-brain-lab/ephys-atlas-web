@@ -1,4 +1,4 @@
-export { decodeFeaturePayload };
+export { decodeFeaturePayload, decodeFeatureResponseText };
 
 let volumeDecoderWorkerPromise = null;
 let nextDecodeRequestId = 1;
@@ -175,6 +175,42 @@ async function decodeVolumesInWorker(featureData) {
     });
 }
 
+async function decodeFeatureResponseTextInWorker(featureResponseText) {
+    const worker = await getVolumeDecoderWorker();
+    if (!worker) {
+        const featureResponse = JSON.parse(featureResponseText);
+        decodeVolumes(featureResponse.feature_data);
+        return featureResponse.feature_data;
+    }
+
+    return new Promise((resolve, reject) => {
+        const id = nextDecodeRequestId++;
+
+        const onMessage = (event) => {
+            const data = event.data;
+            if (!data || data.id !== id) {
+                return;
+            }
+
+            worker.removeEventListener('message', onMessage);
+            if (data.error) {
+                reject(new Error(data.error));
+                return;
+            }
+
+            resolve(data.featureData);
+        };
+
+        worker.addEventListener('message', onMessage);
+        worker.postMessage({ id, featureResponseText });
+    }).catch((error) => {
+        console.warn('volume parse/decode worker failed, falling back to main thread', error);
+        const featureResponse = JSON.parse(featureResponseText);
+        decodeVolumes(featureResponse.feature_data);
+        return featureResponse.feature_data;
+    });
+}
+
 function cleanupNonVolumeMappings(featureData) {
     for (const mappingKey in featureData) {
         const mapping = featureData[mappingKey];
@@ -209,4 +245,12 @@ async function decodeFeaturePayload(featureResponse) {
 
     cleanupNonVolumeMappings(featureData);
     return featureData;
+}
+
+async function decodeFeatureResponseText(featureResponseText) {
+    if (!featureResponseText) {
+        return null;
+    }
+
+    return decodeFeatureResponseTextInWorker(featureResponseText);
 }

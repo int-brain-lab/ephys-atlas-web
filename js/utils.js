@@ -331,6 +331,29 @@ export async function downloadJSON(url, refresh = false, options = {}) {
     return null;
 }
 
+export async function downloadText(url, refresh = false, options = {}) {
+    console.log(`download ${url}${refresh ? ' [refresh]' : ''}`);
+    let params = {
+        headers: {
+            'Content-Encoding': 'gzip',
+            'Content-Type': 'application/json'
+        },
+    };
+    if (refresh)
+        params['cache'] = 'reload';
+    if (options.signal)
+        params['signal'] = options.signal;
+    var r = await fetch(url, params);
+    if (!r.ok) {
+        console.error(`could not load ${url}:`);
+        return null;
+    }
+    if (r.status == 200) {
+        return await r.text();
+    }
+    return null;
+}
+
 
 
 export function downloadBinaryFile(url, filename) {

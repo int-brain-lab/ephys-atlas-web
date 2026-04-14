@@ -116,10 +116,17 @@ function decodeVolumes(featureData) {
 }
 
 self.onmessage = (event) => {
-    const { id, featureData } = event.data;
+    const { id, featureData, featureResponseText } = event.data;
 
     try {
-        const decoded = decodeVolumes(featureData);
+        let decoded = null;
+        if (featureResponseText != null) {
+            const featureResponse = JSON.parse(featureResponseText);
+            decoded = decodeVolumes(featureResponse.feature_data);
+        }
+        else {
+            decoded = decodeVolumes(featureData);
+        }
         self.postMessage({ id, featureData: decoded });
     }
     catch (error) {
