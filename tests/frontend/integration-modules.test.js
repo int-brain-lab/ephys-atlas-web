@@ -5,6 +5,7 @@ import { Colorbar } from '../../js/colorbar.js';
 import { Coloring } from '../../js/coloring.js';
 import { Panel } from '../../js/panel.js';
 import { Region } from '../../js/region.js';
+import { Share } from '../../js/share.js';
 import { EVENTS } from '../../js/core/events.js';
 
 class FakeElement {
@@ -164,7 +165,7 @@ class FakeDocument {
         }
         return matches;
     }
-    }
+}
 
 class FakeDispatcher {
     constructor() {
@@ -280,6 +281,68 @@ function installTestDom() {
         document,
         restore() {
             globalThis.document = previousDocument;
+        },
+    };
+}
+
+function installTestWindow() {
+    const historyCalls = [];
+    const clipboardWrites = [];
+    const previousWindow = globalThis.window;
+    const previousLocation = globalThis.location;
+    const previousNavigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const previousSetTimeout = globalThis.setTimeout;
+
+    const windowStub = {
+        history: {
+            pushState(_state, _title, url) {
+                historyCalls.push(url);
+            },
+            replaceState(_state, _title, url) {
+                historyCalls.push(url);
+            },
+        },
+        location: {
+            href: 'https://localhost:8456/?bucket=tmp&state=abc',
+            toString() {
+                return this.href;
+            },
+        },
+        confirm() {
+            return true;
+        },
+    };
+
+    globalThis.window = windowStub;
+    globalThis.location = windowStub.location;
+    Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        writable: true,
+        value: {
+            clipboard: {
+                writeText(value) {
+                    clipboardWrites.push(String(value));
+                },
+            },
+        },
+    });
+    globalThis.setTimeout = (fn) => {
+        fn();
+        return 0;
+    };
+
+    return {
+        historyCalls,
+        clipboardWrites,
+        restore() {
+            globalThis.window = previousWindow;
+            globalThis.location = previousLocation;
+            if (previousNavigatorDescriptor) {
+                Object.defineProperty(globalThis, 'navigator', previousNavigatorDescriptor);
+            } else {
+                delete globalThis.navigator;
+            }
+            globalThis.setTimeout = previousSetTimeout;
         },
     };
 }
@@ -419,6 +482,74 @@ test('non-volume feature selection updates coloring rules and region list togeth
         assert.match(document.getElementById('bar-plot-list').innerHTML, /VISp/);
         assert.doesNotMatch(document.getElementById('bar-plot-list').innerHTML, /MOp/);
     } finally {
+        restore();
+    }
+});
+
+test('panel reset and share update URL state consistently', () => {
+    const { document, restore } = installTestDom();
+    const windowEnv = installTestWindow();
+    try {
+        const state = {
+            bucket: 'tmp',
+            buckets: ['tmp', 'local'],
+            fname: 'firing_rate',
+            isVolume: false,
+            mapping: 'allen',
+            stat: 'mean',
+            cmap: 'magma',
+            cmapmin: 25,
+            cmapmax: 75,
+            logScale: true,
+            search: '',
+            panelOpen: true,
+            selected: new Set([10]),
+            coronal: 660,
+            sagittal: 550,
+            horizontal: 400,
+            exploded: 0,
+            resetCalls: 0,
+            reset() {
+                this.resetCalls += 1;
+                this.fname = '';
+                this.isVolume = null;
+                this.cmap = 'magma';
+                this.cmapmin = 0;
+                this.cmapmax = 100;
+                this.logScale = false;
+            },
+            setCmapRange(cmin, cmax) {
+                this.cmapmin = cmin;
+                this.cmapmax = cmax;
+            },
+            setPanelOpen(open) {
+                this.panelOpen = open;
+            },
+            updateURLCalls: 0,
+            updateURL() {
+                this.updateURLCalls += 1;
+                return 'https://localhost:8456/?bucket=tmp&state=serialized';
+            },
+        };
+        const model = createModelStub();
+        const dispatcher = new FakeDispatcher();
+
+        const panel = new Panel(state, model, dispatcher);
+        const share = new Share(state, model, dispatcher);
+
+        panel.resetView();
+        assert.equal(state.resetCalls, 1);
+        assert.equal(dispatcher.resetEvents.length, 1);
+        assert.equal(document.getElementById('colormap-min').value, 0);
+        assert.equal(document.getElementById('colormap-max').value, 100);
+        assert.equal(windowEnv.historyCalls.at(-1), 'https://localhost:8456/?bucket=tmp&state=');
+
+        dispatcher.emit(EVENTS.SHARE, {});
+        assert.equal(state.updateURLCalls, 1);
+        assert.equal(windowEnv.clipboardWrites.at(-1), 'https://localhost:8456/?bucket=tmp&state=serialized');
+        assert.equal(document.getElementById('share-button').innerHTML, 'share');
+    } finally {
+        windowEnv.restore();
         restore();
     }
 });
