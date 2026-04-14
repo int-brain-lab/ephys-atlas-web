@@ -123,6 +123,7 @@ class Feature {
     setupDispatcher() {
         this.dispatcher.on(EVENTS.RESET, (ev) => { this.init(); this.selectFeature(); });
         this.dispatcher.on(EVENTS.BUCKET, async (ev) => {
+            this.model.clearFeaturePrefetch();
             this.setBucket(ev.uuid_or_alias);
 
             if (this.state.fname) {
@@ -138,7 +139,10 @@ class Feature {
             }
         });
         this.dispatcher.on(EVENTS.REFRESH, (ev) => { this.refreshBucket(); });
-        this.dispatcher.on(EVENTS.BUCKET_REMOVE, (ev) => { this.setBucket(DEFAULT_BUCKET); });
+        this.dispatcher.on(EVENTS.BUCKET_REMOVE, (ev) => {
+            this.model.clearFeaturePrefetch();
+            this.setBucket(DEFAULT_BUCKET);
+        });
         this.dispatcher.on(EVENTS.FEATURE_REMOVE, (ev) => {
             this.selectFeature(''); // deselect
             this.model.localCache.delete(`${ev.fname}.json`);
@@ -209,9 +213,12 @@ class Feature {
         console.assert(bucket);
         this.dropdown.setFeatures(bucket.features, bucket.metadata.tree, bucket.metadata.volumes);
 
+        this.model.clearFeaturePrefetch();
+
         if (this.state.fname) {
             await this.model.downloadFeatures(this.state.bucket, this.state.fname, { refresh: true });
             this.dropdown.select(this.state.fname);
+            this.model.scheduleFeaturePrefetch(this.state.bucket, this.state.fname);
         }
 
         this.dispatcher.spinning(this, false);
@@ -221,6 +228,14 @@ class Feature {
         console.log(`select feature ${fname}, volume=${isVolume}`);
         this.state.setFeature(fname, isVolume);
         this.dropdown.select(fname);
+
+        if (fname) {
+            this.model.scheduleFeaturePrefetch(this.state.bucket, fname);
+        }
+        else {
+            this.model.clearFeaturePrefetch();
+        }
+
         this.dispatcher.feature(this, fname, isVolume);
     }
 

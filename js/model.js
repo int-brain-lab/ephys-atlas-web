@@ -168,6 +168,10 @@ async function loadCacheFiles(cache) {
 class Model {
     constructor(splash) {
         this.splash = splash;
+        this.prefetchGeneration = 0;
+        this.prefetchQueue = [];
+        this.prefetchRunning = false;
+        this.prefetchDelayMs = 150;
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -202,12 +206,15 @@ class Model {
         // Features.
         this.features = new Cache(async (bucket, fname, options) => {
             const refresh = options ? options.refresh : false;
+            const isPrefetch = options ? options.prefetch === true : false;
             if (!fname) return null;
             const url = URLS['features'](bucket, fname);
 
-            this.splash.setTotal(2);
-            this.splash.setDescription(`Downloading feature "${fname}"`);
-            this.splash.start();
+            if (!isPrefetch) {
+                this.splash.setTotal(2);
+                this.splash.setDescription(`Downloading feature "${fname}"`);
+                this.splash.start();
+            }
 
             let f = null;
 
@@ -226,7 +233,9 @@ class Model {
                 f = await downloadJSON(url, refresh);
             }
 
-            this.splash.add(1);
+            if (!isPrefetch) {
+                this.splash.add(1);
+            }
 
             let out = null;
 
@@ -255,7 +264,9 @@ class Model {
                     if ("urls" in f["feature_data"])
                         f["feature_data"]["urls"] = loadCompressedBase64(f["feature_data"]["urls"]);
 
-                    this.splash.add(1);
+                    if (!isPrefetch) {
+                        this.splash.add(1);
+                    }
                 }
 
                 // HACK: remove void/root
@@ -276,7 +287,9 @@ class Model {
                 }
             }
 
-            this.splash.end();
+            if (!isPrefetch) {
+                this.splash.end();
+            }
             return out;
         });
 
@@ -294,6 +307,114 @@ class Model {
             p.push(this.loaders[loader].start());
         }
         await Promise.all(p);
+    }
+
+    _flattenFeatureTree(node) {
+        if (!node) return [];
+
+        const entries = [];
+        for (const key in node) {
+            if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+            const value = node[key];
+            if (value && typeof value === 'object') {
+                entries.push(...this._flattenFeatureTree(value));
+            }
+            else if (value) {
+                entries.push(value);
+            }
+        }
+        return entries;
+    }
+
+    _getOrderedBucketFeatures(bucketName) {
+        if (!bucketName || !this.hasBucket(bucketName)) {
+            return [];
+        }
+
+        const bucket = this.getBucket(bucketName);
+        if (!bucket?.features) {
+            return [];
+        }
+
+        const fromTree = this._flattenFeatureTree(bucket.metadata?.tree);
+        if (fromTree.length > 0) {
+            return fromTree.filter((fname, index, arr) => fname && arr.indexOf(fname) === index);
+        }
+
+        return Object.keys(bucket.features);
+    }
+
+    _buildPrefetchList(bucket, fname) {
+        const orderedFeatures = this._getOrderedBucketFeatures(bucket);
+        if (!orderedFeatures.length) {
+            return [];
+        }
+
+        const currentIndex = orderedFeatures.indexOf(fname);
+        if (currentIndex < 0) {
+            return orderedFeatures.filter((candidate) => candidate !== fname);
+        }
+
+        const prefetch = [];
+        for (let distance = 1; distance < orderedFeatures.length; distance++) {
+            const nextIndex = currentIndex + distance;
+            if (nextIndex < orderedFeatures.length) {
+                prefetch.push(orderedFeatures[nextIndex]);
+            }
+
+            const prevIndex = currentIndex - distance;
+            if (prevIndex >= 0) {
+                prefetch.push(orderedFeatures[prevIndex]);
+            }
+        }
+        return prefetch;
+    }
+
+    _awaitPrefetchTurn() {
+        return new Promise((resolve) => {
+            const callback = () => {
+                window.setTimeout(resolve, this.prefetchDelayMs);
+            };
+
+            if (typeof window.requestIdleCallback === 'function') {
+                window.requestIdleCallback(callback, { timeout: 1000 });
+                return;
+            }
+
+            callback();
+        });
+    }
+
+    async _drainPrefetchQueue(generation) {
+        if (this.prefetchRunning) return;
+        this.prefetchRunning = true;
+
+        try {
+            while (generation === this.prefetchGeneration && this.prefetchQueue.length > 0) {
+                const task = this.prefetchQueue.shift();
+                if (!task) continue;
+
+                if (task.generation !== this.prefetchGeneration) continue;
+                if (this.hasFeatures(task.bucket, task.fname)) continue;
+
+                await this._awaitPrefetchTurn();
+                if (task.generation !== this.prefetchGeneration) continue;
+
+                try {
+                    await this.downloadFeatures(task.bucket, task.fname, { prefetch: true });
+                }
+                catch (error) {
+                    console.warn(`prefetch failed for ${task.bucket}/${task.fname}`, error);
+                }
+            }
+        }
+        finally {
+            this.prefetchRunning = false;
+
+            if (generation === this.prefetchGeneration && this.prefetchQueue.length > 0) {
+                this._drainPrefetchQueue(generation);
+            }
+        }
     }
 
     /* Colormaps                                                                                 */
@@ -381,6 +502,35 @@ class Model {
 
         console.log(`download features ${fname}`);
         return this.features.download(bucket, fname, options);
+    }
+
+    clearFeaturePrefetch() {
+        this.prefetchGeneration += 1;
+        this.prefetchQueue = [];
+    }
+
+    scheduleFeaturePrefetch(bucket, fname) {
+        if (!bucket || !fname || bucket == "local") {
+            this.clearFeaturePrefetch();
+            return;
+        }
+
+        const candidates = this._buildPrefetchList(bucket, fname)
+            .filter((candidate) => candidate && candidate !== fname && !this.hasFeatures(bucket, candidate));
+
+        this.prefetchGeneration += 1;
+        const generation = this.prefetchGeneration;
+        this.prefetchQueue = candidates.map((candidate) => ({
+            bucket,
+            fname: candidate,
+            generation,
+        }));
+
+        if (this.prefetchQueue.length === 0) {
+            return;
+        }
+
+        this._drainPrefetchQueue(generation);
     }
 
     hasFeatures(bucket, fname) {
