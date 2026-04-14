@@ -1,5 +1,6 @@
 export { Panel };
 
+import { PersistentCache } from "./persistent-cache.js";
 import { throttle } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
@@ -275,16 +276,15 @@ class Panel {
     }
 
     setupClearButton() {
-        this.ibclear.addEventListener('click', () => {
+        this.ibclear.addEventListener('click', async () => {
             if (window.confirm('Are you sure you want to clear the cache and re-download the data?')) {
                 if ('caches' in window) {
-                    caches.keys().then(cacheNames => {
-                        cacheNames.forEach(cacheName => {
-                            caches.delete(cacheName);
-                        });
-                    });
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
                 }
 
+                await this.model.persistentCache.close();
+                await PersistentCache.clearAll();
                 location.reload();
             }
         });

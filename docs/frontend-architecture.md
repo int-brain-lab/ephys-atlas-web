@@ -130,6 +130,7 @@ Important features of `Model`:
 
 - wraps remote/static loads behind a stable API
 - caches downloads in memory
+- persists remote bucket metadata and non-volume feature payloads in IndexedDB for 24 hours
 - supports local uploaded features via browser cache storage
 - includes custom `.npy` parsing and compressed volume loading logic
 

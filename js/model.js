@@ -3,6 +3,7 @@ export { Model, URLS };
 import { BASE_URL } from "./constants.js";
 import { Loader } from "./loader.js";
 import { Cache } from "./cache.js";
+import { PersistentCache } from "./persistent-cache.js";
 import { downloadJSON, memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
 
@@ -18,6 +19,9 @@ const URLS = {
     'bucket': (bucket) => `${BASE_URL}/api/buckets/${bucket}`,
     'features': (bucket, fname) => `${BASE_URL}/api/buckets/${bucket}/${fname}`,
 }
+
+const PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const PERSISTENT_CACHE_SCHEMA_VERSION = 1;
 
 
 
@@ -168,6 +172,7 @@ async function loadCacheFiles(cache) {
 class Model {
     constructor(splash) {
         this.splash = splash;
+        this.persistentCache = new PersistentCache();
         this.prefetchGeneration = 0;
         this.prefetchQueue = [];
         this.prefetchRunning = false;
@@ -202,7 +207,17 @@ class Model {
             }
 
             const refresh = options ? options.refresh : false;
-            return downloadJSON(URLS['bucket'](bucket), refresh);
+            const cacheKey = this._getPersistentBucketKey(bucket);
+            const cached = refresh ? null : await this._getPersistentCacheEntry(cacheKey);
+            if (cached) {
+                return cached;
+            }
+
+            const data = await downloadJSON(URLS['bucket'](bucket), refresh);
+            if (data) {
+                await this._setPersistentCacheEntry(cacheKey, data);
+            }
+            return data;
         });
 
         // Features.
@@ -233,7 +248,22 @@ class Model {
                 }
             }
             else {
-                f = await downloadJSON(url, refresh, { signal });
+                const cacheKey = this._getPersistentFeatureKey(bucket, fname);
+                const cached = refresh ? null : await this._getPersistentCacheEntry(cacheKey);
+                if (cached) {
+                    f = cached;
+                }
+                else {
+                    f = await downloadJSON(url, refresh, { signal });
+                    if (f) {
+                        if ("volumes" in (f.feature_data || {})) {
+                            await this.persistentCache.delete(cacheKey);
+                        }
+                        else {
+                            await this._setPersistentCacheEntry(cacheKey, f);
+                        }
+                    }
+                }
             }
 
             if (!isPrefetch) {
@@ -310,6 +340,46 @@ class Model {
             p.push(this.loaders[loader].start());
         }
         await Promise.all(p);
+    }
+
+    _getPersistentBucketKey(bucket) {
+        return `bucket:${bucket}`;
+    }
+
+    _getPersistentFeatureKey(bucket, fname) {
+        return `feature:${bucket}:${fname}`;
+    }
+
+    _isPersistentCacheEntryFresh(entry) {
+        if (!entry) {
+            return false;
+        }
+
+        if (entry.schemaVersion !== PERSISTENT_CACHE_SCHEMA_VERSION) {
+            return false;
+        }
+
+        const age = Date.now() - (entry.storedAt || 0);
+        return age >= 0 && age <= PERSISTENT_CACHE_TTL_MS;
+    }
+
+    async _getPersistentCacheEntry(key) {
+        const entry = await this.persistentCache.get(key);
+        if (!this._isPersistentCacheEntryFresh(entry)) {
+            if (entry) {
+                await this.persistentCache.delete(key);
+            }
+            return null;
+        }
+        return entry.payload || null;
+    }
+
+    async _setPersistentCacheEntry(key, payload) {
+        await this.persistentCache.set(key, {
+            payload,
+            storedAt: Date.now(),
+            schemaVersion: PERSISTENT_CACHE_SCHEMA_VERSION,
+        });
     }
 
     _flattenFeatureTree(node) {
