@@ -120,7 +120,11 @@ class Volume {
 
                 for (const [name, entry] of Object.entries(volume["volumes"])) {
                     if (entry && entry.volume) {
-                        this.volumeArrays[name] = entry.volume;
+                        const loadedVolume = entry.volume;
+                        if (entry.bounds && entry.bounds.length >= 2) {
+                            loadedVolume.bounds = entry.bounds;
+                        }
+                        this.volumeArrays[name] = loadedVolume;
                     }
                 }
 
