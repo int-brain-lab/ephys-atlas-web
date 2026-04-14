@@ -1,32 +1,4 @@
-export { decodeFeaturePayload };
-
-let volumeDecoderWorkerPromise = null;
-let nextDecodeRequestId = 1;
-
-function getVolumeDecoderWorker() {
-    if (volumeDecoderWorkerPromise) {
-        return volumeDecoderWorkerPromise;
-    }
-
-    volumeDecoderWorkerPromise = new Promise((resolve, reject) => {
-        try {
-            const worker = new Worker(new URL('./feature-decoder-worker.js', import.meta.url));
-            worker.onerror = (event) => {
-                reject(event.error || new Error('volume decoder worker failed'));
-            };
-            resolve(worker);
-        }
-        catch (error) {
-            reject(error);
-        }
-    }).catch((error) => {
-        console.warn('unable to start volume decoder worker, falling back to main thread', error);
-        volumeDecoderWorkerPromise = null;
-        return null;
-    });
-
-    return volumeDecoderWorkerPromise;
-}
+importScripts('https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js');
 
 function asciiDecode(buf) {
     return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -139,74 +111,21 @@ function decodeVolumes(featureData) {
     if ("urls" in featureData) {
         featureData.urls = loadCompressedBase64(featureData.urls);
     }
-}
 
-async function decodeVolumesInWorker(featureData) {
-    const worker = await getVolumeDecoderWorker();
-    if (!worker) {
-        decodeVolumes(featureData);
-        return featureData;
-    }
-
-    return new Promise((resolve, reject) => {
-        const id = nextDecodeRequestId++;
-
-        const onMessage = (event) => {
-            const data = event.data;
-            if (!data || data.id !== id) {
-                return;
-            }
-
-            worker.removeEventListener('message', onMessage);
-            if (data.error) {
-                reject(new Error(data.error));
-                return;
-            }
-
-            resolve(data.featureData);
-        };
-
-        worker.addEventListener('message', onMessage);
-        worker.postMessage({ id, featureData });
-    }).catch((error) => {
-        console.warn('volume decode worker failed, falling back to main thread', error);
-        decodeVolumes(featureData);
-        return featureData;
-    });
-}
-
-function cleanupNonVolumeMappings(featureData) {
-    for (const mappingKey in featureData) {
-        const mapping = featureData[mappingKey];
-        if (!mapping || typeof mapping !== 'object') {
-            continue;
-        }
-
-        ['beryl', 'cosmos'].forEach((key) => {
-            if (mapping[key] &&
-                typeof mapping[key] === 'object' &&
-                mapping[key].data) {
-                delete mapping[key].data["0"];
-                delete mapping[key].data["1"];
-            }
-        });
-    }
-}
-
-async function decodeFeaturePayload(featureResponse) {
-    if (!featureResponse) {
-        return null;
-    }
-
-    const featureData = featureResponse.feature_data;
-    if (!featureData) {
-        return null;
-    }
-
-    if ("volumes" in featureData) {
-        return decodeVolumesInWorker(featureData);
-    }
-
-    cleanupNonVolumeMappings(featureData);
     return featureData;
 }
+
+self.onmessage = (event) => {
+    const { id, featureData } = event.data;
+
+    try {
+        const decoded = decodeVolumes(featureData);
+        self.postMessage({ id, featureData: decoded });
+    }
+    catch (error) {
+        self.postMessage({
+            id,
+            error: error instanceof Error ? error.message : String(error),
+        });
+    }
+};

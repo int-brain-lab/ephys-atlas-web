@@ -161,7 +161,7 @@ class FeatureStore {
             this.splash.add(1);
         }
 
-        const featureData = decodeFeaturePayload(response);
+        const featureData = await decodeFeaturePayload(response);
         if (featureData && "volumes" in featureData && !isPrefetch) {
             this.splash.add(1);
         }
