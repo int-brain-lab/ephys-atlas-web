@@ -31,6 +31,11 @@ class Model {
             hasFeature: (bucket, fname) => this.hasFeatures(bucket, fname),
             downloadFeature: (bucket, fname, options) => this.downloadFeatures(bucket, fname, options),
         });
+        this.volumePrefetchController = new PrefetchController({
+            delayMs: 150,
+            hasFeature: (bucket, fname) => this.hasFeatures(bucket, fname) || this.hasRawVolumeResponse(bucket, fname),
+            downloadFeature: (bucket, fname, options) => this.prefetchRawVolumeResponse(bucket, fname, options),
+        });
 
         this.loaders = {
             'colormaps': this.setupColormaps([1, 1, 1]),
@@ -245,6 +250,7 @@ class Model {
 
     clearFeaturePrefetch() {
         this.prefetchController.clear();
+        this.volumePrefetchController.clear();
     }
 
     scheduleFeaturePrefetch(bucket, fname) {
@@ -254,28 +260,46 @@ class Model {
         }
 
         const volumeFeatures = this._getVolumeFeatureSet(bucket);
-        if (volumeFeatures.has(fname)) {
-            this.clearFeaturePrefetch();
-            return;
-        }
-
-        const candidates = this._buildPrefetchList(bucket, fname)
+        const selectedIsVolume = volumeFeatures.has(fname);
+        const rawVolumeTasks = this._getOrderedBucketFeatures(bucket)
             .filter((candidate) =>
                 candidate &&
                 candidate !== fname &&
-                !volumeFeatures.has(candidate) &&
-                !this.hasFeatures(bucket, candidate));
+                volumeFeatures.has(candidate) &&
+                !this.hasFeatures(bucket, candidate) &&
+                !this.hasRawVolumeResponse(bucket, candidate))
+            .map((candidate) => ({
+                bucket,
+                fname: candidate,
+            }));
+        const candidates = this._buildPrefetchList(bucket, fname)
+            .filter((candidate) => {
+                if (!candidate || candidate === fname || this.hasFeatures(bucket, candidate)) {
+                    return false;
+                }
 
-        const tasks = candidates.map((candidate) => ({
+                const candidateIsVolume = volumeFeatures.has(candidate);
+                if (selectedIsVolume) {
+                    return candidateIsVolume;
+                }
+
+                return !candidateIsVolume;
+            });
+
+        const limitedCandidates = selectedIsVolume ? candidates.slice(0, 1) : candidates;
+
+        const tasks = limitedCandidates.map((candidate) => ({
             bucket,
             fname: candidate,
         }));
 
-        if (tasks.length === 0) {
-            return;
+        if (rawVolumeTasks.length > 0) {
+            this.volumePrefetchController.schedule(rawVolumeTasks);
         }
 
-        this.prefetchController.schedule(tasks);
+        if (tasks.length > 0) {
+            this.prefetchController.schedule(tasks);
+        }
     }
 
     hasFeatures(bucket, fname) {
@@ -283,6 +307,20 @@ class Model {
         console.assert(fname);
 
         return this.featureStore.hasFeature(bucket, fname);
+    }
+
+    hasRawVolumeResponse(bucket, fname) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        return this.featureStore.hasRawVolumeResponse(bucket, fname);
+    }
+
+    prefetchRawVolumeResponse(bucket, fname, options) {
+        console.assert(bucket);
+        console.assert(fname);
+
+        return this.featureStore.prefetchRawVolumeResponse(bucket, fname, options);
     }
 
     getFeaturePayload(bucket, fname) {

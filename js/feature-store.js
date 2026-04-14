@@ -44,6 +44,7 @@ class FeatureStore {
         });
 
         this.buckets = new Cache(async (bucket, options) => this._loadBucket(bucket, options));
+        this.rawVolumeResponses = new Cache(async (bucket, fname, options) => this._loadRawVolumeResponse(bucket, fname, options));
         this.features = new Cache(async (bucket, fname, options) => this._loadFeature(bucket, fname, options));
     }
 
@@ -148,7 +149,7 @@ class FeatureStore {
             }
             else {
                 if (this._isVolumeFeature(bucket, fname)) {
-                    featureText = await this.dataClient.fetchFeatureText(bucket, fname, { refresh, signal });
+                    featureText = await this.rawVolumeResponses.download(bucket, fname, { refresh, signal });
                     usedRawVolumeText = featureText != null;
                 }
                 else {
@@ -178,6 +179,12 @@ class FeatureStore {
         return featureData;
     }
 
+    async _loadRawVolumeResponse(bucket, fname, options) {
+        const refresh = options ? options.refresh : false;
+        const signal = options ? options.signal : undefined;
+        return this.dataClient.fetchFeatureText(bucket, fname, { refresh, signal });
+    }
+
     downloadBucket(bucket, options) {
         return this.buckets.download(bucket, options);
     }
@@ -200,6 +207,14 @@ class FeatureStore {
 
     getFeature(bucket, fname) {
         return this.features.get(bucket, fname);
+    }
+
+    hasRawVolumeResponse(bucket, fname) {
+        return this.rawVolumeResponses.has(bucket, fname);
+    }
+
+    prefetchRawVolumeResponse(bucket, fname, options) {
+        return this.rawVolumeResponses.download(bucket, fname, options);
     }
 
     _isVolumeFeature(bucket, fname) {
