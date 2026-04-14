@@ -23,3 +23,13 @@ export function fromHistogramValueRange(vminMod, vmaxMod, histogram) {
     const cmax = (vmaxMod - vmin) * 100.0 / vdiff;
     return [cmin, cmax];
 }
+
+export function getOrderedColormapRange(cmin, cmax) {
+    return [Math.min(cmin, cmax), Math.max(cmin, cmax)];
+}
+
+export function buildClearedStateUrl(href) {
+    const url = new URL(href);
+    url.searchParams.set('state', '');
+    return url.toString();
+}

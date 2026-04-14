@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { toHistogramValueRange, fromHistogramValueRange } from '../../js/core/panel-helpers.js';
+import {
+    buildClearedStateUrl,
+    fromHistogramValueRange,
+    getOrderedColormapRange,
+    toHistogramValueRange,
+} from '../../js/core/panel-helpers.js';
 
 test('toHistogramValueRange converts slider percentages into histogram values', () => {
     assert.deepEqual(toHistogramValueRange(25, 75, { vmin: 10, vmax: 30 }), [15, 25]);
@@ -19,4 +24,16 @@ test('panel histogram helpers preserve negative-to-zero ranges', () => {
 test('panel histogram range helpers return zeros when histogram data is missing', () => {
     assert.deepEqual(toHistogramValueRange(25, 75, null), [0, 0]);
     assert.deepEqual(fromHistogramValueRange(15, 25, null), [0, 0]);
+});
+
+test('getOrderedColormapRange normalizes slider order', () => {
+    assert.deepEqual(getOrderedColormapRange(80, 20), [20, 80]);
+    assert.deepEqual(getOrderedColormapRange(10, 10), [10, 10]);
+});
+
+test('buildClearedStateUrl preserves the page and clears the state query param', () => {
+    assert.equal(
+        buildClearedStateUrl('https://localhost:8456/?bucket=test&state=abc#hash'),
+        'https://localhost:8456/?bucket=test&state=#hash',
+    );
 });

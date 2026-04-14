@@ -3,7 +3,7 @@ export { Panel };
 import { clamp, setOptions, throttle, displayNumber } from "./utils.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
-import { toHistogramValueRange, fromHistogramValueRange } from "./core/panel-helpers.js";
+import { buildClearedStateUrl, fromHistogramValueRange, getOrderedColormapRange, toHistogramValueRange } from "./core/panel-helpers.js";
 
 
 
@@ -148,7 +148,7 @@ class Panel {
 
         // Display the cmap range once the features are loaded.
         this.dispatcher.on(EVENTS.FEATURE, (ev, source, fname) => {
-            let [vminMod, vmaxMod] = this._toMinMaxValues(this.state.cmapmin, this.state.cmapmax);
+            const [vminMod, vmaxMod] = this._toMinMaxValues(this.state.cmapmin, this.state.cmapmax);
             this.icmapminInput.value = displayNumber(vminMod);
             this.icmapmaxInput.value = displayNumber(vmaxMod);
 
@@ -254,14 +254,11 @@ class Panel {
     setupColormapRange() {
 
         // Slider.
-        let onSlider = throttle((e) => {
-            let cmin = Math.min(this.icmapmin.value, this.icmapmax.value);
-            let cmax = Math.max(this.icmapmin.value, this.icmapmax.value);
+        let onSlider = throttle(() => {
+            const [cmin, cmax] = getOrderedColormapRange(this.icmapmin.value, this.icmapmax.value);
             this._updateColormapRange(cmin, cmax);
 
-            // Update the input number fields.
-            let [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
-
+            const [vminMod, vmaxMod] = this._toMinMaxValues(cmin, cmax);
             this.icmapminInput.value = displayNumber(vminMod);
             this.icmapmaxInput.value = displayNumber(vmaxMod);
 
@@ -362,9 +359,7 @@ class Panel {
             this.init();
 
             // Reset the browser URL.
-            const url = new URL(window.location);
-            url.searchParams.set('state', '');
-            window.history.pushState(null, '', url.toString());
+            window.history.pushState(null, '', buildClearedStateUrl(window.location.href));
             // }
         });
     }
