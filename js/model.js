@@ -3,6 +3,7 @@ export { Model, URLS };
 import { BASE_URL } from "./constants.js";
 import { Loader } from "./loader.js";
 import { Cache } from "./cache.js";
+import { decodeFeaturePayload } from "./feature-decoder.js";
 import { PersistentCache } from "./persistent-cache.js";
 import { downloadJSON, memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
@@ -22,112 +23,6 @@ const URLS = {
 
 const PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const PERSISTENT_CACHE_SCHEMA_VERSION = 1;
-
-
-
-/*************************************************************************************************/
-/* NPY loading                                                                                   */
-/*************************************************************************************************/
-
-function asciiDecode(buf) {
-    return String.fromCharCode.apply(null, new Uint8Array(buf));
-}
-
-function readUint16LE(buffer) {
-    var view = new DataView(buffer.buffer);
-    var val = view.getUint8(0);
-    val |= view.getUint8(1) << 8;
-    return val;
-}
-
-function utf32ToUnicodeArray(uint8Array, stringLength) {
-    const strings = [];
-    const totalBytes = uint8Array.length;
-    const bytesPerString = stringLength * 4; // Each Unicode character is represented by 4 bytes in UTF-32
-
-    for (let i = 0; i < totalBytes; i += bytesPerString) {
-        let stringBytes = uint8Array.slice(i, i + bytesPerString);
-
-        // Convert UTF-32 bytes to Unicode string (little-endian)
-        let unicodeString = '';
-        for (let j = 0; j < stringBytes.length; j += 4) {
-            let codePoint = (stringBytes[j + 3] << 24) | (stringBytes[j + 2] << 16) | (stringBytes[j + 1] << 8) | stringBytes[j];
-            if (codePoint == 0) break;
-            unicodeString += String.fromCodePoint(codePoint);
-        }
-
-        strings.push(unicodeString);
-    }
-
-    return strings;
-}
-
-function loadNPY(buf) {
-    // Check the magic number
-    let magic = asciiDecode(buf.slice(0, 6));
-    if (magic.slice(1, 6) != 'NUMPY') {
-        throw new Error('unknown file type');
-    }
-
-    let version = new Uint8Array(buf.slice(6, 8)),
-        headerLength = readUint16LE(buf.slice(8, 10)),
-        headerStr = asciiDecode(buf.slice(10, 10 + headerLength));
-    let offsetBytes = 10 + headerLength;
-    //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
-
-    // Hacky conversion of dict literal string to JS Object
-    // eval("var info = " + headerStr.toLowerCase().replace('(', '[').replace('),', ']'));
-    let info = JSON.parse(headerStr.toLowerCase().replace('(', '[').replace(/\,*\)\,*/g, ']').replace(/'/g, "\""));
-    // console.log("npy", headerLength, headerStr, info);
-
-    // Intepret the bytes according to the specified dtype
-    let data;
-    if (info.descr === "|u1") {
-        data = new Uint8Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "|i1") {
-        data = new Int8Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "<u2") {
-        data = new Uint16Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "<i2") {
-        data = new Int16Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "<u4") {
-        data = new Uint32Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "<i4") {
-        data = new Int32Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "<f4") {
-        data = new Float32Array(buf.buffer, offsetBytes);
-    } else if (info.descr === "<f8") {
-        data = new Float64Array(buf.buffer, offsetBytes);
-    } else if (info.descr.startsWith("<u")) {
-        // String type.
-        data = new Uint8Array(buf.buffer, offsetBytes);
-        // window.data = data; // DEBUG
-        let stringLength = parseInt(info.descr.substring(2));
-        data = utf32ToUnicodeArray(data, stringLength);
-        // console.log(data);
-    } else {
-        throw new Error('unknown numeric dtype')
-    }
-
-    // NOTE: extract the last 8 bytes which contain extra metadata information, the min and max
-    // values of the original value before downsampling to uint8, as two float32 values.
-    const startIndex = buf.length - 8;
-    let bounds = new Float32Array(buf.buffer, startIndex); // min, max value of the original array
-
-    return {
-        shape: info.shape,
-        fortran_order: info.fortran_order,
-        data: data,
-        bounds: bounds,
-    };
-}
-
-function loadCompressedBase64(base64) {
-    const gzippedData = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    const inflatedData = pako.inflate(gzippedData);
-    const npydata = new Uint8Array(inflatedData);
-    return loadNPY(npydata);
-}
 
 
 
@@ -273,50 +168,10 @@ class Model {
             let out = null;
 
             if (f) {
-                out = f["feature_data"];
+                out = decodeFeaturePayload(f);
 
-                // Special handling of volumes.
-                if ("volumes" in f["feature_data"]) {
-
-                    // Load the base64 string into a decompressed array buffer.
-                    for (const name in f.feature_data.volumes) {
-                        const vol = f.feature_data.volumes[name].volume;
-                        f.feature_data.volumes[name].volume = loadCompressedBase64(vol);
-                    }
-
-                    // Load optional data:
-                    // - xyz positions of the dots
-                    if ("xyz" in f["feature_data"])
-                        f["feature_data"]["xyz"] = loadCompressedBase64(f["feature_data"]["xyz"]);
-
-                    // - scalar values associated with the dots
-                    if ("values" in f["feature_data"])
-                        f["feature_data"]["values"] = loadCompressedBase64(f["feature_data"]["values"]);
-
-                    // - image URLs associated to each dot
-                    if ("urls" in f["feature_data"])
-                        f["feature_data"]["urls"] = loadCompressedBase64(f["feature_data"]["urls"]);
-
-                    if (!isPrefetch) {
-                        this.splash.add(1);
-                    }
-                }
-
-                // HACK: remove void/root
-                else {
-                    for (const mappingKey in out) {
-                        const mapping = out[mappingKey];
-                        if (mapping && typeof mapping === 'object') {
-                            ['beryl', 'cosmos'].forEach(key => {
-                                if (mapping[key] &&
-                                    typeof mapping[key] === 'object' &&
-                                    mapping[key].data) {
-                                    delete mapping[key].data["0"];
-                                    delete mapping[key].data["1"];
-                                }
-                            });
-                        }
-                    }
+                if (out && "volumes" in out && !isPrefetch) {
+                    this.splash.add(1);
                 }
             }
 
