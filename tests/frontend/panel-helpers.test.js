@@ -11,6 +11,11 @@ test('fromHistogramValueRange converts histogram values back into slider percent
     assert.deepEqual(fromHistogramValueRange(15, 25, { vmin: 10, vmax: 30 }), [25, 75]);
 });
 
+test('panel histogram helpers preserve negative-to-zero ranges', () => {
+    assert.deepEqual(toHistogramValueRange(0, 100, { vmin: -96.0625, vmax: 0 }), [-96.0625, 0]);
+    assert.deepEqual(fromHistogramValueRange(-96.0625, 0, { vmin: -96.0625, vmax: 0 }), [0, 100]);
+});
+
 test('panel histogram range helpers return zeros when histogram data is missing', () => {
     assert.deepEqual(toHistogramValueRange(25, 75, null), [0, 0]);
     assert.deepEqual(fromHistogramValueRange(15, 25, null), [0, 0]);

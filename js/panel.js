@@ -242,12 +242,12 @@ class Panel {
     }
 
     _toMinMaxValues(cmin, cmax) {
-        let hist = this.state.isVolume ? null : this.model.getHistogram(this.state.bucket, this.state.fname);
+        const hist = this.model.getHistogram(this.state.bucket, this.state.fname);
         return toHistogramValueRange(cmin, cmax, hist);
     }
 
     _fromMinMaxValues(vminMod, vmaxMod) {
-        let hist = this.state.isVolume ? null : this.model.getHistogram(this.state.bucket, this.state.fname);
+        const hist = this.model.getHistogram(this.state.bucket, this.state.fname);
         return fromHistogramValueRange(vminMod, vmaxMod, hist);
     }
 

@@ -256,25 +256,18 @@ class Colorbar {
 
     setFeatureRange(hist) {
         hist = hist || this.miniHistogram;
-        // Display vmin and vmax.
         const state = this.state;
-        if (!state.isVolume) {
-            let histogram = this.model.getHistogram(state.bucket, state.fname);
-            if (histogram) {
-                let vmin = histogram['vmin'];
-                let vmax = histogram['vmax'];
-                let count = histogram['total_count'];
-                hist.setFeatureRange(vmin, vmax);
-                hist.setGlobalCount(count);
-            }
-        } else {
-            let volume = this.model.getVolumeData(state.bucket, state.fname);
-            volume = volume["volumes"];
-            if (volume) {
-                let vmin = volume["mean"]['bounds'][0];
-                let vmax = volume["mean"]['bounds'][1];
-                hist.setFeatureRange(vmin, vmax, 0);
-            }
+        const histogram = this.model.getHistogram(state.bucket, state.fname);
+        if (histogram) {
+            hist.setFeatureRange(histogram.vmin, histogram.vmax);
+            hist.setGlobalCount(histogram.total_count);
+            return;
+        }
+
+        const volume = this.model.getVolumeData(state.bucket, state.fname);
+        const bounds = volume && volume.volumes && volume.volumes.mean && volume.volumes.mean.volume ? volume.volumes.mean.volume.bounds : null;
+        if (bounds && bounds.length >= 2) {
+            hist.setFeatureRange(bounds[0], bounds[1]);
         }
     }
 
