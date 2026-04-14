@@ -195,6 +195,8 @@ A typical interaction looks like this:
 
 This event-driven fan-out is how most frontend state changes propagate.
 
+One result of the recent refactor work is that many of the pure decisions inside those fan-out paths now live in `js/core/*`, while the top-level modules stay responsible for wiring, rendering, and side effects.
+
 ---
 
 ## 5. Module groups
@@ -252,11 +254,34 @@ The JS code is easiest to navigate in groups.
 
 - `js/socket.js` — connection-related behavior used by the frontend
 
+### H. Refactor helper layer
+
+The frontend now also has a meaningful `js/core/` helper layer that was introduced through the recent refactor work.
+
+Representative helpers include:
+
+- `js/core/events.js` — shared event name constants
+- `js/core/dom.js` — required-element / stylesheet lookup helpers
+- `js/core/state-url.js` — URL parse/serialize helpers
+- `js/core/coloring-helpers.js` — CSS color-rule and coloring-view derivation
+- `js/core/colorbar-helpers.js` — colorbar range and histogram-source resolution
+- `js/core/panel-helpers.js` — colormap-range display derivation and cleared-state URL logic
+- `js/core/region-helpers.js` — search/filter/title/sort helpers for the region list
+- `js/core/slice-helpers.js` — slice guide-line and wheel-step logic
+- `js/core/volume-helpers.js` — volume indexing, hover coordinates, and denormalization
+- `js/core/dotimage-helpers.js` — point projection and nearest-point lookup
+
+A practical reading pattern is: understand the UI module, then check whether the pure logic it relies on has already been moved into `js/core/*`.
+
 ---
 
 ## 6. The most important modules to understand first
 
 If you are new to the repo, read these first:
+
+A useful secondary rule after the recent refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file before changing behavior. Many calculations that used to be inline have been extracted there and are covered by frontend node tests under `tests/frontend/`.
+
+A useful secondary rule after the recent refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file before changing behavior. Many calculations that used to be inline have been extracted there and are covered by frontend node tests under `tests/frontend/`.
 
 1. `js/main.js`
 2. `js/app.js`
