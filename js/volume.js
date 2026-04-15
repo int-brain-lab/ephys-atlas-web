@@ -1,22 +1,18 @@
 export { Volume };
 
-import { clamp, clearStyle } from "./utils.js";
+import { clearStyle } from "./utils.js";
 import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
-import { VOLUME_AXES, VOLUME_XY_AXES, getVolumeSize } from "./constants.js";
+import { VOLUME_AXES, VOLUME_XY_AXES } from "./constants.js";
 import {
     denormalizeVolumeValue,
     getVolumeHoverAxisCoords,
-    getVolumePlaneSize,
     hexColorToRgb,
     indexFromAxisCoords,
 } from "./core/volume-helpers.js";
 import { buildVolumeVisibilityRules, getVolumeSliderMax, getVolumeSliceIndex } from "./core/volume-ui-helpers.js";
 import { EVENTS } from "./core/events.js";
 import { VolumeSession } from "./volume-session.js";
-
-function makeImageData(canvas) {
-    return canvas.getContext('2d').createImageData(canvas.width, canvas.height);
-}
+import { VolumeCanvasRenderer } from "./volume-canvas-renderer.js";
 
 class Volume {
     constructor(state, model, dispatcher) {
@@ -29,38 +25,37 @@ class Volume {
 
         this.session = new VolumeSession();
         this.volumeContainers = {};
+        this.svgs = {};
+        this.canvases = {};
+        this.baseViewBox = {};
+        this.baseViewBoxSize = {};
         for (const axis of VOLUME_AXES) {
             this.volumeContainers[axis] = getRequiredElement(`svg-${axis}-container-inner`);
+            this.canvases[axis] = getRequiredElement(`canvas-${axis}`);
+            const svg = getRequiredElement(`svg-${axis}`);
+            this.svgs[axis] = svg;
+            const vb = svg.getAttribute("viewBox");
+            this.baseViewBox[axis] = vb;
+            if (vb) {
+                const parts = vb.split(/\s+/).map(Number);
+                if (parts.length === 4 && parts.every(isFinite)) {
+                    const [, , w, h] = parts;
+                    this.baseViewBoxSize[axis] = { w, h };
+                }
+            }
         }
         this.session.volumeArrays = {};
         this.activeVolumeName = null;
 
+        this.renderer = new VolumeCanvasRenderer({
+            canvases: this.canvases,
+            svgs: this.svgs,
+            containers: this.volumeContainers,
+            baseViewBox: this.baseViewBox,
+            baseViewBoxSize: this.baseViewBoxSize,
+        });
+
         this.style = getRequiredSheet('style-volume');
-
-        this.canvas_coronal = getRequiredElement("canvas-coronal");
-        this.canvas_horizontal = getRequiredElement("canvas-horizontal");
-        this.canvas_sagittal = getRequiredElement("canvas-sagittal");
-
-        this.baseViewBox = {};
-        this.baseViewBoxSize = {};
-        for (const axis of VOLUME_AXES) {
-            const svg = getRequiredElement(`svg-${axis}`);
-            if (svg) {
-                const vb = svg.getAttribute("viewBox");
-                this.baseViewBox[axis] = vb;
-                if (vb) {
-                    const parts = vb.split(/\s+/).map(Number);
-                    if (parts.length === 4 && parts.every(isFinite)) {
-                        const [, , w, h] = parts;
-                        this.baseViewBoxSize[axis] = { w, h };
-                    }
-                }
-            }
-        }
-
-        this.imageData_coronal = makeImageData(this.canvas_coronal);
-        this.imageData_horizontal = makeImageData(this.canvas_horizontal);
-        this.imageData_sagittal = makeImageData(this.canvas_sagittal);
 
         this.setupDispatcher();
     }
@@ -96,22 +91,9 @@ class Volume {
                     return;
                 }
 
-                this.session.volumeArrays = {};
+                this.session.loadVolumeEntries(volume);
 
-                for (const [name, entry] of Object.entries(volume["volumes"])) {
-                    if (entry && entry.volume) {
-                        const loadedVolume = entry.volume;
-                        if (entry.bounds && entry.bounds.length >= 2) {
-                            loadedVolume.bounds = entry.bounds;
-                        }
-                        this.session.volumeArrays[name] = loadedVolume;
-                    }
-                }
-
-                const preferred = this.session.volumeArrays["mean"] ?
-                    "mean" :
-                    Object.keys(this.session.volumeArrays)[0];
-
+                const preferred = this.session.getPreferredVolumeName();
                 if (preferred) {
                     this.session.activeVolumeName = preferred;
                     this.setSessionArray(this.session.volumeArrays[preferred], preferred);
@@ -159,36 +141,6 @@ class Volume {
         return indexFromAxisCoords(axisCoords, this.session.rawToAxis, this.session.shape, this.session.fortran_order, VOLUME_AXES);
     }
 
-    updateCanvasSizes() {
-        if (!this.session.axisSizes) {
-            return;
-        }
-        for (const axis of VOLUME_AXES) {
-            const canvas = this[`canvas_${axis}`];
-            const svg = getRequiredElement(`svg-${axis}`);
-            const container = getRequiredElement(`svg-${axis}-container-inner`);
-            const plane = getVolumePlaneSize(axis, this.session.axisSizes, VOLUME_XY_AXES);
-            if (!canvas || !plane) continue;
-            const { width, height } = plane;
-            if (canvas.width !== width || canvas.height !== height) {
-                canvas.width = width;
-                canvas.height = height;
-                this[`imageData_${axis}`] = makeImageData(canvas);
-            }
-            if (svg) {
-                const base = this.baseViewBox[axis];
-                if (base) {
-                    svg.setAttribute("viewBox", base);
-                }
-            }
-            if (container) {
-                const vb = this.baseViewBoxSize[axis];
-                const ratio = vb ? `${vb.w} / ${vb.h}` : `${width} / ${height}`;
-                container.style.aspectRatio = ratio;
-            }
-        }
-    }
-
     updateSliceRanges() {
         if (!this.session.axisSizes) {
             return;
@@ -208,65 +160,11 @@ class Volume {
     }
 
     drawSlice(axis, idx) {
-        if (this.session.shape == null) {
-            return;
-        }
-
-        let cmin = this.state.cmapmin * 2.55;
-        let cmax = this.state.cmapmax * 2.55;
-        if (cmin >= cmax) {
-            return;
-        }
-
-        const nTotal = this.colors.length;
-        const canvas = this[`canvas_${axis}`];
-        let imageData = this[`imageData_${axis}`];
-        let data = imageData.data;
-        console.assert(canvas);
-
-        const plane = getVolumePlaneSize(axis, this.session.axisSizes, VOLUME_XY_AXES);
-        if (!plane) {
-            return;
-        }
-        const { widthAxis, heightAxis, width, height, sliceCount } = plane;
-
-        if (canvas.width !== width || canvas.height !== height || !imageData || imageData.width !== width || imageData.height !== height) {
-            canvas.width = width;
-            canvas.height = height;
-            imageData = this[`imageData_${axis}`] = makeImageData(canvas);
-            data = imageData.data;
-        }
-
-        const ds = this.session.downsample ? (this.session.downsample[axis] || 1) : 1;
-        const sliceIdx = getVolumeSliceIndex(idx, ds, sliceCount);
-
-        let i = 0;
-        const axisCoords = [0, 0, 0];
-        axisCoords[VOLUME_AXES.indexOf(axis)] = sliceIdx;
-        const widthIdx = VOLUME_AXES.indexOf(widthAxis);
-        const heightIdx = VOLUME_AXES.indexOf(heightAxis);
-
-        for (let h = 0; h < height; h++) {
-            axisCoords[heightIdx] = h;
-            for (let w = 0; w < width; w++) {
-                axisCoords[widthIdx] = w;
-                const j = this.indexFromAxisCoords(axisCoords);
-                let value = this.session.volume[j];
-
-                value = (value - cmin) / (cmax - cmin);
-                value = clamp(value, 0, .9999);
-                const rgb = this.colors[Math.floor(value * nTotal)];
-                if (rgb != undefined) {
-                    data[i + 0] = rgb[0];
-                    data[i + 1] = rgb[1];
-                    data[i + 2] = rgb[2];
-                }
-                data[i + 3] = 255;
-                i = i + 4;
-            }
-        }
-
-        canvas.getContext('2d').putImageData(imageData, 0, 0);
+        this.renderer.drawSlice(axis, idx, {
+            state: this.state,
+            session: this.session,
+            colors: this.colors,
+        });
     }
 
     setSessionArray(arr, volumeName = null) {
@@ -275,7 +173,7 @@ class Volume {
             return;
         }
 
-        this.updateCanvasSizes();
+        this.renderer.updateCanvasSizes(this.session);
         this.updateSliceRanges();
         this.setCmap();
     }
@@ -343,14 +241,6 @@ class Volume {
     }
 
     draw() {
-        console.log("redraw volume bitmaps");
-
-        if (this.state.logScale) {
-            console.warn("pseudo log scale not yet implemented on volumes");
-        }
-
-        this.drawSlice('coronal', this.state.coronal);
-        this.drawSlice('horizontal', this.state.horizontal);
-        this.drawSlice('sagittal', this.state.sagittal);
+        this.renderer.draw(this.state, this.session, this.colors);
     }
 };
