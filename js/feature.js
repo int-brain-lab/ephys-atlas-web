@@ -5,6 +5,7 @@ import { URLS } from "./model.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement } from "./core/dom.js";
 import { FeatureDropdown } from "./feature-dropdown.js";
+import { applyFeatureSelection, loadAndSelectFeature } from "./feature-selection-service.js";
 import { downloadBinaryFile, removeFromArray } from "./utils.js";
 
 class Feature {
@@ -27,7 +28,15 @@ class Feature {
     async setState(state) {
         if (state.fname && !state.isVolume) {
             this.model.downloadFeatures(state.bucket, state.fname).then(() => {
-                this.selectFeature(state.fname, state.isVolume);
+                applyFeatureSelection({
+                    state: this.state,
+                    model: this.model,
+                    dispatcher: this.dispatcher,
+                    source: this,
+                    dropdown: this.dropdown,
+                    fname: state.fname,
+                    isVolume: state.isVolume,
+                });
             });
         }
     }
@@ -40,8 +49,15 @@ class Feature {
 
             if (this.state.fname) {
                 const state = this.state;
-                await this.model.downloadFeatures(state.bucket, state.fname);
-                this.selectFeature(state.fname, state.isVolume);
+                await loadAndSelectFeature({
+                    state: this.state,
+                    model: this.model,
+                    dispatcher: this.dispatcher,
+                    source: this,
+                    dropdown: this.dropdown,
+                    fname: state.fname,
+                    isVolume: state.isVolume,
+                });
             }
         });
         this.dispatcher.on(EVENTS.REFRESH, () => { this.refreshBucket(); });
@@ -50,7 +66,15 @@ class Feature {
             this.setBucket(DEFAULT_BUCKET);
         });
         this.dispatcher.on(EVENTS.FEATURE_REMOVE, (ev) => {
-            this.selectFeature('');
+            applyFeatureSelection({
+                state: this.state,
+                model: this.model,
+                dispatcher: this.dispatcher,
+                source: this,
+                dropdown: this.dropdown,
+                fname: '',
+                isVolume: undefined,
+            });
             this.model.deleteLocalFeature(ev.fname);
             this.refreshBucket();
         });
@@ -62,7 +86,15 @@ class Feature {
             const state = this.state;
 
             if (!fname) {
-                this.selectFeature('');
+                applyFeatureSelection({
+                state: this.state,
+                model: this.model,
+                dispatcher: this.dispatcher,
+                source: this,
+                dropdown: this.dropdown,
+                fname: '',
+                isVolume: undefined,
+            });
                 return;
             }
 
@@ -113,27 +145,31 @@ class Feature {
         this.model.clearFeaturePrefetch();
 
         if (this.state.fname) {
-            await this.model.downloadFeatures(this.state.bucket, this.state.fname, { refresh: true });
-            this.dropdown.select(this.state.fname);
-            this.model.scheduleFeaturePrefetch(this.state.bucket, this.state.fname);
+            await loadAndSelectFeature({
+                state: this.state,
+                model: this.model,
+                dispatcher: this.dispatcher,
+                source: this,
+                dropdown: this.dropdown,
+                fname: this.state.fname,
+                isVolume: this.state.isVolume,
+                options: { refresh: true },
+            });
         }
 
         this.dispatcher.spinning(this, false);
     }
 
     selectFeature(fname, isVolume) {
-        console.log(`select feature ${fname}, volume=${isVolume}`);
-        this.state.setFeature(fname, isVolume);
-        this.dropdown.select(fname);
-
-        if (fname) {
-            this.model.scheduleFeaturePrefetch(this.state.bucket, fname);
-        }
-        else {
-            this.model.clearFeaturePrefetch();
-        }
-
-        this.dispatcher.feature(this, fname, isVolume);
+        applyFeatureSelection({
+            state: this.state,
+            model: this.model,
+            dispatcher: this.dispatcher,
+            source: this,
+            dropdown: this.dropdown,
+            fname,
+            isVolume,
+        });
     }
 
     async download() {
