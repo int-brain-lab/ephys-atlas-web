@@ -2,9 +2,8 @@ export { Volume };
 
 import { clamp, clearStyle } from "./utils.js";
 import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
-import { VOLUME_AXES, VOLUME_SIZE, VOLUME_XY_AXES, getVolumeSize, setVolumeSizeDynamic } from "./constants.js";
+import { VOLUME_AXES, VOLUME_XY_AXES, getVolumeSize } from "./constants.js";
 import {
-    computeAxisMapping,
     denormalizeVolumeValue,
     getVolumeHoverAxisCoords,
     getVolumePlaneSize,
@@ -13,6 +12,7 @@ import {
 } from "./core/volume-helpers.js";
 import { buildVolumeVisibilityRules, getVolumeSliderMax, getVolumeSliceIndex } from "./core/volume-ui-helpers.js";
 import { EVENTS } from "./core/events.js";
+import { VolumeSession } from "./volume-session.js";
 
 function makeImageData(canvas) {
     return canvas.getContext('2d').createImageData(canvas.width, canvas.height);
@@ -27,18 +27,12 @@ class Volume {
         this.model = model;
         this.dispatcher = dispatcher;
 
-        this.shape = null;
-        this.volume = null;
-        this.fortran_order = null;
-        this.axisSizes = getVolumeSize();
-        this.axisToRaw = null;
-        this.rawToAxis = null;
-        this.downsample = { coronal: 1, horizontal: 1, sagittal: 1 };
+        this.session = new VolumeSession();
         this.volumeContainers = {};
         for (const axis of VOLUME_AXES) {
             this.volumeContainers[axis] = getRequiredElement(`svg-${axis}-container-inner`);
         }
-        this.volumeArrays = {};
+        this.session.volumeArrays = {};
         this.activeVolumeName = null;
 
         this.style = getRequiredSheet('style-volume');
@@ -85,25 +79,11 @@ class Volume {
         }
     }
 
-    resetArrayState() {
-        this.shape = null;
-        this.volume = null;
-        this.fortran_order = null;
-        this.bounds = null;
-        this.axisSizes = getVolumeSize();
-        this.axisToRaw = null;
-        this.rawToAxis = null;
-        this.downsample = { coronal: 1, horizontal: 1, sagittal: 1 };
-        this.activeVolumeName = null;
-        this.volumeArrays = {};
-        setVolumeSizeDynamic(null);
-    }
-
     setupDispatcher() {
         this.dispatcher.on(EVENTS.FEATURE, async (ev) => {
             if (!ev.isVolume) {
                 this.hideVolume();
-                this.resetArrayState();
+                this.session.reset();
             }
             else {
                 this.showVolume();
@@ -112,11 +92,11 @@ class Volume {
                 const volume = this.model.getVolumeData(state.bucket, state.fname);
 
                 if (!volume || !volume["volumes"]) {
-                    this.setArray(null);
+                    this.setSessionArray(null);
                     return;
                 }
 
-                this.volumeArrays = {};
+                this.session.volumeArrays = {};
 
                 for (const [name, entry] of Object.entries(volume["volumes"])) {
                     if (entry && entry.volume) {
@@ -124,20 +104,20 @@ class Volume {
                         if (entry.bounds && entry.bounds.length >= 2) {
                             loadedVolume.bounds = entry.bounds;
                         }
-                        this.volumeArrays[name] = loadedVolume;
+                        this.session.volumeArrays[name] = loadedVolume;
                     }
                 }
 
-                const preferred = this.volumeArrays["mean"] ?
+                const preferred = this.session.volumeArrays["mean"] ?
                     "mean" :
-                    Object.keys(this.volumeArrays)[0];
+                    Object.keys(this.session.volumeArrays)[0];
 
                 if (preferred) {
-                    this.activeVolumeName = preferred;
-                    this.setArray(this.volumeArrays[preferred], preferred);
+                    this.session.activeVolumeName = preferred;
+                    this.setSessionArray(this.session.volumeArrays[preferred], preferred);
                 }
                 else {
-                    this.setArray(null);
+                    this.setSessionArray(null);
                 }
 
                 this.draw();
@@ -175,25 +155,19 @@ class Volume {
         }
     }
 
-    computeAxisMapping(shape) {
-        const mapping = computeAxisMapping(shape, VOLUME_SIZE, VOLUME_AXES);
-        console.log("volume axis mapping", mapping.axisToRaw, "axis sizes", mapping.axisSizes, "downsample", mapping.downsample);
-        return mapping;
-    }
-
     indexFromAxisCoords(axisCoords) {
-        return indexFromAxisCoords(axisCoords, this.rawToAxis, this.shape, this.fortran_order, VOLUME_AXES);
+        return indexFromAxisCoords(axisCoords, this.session.rawToAxis, this.session.shape, this.session.fortran_order, VOLUME_AXES);
     }
 
     updateCanvasSizes() {
-        if (!this.axisSizes) {
+        if (!this.session.axisSizes) {
             return;
         }
         for (const axis of VOLUME_AXES) {
             const canvas = this[`canvas_${axis}`];
             const svg = getRequiredElement(`svg-${axis}`);
             const container = getRequiredElement(`svg-${axis}-container-inner`);
-            const plane = getVolumePlaneSize(axis, this.axisSizes, VOLUME_XY_AXES);
+            const plane = getVolumePlaneSize(axis, this.session.axisSizes, VOLUME_XY_AXES);
             if (!canvas || !plane) continue;
             const { width, height } = plane;
             if (canvas.width !== width || canvas.height !== height) {
@@ -216,14 +190,14 @@ class Volume {
     }
 
     updateSliceRanges() {
-        if (!this.axisSizes) {
+        if (!this.session.axisSizes) {
             return;
         }
         for (const axis of VOLUME_AXES) {
             const slider = getRequiredElement(`slider-${axis}`);
             if (!slider) continue;
-            const voxels = this.axisSizes[axis];
-            const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
+            const voxels = this.session.axisSizes[axis];
+            const ds = this.session.downsample ? (this.session.downsample[axis] || 1) : 1;
             const max = getVolumeSliderMax(voxels, ds);
             slider.max = max;
             const value = parseInt(slider.value);
@@ -233,37 +207,8 @@ class Volume {
         }
     }
 
-    setArray(arr, volumeName = null) {
-        if (!arr) {
-            this.resetArrayState();
-            return;
-        }
-
-        this.shape = Array.from(arr.shape);
-        this.volume = arr.data;
-        this.fortran_order = arr.fortran_order;
-        this.bounds = arr.bounds;
-        this.activeVolumeName = volumeName;
-        console.log(
-            "array is loaded, shape is", this.shape,
-            "bounds are:", this.bounds[0], this.bounds[1],
-            "fortran order:", this.fortran_order,
-        );
-
-        const mapping = this.computeAxisMapping(this.shape);
-        this.axisToRaw = mapping.axisToRaw;
-        this.rawToAxis = mapping.rawToAxis;
-        this.axisSizes = mapping.axisSizes;
-        this.downsample = mapping.downsample;
-        setVolumeSizeDynamic(this.axisSizes);
-        this.updateCanvasSizes();
-        this.updateSliceRanges();
-
-        this.setCmap();
-    }
-
     drawSlice(axis, idx) {
-        if (this.shape == null) {
+        if (this.session.shape == null) {
             return;
         }
 
@@ -279,7 +224,7 @@ class Volume {
         let data = imageData.data;
         console.assert(canvas);
 
-        const plane = getVolumePlaneSize(axis, this.axisSizes, VOLUME_XY_AXES);
+        const plane = getVolumePlaneSize(axis, this.session.axisSizes, VOLUME_XY_AXES);
         if (!plane) {
             return;
         }
@@ -292,7 +237,7 @@ class Volume {
             data = imageData.data;
         }
 
-        const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
+        const ds = this.session.downsample ? (this.session.downsample[axis] || 1) : 1;
         const sliceIdx = getVolumeSliceIndex(idx, ds, sliceCount);
 
         let i = 0;
@@ -306,7 +251,7 @@ class Volume {
             for (let w = 0; w < width; w++) {
                 axisCoords[widthIdx] = w;
                 const j = this.indexFromAxisCoords(axisCoords);
-                let value = this.volume[j];
+                let value = this.session.volume[j];
 
                 value = (value - cmin) / (cmax - cmin);
                 value = clamp(value, 0, .9999);
@@ -324,22 +269,33 @@ class Volume {
         canvas.getContext('2d').putImageData(imageData, 0, 0);
     }
 
+    setSessionArray(arr, volumeName = null) {
+        const mapping = this.session.setArray(arr, volumeName);
+        if (!mapping) {
+            return;
+        }
+
+        this.updateCanvasSizes();
+        this.updateSliceRanges();
+        this.setCmap();
+    }
+
     sliceIndexFromState(axis) {
-        if (!this.axisSizes || !this.axisSizes[axis]) {
+        if (!this.session.axisSizes || !this.session.axisSizes[axis]) {
             return 0;
         }
-        const ds = this.downsample ? (this.downsample[axis] || 1) : 1;
-        const sliceCount = this.axisSizes[axis];
+        const ds = this.session.downsample ? (this.session.downsample[axis] || 1) : 1;
+        const sliceCount = this.session.axisSizes[axis];
         const sliderValue = this.state[axis] || 0;
         return getVolumeSliceIndex(sliderValue, ds, sliceCount);
     }
 
     handleVolumeHover(axis, e) {
-        if (!this.state.isVolume || !axis || !e || !this.axisSizes) {
+        if (!this.state.isVolume || !axis || !e || !this.session.axisSizes) {
             return;
         }
 
-        if (!this.volumeArrays || Object.keys(this.volumeArrays).length === 0) {
+        if (!this.session.volumeArrays || Object.keys(this.session.volumeArrays).length === 0) {
             return;
         }
 
@@ -353,7 +309,7 @@ class Volume {
             axis,
             rect,
             e,
-            this.axisSizes,
+            this.session.axisSizes,
             VOLUME_XY_AXES,
             this.sliceIndexFromState(axis),
             VOLUME_AXES,
@@ -368,7 +324,7 @@ class Volume {
         }
 
         const values = {};
-        for (const [name, arr] of Object.entries(this.volumeArrays)) {
+        for (const [name, arr] of Object.entries(this.session.volumeArrays)) {
             if (!arr || !arr.data || dataIndex >= arr.data.length) {
                 continue;
             }
