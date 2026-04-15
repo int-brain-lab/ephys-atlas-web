@@ -1,6 +1,7 @@
 export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
-import { DEBUG, SLICE_DEFAULT } from "./constants.js";
+import { DEBUG } from "./constants.js";
+import { normalizeAppState } from "./core/state-normalize.js";
 import { parseUrlState, serializeStateToUrl } from "./core/state-url.js";
 import {
     ALIAS_STATES,
@@ -52,38 +53,7 @@ class State {
     }
 
     init(state) {
-        // Colormap.
-        this.cmap = state.cmap || DEFAULT_COLORMAP;
-        this.cmapmin = state.cmapmin || DEFAULT_COLORMAP_MIN;
-        this.cmapmax = state.cmapmax || DEFAULT_COLORMAP_MAX;
-        this.logScale = state.logScale || DEFAULT_LOG_SCALE;
-
-        // Features.
-        this.bucket = state.bucket || DEFAULT_BUCKET;
-        this.buckets = state.buckets || DEFAULT_BUCKETS;
-        this.fname = state.fname;
-        this.isVolume = state.isVolume;
-        this.stat = state.stat || DEFAULT_STAT;
-
-        // Slices.
-        this.coronal = parseInt(state.coronal) || (SLICE_DEFAULT['coronal']);
-        this.sagittal = parseInt(state.sagittal) || (SLICE_DEFAULT['sagittal']);
-        this.horizontal = parseInt(state.horizontal) || (SLICE_DEFAULT['horizontal']);
-
-        // Unity exploded.
-        this.exploded = parseFloat(state.exploded) || DEFAULT_EXPLODED;
-
-        // Regions.
-        this.mapping = state.mapping || DEFAULT_MAPPING;
-
-        // NOTE: remove search from state
-        // this.search = state.search || DEFAULT_SEARCH;
-
-        this.highlighted = state.highlighted || DEFAULT_HIGHLIGHTED;
-        this.selected = new Set(state.selected || []);
-
-        // Panel.
-        this.panelOpen = state.panelOpen;
+        Object.assign(this, normalizeAppState(state));
     }
 
     reset() {
