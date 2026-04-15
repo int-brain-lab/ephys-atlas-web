@@ -4,7 +4,7 @@ import { DEFAULT_BUCKET } from "./state.js";
 import { URLS } from "./model.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement } from "./core/dom.js";
-import { buildFeatureDropdownEntries } from "./core/feature-tree.js";
+import { FeatureDropdown } from "./feature-dropdown.js";
 import { downloadBinaryFile, removeFromArray } from "./utils.js";
 
 
