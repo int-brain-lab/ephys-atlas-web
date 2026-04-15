@@ -3,6 +3,7 @@ export { Panel };
 import { PersistentCache } from "./persistent-cache.js";
 import { throttle } from "./utils.js";
 import { EVENTS } from "./core/events.js";
+import { exportSvgCollection } from "./panel-export.js";
 import { getRequiredElement, getRequiredSelector } from "./core/dom.js";
 import {
     buildClearedStateUrl,
@@ -17,29 +18,6 @@ import {
 /*************************************************************************************************/
 
 const CMAP_RANGE_THROTTLE = 250; // number of milliseconds between updates
-
-
-
-function cloneSvgAndSetFillColors(svgElement) {
-    const originalPathElements = svgElement.querySelectorAll('path');
-    const fillColors = new Map();
-
-    originalPathElements.forEach(pathElement => {
-        const fillColor = window.getComputedStyle(pathElement).fill;
-        fillColors.set(pathElement, fillColor);
-    });
-
-    const clonedSvg = svgElement.cloneNode(true);
-    const clonedPathElements = clonedSvg.querySelectorAll('path');
-
-    clonedPathElements.forEach((clonedPathElement, index) => {
-        const originalPathElement = originalPathElements[index];
-        const fillColor = fillColors.get(originalPathElement);
-        clonedPathElement.style.fill = fillColor;
-    });
-
-    return clonedSvg;
-}
 
 
 
@@ -236,42 +214,9 @@ class Panel {
 
     setupExportButton() {
         this.ibexport.addEventListener('click', async () => {
-            const svgs = document.getElementsByTagName('svg');
-            const zip = new JSZip();
-
-            for (const svg of svgs) {
-                const svgClone = cloneSvgAndSetFillColors(svg);
-                const svgData = new XMLSerializer().serializeToString(svgClone);
-                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(svgBlob);
-
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                const img = new Image();
-
-                await new Promise((resolve) => {
-                    img.onload = () => {
-                        canvas.width = 10 * img.width;
-                        canvas.height = 10 * img.height;
-                        context.drawImage(img, 0, 0);
-                        URL.revokeObjectURL(url);
-                        resolve();
-                    };
-                    img.src = url;
-                });
-
-                const pngBlob = await new Promise((resolve) => {
-                    canvas.toBlob((blob) => {
-                        resolve(blob);
-                    }, 'image/png');
-                });
-
-                const id = svg.getAttribute('id') || `svg-${Math.random().toString(36).substr(2, 9)}`;
-                zip.file(`${id}.png`, pngBlob);
-            }
-
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            saveAs(zipBlob, 'svgs.zip');
+            await exportSvgCollection({
+                svgs: document.getElementsByTagName('svg'),
+            });
         });
     }
 
