@@ -2,45 +2,13 @@ export { State, DEFAULT_BUCKET, DEFAULT_BUCKETS };
 
 import { DEBUG } from "./constants.js";
 import { normalizeAppState } from "./core/state-normalize.js";
-import { parseUrlState, serializeStateToUrl } from "./core/state-url.js";
-import {
-    ALIAS_STATES,
-    DEFAULT_BUCKET,
-    DEFAULT_BUCKETS,
-    DEFAULT_COLORMAP,
-    DEFAULT_COLORMAP_MAX,
-    DEFAULT_COLORMAP_MIN,
-    DEFAULT_EXPLODED,
-    DEFAULT_HIGHLIGHTED,
-    DEFAULT_LOG_SCALE,
-    DEFAULT_MAPPING,
-    DEFAULT_SEARCH,
-    DEFAULT_STAT,
-} from "./state-defaults.js";
+import { loadStateFromUrl, replaceBrowserUrl, serializeAppStateToUrl } from "./state-router.js";
+import { DEFAULT_BUCKET, DEFAULT_BUCKETS } from "./state-defaults.js";
 /** @import { AppStateShape } from "./core/types.js" */
 
 
 
 /* Default state constants live in state-defaults.js. */
-
-function url2state() {
-    return parseUrlState(window.location.search, {
-        aliasStates: ALIAS_STATES,
-        defaultBucket: DEFAULT_BUCKET,
-        defaultBuckets: DEFAULT_BUCKETS,
-        debug: DEBUG,
-    });
-}
-
-
-function state2url(state_) {
-    return serializeStateToUrl(state_, {
-        currentUrl: window.location.toString(),
-        defaultBuckets: DEFAULT_BUCKETS,
-    });
-}
-
-
 
 /*************************************************************************************************/
 /* State                                                                                         */
@@ -138,28 +106,15 @@ class State {
         // Update the address bar URL.
 
         // Generate the URL from the state.
-        let url = this.toURL();
-
-        // Set the URL in the location bar.
-
-        // if (!DEBUG)
-        window.history.replaceState(null, '', url.toString());
-
-        return url;
+        const url = this.toURL();
+        return replaceBrowserUrl(url);
     }
 
     fromURL() {
-        let state = url2state();
-        this.init(state);
+        this.init(loadStateFromUrl({ debug: DEBUG }));
     }
 
     toURL() {
-        // HACK: temporarily replace selected, a Set(), by an array, otherwise the JSON
-        // serialization won't work.
-        let cpy = { ...this };
-        delete cpy._toggle;
-        cpy.selected = Array.from(cpy.selected);
-        let url = state2url(cpy);
-        return url;
+        return serializeAppStateToUrl(this);
     }
 };
