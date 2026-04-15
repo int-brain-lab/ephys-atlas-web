@@ -150,7 +150,7 @@ Important features of `Model`:
 - delegates bucket/feature transport to `DataClient`
 - delegates bucket/feature cache and persistence policy to `FeatureStore`
 - delegates background feature prefetch scheduling to `PrefetchController`
-- delegates feature payload decoding to `feature-decoder`
+- delegates static atlas resources, feature catalog policy, feature payload accessors, and prefetch policy to focused helper modules
 
 Modules should generally ask the `model` for data instead of fetching directly.
 
@@ -160,7 +160,8 @@ The current split is:
 - `js/data-client.js` — raw HTTP access for buckets/features
 - `js/feature-store.js` — in-memory + persistent cache policy and local bucket handling
 - `js/prefetch-controller.js` — prefetch queueing, idle scheduling, and cancellation
-- `js/feature-decoder.js` — feature payload normalization and volume decoding
+- `js/feature-catalog.js` — ordered-feature and volume-feature catalog helpers
+- `js/feature-payload.js` — feature payload accessors for mappings, histograms, colormaps, and volumes
 
 ### `js/dispatcher.js`
 
@@ -237,9 +238,14 @@ The JS code is easiest to navigate in groups.
 - `js/state.js` — shared app state
 - `js/model.js` — facade/orchestration layer for data access
 - `js/data-client.js` — raw bucket/feature transport
+- `js/atlas-static-store.js` — static colormap, region, and slice resources
 - `js/feature-store.js` — bucket/feature cache and persistence layer
 - `js/prefetch-controller.js` — background prefetch queue and cancellation
-- `js/feature-decoder.js` — feature payload decoding/normalization
+- `js/feature-catalog.js` — bucket feature ordering and volume-feature detection
+- `js/feature-payload.js` — feature payload accessors
+- `js/feature-prefetch-policy.js` — feature prefetch candidate selection
+- `js/state-defaults.js` — default state constants and alias definitions
+- `js/state-router.js` — URL parse/serialize and history integration
 - `js/dispatcher.js` — event bus
 - `js/cache.js` — async cache wrapper
 - `js/loader.js` — loader for static JSON resources
@@ -259,7 +265,9 @@ The JS code is easiest to navigate in groups.
 
 ### C. Region list / selection / interaction overlays
 
-- `js/region.js` — left-hand region list and bar plot
+- `js/region.js` — region list orchestration and feature-to-mapping compatibility handling
+- `js/region-view.js` — region list rendering and sort interactions
+- `js/region-policy.js` — mapping compatibility policy for selected features
 - `js/selection.js` — selected region list
 - `js/selector.js` — selected-region CSS styling
 - `js/highlighter.js` — hover highlight styling
@@ -273,8 +281,12 @@ The JS code is easiest to navigate in groups.
 
 ### E. Slice and volume rendering
 
-- `js/slice.js` — SVG slice swapping, sliders, wheel motion, region hover/click, crosshair lines
-- `js/volume.js` — canvas-based volume rendering on top of SVG slices
+- `js/slice.js` — slice state, guide updates, and dispatcher orchestration
+- `js/slice-dom.js` — slice DOM lookup and event binding helpers
+- `js/volume.js` — volume controller and dispatcher integration
+- `js/volume-session.js` — volume session state and axis-mapping setup
+- `js/volume-canvas-renderer.js` — canvas sizing and raster slice drawing
+- `js/volume-interaction.js` — volume hover/value lookup helpers
 - `js/dotimage.js` — ctrl-click volume point/image lookup utilities
 
 ### F. 3D integration
@@ -293,7 +305,7 @@ Representative helpers include:
 
 - `js/core/events.js` — shared event name constants
 - `js/core/dom.js` — required-element / stylesheet lookup helpers
-- `js/core/state-url.js` — URL parse/serialize helpers
+- `js/core/state-normalize.js` — pure app-state normalization
 - `js/core/coloring-helpers.js` — CSS color-rule and coloring-view derivation
 - `js/core/colorbar-helpers.js` — colorbar range and histogram-source resolution
 - `js/core/panel-helpers.js` — colormap-range display derivation and cleared-state URL logic
@@ -310,9 +322,8 @@ A practical reading pattern is: understand the UI module, then check whether the
 
 If you are new to the repo, read these first:
 
-A useful secondary rule after the recent refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file before changing behavior. Many calculations that used to be inline have been extracted there and are covered by frontend node tests under `tests/frontend/`.
+A useful secondary rule after the recent refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file or extracted service module before changing behavior. Many calculations that used to be inline have been extracted there and are covered by frontend node tests under `tests/frontend/`.
 
-A useful secondary rule after the recent refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file before changing behavior. Many calculations that used to be inline have been extracted there and are covered by frontend node tests under `tests/frontend/`.
 
 1. `js/main.js`
 2. `js/app.js`
@@ -422,7 +433,7 @@ Some genuinely useful properties of this frontend structure:
 - event bus keeps modules decoupled
 - modules are split by UI concern, which helps maintenance
 - data loading is centralized through `Model`
-- volumetric rendering logic is mostly isolated in `Volume`
+- volumetric rendering logic is split between `Volume`, `volume-session`, `volume-canvas-renderer`, and `volume-interaction`
 - Unity integration is mostly contained in one module
 
 ---
@@ -449,7 +460,7 @@ Because styling often comes from injected rules, visual bugs may be caused by ru
 
 ### `model.js` is now a facade, but remains central
 
-`Model` is thinner than before, but it is still the main frontend integration surface. It coordinates the store, decoder, and prefetch layers, so changes to data flow should still start there.
+`Model` is thinner than before, but it is still the main frontend integration surface. It coordinates the static store, feature store, catalog helpers, payload helpers, and prefetch layers, so changes to data flow should still start there.
 
 ### Slice geometry is partly modernized, partly legacy
 

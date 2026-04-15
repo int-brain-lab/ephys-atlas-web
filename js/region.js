@@ -37,7 +37,7 @@ class Region {
         this.dispatcher.on(EVENTS.RESET, () => { this.init(); });
 
         this.dispatcher.on(EVENTS.FEATURE, (ev) => {
-            const mappings = this.model.getFeaturesMappings(this.state.bucket, ev.fname);
+            const mappings = this.model.getFeatureMappings(this.state.bucket, ev.fname);
             const mapping = resolveCompatibleMappingForFeature({
                 isVolume: this.state.isVolume,
                 currentMapping: this.state.mapping,

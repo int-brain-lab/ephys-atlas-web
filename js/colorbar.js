@@ -166,7 +166,7 @@ class Colorbar {
             return null;
         }
 
-        const histogram = this.model.getHistogram(this.state.bucket, this.state.fname);
+        const histogram = this.model.getFeatureHistogram(this.state.bucket, this.state.fname);
         const features = this.state.isVolume ? null : this.model.getFeatures(
             this.state.bucket,
             this.state.fname,
@@ -190,7 +190,7 @@ class Colorbar {
 
     setFeatureRange(hist = this.miniHistogram) {
         const range = resolveColorbarRange(
-            this.model.getHistogram(this.state.bucket, this.state.fname),
+            this.model.getFeatureHistogram(this.state.bucket, this.state.fname),
             this.model.getVolumeData(this.state.bucket, this.state.fname),
         );
         if (!range) {

@@ -70,7 +70,7 @@ export class PanelControls {
     }
 
     getHistogram() {
-        return this.model.getHistogram(this.state.bucket, this.state.fname);
+        return this.model.getFeatureHistogram(this.state.bucket, this.state.fname);
     }
 
     buildColormapRangeView(cmin, cmax) {
@@ -92,7 +92,7 @@ export class PanelControls {
     syncFeatureControls() {
         this.renderColormapRange(this.buildColormapRangeView(this.state.cmapmin, this.state.cmapmax));
 
-        const cmap = this.model.getCmap(this.state.bucket, this.state.fname);
+        const cmap = this.model.getFeatureColormap(this.state.bucket, this.state.fname);
         if (cmap) {
             this.elements.icmap.value = cmap;
             this.state.setCmap(cmap);

@@ -126,7 +126,7 @@ class StatToolbox {
             return;
         }
 
-        const histogram = this.model.getHistogram(this.state.bucket, this.state.fname);
+        const histogram = this.model.getFeatureHistogram(this.state.bucket, this.state.fname);
         const features = this.model.getFeatures(this.state.bucket, this.state.fname, this.state.mapping);
         const regions = this.model.getRegions(this.state.mapping);
         const unit = this.model.getFeatureUnit(this.state.bucket, this.state.fname);

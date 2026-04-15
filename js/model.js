@@ -198,12 +198,22 @@ class Model {
         return this.featureStore.getFeature(bucket, fname);
     }
 
-    getFeaturesMappings(bucket, fname) {
+    getFeatureMappings(bucket, fname) {
         return getFeatureMappings(this.getFeaturePayload(bucket, fname));
     }
 
-    getCmap(bucket, fname) {
+    // Compatibility alias for older callers.
+    getFeaturesMappings(bucket, fname) {
+        return this.getFeatureMappings(bucket, fname);
+    }
+
+    getFeatureColormap(bucket, fname) {
         return getFeatureCmap(this.getFeaturePayload(bucket, fname));
+    }
+
+    // Compatibility alias for older callers.
+    getCmap(bucket, fname) {
+        return this.getFeatureColormap(bucket, fname);
     }
 
     getFeatures(bucket, fname, mapping) {
@@ -213,9 +223,14 @@ class Model {
         return getFeatureMappingData(this.getFeaturePayload(bucket, fname), mapping);
     }
 
-    getHistogram(bucket, fname) {
+    getFeatureHistogram(bucket, fname) {
         console.assert(bucket);
         return getFeatureHistogram(this.getFeaturePayload(bucket, fname));
+    }
+
+    // Compatibility alias for older callers.
+    getHistogram(bucket, fname) {
+        return this.getFeatureHistogram(bucket, fname);
     }
 
     getVolumeData(bucket, fname) {

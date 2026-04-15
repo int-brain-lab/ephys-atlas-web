@@ -41,7 +41,6 @@ class Volume {
             }
         }
         this.session.volumeArrays = {};
-        this.activeVolumeName = null;
 
         this.renderer = new VolumeCanvasRenderer({
             canvases: this.canvases,
