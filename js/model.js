@@ -8,6 +8,7 @@ import { PrefetchController } from "./prefetch-controller.js";
 import { memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
 import { getOrderedBucketFeatures, getVolumeFeatureSet } from "./feature-catalog.js";
+import { getFeatureCmap, getFeatureHistogram, getFeatureMappingData, getFeatureMappings, getFeatureVolumeData } from "./feature-payload.js";
 
 
 /*************************************************************************************************/
@@ -306,79 +307,28 @@ class Model {
     }
 
     getFeaturesMappings(bucket, fname) {
-        // Return the non-empty mappings of a feature.
-        if (!fname)
-            return null;
-        let g = this.getFeaturePayload(bucket, fname);
-        if (!g) return null;
-        if (!g["mappings"]) return null;
-        let mappings = [];
-        for (let mapping in g["mappings"]) {
-            let ids = Object.keys(g["mappings"][mapping]["data"]);
-            ids.pop("1");
-            if (ids.length > 0) mappings.push(mapping);
-        }
-        return mappings;
+        return getFeatureMappings(this.getFeaturePayload(bucket, fname));
     }
 
     getCmap(bucket, fname) {
-        if (!fname)
-            return null;
-        let g = this.getFeaturePayload(bucket, fname);
-        if (!g) return null;
-        if (!g["cmap"]) return null;
-        return g["cmap"];
+        return getFeatureCmap(this.getFeaturePayload(bucket, fname));
     }
 
     getFeatures(bucket, fname, mapping) {
         console.assert(bucket);
+        console.assert(mapping);
 
-        if (!fname) {
-            return null;
-        }
-        let g = this.getFeaturePayload(bucket, fname);
-        if (!g) {
-            return null;
-        }
-
-        if ("mappings" in g) {
-            console.assert(mapping);
-            return g["mappings"][mapping];
-        }
-        return null;
+        return getFeatureMappingData(this.getFeaturePayload(bucket, fname), mapping);
     }
 
     getHistogram(bucket, fname) {
         console.assert(bucket);
-
-        if (!fname) {
-            return null;
-        }
-        let g = this.getFeaturePayload(bucket, fname);
-        if (!g) {
-            return null;
-        }
-
-        if ("histogram" in g) {
-            return g["histogram"];
-        }
-        return null;
+        return getFeatureHistogram(this.getFeaturePayload(bucket, fname));
     }
 
     getVolumeData(bucket, fname) {
         console.assert(bucket);
-        if (!fname) {
-            return null;
-        }
-        let g = this.getFeaturePayload(bucket, fname);
-        if (!g) {
-            return null;
-        }
-        if ("volumes" in g) {
-            g["volumes"]["is_volume"] = true;
-            return g;
-        }
-        return null;
+        return getFeatureVolumeData(this.getFeaturePayload(bucket, fname));
     }
 
     /* Colors                                                                                    */
