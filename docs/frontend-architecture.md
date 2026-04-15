@@ -89,9 +89,16 @@ Its `init()` method:
 1. starts the splash/loading flow
 2. calls `model.load()`
 3. temporarily disables URL updates
-4. initializes modules
-5. re-enables URL updates
-6. initializes Unity if enabled
+4. initializes primary UI modules
+5. initializes dependent UI modules
+6. re-enables URL updates
+7. initializes deferred modules such as Unity if enabled
+
+A few startup dependencies are worth preserving during refactors:
+
+- URL updates stay suspended during startup so initialization does not churn the location bar
+- `selection.init()` currently runs after `region.init()`
+- Unity initialization remains deferred until the rest of the app is initialized
 
 `App` mostly wires the rest of the application together.
 
