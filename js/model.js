@@ -7,6 +7,7 @@ import { Loader } from "./loader.js";
 import { PrefetchController } from "./prefetch-controller.js";
 import { memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
+import { getOrderedBucketFeatures, getVolumeFeatureSet } from "./feature-catalog.js";
 
 
 /*************************************************************************************************/
@@ -64,53 +65,8 @@ class Model {
         await Promise.all(p);
     }
 
-    _flattenFeatureTree(node) {
-        if (!node) return [];
-
-        const entries = [];
-        for (const key in node) {
-            if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
-            const value = node[key];
-            if (value && typeof value === 'object') {
-                entries.push(...this._flattenFeatureTree(value));
-            }
-            else if (value) {
-                entries.push(value);
-            }
-        }
-        return entries;
-    }
-
-    _getOrderedBucketFeatures(bucketName) {
-        if (!bucketName || !this.hasBucket(bucketName)) {
-            return [];
-        }
-
-        const bucket = this.getBucket(bucketName);
-        if (!bucket?.features) {
-            return [];
-        }
-
-        const fromTree = this._flattenFeatureTree(bucket.metadata?.tree);
-        if (fromTree.length > 0) {
-            return fromTree.filter((fname, index, arr) => fname && arr.indexOf(fname) === index);
-        }
-
-        return Object.keys(bucket.features);
-    }
-
-    _getVolumeFeatureSet(bucketName) {
-        if (!bucketName || !this.hasBucket(bucketName)) {
-            return new Set();
-        }
-
-        const bucket = this.getBucket(bucketName);
-        const volumeFeatures = bucket?.metadata?.volumes || [];
-        return new Set(volumeFeatures);
-    }
-
     _buildPrefetchList(bucket, fname) {
-        const orderedFeatures = this._getOrderedBucketFeatures(bucket);
+        const orderedFeatures = this.getOrderedBucketFeatures(bucket);
         if (!orderedFeatures.length) {
             return [];
         }
@@ -218,6 +174,22 @@ class Model {
         return this.featureStore.deleteLocalFeature(fname);
     }
 
+    getOrderedBucketFeatures(bucket) {
+        if (!bucket || !this.hasBucket(bucket)) {
+            return [];
+        }
+
+        return getOrderedBucketFeatures(this.getBucket(bucket));
+    }
+
+    getVolumeFeatureSet(bucket) {
+        if (!bucket || !this.hasBucket(bucket)) {
+            return new Set();
+        }
+
+        return getVolumeFeatureSet(this.getBucket(bucket));
+    }
+
     /* Features                                                                                  */
     /*********************************************************************************************/
 
@@ -259,9 +231,9 @@ class Model {
             return;
         }
 
-        const volumeFeatures = this._getVolumeFeatureSet(bucket);
+        const volumeFeatures = this.getVolumeFeatureSet(bucket);
         const selectedIsVolume = volumeFeatures.has(fname);
-        const rawVolumeTasks = this._getOrderedBucketFeatures(bucket)
+        const rawVolumeTasks = this.getOrderedBucketFeatures(bucket)
             .filter((candidate) =>
                 candidate &&
                 candidate !== fname &&
