@@ -37,7 +37,7 @@ class FeatureDropdown {
             const unit = features[fname] ? features[fname]['unit'] : '';
             const titleParts = [];
             if (desc) titleParts.push(desc);
-            if (unit) titleParts.push(`Unit: ${unit}`);
+            if (unit && unit.trim().toLowerCase() !== 'dimensionless') titleParts.push(`Unit: ${unit}`);
             if (titleParts.length) {
                 option.title = titleParts.join('\n');
             }

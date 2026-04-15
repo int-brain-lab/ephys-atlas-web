@@ -22,7 +22,8 @@ export function displayNumber(x, precision = DISPLAY_NUMBER_PRECISION) {
 
 
 export function statUsesFeatureUnit(statKey, unit) {
-    return !!(unit && statKey && statKey !== 'count' && !statKey.startsWith('h_'));
+    const normalizedUnit = typeof unit === 'string' ? unit.trim().toLowerCase() : unit;
+    return !!(unit && normalizedUnit !== 'dimensionless' && statKey && statKey !== 'count' && !statKey.startsWith('h_'));
 }
 
 
