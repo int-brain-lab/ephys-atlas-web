@@ -1,23 +1,6 @@
-export function flattenFeatureTree(node) {
-    if (!node) {
-        return [];
-    }
+import { flattenFeatureTree } from "./core/feature-tree.js";
 
-    const entries = [];
-    for (const key in node) {
-        if (!Object.prototype.hasOwnProperty.call(node, key)) {
-            continue;
-        }
-        const value = node[key];
-        if (value && typeof value === 'object') {
-            entries.push(...flattenFeatureTree(value));
-        }
-        else if (value) {
-            entries.push(value);
-        }
-    }
-    return entries;
-}
+export { flattenFeatureTree };
 
 export function getOrderedBucketFeatures(bucket) {
     if (!bucket?.features) {

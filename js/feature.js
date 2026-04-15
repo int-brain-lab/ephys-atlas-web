@@ -4,6 +4,7 @@ import { DEFAULT_BUCKET } from "./state.js";
 import { URLS } from "./model.js";
 import { EVENTS } from "./core/events.js";
 import { getRequiredElement } from "./core/dom.js";
+import { buildFeatureDropdownEntries } from "./core/feature-tree.js";
 import { downloadBinaryFile, removeFromArray } from "./utils.js";
 
 
@@ -19,11 +20,8 @@ class FeatureDropdown {
     setFeatures(features, tree, volumes) {
         features = features || {};
         volumes = volumes || [];
-        if (!tree || tree.length == 0) {
-            tree = Object.keys(features).reduce((obj, key) => { obj[key] = key; return obj; }, {});
-        }
 
-        const entries = this._flattenTree(tree);
+        const entries = buildFeatureDropdownEntries(tree, features);
         this.el.innerHTML = '';
 
         const placeholder = document.createElement('option');
@@ -63,24 +61,6 @@ class FeatureDropdown {
 
     selected(fname) {
         return this.el.value === fname;
-    }
-
-    _flattenTree(node, prefix = []) {
-        if (!node) return [];
-
-        const entries = [];
-        for (const key in node) {
-            if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
-            const value = node[key];
-            if (value && typeof value === 'object') {
-                entries.push(...this._flattenTree(value, prefix.concat(key)));
-            } else {
-                const labelParts = prefix.concat(key);
-                const label = labelParts.filter(Boolean).join(' / ');
-                entries.push({ fname: value, label });
-            }
-        }
-        return entries;
     }
 
     _hasOption(fname) {
