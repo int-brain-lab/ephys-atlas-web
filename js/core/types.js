@@ -1,9 +1,21 @@
 /**
+ * @typedef {Object.<string, FeatureTreeNode | string>} FeatureTreeNode
+ */
+
+/**
+ * @typedef {Object} BucketFeatureMetadata
+ * @property {string | null | undefined} [short_desc]
+ * @property {string | null | undefined} [long_desc]
+ * @property {string | null | undefined} [unit]
+ */
+
+/**
  * @typedef {Object} BucketMetadata
  * @property {string} uuid
  * @property {string | null | undefined} [alias]
  * @property {string | null | undefined} [url]
- * @property {Object | null | undefined} [tree]
+ * @property {FeatureTreeNode | null | undefined} [tree]
+ * @property {string[] | null | undefined} [volumes]
  * @property {string | null | undefined} [short_desc]
  * @property {string | null | undefined} [long_desc]
  * @property {string | null | undefined} [last_access_date]
@@ -11,7 +23,7 @@
 
 /**
  * @typedef {Object} BucketResponse
- * @property {Object.<string, {short_desc: string, unit?: (string | null | undefined)}>} features
+ * @property {Object.<string, BucketFeatureMetadata>} features
  * @property {BucketMetadata} metadata
  */
 
@@ -27,15 +39,49 @@
  */
 
 /**
+ * @typedef {Object.<string, number | null>} FeatureStatisticValues
+ */
+
+/**
+ * @typedef {Object.<string, FeatureStatisticValues>} FeatureStatisticsById
+ */
+
+/**
  * @typedef {Object} FeatureMappingData
- * @property {Object.<string, Object.<string, number | null>>} data
- * @property {Object.<string, Object.<string, number | null>>} statistics
+ * @property {FeatureStatisticsById} data
+ * @property {Object.<string, {min: number, max: number}>} statistics
+ */
+
+/**
+ * @typedef {Object} FeatureHistogram
+ * @property {number} [vmin]
+ * @property {number} [vmax]
+ */
+
+/**
+ * @typedef {Object} DecodedVolumeArray
+ * @property {number[]} shape
+ * @property {boolean} fortran_order
+ * @property {ArrayLike<number>} data
+ * @property {[number, number]} [bounds]
+ */
+
+/**
+ * @typedef {Object} VolumePayloadEntry
+ * @property {DecodedVolumeArray} [volume]
+ * @property {[number, number]} [bounds]
+ */
+
+/**
+ * @typedef {Object.<string, VolumePayloadEntry>} VolumePayloadMap
  */
 
 /**
  * @typedef {Object} FeaturePayload
  * @property {Object.<string, FeatureMappingData>} [mappings]
- * @property {Object | null} [volume]
+ * @property {FeatureHistogram | null} [histogram]
+ * @property {string | null | undefined} [cmap]
+ * @property {VolumePayloadMap | null} [volumes]
  */
 
 /**
@@ -57,6 +103,7 @@
  * @property {number | null} highlighted
  * @property {Set<number>} selected
  * @property {boolean | undefined} panelOpen
+ * @property {string | undefined} [search]
  */
 
 /**

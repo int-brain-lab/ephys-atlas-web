@@ -164,7 +164,7 @@ class Panel {
         const cmap = this.model.getCmap(this.state.bucket, this.state.fname);
         if (cmap) {
             this.icmap.value = cmap;
-            this.state.cmap = cmap;
+            this.state.setCmap(cmap);
             this.dispatcher.cmap(this, cmap);
         }
     }
@@ -220,7 +220,7 @@ class Panel {
 
     setupLogScale() {
         this.iclog.addEventListener('change', (e) => {
-            this.state.logScale = e.target.checked;
+            this.state.setLogScale(e.target.checked);
             this.dispatcher.logScale(this, this.state.logScale);
         });
     }

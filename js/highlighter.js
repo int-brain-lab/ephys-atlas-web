@@ -63,7 +63,7 @@ class Highlighter {
     /*********************************************************************************************/
 
     clear() {
-        this.state.highlighted = null;
+        this.state.setHighlighted(null);
         clearStyle(this.style);
     }
 
@@ -71,7 +71,7 @@ class Highlighter {
         if (!idx) {
             this.clear();
         } else {
-            this.state.highlighted = idx;
+            this.state.setHighlighted(idx);
             this.makeCSS();
         }
     }

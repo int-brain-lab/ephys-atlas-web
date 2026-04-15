@@ -1,6 +1,17 @@
 # Frontend architecture
 
-This document describes how the JavaScript frontend in the IBL ephys atlas web app is organized, how data flows through it, and which files are most important when making changes.
+The document describes how the JavaScript frontend in the IBL ephys atlas web app is organized, how data flows through it, and which files are most important when making changes.
+
+## Refactor direction
+
+When extending or refactoring the frontend, prefer these boundaries:
+
+- keep top-level modules as thin controllers that wire DOM events, shared state, and dispatcher events
+- move pure decision logic into `js/core/*` helpers
+- move data, persistence, and policy concerns into focused service-style modules rather than growing `app.js`, `state.js`, or `model.js`
+- preserve the existing event-driven architecture unless a change clearly justifies broader redesign
+
+In practice, the preferred direction is small extractions that reduce the number of reasons a module must change, while keeping public behavior stable.
 
 The frontend is a **plain JavaScript ES-module application**. It does not use React, Vue, or another UI framework. Instead, it is organized around:
 
