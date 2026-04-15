@@ -404,6 +404,9 @@ function createModelStub() {
         },
     };
     return {
+        getFeatureHistogram() {
+            return histogram;
+        },
         getHistogram() {
             return histogram;
         },
@@ -422,14 +425,23 @@ function createModelStub() {
         getCmap() {
             return 'viridis';
         },
+        getFeatureColormap() {
+            return 'viridis';
+        },
         getColors() {
             return {
                 10: '#112233',
                 20: '#445566',
             };
         },
+        getFeatureMappings() {
+            return ['allen'];
+        },
         getFeaturesMappings() {
             return ['allen'];
+        },
+        getFeatureUnit() {
+            return null;
         },
     };
 }
@@ -452,6 +464,9 @@ test('feature selection keeps panel and colorbar range in sync for volume featur
             setCmapRange(cmin, cmax) {
                 this.cmapmin = cmin;
                 this.cmapmax = cmax;
+            },
+            setCmap(cmap) {
+                this.cmap = cmap;
             },
             setPanelOpen(open) {
                 this.panelOpen = open;
@@ -575,7 +590,7 @@ test('panel reset and share update URL state consistently', () => {
         const panel = new Panel(state, model, dispatcher);
         const share = new Share(state, model, dispatcher);
 
-        panel.resetView();
+        panel.actions.resetView();
         assert.equal(state.resetCalls, 1);
         assert.equal(dispatcher.resetEvents.length, 1);
         assert.equal(document.getElementById('colormap-min').value, 0);
@@ -613,6 +628,9 @@ test('volume hover publishes denormalized bounds-based values to the tooltip', a
             sagittal: 0,
         };
         const model = {
+            getFeatureUnit() {
+                return null;
+            },
             getVolumeData() {
                 return {
                     volumes: {
@@ -676,6 +694,14 @@ test('colorbar shows selected-region local histogram overlay and selected count'
             selected: new Set([10]),
         };
         const model = {
+            getFeatureHistogram() {
+                return {
+                    vmin: 0,
+                    vmax: 100,
+                    total_count: 25,
+                    counts: [5, 0, 3, 1],
+                };
+            },
             getHistogram() {
                 return {
                     vmin: 0,
@@ -700,6 +726,9 @@ test('colorbar shows selected-region local histogram overlay and selected count'
             },
             getColormap() {
                 return Array.from({ length: 100 }, (_, idx) => `#${idx.toString(16).padStart(6, '0')}`);
+            },
+            getFeatureUnit() {
+                return null;
             },
         };
         const dispatcher = new FakeDispatcher();
