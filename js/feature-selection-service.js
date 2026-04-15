@@ -6,7 +6,7 @@ export async function loadAndSelectFeature({ state, model, dispatcher, source, d
 
     await model.downloadFeatures(state.bucket, fname, options);
 
-    const resolvedIsVolume = isVolume !== undefined ? isVolume : model.getVolumeData(state.bucket, fname, state.mapping) != undefined;
+    const resolvedIsVolume = isVolume !== undefined ? isVolume : model.getFeatureVolumeData(state.bucket, fname, state.mapping) != undefined;
     applyFeatureSelection({ state, model, dispatcher, source, dropdown, fname, isVolume: resolvedIsVolume });
     return { fname, isVolume: resolvedIsVolume };
 }

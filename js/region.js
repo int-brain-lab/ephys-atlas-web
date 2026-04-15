@@ -60,7 +60,7 @@ class Region {
     async setRegions() {
         console.assert(this.state.mapping);
         const regions = this.model.getRegions(this.state.mapping);
-        const features = this.state.isVolume ? null : this.model.getFeatures(
+        const features = this.state.isVolume ? null : this.model.getFeatureMappingData(
             this.state.bucket,
             this.state.fname,
             this.state.mapping,

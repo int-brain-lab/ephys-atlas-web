@@ -80,7 +80,7 @@ class DotImage {
     displayDots() {
         return false;
 
-        let volume = this.model.getVolumeData(this.state.bucket, this.state.fname);
+        let volume = this.model.getFeatureVolumeData(this.state.bucket, this.state.fname);
         if (volume) {
             let points = volume["xyz"].data;
             for (let axis in this.bitmaps) {
@@ -109,7 +109,7 @@ class DotImage {
                         `clicked on axis ${axis}, slice #${sliceIdx}, ` +
                         `x=${xyz[0].toFixed(5)}, y=${xyz[1].toFixed(5)}, z=${xyz[2].toFixed(5)}`);
 
-                    let volume = this.model.getVolumeData(this.state.bucket, this.state.fname);
+                    let volume = this.model.getFeatureVolumeData(this.state.bucket, this.state.fname);
                     if (!volume) return;
 
                     let points = volume["xyz"].data;

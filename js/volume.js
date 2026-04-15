@@ -79,7 +79,7 @@ class Volume {
                 this.showVolume();
 
                 const state = this.state;
-                const volume = this.model.getVolumeData(state.bucket, state.fname);
+                const volume = this.model.getFeatureVolumeData(state.bucket, state.fname);
 
                 if (!volume || !volume["volumes"]) {
                     this.setSessionArray(null);

@@ -100,7 +100,7 @@ class Feature {
 
             await this.model.downloadFeatures(state.bucket, fname);
 
-            const vol = this.model.getVolumeData(state.bucket, fname, this.state.mapping);
+            const vol = this.model.getFeatureVolumeData(state.bucket, fname, this.state.mapping);
             const isVol = vol != undefined;
 
             this.selectFeature(fname, isVol);

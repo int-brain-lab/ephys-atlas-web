@@ -202,21 +202,11 @@ class Model {
         return getFeatureMappings(this.getFeaturePayload(bucket, fname));
     }
 
-    // Compatibility alias for older callers.
-    getFeaturesMappings(bucket, fname) {
-        return this.getFeatureMappings(bucket, fname);
-    }
-
     getFeatureColormap(bucket, fname) {
         return getFeatureCmap(this.getFeaturePayload(bucket, fname));
     }
 
-    // Compatibility alias for older callers.
-    getCmap(bucket, fname) {
-        return this.getFeatureColormap(bucket, fname);
-    }
-
-    getFeatures(bucket, fname, mapping) {
+    getFeatureMappingData(bucket, fname, mapping) {
         console.assert(bucket);
         console.assert(mapping);
 
@@ -228,12 +218,7 @@ class Model {
         return getFeatureHistogram(this.getFeaturePayload(bucket, fname));
     }
 
-    // Compatibility alias for older callers.
-    getHistogram(bucket, fname) {
-        return this.getFeatureHistogram(bucket, fname);
-    }
-
-    getVolumeData(bucket, fname) {
+    getFeatureVolumeData(bucket, fname) {
         console.assert(bucket);
         return getFeatureVolumeData(this.getFeaturePayload(bucket, fname));
     }
@@ -245,7 +230,7 @@ class Model {
 
         let colors = this.getColormap(state.cmap);
         let regions = this.getRegions(state.mapping);
-        let features = state.isVolume ? null : this.getFeatures(
+        let features = state.isVolume ? null : this.getFeatureMappingData(
             state.bucket, state.fname, state.mapping, refresh);
         let featurePayload = this.getFeaturePayload(state.bucket, state.fname);
         let histogram = featurePayload ? featurePayload['histogram'] : null;
