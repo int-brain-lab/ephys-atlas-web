@@ -9,6 +9,7 @@ import { memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
 import { getOrderedBucketFeatures, getVolumeFeatureSet } from "./feature-catalog.js";
 import { getFeatureCmap, getFeatureHistogram, getFeatureMappingData, getFeatureMappings, getFeatureVolumeData } from "./feature-payload.js";
+import { buildFeaturePrefetchPlan, buildPrefetchList } from "./feature-prefetch-policy.js";
 
 
 /*************************************************************************************************/
@@ -64,32 +65,6 @@ class Model {
             p.push(this.loaders[loader].start());
         }
         await Promise.all(p);
-    }
-
-    _buildPrefetchList(bucket, fname) {
-        const orderedFeatures = this.getOrderedBucketFeatures(bucket);
-        if (!orderedFeatures.length) {
-            return [];
-        }
-
-        const currentIndex = orderedFeatures.indexOf(fname);
-        if (currentIndex < 0) {
-            return orderedFeatures.filter((candidate) => candidate !== fname);
-        }
-
-        const prefetch = [];
-        for (let distance = 1; distance < orderedFeatures.length; distance++) {
-            const nextIndex = currentIndex + distance;
-            if (nextIndex < orderedFeatures.length) {
-                prefetch.push(orderedFeatures[nextIndex]);
-            }
-
-            const prevIndex = currentIndex - distance;
-            if (prevIndex >= 0) {
-                prefetch.push(orderedFeatures[prevIndex]);
-            }
-        }
-        return prefetch;
     }
 
     /* Colormaps                                                                                 */
@@ -232,39 +207,16 @@ class Model {
             return;
         }
 
+        const orderedFeatures = this.getOrderedBucketFeatures(bucket);
         const volumeFeatures = this.getVolumeFeatureSet(bucket);
-        const selectedIsVolume = volumeFeatures.has(fname);
-        const rawVolumeTasks = this.getOrderedBucketFeatures(bucket)
-            .filter((candidate) =>
-                candidate &&
-                candidate !== fname &&
-                volumeFeatures.has(candidate) &&
-                !this.hasFeatures(bucket, candidate) &&
-                !this.hasRawVolumeResponse(bucket, candidate))
-            .map((candidate) => ({
-                bucket,
-                fname: candidate,
-            }));
-        const candidates = this._buildPrefetchList(bucket, fname)
-            .filter((candidate) => {
-                if (!candidate || candidate === fname || this.hasFeatures(bucket, candidate)) {
-                    return false;
-                }
-
-                const candidateIsVolume = volumeFeatures.has(candidate);
-                if (selectedIsVolume) {
-                    return candidateIsVolume;
-                }
-
-                return !candidateIsVolume;
-            });
-
-        const limitedCandidates = selectedIsVolume ? candidates.slice(0, 2) : candidates;
-
-        const tasks = limitedCandidates.map((candidate) => ({
+        const { rawVolumeTasks, tasks } = buildFeaturePrefetchPlan({
             bucket,
-            fname: candidate,
-        }));
+            fname,
+            orderedFeatures,
+            volumeFeatures,
+            hasFeature: (candidate) => this.hasFeatures(bucket, candidate),
+            hasRawVolumeResponse: (candidate) => this.hasRawVolumeResponse(bucket, candidate),
+        });
 
         if (rawVolumeTasks.length > 0) {
             this.volumePrefetchController.schedule(rawVolumeTasks);
