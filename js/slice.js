@@ -1,16 +1,21 @@
 export { Slice };
 
-import { throttle, getOS, e2idx } from "./utils.js";
-import { getRequiredElement } from "./core/dom.js";
+import { throttle } from "./utils.js";
 import { SLICE_MAX, SLICE_AXES, SLICE_STATIC_AXES } from "./constants.js";
 import { EVENTS } from "./core/events.js";
 import {
     getCoronalGuideState,
     getHorizontalGuideState,
-    getNextSliceSliderValue,
     getSagittalGuideState,
-    isRootTarget,
 } from "./core/slice-helpers.js";
+import {
+    bindSliceHighlighting,
+    bindSliceSelection,
+    bindSliceSliderAndWheel,
+    getSliceAxisElements,
+    getSliceCoordinateElements,
+    getSliceGuideElements,
+} from "./slice-dom.js";
 
 const SLICE_THROTTLE = 40;
 
@@ -24,18 +29,8 @@ class Slice {
         this.setSlice = throttle(
             this._setSlice, SLICE_THROTTLE, { leading: true, trailing: true });
 
-        this.tv = getRequiredElement('top-vline');
-        this.th = getRequiredElement('top-hline');
-        this.cv = getRequiredElement('coronal-vline');
-        this.ch = getRequiredElement('coronal-hline');
-        this.hv = getRequiredElement('horizontal-vline');
-        this.hh = getRequiredElement('horizontal-hline');
-        this.sv = getRequiredElement('sagittal-vline');
-        this.sh = getRequiredElement('sagittal-hline');
-
-        this.ml = getRequiredElement('coord-ml');
-        this.ap = getRequiredElement('coord-ap');
-        this.dv = getRequiredElement('coord-dv');
+        Object.assign(this, getSliceGuideElements());
+        Object.assign(this, getSliceCoordinateElements());
 
         this.setupDispatcher();
         this.setupSlices();
@@ -74,21 +69,21 @@ class Slice {
 
     setupSlices() {
         for (let axis of SLICE_AXES) {
-            this[`svg_${axis}`] = getRequiredElement(`figure-${axis}`);
-            this[`slider_${axis}`] = getRequiredElement(`slider-${axis}`);
+            const { svg, slider } = getSliceAxisElements(axis);
+            this[`svg_${axis}`] = svg;
+            this[`slider_${axis}`] = slider;
 
             this.setupSlice(axis);
             this.setupHighlighting(axis);
             this.setupSelection(axis);
-            this.setupTooltip(axis);
         }
 
         for (let axis of SLICE_STATIC_AXES) {
-            this[`svg_${axis}`] = getRequiredElement(`figure-${axis}`);
+            const { svg } = getSliceAxisElements(axis, { withSlider: false });
+            this[`svg_${axis}`] = svg;
 
             this.setupHighlighting(axis);
             this.setupSelection(axis);
-            this.setupTooltip(axis);
         }
     }
 
@@ -99,90 +94,41 @@ class Slice {
     }
 
     setupSlice(axis) {
-        const max = SLICE_MAX[axis];
-
-        const slider = this[`slider_${axis}`];
-        const svg = this[`svg_${axis}`];
-
-        slider.oninput = (e) => {
-            const idx = Math.floor(e.target.value);
-            this._updateLines(axis, idx);
-            this.setSlice(axis, idx);
-        };
-
-        svg.parentNode.addEventListener('wheel', (e) => {
-            e.preventDefault();
-
-            slider.valueAsNumber = getNextSliceSliderValue(slider.valueAsNumber, e.deltaY, max, getOS());
-            const idx = slider.valueAsNumber;
-
-            this._updateLines(axis, idx);
-            this.setSlice(axis, idx);
-        }, { passive: false });
+        bindSliceSliderAndWheel({
+            axis,
+            slider: this[`slider_${axis}`],
+            svg: this[`svg_${axis}`],
+            max: SLICE_MAX[axis],
+            onChange: (idx) => {
+                this._updateLines(axis, idx);
+                this.setSlice(axis, idx);
+            },
+        });
     };
 
     setupHighlighting(axis) {
-        const svg = this[`svg_${axis}`];
-
-        svg.addEventListener('mouseover', (e) => {
-            if (e.target.tagName == 'path') {
-                if (isRootTarget(e.target)) return;
-
-                if (!e.ctrlKey) {
-                    if (this.state.isVolume) {
-                        this.dispatcher.volumeHover(this, axis, e);
-                    }
-                    const idx = e2idx(this.state.mapping, e);
-                    this.dispatcher.highlight(this, idx, e);
-                }
-            }
-        });
-
-        svg.addEventListener('mousemove', (e) => {
-            if (!this.state.isVolume) {
-                return;
-            }
-            if (e.target.tagName == 'path' && !isRootTarget(e.target) && !e.ctrlKey) {
-                this.dispatcher.volumeHover(this, axis, e);
-            }
-        });
-
-        svg.addEventListener('mouseout', (e) => {
-            if (e.target.tagName == 'path') {
-                this.dispatcher.highlight(this, null, null);
-            }
+        bindSliceHighlighting({
+            axis,
+            svg: this[`svg_${axis}`],
+            state: this.state,
+            dispatcher: this.dispatcher,
+            source: this,
         });
     }
 
     setupSelection(axis) {
-        const svg = this[`svg_${axis}`];
-
-        svg.addEventListener('click', (e) => {
-            if (e.target.tagName == 'path') {
-                if (isRootTarget(e.target)) return;
-
-                if (!e.ctrlKey) {
-                    const idx = e2idx(this.state.mapping, e);
-                    this.dispatcher.toggle(this, idx);
-                }
-            }
+        bindSliceSelection({
+            svg: this[`svg_${axis}`],
+            state: this.state,
+            dispatcher: this.dispatcher,
+            source: this,
         });
     }
-
-    setupTooltip(axis) {
-        const svg = this[`svg_${axis}`];
-
-        svg.addEventListener('mouseout', (e) => {
-            if (e.target.tagName == 'path') {
-                this.dispatcher.highlight(this, null, null);
-            }
-        });
-    };
 
     _setSlice(axis, idx) {
         const svg = this.model.getSlice(axis, idx);
         if (svg) {
-            getRequiredElement(`figure-${axis}`).innerHTML = svg;
+            this[`svg_${axis}`].innerHTML = svg;
             this.state.setSliceIndex(axis, idx);
         }
         else {
