@@ -2,8 +2,8 @@ export { Model, URLS };
 
 import { BASE_URL } from "./constants.js";
 import { DataClient } from "./data-client.js";
+import { AtlasStaticStore } from "./atlas-static-store.js";
 import { FeatureStore } from "./feature-store.js";
-import { Loader } from "./loader.js";
 import { PrefetchController } from "./prefetch-controller.js";
 import { memoize } from "./utils.js";
 import { buildRegionColors } from "./core/color-helpers.js";
@@ -40,16 +40,7 @@ class Model {
             downloadFeature: (bucket, fname, options) => this.prefetchRawVolumeResponse(bucket, fname, options),
         });
 
-        this.loaders = {
-            'colormaps': this.setupColormaps([1, 1, 1]),
-            'regions': this.setupRegions([2, 3, 1]),
-
-            'slices_sagittal': this.setupSlices('sagittal', [10, 0, 5]),
-            'slices_coronal': this.setupSlices('coronal', [10, 0, 5]),
-            'slices_horizontal': this.setupSlices('horizontal', [10, 0, 5]),
-            'slices_top': this.setupSlices('top', [2, 0, 2]),
-            'slices_swanson': this.setupSlices('swanson', [2, 0, 2]),
-        };
+        this.atlasStaticStore = new AtlasStaticStore({ splash, urls: URLS });
 
         this.getColors = memoize(this._getColors.bind(this));
     }
@@ -58,70 +49,19 @@ class Model {
     /*********************************************************************************************/
 
     async load() {
-        // Start the loading process of each loader.
-        let p = []
-        for (let loader in this.loaders) {
-            console.debug(`start loader '${loader}'`)
-            p.push(this.loaders[loader].start());
-        }
-        await Promise.all(p);
-    }
-
-    /* Colormaps                                                                                 */
-    /*********************************************************************************************/
-
-    setupColormaps(progress) {
-        return new Loader(this.splash, URLS['colormaps'], progress);
+        await this.atlasStaticStore.load();
     }
 
     getColormap(cmap) {
-        console.assert(cmap);
-        let colors = this.loaders['colormaps'].get(cmap);
-        console.assert(colors);
-        console.assert(colors.length > 0);
-        return colors;
-    }
-
-    /* Regions                                                                                   */
-    /*********************************************************************************************/
-
-    setupRegions(progress) {
-        return new Loader(this.splash, URLS['regions'], progress);
+        return this.atlasStaticStore.getColormap(cmap);
     }
 
     getRegions(mapping) {
-        console.assert(mapping);
-        let regions = this.loaders['regions'].get(mapping);
-
-        // NOTE: remove left hemisphere regions.
-        let kept = {};
-        for (let relidx in regions) {
-            let region = regions[relidx];
-            let regionIdx = region['idx'];
-            // NOTE: skip non-leaf Allen regions
-            if (mapping == "allen" && !region['leaf']) {
-                // console.log(region);
-                continue;
-            }
-            kept[regionIdx] = region;
-        }
-        // regions = Object.values(regions).filter(region => region.atlas_id >= 0);
-        console.assert(kept);
-        console.assert(Object.keys(kept).length > 0);
-        return kept;
-    }
-
-    /* Slices                                                                                    */
-    /*********************************************************************************************/
-
-    setupSlices(name, progress) {
-        return new Loader(this.splash, URLS['slices'](name), progress);
+        return this.atlasStaticStore.getRegions(mapping);
     }
 
     getSlice(axis, idx) {
-        console.assert(axis);
-        console.assert(this.loaders[`slices_${axis}`]);
-        return this.loaders[`slices_${axis}`].get((idx || 0).toString());
+        return this.atlasStaticStore.getSlice(axis, idx);
     }
 
     /* Buckets                                                                                   */
