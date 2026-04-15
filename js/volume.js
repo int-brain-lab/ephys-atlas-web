@@ -2,17 +2,13 @@ export { Volume };
 
 import { clearStyle } from "./utils.js";
 import { getRequiredElement, getRequiredSheet } from "./core/dom.js";
-import { VOLUME_AXES, VOLUME_XY_AXES } from "./constants.js";
-import {
-    denormalizeVolumeValue,
-    getVolumeHoverAxisCoords,
-    hexColorToRgb,
-    indexFromAxisCoords,
-} from "./core/volume-helpers.js";
-import { buildVolumeVisibilityRules, getVolumeSliderMax, getVolumeSliceIndex } from "./core/volume-ui-helpers.js";
+import { VOLUME_AXES } from "./constants.js";
+import { hexColorToRgb } from "./core/volume-helpers.js";
+import { buildVolumeVisibilityRules, getVolumeSliderMax } from "./core/volume-ui-helpers.js";
 import { EVENTS } from "./core/events.js";
 import { VolumeSession } from "./volume-session.js";
 import { VolumeCanvasRenderer } from "./volume-canvas-renderer.js";
+import { getVolumeHoverValues } from "./volume-interaction.js";
 
 class Volume {
     constructor(state, model, dispatcher) {
@@ -137,10 +133,6 @@ class Volume {
         }
     }
 
-    indexFromAxisCoords(axisCoords) {
-        return indexFromAxisCoords(axisCoords, this.session.rawToAxis, this.session.shape, this.session.fortran_order, VOLUME_AXES);
-    }
-
     updateSliceRanges() {
         if (!this.session.axisSizes) {
             return;
@@ -178,66 +170,19 @@ class Volume {
         this.setCmap();
     }
 
-    sliceIndexFromState(axis) {
-        if (!this.session.axisSizes || !this.session.axisSizes[axis]) {
-            return 0;
-        }
-        const ds = this.session.downsample ? (this.session.downsample[axis] || 1) : 1;
-        const sliceCount = this.session.axisSizes[axis];
-        const sliderValue = this.state[axis] || 0;
-        return getVolumeSliceIndex(sliderValue, ds, sliceCount);
-    }
-
     handleVolumeHover(axis, e) {
-        if (!this.state.isVolume || !axis || !e || !this.session.axisSizes) {
-            return;
-        }
-
-        if (!this.session.volumeArrays || Object.keys(this.session.volumeArrays).length === 0) {
-            return;
-        }
-
-        const container = this.volumeContainers[axis];
-        if (!container) {
-            return;
-        }
-
-        const rect = container.getBoundingClientRect();
-        const axisCoords = getVolumeHoverAxisCoords(
+        const hover = getVolumeHoverValues({
             axis,
-            rect,
-            e,
-            this.session.axisSizes,
-            VOLUME_XY_AXES,
-            this.sliceIndexFromState(axis),
-            VOLUME_AXES,
-        );
-        if (!axisCoords) {
+            event: e,
+            state: this.state,
+            session: this.session,
+            container: this.volumeContainers[axis],
+        });
+        if (!hover) {
             return;
         }
 
-        const dataIndex = this.indexFromAxisCoords(axisCoords);
-        if (dataIndex == null || dataIndex < 0) {
-            return;
-        }
-
-        const values = {};
-        for (const [name, arr] of Object.entries(this.session.volumeArrays)) {
-            if (!arr || !arr.data || dataIndex >= arr.data.length) {
-                continue;
-            }
-            const rawValue = denormalizeVolumeValue(arr.data[dataIndex], arr.bounds);
-            if (rawValue == null) {
-                continue;
-            }
-            values[name] = rawValue;
-        }
-
-        if (Object.keys(values).length === 0) {
-            return;
-        }
-
-        this.dispatcher.volumeValues(this, axis, values, e);
+        this.dispatcher.volumeValues(this, axis, hover.values, e);
     }
 
     draw() {
