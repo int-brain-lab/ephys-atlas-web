@@ -407,13 +407,10 @@ function createModelStub() {
         getFeatureHistogram() {
             return histogram;
         },
-        getHistogram() {
-            return histogram;
-        },
-        getVolumeData() {
+        getFeatureVolumeData() {
             return { volumes: { mean: { volume: { bounds: [-1, 1] } } } };
         },
-        getFeatures() {
+        getFeatureMappingData() {
             return features;
         },
         getRegions() {
@@ -421,9 +418,6 @@ function createModelStub() {
         },
         getColormap() {
             return Array.from({ length: 100 }, (_, idx) => `#${idx.toString(16).padStart(6, '0')}`);
-        },
-        getCmap() {
-            return 'viridis';
         },
         getFeatureColormap() {
             return 'viridis';
@@ -435,9 +429,6 @@ function createModelStub() {
             };
         },
         getFeatureMappings() {
-            return ['allen'];
-        },
-        getFeaturesMappings() {
             return ['allen'];
         },
         getFeatureUnit() {
@@ -631,7 +622,7 @@ test('volume hover publishes denormalized bounds-based values to the tooltip', a
             getFeatureUnit() {
                 return null;
             },
-            getVolumeData() {
+            getFeatureVolumeData() {
                 return {
                     volumes: {
                         mean: {
@@ -702,18 +693,10 @@ test('colorbar shows selected-region local histogram overlay and selected count'
                     counts: [5, 0, 3, 1],
                 };
             },
-            getHistogram() {
-                return {
-                    vmin: 0,
-                    vmax: 100,
-                    total_count: 25,
-                    counts: [5, 0, 3, 1],
-                };
-            },
-            getVolumeData() {
+            getFeatureVolumeData() {
                 return null;
             },
-            getFeatures() {
+            getFeatureMappingData() {
                 return {
                     data: {
                         10: { count: 7, h_0: 2, h_1: 0, h_2: 4, h_3: 1 },

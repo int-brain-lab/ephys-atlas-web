@@ -46,7 +46,7 @@ test('loadAndSelectFeature resolves volume state from the model when needed', as
     };
     const model = {
         async downloadFeatures(bucket, fname, options) { calls.push(['download', bucket, fname, options]); },
-        getVolumeData(bucket, fname) { calls.push(['volume', bucket, fname]); return { volumes: {} }; },
+        getFeatureVolumeData(bucket, fname) { calls.push(['volume', bucket, fname]); return { volumes: {} }; },
         scheduleFeaturePrefetch(bucket, fname) { calls.push(['prefetch', bucket, fname]); },
         clearFeaturePrefetch() { calls.push(['clear']); },
     };
