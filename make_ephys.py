@@ -369,58 +369,86 @@ def load_clusters_dataframe(
     cache_root = Path(cache_root)
     cache_root.mkdir(parents=True, exist_ok=True)
     dfs = []
-    stats = {"cached": 0, "computed": 0, "skipped": 0}
+    stats = {"cached": 0, "computed": 0, "skipped": 0, "failed": 0}
+    failures = []
 
     log_step(f"Loading cluster data for {len(pids):,} insertions into cache {cache_root}")
     pbar = tqdm(pids, desc="ephys_clusters: pids", unit="pid")
     for pid in pbar:
-        probe_cache_dir = cache_root / pid
-        probe_cache_dir.mkdir(parents=True, exist_ok=True)
-        cache_file = probe_cache_dir / "clusters.pqt"
+        try:
+            probe_cache_dir = cache_root / pid
+            probe_cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_file = probe_cache_dir / "clusters.pqt"
 
-        if cache_file.exists() and not recompute_metrics:
-            df = pd.read_parquet(cache_file)
-            stats["cached"] += 1
-            source = "cached"
-        else:
-            ssl = SpikeSortingLoader(pid=pid, one=one)
-            spikes, clusters, channels = ssl.load_spike_sorting(spike_sorter=spike_sorter)
-            if not clusters or not channels:
-                stats["skipped"] += 1
-                pbar.write(f"Skipping {pid}: missing clusters or channels")
-                continue
-            merged = ssl.merge_clusters(
-                spikes,
-                clusters,
-                channels,
-                cache_dir=probe_cache_dir,
-                compute_metrics=recompute_metrics,
+            if cache_file.exists() and not recompute_metrics:
+                df = pd.read_parquet(cache_file)
+                stats["cached"] += 1
+                source = "cached"
+            else:
+                ssl = SpikeSortingLoader(pid=pid, one=one)
+                spikes, clusters, channels = ssl.load_spike_sorting(spike_sorter=spike_sorter)
+                if not clusters or not channels:
+                    stats["skipped"] += 1
+                    pbar.write(f"Skipping {pid}: missing clusters or channels")
+                    continue
+                merged = ssl.merge_clusters(
+                    spikes,
+                    clusters,
+                    channels,
+                    cache_dir=probe_cache_dir,
+                    compute_metrics=recompute_metrics,
+                )
+                if merged is None:
+                    stats["skipped"] += 1
+                    pbar.write(f"Skipping {pid}: no merged clusters")
+                    continue
+                df = pd.DataFrame(merged)
+                if not cache_file.exists():
+                    df.to_parquet(cache_file)
+                stats["computed"] += 1
+                source = "computed"
+
+            if "pid" not in df.columns:
+                df["pid"] = pid
+            dfs.append(df)
+            pbar.set_postfix(
+                rows=f"{sum(len(d) for d in dfs):,}",
+                cached=stats["cached"],
+                computed=stats["computed"],
+                failed=stats["failed"],
+                source=source,
             )
-            if merged is None:
-                stats["skipped"] += 1
-                pbar.write(f"Skipping {pid}: no merged clusters")
-                continue
-            df = pd.DataFrame(merged)
-            if not cache_file.exists():
-                df.to_parquet(cache_file)
-            stats["computed"] += 1
-            source = "computed"
-
-        if "pid" not in df.columns:
-            df["pid"] = pid
-        dfs.append(df)
-        pbar.set_postfix(
-            rows=f"{sum(len(d) for d in dfs):,}",
-            cached=stats["cached"],
-            computed=stats["computed"],
-            source=source,
-        )
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            stats["failed"] += 1
+            failure = {
+                "pid": pid,
+                "error_type": type(e).__name__,
+                "error": str(e),
+            }
+            failures.append(failure)
+            pbar.write(f"Failed {pid}: {type(e).__name__}: {e}")
+            failure_file = cache_root / "cluster_load_failures.json"
+            save_json(failures, failure_file)
+            pbar.set_postfix(
+                rows=f"{sum(len(d) for d in dfs):,}",
+                cached=stats["cached"],
+                computed=stats["computed"],
+                failed=stats["failed"],
+                source="error",
+            )
+            continue
 
     if not dfs:
         raise RuntimeError("No cluster dataframes could be loaded")
+    if failures:
+        failure_file = cache_root / "cluster_load_failures.json"
+        save_json(failures, failure_file)
+        log_step(f"Recorded {len(failures)} PID failures in {failure_file}")
     log_step(
         f"Loaded {len(dfs):,} pid tables ({stats['cached']} cached, {stats['computed']} computed, "
-        f"{stats['skipped']} skipped)"
+        f"{stats['skipped']} skipped, {stats['failed']} failed)"
     )
     return pd.concat(dfs, ignore_index=True)
 
