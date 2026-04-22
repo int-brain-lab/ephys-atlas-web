@@ -48,5 +48,27 @@ EPHYS_FEATURE_UNITS = {
 }
 
 
+EPHYS_CLUSTER_FEATURE_UNITS = {
+    "amp_max": "V",
+    "amp_min": "V",
+    "amp_median": "V",
+    "amp_std_dB": "dB",
+    "contamination": "fraction",
+    "contamination_alt": "fraction",
+    "drift": "um/h",
+    "missed_spikes_est": "fraction",
+    "noise_cutoff": "a.u.",
+    "presence_ratio": "fraction",
+    "presence_ratio_std": "count",
+    "slidingRP_viol": "fraction",
+    "spike_count": "count",
+    "firing_rate": "Hz",
+}
+
+
 def get_ephys_feature_unit(fname):
     return EPHYS_FEATURE_UNITS.get(fname, None)
+
+
+def get_ephys_cluster_feature_unit(fname):
+    return EPHYS_CLUSTER_FEATURE_UNITS.get(fname, None)
