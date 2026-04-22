@@ -28,6 +28,7 @@
 
     <!-- Custom styles -->
     <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/help.css" />
     <link rel="stylesheet" href="data/css/region_colors.css" />
     <link rel="stylesheet" id="style-default-regions" href="data/css/default_region_colors_beryl.css" />
 
@@ -153,6 +154,16 @@
 
     <div id="dispatcher"></div>
 
+    <div id="help-modal" aria-hidden="true">
+        <div id="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
+            <div id="help-dialog-header">
+                <h2 id="help-title">Atlas help</h2>
+                <button id="help-close" type="button" aria-label="Close help">×</button>
+            </div>
+            <div id="help-content"></div>
+        </div>
+    </div>
+
 
     <!-- TOOLTIP -->
 
@@ -201,6 +212,7 @@
                     <li><a href="javascript:app.feature.download();">DOWNLOAD</a></li>
                     <li><a href="https://www.internationalbrainlab.com/">LAB</a></li>
                     <li><a href="https://atlas.internationalbrainlab.org/docs/">DOC</a></li>
+                    <li><button id="help-button" class="nav-button" type="button" aria-haspopup="dialog" aria-expanded="false">HELP</button></li>
                 </ul>
             </nav>
         </header>

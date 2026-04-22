@@ -31,6 +31,7 @@ export function initPrimaryUi(app) {
     app.selector.init();
     app.panel.init();
     app.search.init();
+    app.help.init();
 }
 
 export async function initDependentUi(app) {

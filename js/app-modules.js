@@ -4,6 +4,7 @@ import { Coloring } from "./coloring.js";
 import { DotImage } from "./dotimage.js";
 import { Feature } from "./feature.js";
 import { Highlighter } from "./highlighter.js";
+import { Help } from "./help.js";
 import { LocalSocket } from "./socket.js";
 import { Maximizer } from "./maximizer.js";
 import { Panel } from "./panel.js";
@@ -29,6 +30,7 @@ export function createAppModules({ state, model, dispatcher }) {
         colorbar: new Colorbar(state, model, dispatcher),
         coloring: new Coloring(state, model, dispatcher),
         highlighter: new Highlighter(state, model, dispatcher),
+        help: new Help(state, model, dispatcher),
         dotimage: new DotImage(state, model, dispatcher),
         maximizer: new Maximizer(state, model, dispatcher),
         panel: new Panel(state, model, dispatcher),
