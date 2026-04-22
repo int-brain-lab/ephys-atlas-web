@@ -191,3 +191,12 @@ body.about-page {
         width: 100%;
     }
 }
+
+
+.about-page #header .menu-disabled {
+    color: #9aa3ad;
+    cursor: default;
+    opacity: 0.75;
+    font-family: roboto-condensed, sans-serif;
+    text-transform: uppercase;
+}
