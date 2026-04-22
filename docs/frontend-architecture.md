@@ -1,17 +1,6 @@
 # Frontend architecture
 
-The document describes how the JavaScript frontend in the IBL ephys atlas web app is organized, how data flows through it, and which files are most important when making changes.
-
-## Refactor direction
-
-When extending or refactoring the frontend, prefer these boundaries:
-
-- keep top-level modules as thin controllers that wire DOM events, shared state, and dispatcher events
-- move pure decision logic into `js/core/*` helpers
-- move data, persistence, and policy concerns into focused service-style modules rather than growing `app.js`, `state.js`, or `model.js`
-- preserve the existing event-driven architecture unless a change clearly justifies broader redesign
-
-In practice, the preferred direction is small extractions that reduce the number of reasons a module must change, while keeping public behavior stable.
+This document describes how the JavaScript frontend in the IBL ephys atlas web app is currently organized, how data flows through it, and which files are most important when making changes.
 
 The frontend is a **plain JavaScript ES-module application**. It does not use React, Vue, or another UI framework. Instead, it is organized around:
 
@@ -19,6 +8,23 @@ The frontend is a **plain JavaScript ES-module application**. It does not use Re
 - a shared data/model layer
 - a lightweight event bus
 - a set of modules that each manage one part of the UI or rendering pipeline
+- a growing helper/service layer extracted from older monolithic modules
+
+## Current refactor status
+
+The frontend refactor is no longer just a plan: the main structural extractions have already landed in the active codebase.
+
+Current architectural direction:
+
+- keep top-level modules as thin controllers that wire DOM events, shared state, and dispatcher events
+- move pure decision logic into `js/core/*` helpers
+- move data, persistence, and policy concerns into focused service-style modules rather than growing `app.js`, `state.js`, or `model.js`
+- preserve the existing event-driven architecture unless a change clearly justifies broader redesign
+
+In practice, this means that when you change behavior, you should usually inspect both:
+
+- the UI/controller module, and
+- any corresponding extracted helper/service module it now depends on
 
 ---
 
@@ -27,13 +33,16 @@ The frontend is a **plain JavaScript ES-module application**. It does not use Re
 The easiest way to understand the frontend is:
 
 1. `main.js` starts the app in the browser
-2. `app.js` creates all major modules
-3. `state.js` stores the current UI/application state
-4. `model.js` loads and caches data
-5. `dispatcher.js` sends events between modules
-6. feature-specific modules react to events and update the DOM
+2. `app.js` exposes the public `App` entrypoint
+3. `app-services.js` builds shared services
+4. `app-modules.js` builds feature/view modules
+5. `app-lifecycle.js` runs the startup phases
+6. `state.js` stores the current UI/application state
+7. `model.js` loads and caches data
+8. `dispatcher.js` sends events between modules
+9. feature-specific modules react to events and update the DOM
 
-In short, the frontend is an **event-driven app built on shared `state + model + dispatcher` objects**.
+In short, the frontend is an **event-driven app built on shared `state + model + dispatcher` objects**, with composition and helper logic extracted into smaller files.
 
 ---
 
@@ -52,16 +61,28 @@ It:
 
 ### `js/app.js`
 
-Composition root for the frontend.
+Thin public app wrapper.
 
-It creates the shared core objects:
+It delegates almost all construction and initialization behavior to:
+
+- `js/app-services.js`
+- `js/app-modules.js`
+- `js/app-lifecycle.js`
+
+So `App` is now intentionally small and mostly exposes the public composition root used by `main.js`.
+
+### `js/app-services.js`
+
+Creates the shared long-lived services:
 
 - `Splash`
 - `State`
 - `Model`
 - `Dispatcher`
 
-It then creates the feature/view modules:
+### `js/app-modules.js`
+
+Creates the feature/view modules from the shared services:
 
 - `Bucket`
 - `Feature`
@@ -84,23 +105,25 @@ It then creates the feature/view modules:
 - `StatToolbox`
 - `LocalSocket`
 
-Its `init()` method:
+### `js/app-lifecycle.js`
 
-1. starts the splash/loading flow
-2. calls `model.load()`
-3. temporarily disables URL updates
-4. initializes primary UI modules
-5. initializes dependent UI modules
-6. re-enables URL updates
-7. initializes deferred modules such as Unity if enabled
+Contains the startup phases.
 
-A few startup dependencies are worth preserving during refactors:
+The current flow is:
+
+1. start splash/loading
+2. load static model data
+3. suspend URL updates
+4. initialize primary UI modules
+5. initialize dependent UI modules
+6. resume URL updates
+7. initialize deferred modules such as Unity if enabled
+
+A few startup dependencies are worth preserving:
 
 - URL updates stay suspended during startup so initialization does not churn the location bar
 - `selection.init()` currently runs after `region.init()`
 - Unity initialization remains deferred until the rest of the app is initialized
-
-`App` mostly wires the rest of the application together.
 
 ---
 
@@ -123,13 +146,14 @@ It stores things like:
 - selected and highlighted regions
 - panel open/closed state
 
-It also handles URL serialization:
+`State` now delegates part of its previous responsibilities to extracted modules:
 
-- reading initial state from the URL
-- writing state back into the URL
-- predefined alias states
+- `js/state-defaults.js` — default constants and alias definitions
+- `js/state-router.js` — browser URL parsing/serialization/history integration
+- `js/core/state-normalize.js` — pure normalization of the in-memory state shape
+- `js/core/state-url.js` — low-level URL state parsing/serialization helpers
 
-So `State` is the session state of the current atlas view.
+So `State` is still central, but it is now more focused on the mutable in-memory session state.
 
 ### `js/model.js`
 
@@ -160,8 +184,10 @@ The current split is:
 - `js/data-client.js` — raw HTTP access for buckets/features
 - `js/feature-store.js` — in-memory + persistent cache policy and local bucket handling
 - `js/prefetch-controller.js` — prefetch queueing, idle scheduling, and cancellation
+- `js/atlas-static-store.js` — static colormap, region, and slice resources
 - `js/feature-catalog.js` — ordered-feature and volume-feature catalog helpers
 - `js/feature-payload.js` — feature payload accessors for mappings, histograms, colormaps, and volumes
+- `js/feature-prefetch-policy.js` — feature prefetch candidate selection
 
 ### `js/dispatcher.js`
 
@@ -192,7 +218,7 @@ Modules usually communicate by:
 2. emitting an event through `dispatcher`
 3. letting other modules react independently
 
-This is one of the key patterns in the codebase.
+This remains one of the key patterns in the codebase.
 
 ---
 
@@ -223,7 +249,7 @@ A typical interaction looks like this:
 
 This event-driven fan-out is how most frontend state changes propagate.
 
-One result of the recent refactor work is that many of the pure decisions inside those fan-out paths now live in `js/core/*`, while the top-level modules stay responsible for wiring, rendering, and side effects.
+One result of the refactor is that many pure decisions inside those fan-out paths now live in `js/core/*` or small service modules, while the top-level modules stay responsible for wiring, rendering, and side effects.
 
 ---
 
@@ -234,7 +260,10 @@ The JS code is easiest to navigate in groups.
 ### A. App/core infrastructure
 
 - `js/main.js` — browser entrypoint
-- `js/app.js` — app wiring/composition root
+- `js/app.js` — thin public app wrapper
+- `js/app-services.js` — shared service construction
+- `js/app-modules.js` — feature/view module construction
+- `js/app-lifecycle.js` — startup phase orchestration
 - `js/state.js` — shared app state
 - `js/model.js` — facade/orchestration layer for data access
 - `js/data-client.js` — raw bucket/feature transport
@@ -255,8 +284,13 @@ The JS code is easiest to navigate in groups.
 ### B. Controls and top-level interactions
 
 - `js/bucket.js` — bucket dropdown, add/remove/refresh/upload
-- `js/feature.js` — feature dropdown and feature selection
-- `js/panel.js` — mapping/stat/colormap/log-scale/export/share/reset controls
+- `js/feature.js` — feature controller
+- `js/feature-dropdown.js` — feature dropdown rendering/view helper
+- `js/feature-selection-service.js` — feature loading/selection flow
+- `js/panel.js` — panel composition/wiring
+- `js/panel-controls.js` — mapping/stat/colormap/log-scale/range controls
+- `js/panel-actions.js` — reset/share/connect/export/clear-cache actions
+- `js/panel-export.js` — SVG export workflow
 - `js/search.js` — search box behavior
 - `js/share.js` — syncing app state into shareable URLs
 - `js/maximizer.js` — maximizing/minimizing panels
@@ -299,22 +333,25 @@ The JS code is easiest to navigate in groups.
 
 ### H. Refactor helper layer
 
-The frontend now also has a meaningful `js/core/` helper layer that was introduced through the recent refactor work.
+The frontend now has a meaningful `js/core/` helper layer.
 
 Representative helpers include:
 
 - `js/core/events.js` — shared event name constants
 - `js/core/dom.js` — required-element / stylesheet lookup helpers
 - `js/core/state-normalize.js` — pure app-state normalization
+- `js/core/state-url.js` — low-level URL parsing/serialization helpers
+- `js/core/feature-tree.js` — feature tree traversal and dropdown entry building
 - `js/core/coloring-helpers.js` — CSS color-rule and coloring-view derivation
 - `js/core/colorbar-helpers.js` — colorbar range and histogram-source resolution
 - `js/core/panel-helpers.js` — colormap-range display derivation and cleared-state URL logic
 - `js/core/region-helpers.js` — search/filter/title/sort helpers for the region list
 - `js/core/slice-helpers.js` — slice guide-line and wheel-step logic
 - `js/core/volume-helpers.js` — volume indexing, hover coordinates, and denormalization
+- `js/core/volume-ui-helpers.js` — UI-facing slice index helpers for dynamic volume sizing
 - `js/core/dotimage-helpers.js` — point projection and nearest-point lookup
 
-A practical reading pattern is: understand the UI module, then check whether the pure logic it relies on has already been moved into `js/core/*`.
+A practical reading pattern is: understand the UI module, then check whether the pure logic it relies on has already been moved into `js/core/*` or a small extracted service module.
 
 ---
 
@@ -322,22 +359,24 @@ A practical reading pattern is: understand the UI module, then check whether the
 
 If you are new to the repo, read these first:
 
-A useful secondary rule after the recent refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file or extracted service module before changing behavior. Many calculations that used to be inline have been extracted there and are covered by frontend node tests under `tests/frontend/`.
-
-
 1. `js/main.js`
 2. `js/app.js`
-3. `js/state.js`
-4. `js/dispatcher.js`
-5. `js/model.js`
-6. `js/panel.js`
-7. `js/feature.js`
-8. `js/region.js`
-9. `js/slice.js`
-10. `js/volume.js`
-11. `js/unity.js`
+3. `js/app-services.js`
+4. `js/app-modules.js`
+5. `js/app-lifecycle.js`
+6. `js/state.js`
+7. `js/dispatcher.js`
+8. `js/model.js`
+9. `js/panel.js`
+10. `js/feature.js`
+11. `js/region.js`
+12. `js/slice.js`
+13. `js/volume.js`
+14. `js/unity.js`
 
 That gives a good picture of the app without reading every file in full.
+
+A useful secondary rule after the refactor is: for any non-trivial UI module, also inspect the matching `js/core/*` helper file or extracted service module before changing behavior.
 
 ---
 
@@ -358,14 +397,14 @@ This is how non-volume feature interaction works:
 
 When the selected feature is volumetric, `Volume` overlays raster data onto canvases aligned with the slice views.
 
-Important behavior in `Volume`:
+Important behavior in the current volume pipeline:
 
-- detect whether feature payload contains volume arrays
-- decode/use volume arrays from model data
-- infer axis permutation and downsampling relative to canonical volume dimensions
-- resize canvases to match actual voxel plane sizes
-- render slice planes into `ImageData`
-- update raster overlays when slice position or colormap changes
+- `Volume` owns dispatcher integration and overall orchestration
+- `VolumeSession` stores loaded array metadata, axis mappings, downsampling, and active volume selection
+- `VolumeCanvasRenderer` handles canvas sizing and raster slice drawing
+- `volume-interaction.js` handles hover/value lookup helpers
+- the renderer infers axis permutation and downsampling relative to canonical volume dimensions
+- canvases resize to match actual voxel plane sizes
 
 So the slice system is effectively:
 
@@ -406,11 +445,35 @@ Several modules build styles at runtime by inserting CSS rules into `<style>` el
 - `Selector` injects selected-region styles
 - `Volume` injects some overlay visibility rules
 
-This is an important pattern in the codebase. A lot of visual behavior is controlled by **generated CSS rules**, not only by direct DOM mutation.
+A lot of visual behavior is controlled by **generated CSS rules**, not only by direct DOM mutation.
 
 ---
 
-## 9. Local-development behavior
+## 9. Tests and validation support
+
+The frontend now has a lightweight Node-based test suite under `tests/frontend/`.
+
+This suite covers many extracted helpers and service modules, including:
+
+- state normalization and URL helpers
+- feature catalog / payload / prefetch policy helpers
+- feature dropdown and selection flow
+- panel export/helpers
+- region helpers/view/policy
+- slice DOM/helpers
+- volume session / renderer / interaction / helper modules
+- integration-oriented module smoke coverage
+
+Useful commands:
+
+- `npm run test:frontend`
+- `just check`
+
+This test suite is still not a full browser E2E harness, so manual smoke testing remains important after meaningful UI changes.
+
+---
+
+## 10. Local-development behavior
 
 A few frontend behaviors are environment-sensitive:
 
@@ -424,7 +487,7 @@ If something behaves differently locally than on production, `constants.js` is o
 
 ---
 
-## 10. Design strengths
+## 11. Design strengths
 
 Some genuinely useful properties of this frontend structure:
 
@@ -433,12 +496,14 @@ Some genuinely useful properties of this frontend structure:
 - event bus keeps modules decoupled
 - modules are split by UI concern, which helps maintenance
 - data loading is centralized through `Model`
+- `app.js` is now a very thin public wrapper
+- state, model, panel, feature, region, slice, and volume logic have been split into smaller pieces
 - volumetric rendering logic is split between `Volume`, `volume-session`, `volume-canvas-renderer`, and `volume-interaction`
 - Unity integration is mostly contained in one module
 
 ---
 
-## 11. Design tradeoffs / rough edges
+## 12. Design tradeoffs / rough edges
 
 Important things to keep in mind when modifying the frontend:
 
@@ -468,15 +533,19 @@ The volume system has been made more dynamic, but some crosshair/line positionin
 
 ---
 
-## 12. Practical advice when changing the frontend
+## 13. Practical advice when changing the frontend
 
 ### If you are changing controls
 
 Start with:
 
 - `js/panel.js`
-- `js/bucket.js`
+- `js/panel-controls.js`
+- `js/panel-actions.js`
 - `js/feature.js`
+- `js/feature-dropdown.js`
+- `js/feature-selection-service.js`
+- `js/bucket.js`
 - `js/search.js`
 
 ### If you are changing selection/hover behavior
@@ -484,7 +553,10 @@ Start with:
 Start with:
 
 - `js/region.js`
+- `js/region-view.js`
+- `js/region-policy.js`
 - `js/slice.js`
+- `js/slice-dom.js`
 - `js/highlighter.js`
 - `js/selector.js`
 - `js/tooltip.js`
@@ -497,13 +569,18 @@ Start with:
 - `js/colorbar.js`
 - `js/stattoolbox.js`
 - `js/model.js`
+- relevant `js/core/*` helper modules
 
 ### If you are changing slice or volume rendering
 
 Start with:
 
 - `js/slice.js`
+- `js/slice-dom.js`
 - `js/volume.js`
+- `js/volume-session.js`
+- `js/volume-canvas-renderer.js`
+- `js/volume-interaction.js`
 - `js/constants.js`
 - `js/dotimage.js`
 
@@ -516,32 +593,18 @@ Start with:
 
 ---
 
-## 13. Minimal validation checklist after frontend changes
+## 14. Minimal validation checklist after frontend changes
 
-Because automated testing is limited, validate manually in the browser.
+After meaningful frontend edits, check the relevant subset of:
 
-At minimum, check:
-
-- app loads without obvious console errors
-- bucket dropdown works
-- feature selection works
-- mapping/stat/cmap controls still update the app
-- region list updates correctly
-- hovering regions shows sensible tooltips
-- selecting regions updates the selection UI and highlighting
-- coronal / sagittal / horizontal slice views still render and respond
-- volumetric overlays still align well enough if relevant
-- Unity/WebGL still loads if your change could affect it
-
----
-
-## 14. Summary
-
-The frontend is best understood as:
-
-- a **shared state object**
-- a **shared data/model layer**
-- a **custom event bus**
-- many **small UI/rendering modules** reacting to those events
-
-It is simple, modular, and practical, but it relies heavily on implicit contracts between state, events, DOM structure, and generated CSS.
+- app boots cleanly
+- bucket list and feature dropdown load correctly
+- switching buckets keeps the feature list and selected state coherent
+- mapping/stat/colormap/range controls still propagate correctly
+- slice sliders and mouse-wheel navigation still work
+- region hover and selection still work
+- volume features still render and hover values remain aligned
+- share/reset/export flows still work if touched
+- Unity still loads if your change could affect it
+- `npm run test:frontend` stays green for helper/service changes
+- browser console stays reasonably clean
