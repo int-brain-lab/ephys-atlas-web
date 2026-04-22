@@ -50,6 +50,13 @@ class Maximizer {
             this.dispatcher.toggleStatToolbox(this);
         });
 
+        this.maxStat.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                this.dispatcher.toggleStatToolbox(this);
+            }
+        });
+
         document.body.addEventListener('keydown', (e) => {
             if (e.key == "Escape") {
                 this.clear();

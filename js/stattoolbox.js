@@ -71,6 +71,7 @@ class StatToolbox {
         this.svg = d3.select('#stat-violin');
         this.table = getRequiredElement('stat-table');
         this.closeButton = getRequiredElement('stat-toolbox-close');
+        this.triggerButton = getRequiredElement('maximizer-stat');
 
         this.setupDispatcher();
 
@@ -79,6 +80,17 @@ class StatToolbox {
                 this.dispatcher.toggleStatToolbox(this);
             });
         }
+
+        this.syncTriggerState();
+    }
+
+
+    syncTriggerState() {
+        if (!this.triggerButton || !this.container) return;
+        const isOpen = this.container.classList.contains('visible');
+        this.triggerButton.classList.toggle('is-open', isOpen);
+        this.triggerButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        this.triggerButton.setAttribute('title', isOpen ? 'Hide stat toolbox' : 'Open stat toolbox');
     }
 
     setupDispatcher() {
@@ -99,6 +111,7 @@ class StatToolbox {
     toggle() {
         if (!this.container) return;
         this.container.classList.toggle("visible");
+        this.syncTriggerState();
         if (this.container.classList.contains("visible")) {
             this.update();
         }
