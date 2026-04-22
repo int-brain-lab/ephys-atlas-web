@@ -92,6 +92,7 @@ Creates the feature/view modules from the shared services:
 - `Colorbar`
 - `Coloring`
 - `Highlighter`
+- `Help`
 - `DotImage`
 - `Maximizer`
 - `Panel`
@@ -217,6 +218,11 @@ Modules usually communicate by:
 1. updating shared state
 2. emitting an event through `dispatcher`
 3. letting other modules react independently
+
+### Help modal
+
+The frontend now also includes a small `Help` UI module that opens a scrollable modal from the header.
+Its body content is loaded from the separate editable file `help/help-content.html`, with presentation styles in `css/help.css`.
 
 This remains one of the key patterns in the codebase.
 
