@@ -35,6 +35,7 @@ from tools.ephys_units import (
 
 N_BINS = 50
 HISTOGRAM_QUANTILE = 0.001
+RANGE_QUANTILE = 0.02
 DEFAULT_PROJECT = "ibl_neuropixel_brainwide_01"
 DEFAULT_AGG_PROJECT = "ea_active"
 DEFAULT_AGG_LEVEL = "agg_full"
@@ -155,15 +156,12 @@ def get_histogram_groupby(df, n_bins=N_BINS):
     out = {}
     feature_names = df.obj.select_dtypes(include=[np.number]).columns
     bin_edges = {}
-    q = HISTOGRAM_QUANTILE
     for fname in feature_names:
         values = df.obj[fname].dropna()
         if values.empty:
             bin_edges[fname] = np.linspace(0, 1, n_bins + 1)
             continue
-        vmin, vmax = XLIMS.get(fname, (values.quantile(q), values.quantile(1 - q)))
-        if vmin == vmax:
-            vmax = vmin + 1
+        vmin, vmax = compute_range(values)
         bin_edges[fname] = np.histogram_bin_edges(values, range=(vmin, vmax), bins=n_bins)
 
     group_hist_data = {bin_idx: {} for bin_idx in range(n_bins)}
@@ -207,6 +205,24 @@ def get_aggregates(df):
     hist, bin_edges = get_histogram_groupby(df, n_bins=N_BINS)
     out.update(hist)
     return out, bin_edges
+
+
+def compute_range(values, q=RANGE_QUANTILE):
+    values = pd.Series(values).replace([np.inf, -np.inf], np.nan).dropna()
+    if values.empty:
+        return 0.0, 1.0
+
+    vmin = float(values.quantile(q))
+    vmax = float(values.quantile(1 - q))
+
+    if not np.isfinite(vmin) or not np.isfinite(vmax) or vmin >= vmax:
+        vmin = float(values.min())
+        vmax = float(values.max())
+
+    if not np.isfinite(vmin) or not np.isfinite(vmax) or vmin >= vmax:
+        vmax = vmin + 1e-12
+
+    return vmin, vmax
 
 
 def clean(payload):
@@ -352,10 +368,7 @@ def make_region_bucket_from_df(
 
     def process_fname(fname):
         values = df_values[fname]
-        q = HISTOGRAM_QUANTILE
-        vmin, vmax = XLIMS.get(fname, (values.quantile(q), values.quantile(1 - q)))
-        if vmin == vmax:
-            vmax = vmin + 1
+        vmin, vmax = compute_range(df[fname])
 
         data = remap(key, values)
         extra_values = {
