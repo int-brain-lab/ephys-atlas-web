@@ -15,6 +15,7 @@ import re
 import shutil
 import ssl
 import sys
+import tempfile
 import unittest
 import uuid
 
@@ -127,15 +128,42 @@ def multiple_file_types(patterns):
 
 
 def get_bucket_path(uuid):
+    """Return the bucket directory matching an exact UUID or alias.
+
+    Bucket directories may be named either exactly as the bucket identifier or as
+    ``<alias>_<uuid>``.  Do not trust glob ordering for alias lookups: aliases
+    can share prefixes (for example ``ephys`` and ``ephys_clusters``), so every
+    candidate's metadata must be checked for an exact ``uuid`` or ``alias``
+    match before falling back to legacy path-name matching.
     """
-    NOTE: the bucket directory should contain the uuid but can also contain an alias
-    """
-    patterns = (f'{uuid}_*', f'*_{uuid}', uuid)
-    # filenames = sum(list(FEATURES_DIR.glob(p)) for p in patterns)
-    filenames = list(multiple_file_types(patterns))
-    if not filenames:
+    if not uuid:
         return None
-    return filenames[0] if filenames else None
+
+    exact_path = FEATURES_DIR / uuid
+    if exact_path.exists():
+        return exact_path
+
+    patterns = (f'{uuid}_*', f'*_{uuid}')
+    candidates = sorted(
+        (path for path in multiple_file_types(patterns) if path.is_dir()),
+        key=lambda path: path.name,
+    )
+
+    for path in candidates:
+        metadata_path = path / '_bucket.json'
+        if not metadata_path.exists():
+            continue
+        try:
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if metadata.get('uuid') == uuid or metadata.get('alias') == uuid:
+            return path
+
+    # Legacy fallback for buckets without metadata. Keep this deterministic, but
+    # only after metadata exact-match resolution to avoid prefix collisions.
+    return candidates[0] if candidates else None
 
 
 def get_bucket_metadata_path(uuid):
@@ -639,6 +667,33 @@ class TestApp(unittest.TestCase):
 
     def ok(self, response):
         self.assertEqual(response.status_code, 200)
+
+    def test_get_bucket_path_disambiguates_alias_prefixes(self):
+        global FEATURES_DIR
+        original_features_dir = FEATURES_DIR
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                FEATURES_DIR = Path(tmpdir)
+
+                ephys_dir = FEATURES_DIR / 'ephys_aaaaaaaaaaaaaaaaaa'
+                ephys_clusters_dir = FEATURES_DIR / 'ephys_clusters_bbbbbbbbbbbbbbbbbb'
+                ephys_dir.mkdir()
+                ephys_clusters_dir.mkdir()
+                (ephys_dir / '_bucket.json').write_text(json.dumps({
+                    'uuid': 'aaaaaaaaaaaaaaaaaa',
+                    'alias': 'ephys',
+                }))
+                (ephys_clusters_dir / '_bucket.json').write_text(json.dumps({
+                    'uuid': 'bbbbbbbbbbbbbbbbbb',
+                    'alias': 'ephys_clusters',
+                }))
+
+                self.assertEqual(get_bucket_path('ephys'), ephys_dir)
+                self.assertEqual(get_bucket_path('ephys_clusters'), ephys_clusters_dir)
+                self.assertEqual(get_bucket_path('aaaaaaaaaaaaaaaaaa'), ephys_dir)
+                self.assertEqual(get_bucket_path('bbbbbbbbbbbbbbbbbb'), ephys_clusters_dir)
+        finally:
+            FEATURES_DIR = original_features_dir
 
     def test_server(self):
         # Ensure the directory does not exist before running the tests.
