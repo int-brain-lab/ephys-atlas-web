@@ -226,6 +226,52 @@ def clean(payload):
     return cleaned
 
 
+def _safe_stats_from_mapping_data(data, stat_name):
+    values = [
+        row.get(stat_name)
+        for row in data.values()
+        if isinstance(row, dict) and row.get(stat_name) is not None
+    ]
+    if not values:
+        return {"min": None, "max": None, "mean": None, "median": None, "std": None}
+    arr = np.asarray(values, dtype=float)
+    return clean(
+        {
+            "min": float(arr.min()),
+            "max": float(arr.max()),
+            "mean": float(arr.mean()),
+            "median": float(np.median(arr)),
+            "std": float(arr.std()),
+        }
+    )
+
+
+def normalize_payload(payload):
+    payload = clean(payload)
+    mappings = payload.get("feature_data", {}).get("mappings", {})
+    for mapping_payload in mappings.values():
+        data = mapping_payload.get("data", {})
+        filtered = {}
+        for region_id, region_values in data.items():
+            if not isinstance(region_values, dict):
+                filtered[region_id] = region_values
+                continue
+            if region_values.get("uncertainty") is None:
+                region_values["uncertainty"] = 0
+            count = region_values.get("count")
+            numeric_stats = [region_values.get(k) for k in ("min", "max", "mean", "median", "std")]
+            if count == 0 and all(v is None for v in numeric_stats):
+                continue
+            filtered[region_id] = region_values
+        mapping_payload["data"] = filtered
+
+        statistics = mapping_payload.get("statistics", {})
+        for stat_name, stat_obj in list(statistics.items()):
+            if isinstance(stat_obj, dict) and any(v is None for v in stat_obj.values()):
+                statistics[stat_name] = _safe_stats_from_mapping_data(filtered, stat_name)
+    return payload
+
+
 def ensure_bucket(alias, short_desc):
     metadata = load_bucket_metadata(alias)
     if metadata:
@@ -326,7 +372,7 @@ def make_region_bucket_from_df(
         )
         payload["unit"] = get_feature_unit(fname, bucket_alias=bucket_alias)
         api.add_payload_histogram(payload, df[fname], vmin, vmax)
-        payload = clean(payload)
+        payload = normalize_payload(payload)
         api.save_payload(output_dir, fname, payload)
 
     if n_jobs != 1:
