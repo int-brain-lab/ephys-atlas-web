@@ -38,7 +38,7 @@
                     <li><span class="menu-disabled" aria-disabled="true">SHARE</span></li>
                     <li><span class="menu-disabled" aria-disabled="true">DOWNLOAD</span></li>
                     <li><a href="https://www.internationalbrainlab.com/">LAB</a></li>
-                    <li><a href="https://atlas.internationalbrainlab.org/docs/">DOC</a></li>
+                    <li><a href="/docs/">DOC</a></li>
                 </ul>
             </nav>
         </header>
@@ -46,44 +46,111 @@
         <main class="about-main">
             <section class="hero">
                 <p class="eyebrow">IBL Ephys Atlas</p>
-                <h1>A brain atlas for exploring region-level electrophysiology features.</h1>
+                <h1>Explore electrophysiology features and brain-wide analysis results.</h1>
                 <p class="lead">
-                    The IBL ephys atlas brings together anatomical mappings, slice views, summary plots,
-                    and 3D exploration to help users inspect how electrophysiology-derived features vary
-                    across brain regions. It supports atlas-based exploration of curated feature buckets,
-                    custom uploads, and multiple region mappings within a single interface.
+                    This website provides a shared anatomical framework for exploring brain-wide data.
+                    Anatomical mappings, slice views, summary plots, and 3D visualization allow extracted
+                    features, analytical results, and user-supplied data to be viewed and compared
+                    consistently across brain regions.
                 </p>
 
                 <div class="hero-actions">
-                    <a class="button-primary" href="/">Open the atlas</a>
-                    <a class="button-secondary" href="https://atlas.internationalbrainlab.org/docs/">Read the docs</a>
+                    <a class="button-primary" href="/?buckets=ephys_atlas_channels&amp;bucket=ephys_atlas_channels">Open the atlas</a>
+                    <a class="button-secondary" href="/docs/">Read the docs</a>
                 </div>
             </section>
 
-            <section class="about-card-grid" aria-label="Atlas highlights">
-                <article class="about-card">
-                    <h2>Explore multiple views</h2>
-                    <p>
-                        Move between coronal, sagittal, horizontal, projection, summary, and 3D views while
-                        keeping a shared regional context.
-                    </p>
-                </article>
+            <section class="data-views" aria-labelledby="data-views-title">
+                <h2 id="data-views-title">Explore the data</h2>
+                <p class="data-views-intro">
+                    Choose a dataset below to explore it in the atlas. The datasets are grouped by project
+                    and data source.
+                </p>
 
-                <article class="about-card">
-                    <h2>Inspect feature buckets</h2>
-                    <p>
-                        Load built-in datasets or work with uploaded features to compare statistics,
-                        mappings, and color encodings across the atlas.
-                    </p>
-                </article>
+                <div class="bucket-sections">
+                    <article class="bucket-banner bucket-banner-ephys">
+                        <div class="bucket-banner-heading">
+                            <p class="bucket-kicker">IBL Ephys Atlas project</p>
+                            <h3>Ephys Atlas</h3>
+                            <p>
+                                Explore extracted electrophysiology features derived from channels and sorted
+                                units, alongside interpolated volumes and aligned molecular datasets.
+                            </p>
+                        </div>
 
-                <article class="about-card">
-                    <h2>Bridge anatomy and data</h2>
-                    <p>
-                        Use the atlas as an entry point for understanding how electrophysiology features
-                        relate to anatomical structure at region level.
-                    </p>
-                </article>
+                        <div class="bucket-button-grid ephys-button-grid">
+                            <a class="bucket-button" href="/?buckets=ephys_atlas_channels&amp;bucket=ephys_atlas_channels">
+                                <strong>Channels</strong>
+                                <span>Aggregated channel-level information mapped to brain regions.</span>
+                                <span class="bucket-button-action">Open <span aria-hidden="true">&rarr;</span></span>
+                            </a>
+
+                            <a class="bucket-button" href="/?buckets=ephys_atlas_clusters&amp;bucket=ephys_atlas_clusters">
+                                <strong>Clusters</strong>
+                                <span>Aggregated features from sorted neural units across regions.</span>
+                                <span class="bucket-button-action">Open <span aria-hidden="true">&rarr;</span></span>
+                            </a>
+
+                            <a class="bucket-button" href="/?buckets=ephys_atlas_volumes&amp;bucket=ephys_atlas_volumes">
+                                <strong>Volumes</strong>
+                                <span>Spatially interpolated atlas volumes for continuous 3D exploration.</span>
+                                <span class="bucket-button-action">Open <span aria-hidden="true">&rarr;</span></span>
+                            </a>
+
+                            <a class="bucket-button" href="/?buckets=ephys_atlas_agea&amp;bucket=ephys_atlas_agea">
+                                <strong>AGEA</strong>
+                                <span>Explore gene-expression information aligned to the atlas framework.</span>
+                                <span class="bucket-button-action">Open <span aria-hidden="true">&rarr;</span></span>
+                            </a>
+
+                            <a class="bucket-button" href="/?buckets=ephys_atlas_merfish&amp;bucket=ephys_atlas_merfish">
+                                <strong>MERFISH</strong>
+                                <span>Explore spatial transcriptomic features in atlas coordinates.</span>
+                                <span class="bucket-button-action">Open <span aria-hidden="true">&rarr;</span></span>
+                            </a>
+                        </div>
+                    </article>
+
+                    <article class="bucket-banner bucket-banner-bwm">
+                        <div class="bucket-banner-heading">
+                            <p class="bucket-kicker">Brainwide Map project</p>
+                            <h3>Brainwide Map</h3>
+                            <p>
+                                Explore results from <em>A Brain-Wide Map of Neural Activity during Complex
+                                Behaviour</em>, including aggregated neural responses to task events across
+                                brain regions.
+                            </p>
+                        </div>
+
+                        <div class="publication-feature">
+                            <p class="publication-label">Featured publication</p>
+                            <h4>A Brain-Wide Map of Neural Activity during Complex Behaviour</h4>
+                            <p class="publication-citation">
+                                International Brain Laboratory et al. — <em>Nature</em>, 3 September 2025
+                            </p>
+                            <p>
+                                A brain-wide recording study mapping neural activity during a complex
+                                decision-making task across hundreds of brain areas.
+                            </p>
+                            <div class="publication-links">
+                                <a href="/?buckets=brainwide_map&amp;bucket=brainwide_map">Open Brainwide Map <span aria-hidden="true">&rarr;</span></a>
+                                <a href="https://doi.org/10.1038/s41586-025-09235-0">Read publication <span aria-hidden="true">&rarr;</span></a>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="bucket-banner bucket-banner-local">
+                        <div class="bucket-banner-heading">
+                            <p class="bucket-kicker">Your data</p>
+                            <h3>Local</h3>
+                            <p>
+                                Upload and visualize your own data within the same interface and coordinate
+                                framework.
+                            </p>
+                        </div>
+                        <a class="local-button" href="/?bucket=local">Open Local <span aria-hidden="true">&rarr;</span></a>
+                    </article>
+                </div>
             </section>
         </main>
 
